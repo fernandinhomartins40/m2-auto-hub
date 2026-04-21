@@ -239,6 +239,9 @@ jobs:
                 exit 1
               fi
 
+              cp "$ROOT_ENV_FILE" "$CURRENT_DIR/.env"
+              chmod 600 "$CURRENT_DIR/.env"
+
               echo "Current release promoted to $CURRENT_TARGET"
             }
 
@@ -539,8 +542,13 @@ jobs:
             set -euo pipefail
 
             CURRENT_DIR="$APP_ROOT/current"
+            ROOT_ENV_FILE="$APP_ROOT/.env"
             COMPOSE_FILE="$CURRENT_DIR/docker-compose.production.yml"
-            ENV_FILE="$CURRENT_DIR/.env"
+            ENV_FILE="$ROOT_ENV_FILE"
+
+            if [ -f "$CURRENT_DIR/.env" ]; then
+              ENV_FILE="$CURRENT_DIR/.env"
+            fi
 
             compose() {
               docker compose -p m2centerauto -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
