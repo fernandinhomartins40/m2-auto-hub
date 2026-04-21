@@ -320,6 +320,39 @@ jobs:
 
             cp "$ROOT_ENV_FILE" "$ENV_FILE"
             printf 'RELEASE_VERSION=%s\n' "$RELEASE" >> "$ENV_FILE"
+            set -a
+            . "$ENV_FILE"
+            set +a
+
+            cleanup_failed_bootstrap_migration() {
+              local app_table_count
+              local migrations_table_exists
+              local failed_migration_count
+
+              app_table_count="$(compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name <> '_prisma_migrations';")"
+
+              if [ "${app_table_count:-0}" != "0" ]; then
+                echo "Database already has application tables, skipping bootstrap cleanup"
+                return 0
+              fi
+
+              migrations_table_exists="$(compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_prisma_migrations';")"
+
+              if [ "${migrations_table_exists:-0}" != "1" ]; then
+                echo "No Prisma migration table found in empty database"
+                return 0
+              fi
+
+              failed_migration_count="$(compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT COUNT(*) FROM \"_prisma_migrations\" WHERE finished_at IS NULL AND rolled_back_at IS NULL;")"
+
+              if [ "${failed_migration_count:-0}" = "0" ]; then
+                echo "No failed Prisma migrations found in empty database"
+                return 0
+              fi
+
+              echo "Cleaning failed Prisma migration state in empty database..."
+              compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'DROP TABLE IF EXISTS "_prisma_migrations";'
+            }
 
             cd "$RELEASE_DIR"
             compose build --no-cache alpr backend frontend migrator
@@ -330,6 +363,7 @@ jobs:
             wait_for_service_health postgres 36 5
             wait_for_service_state alpr running 24 5
             wait_for_service_health alpr 36 5
+            cleanup_failed_bootstrap_migration
 
             echo "Running migrations..."
             compose run --rm migrator

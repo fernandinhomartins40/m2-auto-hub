@@ -119,6 +119,8 @@ services:
 
 volumes:
   postgres_data:
+    external: true
     name: m2centerauto-postgres-data
   uploads_data:
+    external: true
     name: m2centerauto-uploads
