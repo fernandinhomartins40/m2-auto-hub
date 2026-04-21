@@ -543,11 +543,23 @@ jobs:
 
             CURRENT_DIR="$APP_ROOT/current"
             ROOT_ENV_FILE="$APP_ROOT/.env"
-            COMPOSE_FILE="$CURRENT_DIR/docker-compose.production.yml"
+            RELEASE_DIR=""
+            if [ -d "$CURRENT_DIR" ] && [ -f "$CURRENT_DIR/docker-compose.production.yml" ]; then
+              RELEASE_DIR="$CURRENT_DIR"
+            else
+              RELEASE_DIR="$(ls -dt "$APP_ROOT/releases"/*/ 2>/dev/null | head -n 1 | sed 's:/$::')"
+            fi
+
+            if [ -z "$RELEASE_DIR" ] || [ ! -f "$RELEASE_DIR/docker-compose.production.yml" ]; then
+              echo "No release compose file found for post-deploy health check" >&2
+              exit 1
+            fi
+
+            COMPOSE_FILE="$RELEASE_DIR/docker-compose.production.yml"
             ENV_FILE="$ROOT_ENV_FILE"
 
-            if [ -f "$CURRENT_DIR/.env" ]; then
-              ENV_FILE="$CURRENT_DIR/.env"
+            if [ -f "$RELEASE_DIR/.env" ]; then
+              ENV_FILE="$RELEASE_DIR/.env"
             fi
 
             compose() {
