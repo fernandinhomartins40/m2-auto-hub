@@ -1,0 +1,1075 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum CustomerLevel {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum AddressType {
+  HOME
+  WORK
+  OTHER
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+  DISCONTINUED
+}
+
+enum OfferType {
+  DIA
+  SEMANA
+  MES
+}
+
+enum ServiceStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PRODUCTION
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderSource {
+  WEB
+  APP
+  PHONE
+}
+
+enum OrderItemType {
+  PRODUCT
+  SERVICE
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum AdminStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum QuoteStatus {
+  PENDING
+  ANALYZING
+  QUOTED
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  NEW_QUOTE_REQUEST
+  QUOTE_RESPONDED
+  QUOTE_APPROVED
+  QUOTE_REJECTED
+  ORDER_STATUS_UPDATED
+  ORDER_CREATED
+}
+
+enum NotificationRecipientType {
+  ADMIN
+  CUSTOMER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  WAITING_SUPPORT
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  ORDER_ISSUE
+  PRODUCT_QUESTION
+  PAYMENT_ISSUE
+  DELIVERY_ISSUE
+  REVISION_QUESTION
+  TECHNICAL_SUPPORT
+  SUGGESTION
+  COMPLAINT
+  OTHER
+}
+
+// ============================================================================
+// MODELS - FASE 1
+// ============================================================================
+
+model Admin {
+  id          String      @id @default(uuid())
+  email       String      @unique
+  password    String
+  name        String
+  role        AdminRole   @default(STAFF)
+  status      AdminStatus @default(ACTIVE)
+  permissions Json?       // Array de permissões customizadas
+  preferences Json?       // Preferências do usuário (notificações, tema, etc.)
+
+  // Timestamps
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  lastLoginAt DateTime?
+
+  // Relations
+  assignedRevisions Revision[]
+  assignedAppointments RevisionAppointment[]
+  auditLogs        AuditLog[]
+  assignedTickets  SupportTicket[]
+  landingPageConfigHistory LandingPageConfigHistory[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@map("admins")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  admin      Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action     String   // CREATE, UPDATE, DELETE, ASSIGN, etc
+  resource   String   // Revision, Order, Product, etc
+  resourceId String?
+  changes    Json?    // Antes/depois
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Customer {
+  id          String         @id @default(uuid())
+  email       String         @unique
+  password    String
+  name        String
+  phone       String
+  cpf         String?        @unique
+  birthDate   DateTime?
+  status      CustomerStatus @default(ACTIVE)
+  level       CustomerLevel  @default(BRONZE)
+  totalOrders Int            @default(0)
+  totalSpent  Decimal        @default(0) @db.Decimal(10, 2)
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  // Relations
+  addresses Address[]
+  orders    Order[]
+  favorites Favorite[]
+  vehicles  CustomerVehicle[]
+  revisions Revision[]
+  revisionAppointments RevisionAppointment[]
+  supportTickets SupportTicket[]
+
+  @@index([email])
+  @@index([cpf])
+  @@index([status])
+  @@index([level])
+  @@index([createdAt])
+  @@map("customers")
+}
+
+model Address {
+  id           String      @id @default(uuid())
+  customerId   String
+  type         AddressType @default(HOME)
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String      @db.Char(2)
+  zipCode      String      @db.Char(8)
+  isDefault    Boolean     @default(false)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orders   Order[]  // Relação reversa para pedidos
+
+  @@index([customerId])
+  @@index([zipCode])
+  @@map("addresses")
+}
+
+// ============================================================================
+// MODELS - FASE 2: PRODUTOS, SERVIÇOS E VEÍCULOS
+// ============================================================================
+
+// Produtos
+model Product {
+  id             String        @id @default(uuid())
+  name           String
+  description    String        @db.Text
+  category       String
+  subcategory    String?
+  sku            String        @unique
+  supplier       String
+  costPrice      Decimal       @db.Decimal(10, 2)
+  salePrice      Decimal       @db.Decimal(10, 2)
+  promoPrice     Decimal?      @db.Decimal(10, 2)
+  stock          Int           @default(0)
+  minStock       Int           @default(5)
+  images         Json // Array de URLs
+  specifications Json? // Especificações técnicas estruturadas
+  status         ProductStatus @default(ACTIVE)
+
+  // Ofertas (Dia/Semana/Mês)
+  offerType      OfferType?
+  offerStartDate DateTime?
+  offerEndDate   DateTime?
+  offerBadge     String? // Ex: "LIMITADO", "QUEIMA DE ESTOQUE"
+
+  // SEO
+  slug            String  @unique
+  metaDescription String?
+  metaKeywords    String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  vehicleCompatibility ProductVehicleCompatibility[]
+
+  @@index([category])
+  @@index([status])
+  @@index([sku])
+  @@index([slug])
+  @@index([offerType, offerStartDate, offerEndDate])
+  @@map("products")
+}
+
+model ProductCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@map("product_categories")
+}
+
+// Serviços
+model Service {
+  id             String        @id @default(uuid())
+  name           String
+  description    String        @db.Text
+  category       String
+  estimatedTime  String // Ex: "2 horas"
+  basePrice      Decimal?      @db.Decimal(10, 2)
+  specifications Json?
+  status         ServiceStatus @default(ACTIVE)
+
+  // SEO
+  slug            String  @unique
+  metaDescription String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([status])
+  @@index([slug])
+  @@map("services")
+}
+
+model ServiceCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@map("service_categories")
+}
+
+// Marcas de Veículos
+model VehicleMake {
+  id      String  @id @default(uuid())
+  name    String  @unique
+  country String
+  logo    String?
+  active  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  models VehicleModel[]
+
+  @@index([name])
+  @@map("vehicle_makes")
+}
+
+// Modelos de Veículos
+model VehicleModel {
+  id        String  @id @default(uuid())
+  makeId    String
+  name      String
+  segment   String // mini, hatch, sedan, suv, etc.
+  bodyType  String // 2-door, 4-door, etc.
+  fuelTypes Json // Array de tipos de combustível
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  make     VehicleMake      @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  variants VehicleVariant[]
+
+  @@index([makeId])
+  @@index([segment])
+  @@map("vehicle_models")
+}
+
+// Variantes de Veículos
+model VehicleVariant {
+  id             String  @id @default(uuid())
+  modelId        String
+  name           String
+  engineInfo     Json // Informações do motor
+  transmission   String
+  yearStart      Int
+  yearEnd        Int?
+  specifications Json // Especificações técnicas
+  active         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  model VehicleModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
+  @@index([yearStart])
+  @@index([yearEnd])
+  @@map("vehicle_variants")
+}
+
+// Compatibilidade Produto-Veículo
+model ProductVehicleCompatibility {
+  id                String  @id @default(uuid())
+  productId         String
+  makeId            String?
+  modelId           String?
+  variantId         String?
+  yearStart         Int?
+  yearEnd           Int?
+  compatibilityData Json // Regras detalhadas de compatibilidade
+  verified          Boolean @default(false)
+  notes             String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([makeId])
+  @@index([modelId])
+  @@map("product_vehicle_compatibility")
+}
+
+// ============================================================================
+// MODELS - FASE 3: PEDIDOS, PROMOÇÕES E CUPONS
+// ============================================================================
+
+// Pedidos
+model Order {
+  id          String      @id @default(uuid())
+  customerId  String
+  addressId   String
+  status      OrderStatus @default(PENDING)
+  source      OrderSource @default(WEB)
+  hasProducts Boolean     @default(false)
+  hasServices Boolean     @default(false)
+
+  // Campos de Orçamento (Quote)
+  quoteStatus     QuoteStatus? // Status do orçamento se hasServices = true
+  quotedAt        DateTime?    // Quando o orçamento foi enviado ao cliente
+  quoteApprovedAt DateTime?    // Quando o cliente aprovou o orçamento
+  quoteNotes      String?      @db.Text // Observações do orçamento
+
+  // Valores
+  subtotal       Decimal @db.Decimal(10, 2)
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  total          Decimal @db.Decimal(10, 2)
+
+  // Pagamento e Entrega
+  paymentMethod     String
+  trackingCode      String?
+  estimatedDelivery DateTime?
+  deliveredAt       DateTime?
+
+  // Cupom/Promoção
+  couponCode        String?
+  appliedPromotions Json? // Array de IDs de promoções aplicadas
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cancelledAt DateTime?
+
+  // Relations
+  customer Customer    @relation(fields: [customerId], references: [id])
+  address  Address     @relation(fields: [addressId], references: [id])
+  items    OrderItem[]
+
+  @@index([customerId])
+  @@index([addressId])
+  @@index([status])
+  @@index([quoteStatus])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+// Itens do Pedido
+model OrderItem {
+  id        String        @id @default(uuid())
+  orderId   String
+  productId String?
+  serviceId String?
+  type      OrderItemType
+  name      String
+  price     Decimal       @default(0) @db.Decimal(10, 2)
+  quantity  Int
+  subtotal  Decimal       @default(0) @db.Decimal(10, 2)
+
+  // Campos de Cotação (para serviços)
+  priceQuoted Boolean   @default(false) // Se o preço foi cotado
+  quotedPrice Decimal?  @db.Decimal(10, 2) // Preço cotado pelo lojista
+  quotedAt    DateTime? // Quando foi cotado
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([serviceId])
+  @@map("order_items")
+}
+
+// Promoções
+model Promotion {
+  id               String  @id @default(uuid())
+  name             String
+  description      String  @db.Text
+  shortDescription String?
+  bannerImage      String?
+  badgeText        String?
+
+  // Configuração
+  type    String // PERCENTAGE, FIXED, etc.
+  target  String // ALL_PRODUCTS, SPECIFIC_PRODUCTS, etc.
+  trigger String // CART_VALUE, ITEM_QUANTITY, etc.
+
+  // Segmentação
+  customerSegments       Json // Array de segmentos
+  geographicRestrictions Json?
+  deviceTypes            Json?
+
+  // Regras
+  rules Json? @default("[]") // Array de regras complexas
+  tiers Json? // Descontos escalonados
+
+  // Produtos alvo
+  targetProductIds  Json?
+  targetCategories  Json?
+  targetBrands      Json?
+  targetPriceRange  Json?
+  excludeProductIds Json?
+  excludeCategories Json?
+
+  // Recompensas
+  rewards Json // Estrutura de recompensas
+
+  // Agendamento
+  schedule  Json // Configuração de agenda
+  startDate DateTime
+  endDate   DateTime
+
+  // Limitações
+  usageLimit            Int?
+  usageLimitPerCustomer Int?
+  usedCount             Int  @default(0)
+
+  // Combinação
+  canCombineWithOthers Boolean @default(false)
+  excludePromotionIds  Json?
+  priority             Int     @default(0)
+
+  // Código
+  code      String? @unique
+  autoApply Boolean @default(false)
+
+  // Estados
+  isActive Boolean @default(true)
+  isDraft  Boolean @default(false)
+
+  // Analytics
+  analytics Json?
+
+  // Metadados
+  createdBy      String
+  lastModifiedBy String?
+  approvedBy     String?
+  approvedAt     DateTime?
+  tags           Json?
+  notes          String?   @db.Text
+
+  // Configurações avançadas
+  customLogic String? @db.Text
+  webhookUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([isActive])
+  @@map("promotions")
+}
+
+// Cupons
+model Coupon {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  description   String
+  discountType  String // PERCENTAGE, FIXED
+  discountValue Decimal  @db.Decimal(10, 2)
+  minValue      Decimal? @db.Decimal(10, 2)
+  maxDiscount   Decimal? @db.Decimal(10, 2)
+  expiresAt     DateTime
+  usageLimit    Int?
+  usedCount     Int      @default(0)
+  isActive      Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✅ ETAPA 3.2: Relação com histórico de uso
+  usageHistory CouponUsage[]
+
+  @@index([code])
+  @@index([expiresAt])
+  @@index([isActive])
+  @@map("coupons")
+}
+
+// ✅ ETAPA 3.2: Histórico de Uso de Cupons
+model CouponUsage {
+  id          String   @id @default(uuid())
+  couponId    String
+  customerId  String?  // Pode ser null para pedidos de convidados
+  orderId     String
+  discountAmount Decimal @db.Decimal(10, 2)
+  orderValue  Decimal  @db.Decimal(10, 2)
+
+  createdAt   DateTime @default(now())
+
+  // Relations
+  coupon      Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@index([couponId])
+  @@index([customerId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("coupon_usage")
+}
+
+// Favoritos
+model Favorite {
+  id         String @id @default(uuid())
+  customerId String
+  productId  String
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, productId])
+  @@index([customerId])
+  @@index([productId])
+  @@map("favorites")
+}
+
+// ============================================================================
+// MODELS - FASE 4: REVISÕES VEICULARES
+// ============================================================================
+
+enum RevisionStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RevisionAppointmentStatus {
+  REQUESTED
+  SCHEDULED
+  IN_SERVICE
+  COMPLETED
+  CANCELLED
+}
+
+enum ChecklistItemStatus {
+  NOT_CHECKED
+  OK
+  ATTENTION
+  CRITICAL
+  NOT_APPLICABLE
+}
+
+// Veículos dos Clientes (para Revisões)
+model CustomerVehicle {
+  id            String  @id @default(uuid())
+  customerId    String
+  brand         String
+  model         String
+  year          Int
+  plate         String  @unique
+  chassisNumber String?
+  color         String?
+  mileage       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer  Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  revisions Revision[]
+  revisionAppointments RevisionAppointment[]
+
+  @@index([customerId])
+  @@index([plate])
+  @@map("customer_vehicles")
+}
+
+// Categorias do Checklist
+model ChecklistCategory {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  icon        String?
+  isDefault   Boolean @default(false)
+  isEnabled   Boolean @default(true)
+  order       Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items ChecklistItem[]
+
+  @@index([order])
+  @@map("checklist_categories")
+}
+
+// Itens do Checklist
+model ChecklistItem {
+  id          String  @id @default(uuid())
+  categoryId  String
+  name        String
+  description String?
+  isDefault   Boolean @default(false)
+  isEnabled   Boolean @default(true)
+  order       Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  category ChecklistCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([order])
+  @@map("checklist_items")
+}
+
+// Revisões
+model Revision {
+  id              String         @id @default(uuid())
+  customerId      String
+  vehicleId       String
+  date            DateTime
+  mileage         Int?
+  status          RevisionStatus @default(DRAFT)
+  checklistItems  Json // Array de itens verificados
+  generalNotes    String?        @db.Text
+  recommendations String?        @db.Text
+
+  // Mecânico responsável
+  assignedMechanicId String?
+  mechanicName       String? // Cache do nome para performance
+  mechanicNotes      String?  @db.Text
+  assignedAt         DateTime?
+  transferHistory    Json? // Array de histórico de transferências
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  // Relations
+  customer         Customer        @relation(fields: [customerId], references: [id])
+  vehicle          CustomerVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  assignedMechanic Admin?          @relation(fields: [assignedMechanicId], references: [id])
+  appointment      RevisionAppointment?
+
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([date])
+  @@index([assignedMechanicId])
+  @@map("revisions")
+}
+
+// Notificações
+model RevisionAppointment {
+  id                 String                    @id @default(uuid())
+  customerId         String
+  vehicleId          String
+  status             RevisionAppointmentStatus @default(REQUESTED)
+  preferredDate      DateTime
+  scheduledAt        DateTime?
+  notes              String?                   @db.Text
+  adminNotes         String?                   @db.Text
+  cancellationReason String?                   @db.Text
+  assignedMechanicId String?
+  mechanicName       String?
+  revisionId         String?                   @unique
+  confirmedAt        DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer         Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vehicle          CustomerVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  assignedMechanic Admin?          @relation(fields: [assignedMechanicId], references: [id])
+  revision         Revision?       @relation(fields: [revisionId], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([preferredDate])
+  @@index([scheduledAt])
+  @@index([assignedMechanicId])
+  @@map("revision_appointments")
+}
+
+model Notification {
+  id            String                    @id @default(uuid())
+  recipientType NotificationRecipientType
+  recipientId   String // ID do Admin ou Customer
+  type          NotificationType
+  title         String
+  message       String                    @db.Text
+  data          Json? // Dados contextuais (orderId, quoteId, etc)
+  read          Boolean                   @default(false)
+  readAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recipientId, recipientType, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================================================
+// MODELS - FASE 5: SUPORTE E FAQ
+// ============================================================================
+
+// Tickets de Suporte
+model SupportTicket {
+  id          String         @id @default(uuid())
+  customerId  String
+  subject     String
+  category    TicketCategory
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus   @default(OPEN)
+
+  // Contexto
+  orderId     String?
+  productId   String?
+  revisionId  String?
+
+  // Atendimento
+  assignedToId String?
+  assignedAt   DateTime?
+
+  // Timestamps
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  resolvedAt   DateTime?
+  closedAt     DateTime?
+
+  // Avaliação (após fechamento)
+  rating       Int?
+  feedback     String?       @db.Text
+
+  // Relations
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  assignedTo   Admin?        @relation(fields: [assignedToId], references: [id])
+  messages     TicketMessage[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([assignedToId])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+// Mensagens do Ticket
+model TicketMessage {
+  id         String   @id @default(uuid())
+  ticketId   String
+  senderId   String
+  senderType String
+  message    String   @db.Text
+
+  // Anexos
+  attachments Json?
+
+  // Sistema
+  isInternal Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+
+  // Relations
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+  @@map("ticket_messages")
+}
+
+// Categorias FAQ
+model FAQCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  icon        String?
+  order       Int
+  isActive    Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  items       FAQItem[]
+
+  @@index([order])
+  @@map("faq_categories")
+}
+
+// Itens FAQ
+model FAQItem {
+  id          String      @id @default(uuid())
+  categoryId  String
+  question    String
+  answer      String      @db.Text
+  order       Int
+  views       Int         @default(0)
+  helpfulYes  Int         @default(0)
+  helpfulNo   Int         @default(0)
+  isActive    Boolean     @default(true)
+
+  // SEO
+  keywords    Json?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  category    FAQCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([order])
+  @@map("faq_items")
+}
+
+// ============================================================================
+// MODELS - CMS (Content Management System) - PADRÃO FERRACO
+// ============================================================================
+
+// Landing Page Configuration (JSON-based, igual ao Ferraco)
+model LandingPageConfig {
+  id       String @id @default(uuid())
+
+  // Todas as seções armazenadas como JSON Text
+  header      String @db.Text // JSON: logo, menu, CTAs
+  hero        String @db.Text // JSON: slides, auto-play, layout
+  marquee     String @db.Text // JSON: items, speed, colors
+  about       String @db.Text // JSON: title, description, features
+  products    String @db.Text // JSON: featured products config
+  services    String @db.Text // JSON: services showcase config
+  contactPage String @db.Text // JSON: contact page content
+  aboutPage   String @db.Text // JSON: about page content
+  contact     String @db.Text // JSON: contact methods, form
+  footer      String @db.Text // JSON: sections, social, copyright
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  history LandingPageConfigHistory[]
+
+  @@map("landing_page_config")
+}
+
+// Histórico de Alterações (Versionamento completo)
+model LandingPageConfigHistory {
+  id       String  @id @default(uuid())
+  configId String?
+
+  // Snapshot completo de todas as seções
+  header      String @db.Text // JSON
+  hero        String @db.Text // JSON
+  marquee     String @db.Text // JSON
+  about       String @db.Text // JSON
+  products    String @db.Text // JSON
+  services    String @db.Text // JSON
+  contactPage String @db.Text // JSON
+  aboutPage   String @db.Text // JSON
+  contact     String @db.Text // JSON
+  footer      String @db.Text // JSON
+
+  // Metadata
+  changeType      String   @default("manual_save") // 'auto_save', 'manual_save', 'import', 'restore'
+  changedByUserId String?
+  changeNotes     String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  config        LandingPageConfig? @relation(fields: [configId], references: [id], onDelete: SetNull)
+  changedByUser Admin?             @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([configId])
+  @@index([changedByUserId])
+  @@index([createdAt])
+  @@map("landing_page_config_history")
+}
+
+// ============================================================================
+// MODELS - CONFIGURAÇÕES DO SISTEMA
+// ============================================================================
+
+// Configurações Gerais da Loja
+model Settings {
+  id String @id @default(uuid())
+
+  // Informações da Empresa
+  storeName String @default("Moria Peças & Serviços")
+  cnpj      String @default("")
+  phone     String @default("")
+  whatsapp  String @default("5511999999999")
+  email     String @default("contato@moriapecas.com")
+  address   String @default("")
+  city      String @default("")
+  state     String @default("")
+  zipCode   String @default("")
+
+  // Configurações de Vendas
+  defaultMargin   Decimal @default(35) @db.Decimal(5, 2)
+  freeShippingMin Decimal @default(150) @db.Decimal(10, 2)
+  deliveryFee     Decimal @default(15.90) @db.Decimal(10, 2)
+  deliveryDays    Int     @default(3)
+
+  // Horários de Funcionamento (JSON)
+  businessHours Json @default("{\"monday\":\"08:00-18:00\",\"tuesday\":\"08:00-18:00\",\"wednesday\":\"08:00-18:00\",\"thursday\":\"08:00-18:00\",\"friday\":\"08:00-18:00\",\"saturday\":\"08:00-12:00\",\"sunday\":\"Fechado\"}")
+
+  // Notificações
+  notifyNewOrders     Boolean @default(true)
+  notifyLowStock      Boolean @default(true)
+  notifyWeeklyReports Boolean @default(false)
+
+  // Integrações (API Keys)
+  whatsappApiKey    String?
+  correiosApiKey    String?
+  paymentGatewayKey String?
+  googleAnalyticsId String?
+
+  // Branding dos PDFs
+  pdfHeaderLogoUrl String?
+  pdfHeaderHtml    String @default("")
+  pdfFooterLogoUrl String?
+  pdfFooterHtml    String @default("")
+
+  // Flags de Status de Conexão
+  whatsappConnected  Boolean @default(false)
+  correiosConnected  Boolean @default(false)
+  paymentConnected   Boolean @default(false)
+  analyticsConnected Boolean @default(false)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

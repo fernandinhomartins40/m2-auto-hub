@@ -1,0 +1,124 @@
+x-backend-build: &backend-build
+  context: ./apps/backend
+  target: production
+  args:
+    RELEASE_VERSION: ${RELEASE_VERSION:-local}
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  PORT: 3001
+  DATABASE_URL: "postgresql://${POSTGRES_USER:-m2}:${POSTGRES_PASSWORD:-m2_dev_2026}@postgres:5432/${POSTGRES_DB:-m2_auto_hub}?schema=public"
+  JWT_SECRET: ${JWT_SECRET:-replace_me_with_at_least_32_chars_1234567890}
+  JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+  BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-10}
+  CORS_ORIGIN: "${CORS_ORIGIN:-https://www.m2centerauto.com.br,https://m2centerauto.com.br}"
+  COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}
+  COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+  ALPR_SERVICE_URL: http://alpr:8000
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-m2_auto_hub}
+      POSTGRES_USER: ${POSTGRES_USER:-m2}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-m2_dev_2026}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-m2} -d ${POSTGRES_DB:-m2_auto_hub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  alpr:
+    build:
+      context: ./services/alpr-service
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  migrator:
+    image: m2centerauto/backend:${RELEASE_VERSION:-local}
+    build: *backend-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *backend-env
+    command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
+
+  backend:
+    image: m2centerauto/backend:${RELEASE_VERSION:-local}
+    build: *backend-build
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      alpr:
+        condition: service_healthy
+    environment: *backend-env
+    command: ["node", "dist/server.js"]
+    expose:
+      - "3001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - uploads_data:/app/uploads
+
+  frontend:
+    image: m2centerauto/frontend:${RELEASE_VERSION:-local}
+    build:
+      context: ./apps/frontend
+      args:
+        VITE_API_BASE_URL: /api
+        RELEASE_VERSION: ${RELEASE_VERSION:-local}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+
+  gateway:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${DEPLOY_PORT:-7001}:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  postgres_data:
+    name: m2centerauto-postgres-data
+  uploads_data:
+    name: m2centerauto-uploads

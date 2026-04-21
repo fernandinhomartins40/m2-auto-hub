@@ -1,0 +1,257 @@
+export interface BusinessHours {
+  monday?: string;
+  tuesday?: string;
+  wednesday?: string;
+  thursday?: string;
+  friday?: string;
+  saturday?: string;
+  sunday?: string;
+  [key: string]: string | undefined;
+}
+
+export interface PublicSettings {
+  id?: string;
+  storeName?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  businessHours?: BusinessHours;
+  freeShippingMin?: number;
+  deliveryFee?: number;
+  deliveryDays?: number;
+  whatsappConnected?: boolean;
+  correiosConnected?: boolean;
+  paymentConnected?: boolean;
+}
+
+export interface LandingImage {
+  url?: string;
+  alt?: string;
+}
+
+export interface LandingMenuItem {
+  id: string;
+  label: string;
+  href: string;
+  isLink?: boolean;
+}
+
+export interface LandingHeroButton {
+  id: string;
+  text: string;
+  href: string;
+  variant?: string;
+  enabled?: boolean;
+}
+
+export interface LandingFeatureItem {
+  id: string;
+  icon?: string;
+  text?: string;
+}
+
+export interface LandingTrustIndicator {
+  id: string;
+  icon?: string;
+  iconBackground?: string;
+  title?: string;
+  description?: string;
+}
+
+export interface LandingStatItem {
+  id: string;
+  number?: string;
+  label?: string;
+}
+
+export interface LandingListItem {
+  id: string;
+  name: string;
+}
+
+export interface LandingMarqueeItem {
+  id: string;
+  icon?: string;
+  text: string;
+}
+
+export interface LandingSectionHeader {
+  enabled?: boolean;
+  title?: string;
+  subtitle?: string;
+}
+
+export interface LandingHeaderConfig {
+  enabled?: boolean;
+  logo?: LandingImage;
+  menuItems?: LandingMenuItem[];
+  backgroundColor?: string;
+  textColor?: string;
+  hoverColor?: string;
+}
+
+export interface LandingHeroConfig {
+  enabled?: boolean;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  features?: LandingFeatureItem[];
+  buttons?: LandingHeroButton[];
+  backgroundImage?: LandingImage;
+  overlayOpacity?: number;
+}
+
+export interface LandingAboutConfig extends LandingSectionHeader {
+  trustIndicators?: LandingTrustIndicator[];
+}
+
+export interface LandingMarqueeConfig {
+  enabled?: boolean;
+  items?: LandingMarqueeItem[];
+  speed?: number;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface LandingContactInfoCard {
+  id: string;
+  icon?: string;
+  title?: string;
+  content?: string[];
+}
+
+export interface LandingContactPageConfig {
+  enabled?: boolean;
+  heroBadge?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  contactInfoCards?: LandingContactInfoCard[];
+  formTitle?: string;
+  formSubtitle?: string;
+  serviceTypes?: LandingListItem[];
+  mapTitle?: string;
+  mapSubtitle?: string;
+  quickInfoEnabled?: boolean;
+  ctaTitle?: string;
+  ctaSubtitle?: string;
+}
+
+export interface LandingAboutPageConfig {
+  enabled?: boolean;
+  heroBadge?: string;
+  heroTitle?: string;
+  heroHighlight?: string;
+  heroSubtitle?: string;
+  stats?: LandingStatItem[];
+  historyTitle?: string;
+  historySubtitle?: string;
+  valuesTitle?: string;
+  valuesSubtitle?: string;
+  commitmentTitle?: string;
+  commitmentText?: string;
+  commitmentYears?: string;
+}
+
+export interface FooterContactInfo {
+  address?: {
+    street?: string;
+    city?: string;
+    zipCode?: string;
+  };
+  phone?: string;
+  email?: string;
+}
+
+export interface FooterBusinessHours {
+  weekdays?: string;
+  saturday?: string;
+  sunday?: string;
+}
+
+export interface FooterSocialLink {
+  id: string;
+  platform?: string;
+  url?: string;
+  enabled?: boolean;
+}
+
+export interface LandingFooterConfig {
+  enabled?: boolean;
+  logo?: LandingImage;
+  description?: string;
+  contactInfo?: FooterContactInfo;
+  businessHours?: FooterBusinessHours;
+  services?: LandingListItem[];
+  socialLinks?: FooterSocialLink[];
+  certifications?: LandingTrustIndicator[];
+  copyright?: string;
+  bottomLinks?: Array<{
+    id: string;
+    text: string;
+    href: string;
+  }>;
+}
+
+export interface LandingPageConfig {
+  header?: LandingHeaderConfig;
+  hero?: LandingHeroConfig;
+  marquee?: LandingMarqueeConfig;
+  about?: LandingAboutConfig;
+  products?: LandingSectionHeader;
+  services?: LandingSectionHeader;
+  contactPage?: LandingContactPageConfig;
+  aboutPage?: LandingAboutPageConfig;
+  contact?: Record<string, unknown>;
+  footer?: LandingFooterConfig;
+}
+
+export interface StorefrontService {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  estimatedTime?: string;
+  basePrice?: number;
+  status?: string;
+}
+
+export interface StorefrontProduct {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  salePrice?: number;
+  promoPrice?: number | null;
+  images?: string[];
+  stock?: number;
+  status?: string;
+}
+
+export interface StorefrontPromotion {
+  id: string;
+  name: string;
+  description: string;
+  shortDescription?: string | null;
+  badgeText?: string | null;
+  bannerImage?: string | null;
+  code?: string | null;
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
