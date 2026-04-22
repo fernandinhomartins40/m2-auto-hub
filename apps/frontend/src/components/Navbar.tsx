@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { CircleUserRound, Menu, ShoppingCart, X } from "lucide-react";
 
 import { useStorefront } from "@/context/StorefrontContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { normalizeLink, toAssetUrl } from "@/lib/storefront-helpers";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { brandShortName, landingConfig, menuItems, settings, whatsappHref } = useStorefront();
+  const { isAuthenticated, customer } = useAuth();
+  const { totalItems, openCart } = useCart();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -21,6 +25,7 @@ const Navbar = () => {
 
   const logoUrl = toAssetUrl(landingConfig.header?.logo?.url);
   const storeName = settings.storeName || "M2 Auto Center";
+  const customerHref = isAuthenticated ? "/customer" : "/customer-login/?redirect=%2Fcustomer";
 
   const handleClick = (href: string) => {
     setMobileOpen(false);
@@ -81,23 +86,49 @@ const Navbar = () => {
           ))}
         </nav>
 
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden lg:inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-md font-heading font-bold text-sm transition-colors"
-        >
-          Fale no WhatsApp
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href={customerHref}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/20 bg-secondary/60 text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+            aria-label={isAuthenticated ? `Acessar painel do cliente de ${customer?.name ?? "cliente"}` : "Entrar no painel do cliente"}
+            title={isAuthenticated ? "Painel do cliente" : "Entrar no painel do cliente"}
+          >
+            <CircleUserRound size={20} />
+          </a>
 
-        <button
-          type="button"
-          onClick={() => setMobileOpen((open) => !open)}
-          className="lg:hidden text-secondary-foreground"
-          aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
-        >
-          {mobileOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+          <button
+            type="button"
+            onClick={openCart}
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/20 bg-secondary/60 text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+            aria-label="Abrir carrinho"
+            title="Abrir carrinho"
+          >
+            <ShoppingCart size={20} />
+            {totalItems > 0 ? (
+              <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                {totalItems}
+              </span>
+            ) : null}
+          </button>
+
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden lg:inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-md font-heading font-bold text-sm transition-colors"
+          >
+            Fale no WhatsApp
+          </a>
+
+          <button
+            type="button"
+            onClick={() => setMobileOpen((open) => !open)}
+            className="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/20 bg-secondary/60 text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+            aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
@@ -112,6 +143,31 @@ const Navbar = () => {
               {item.label}
             </button>
           ))}
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <a
+              href={customerHref}
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-primary/20 px-4 py-3 text-sm font-semibold text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+            >
+              <CircleUserRound size={18} />
+              Cliente
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                openCart();
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-primary/20 px-4 py-3 text-sm font-semibold text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+            >
+              <ShoppingCart size={18} />
+              Carrinho
+              {totalItems > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                  {totalItems}
+                </span>
+              ) : null}
+            </button>
+          </div>
           <a
             href={whatsappHref}
             target="_blank"

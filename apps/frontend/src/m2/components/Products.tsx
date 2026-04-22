@@ -1,4 +1,8 @@
+import { ShoppingCart } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { useStorefront } from "@/context/StorefrontContext";
+import { useCart } from "@/contexts/CartContext";
 import {
   buildWhatsAppHref,
   formatCurrency,
@@ -8,6 +12,7 @@ import {
 
 const Products = () => {
   const { landingConfig, products, settings } = useStorefront();
+  const { addItem, openCart } = useCart();
   const section = landingConfig.products;
 
   if (section?.enabled === false) {
@@ -38,8 +43,14 @@ const Products = () => {
           {products.map((product) => {
             const ProductIcon = resolveProductIcon(product.category, product.name);
             const imageUrl = toAssetUrl(product.images?.[0]);
+            const displayPriceValue = product.promoPrice ?? product.salePrice ?? null;
             const salePrice = formatCurrency(product.salePrice);
             const promoPrice = formatCurrency(product.promoPrice);
+            const canAddToCart =
+              typeof displayPriceValue === "number" &&
+              displayPriceValue > 0 &&
+              (product.stock ?? 1) > 0 &&
+              product.status !== "INACTIVE";
             const whatsappLink = buildWhatsAppHref(
               settings.whatsapp || settings.phone,
               `Ola! Quero saber mais sobre o produto ${product.name}.`
@@ -100,14 +111,41 @@ const Products = () => {
                       )}
                     </div>
                   ) : null}
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-primary font-heading font-semibold text-sm hover:underline"
-                  >
-                    Solicitar este produto
-                  </a>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (!canAddToCart || displayPriceValue === null) {
+                          return;
+                        }
+
+                        addItem({
+                          id: product.id,
+                          name: product.name,
+                          price: displayPriceValue,
+                          image: imageUrl,
+                          category: product.category,
+                          type: "product",
+                          description: product.description,
+                        });
+                        openCart();
+                      }}
+                      disabled={!canAddToCart}
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <ShoppingCart size={16} />
+                      {canAddToCart ? "Adicionar ao carrinho" : "Consultar disponibilidade"}
+                    </Button>
+
+                    <a
+                      href={whatsappLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center text-primary font-heading font-semibold text-sm hover:underline"
+                    >
+                      Solicitar pelo WhatsApp
+                    </a>
+                  </div>
                 </div>
               </div>
             );

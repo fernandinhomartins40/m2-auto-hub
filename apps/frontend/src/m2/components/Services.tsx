@@ -1,4 +1,8 @@
+import { ClipboardList } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { useStorefront } from "@/context/StorefrontContext";
+import { useCart } from "@/contexts/CartContext";
 import {
   buildWhatsAppHref,
   formatCurrency,
@@ -7,6 +11,7 @@ import {
 
 const Services = () => {
   const { landingConfig, services, settings } = useStorefront();
+  const { addItem, openCart } = useCart();
   const section = landingConfig.about;
 
   if (section?.enabled === false) {
@@ -73,14 +78,35 @@ const Services = () => {
                     </span>
                   ) : null}
                 </div>
-                <a
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-primary font-heading font-semibold text-sm hover:underline"
-                >
-                  Solicitar Orcamento
-                </a>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      addItem({
+                        id: service.id,
+                        name: service.name,
+                        price: service.basePrice ?? 0,
+                        category: service.category,
+                        type: "service",
+                        description: service.description,
+                      });
+                      openCart();
+                    }}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <ClipboardList size={16} />
+                    Adicionar ao orçamento
+                  </Button>
+
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center text-primary font-heading font-semibold text-sm hover:underline"
+                  >
+                    Solicitar pelo WhatsApp
+                  </a>
+                </div>
               </div>
             );
           })}

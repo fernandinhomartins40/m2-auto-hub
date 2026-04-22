@@ -1,4 +1,5 @@
 import About from "@/components/About";
+import { CartDrawer } from "@/components/CartDrawer";
 import Contact from "@/components/Contact";
 import GoogleMap from "@/components/GoogleMap";
 import Highlights from "@/components/Highlights";
@@ -24,6 +25,7 @@ const Index = () => (
     <Contact />
     <GoogleMap />
     <Footer />
+    <CartDrawer />
     <WhatsAppFAB />
   </>
 );

@@ -1,5 +1,7 @@
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 
+import { Button } from "@/components/ui/button";
 import { useStorefront } from "@/context/StorefrontContext";
 import {
   formatPhoneNumber,
@@ -116,6 +118,20 @@ const Footer = () => {
                 </a>
               ) : null}
             </div>
+
+            <Link
+              to="/admin-login/?redirect=%2Fstore-panel"
+              className="inline-flex md:justify-end"
+            >
+              <Button
+                type="button"
+                variant="outline"
+                className="border-primary/40 bg-transparent text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <Settings size={16} />
+                Painel do Lojista
+              </Button>
+            </Link>
           </div>
         </div>
 
