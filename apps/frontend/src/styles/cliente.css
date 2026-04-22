@@ -1,0 +1,499 @@
+/*
+ * Estilos específicos para o painel do cliente
+ * Moria Peças e Serviços - PWA Mobile First
+ */
+
+/* ============================================
+   SAFE AREA SUPPORT (iOS Notch/Home Indicator)
+   ============================================ */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-area-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.h-safe-area-inset-bottom {
+  height: var(--safe-area-inset-bottom);
+}
+
+/* ============================================
+   PWA ANIMATIONS
+   ============================================ */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============================================
+   TOUCH OPTIMIZATIONS
+   ============================================ */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+button, a {
+  -webkit-tap-highlight-color: rgba(255, 107, 53, 0.1);
+}
+
+/* Minimum touch target size (44x44px) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Exceção para Switch/Toggle - não aplicar min-width/min-height */
+button[role="switch"],
+button[role="switch"] > span {
+  min-width: unset !important;
+  min-height: unset !important;
+}
+
+/* ============================================
+   LAYOUT DO PAINEL DO CLIENTE
+   ============================================ */
+.cliente-layout {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.cliente-sidebar {
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.cliente-content {
+  background: #f8fafc;
+  padding: 2rem;
+}
+
+/* ============================================
+   CARDS DO CLIENTE - MOBILE OPTIMIZED
+   ============================================ */
+.cliente-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.cliente-card:active {
+  transform: scale(0.98);
+}
+
+.cliente-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #ff6b35;
+}
+
+/* Card com ação (clicável) */
+.cliente-card.clickable {
+  cursor: pointer;
+}
+
+.cliente-card.clickable:active {
+  background: #fafafa;
+}
+
+/* ============================================
+   NAVEGAÇÃO DO CLIENTE
+   ============================================ */
+.cliente-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  margin: 0.25rem 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  color: #64748b;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.cliente-nav-item:hover {
+  background: #f1f5f9;
+  color: #ff6b35;
+}
+
+.cliente-nav-item:active {
+  background: #e2e8f0;
+  transform: scale(0.98);
+}
+
+.cliente-nav-item.active {
+  background: #fff7ed;
+  color: #ff6b35;
+  border-left: 3px solid #ff6b35;
+  font-weight: 600;
+}
+
+/* ============================================
+   STATUS DOS PEDIDOS - ENHANCED
+   ============================================ */
+.status-badge {
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.status-pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-confirmado {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-preparando {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.status-enviado {
+  background: #e9d5ff;
+  color: #6b21a8;
+}
+
+.status-entregue {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ============================================
+   FAVORITOS DO CLIENTE - ANIMATED
+   ============================================ */
+.favorito-btn {
+  color: #64748b;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.favorito-btn:hover {
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.favorito-btn:active {
+  transform: scale(0.95);
+}
+
+.favorito-btn.ativo {
+  color: #ef4444;
+  animation: scale-in 0.3s ease-out;
+}
+
+/* ============================================
+   HISTÓRICO DE PEDIDOS
+   ============================================ */
+.pedido-item {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem 0;
+  transition: background 0.2s ease;
+}
+
+.pedido-item:last-child {
+  border-bottom: none;
+}
+
+.pedido-item:active {
+  background: #f9fafb;
+}
+
+/* ============================================
+   PERFIL DO CLIENTE
+   ============================================ */
+.perfil-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+/* ============================================
+   PULL TO REFRESH (opcional, para futura implementação)
+   ============================================ */
+.pull-to-refresh {
+  position: relative;
+  overflow: hidden;
+}
+
+.pull-to-refresh-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.pull-to-refresh.refreshing .pull-to-refresh-indicator {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================
+   LOADING STATES - SKELETON
+   ============================================ */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-text {
+  height: 1rem;
+  margin: 0.5rem 0;
+}
+
+.skeleton-title {
+  height: 1.5rem;
+  width: 60%;
+  margin: 0.5rem 0;
+}
+
+.skeleton-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+/* ============================================
+   MOBILE SPECIFIC OPTIMIZATIONS
+   ============================================ */
+@media (max-width: 768px) {
+  .cliente-content {
+    padding: 1rem;
+  }
+
+  .cliente-sidebar {
+    display: none;
+  }
+
+  .cliente-card {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  /* Otimizar scroll em mobile */
+  body {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Esconder scrollbar em mobile (opcional) */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ============================================
+   STANDALONE MODE (PWA INSTALLED)
+   ============================================ */
+@media (display-mode: standalone) {
+  /* Adicionar espaço extra para notch no topo */
+  .pwa-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  /* Garantir que bottom navigation não fique sob home indicator */
+  .pwa-bottom-nav {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  /* Ocultar elementos do navegador se houver */
+  .browser-only {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT (futuro)
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  /* Descomente quando implementar dark mode
+  .cliente-layout {
+    background: #1a1a1a;
+    color: #ffffff;
+  }
+
+  .cliente-card {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+  */
+}
+
+/* ============================================
+   REDUCED MOTION (Acessibilidade)
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  .no-print,
+  .pwa-bottom-nav,
+  .cliente-sidebar,
+  button {
+    display: none !important;
+  }
+
+  .cliente-card {
+    box-shadow: none;
+    border: 1px solid #000;
+    page-break-inside: avoid;
+  }
+}

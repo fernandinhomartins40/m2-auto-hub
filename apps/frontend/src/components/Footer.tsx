@@ -1,132 +1,175 @@
-import { MessageCircle } from "lucide-react";
+import * as Icons from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import { useStorefront } from "@/context/StorefrontContext";
-import {
-  formatPhoneNumber,
-  resolveSocialIcon,
-  toAssetUrl,
-} from "@/lib/storefront-helpers";
+import { useLandingPageConfig } from '@/hooks/useLandingPageConfig';
 
-const Footer = () => {
-  const {
-    addressLines,
-    brandShortName,
-    businessHoursLines,
-    landingConfig,
-    menuItems,
-    settings,
-    whatsappHref,
-  } = useStorefront();
-  const footer = landingConfig.footer;
+import { colorOrGradientToCSS } from './admin/LandingPageEditor/StyleControls';
+import { Button } from './ui/button';
 
-  if (footer?.enabled === false) {
+export function Footer() {
+  const { config, loading } = useLandingPageConfig();
+
+  if (!loading && !config.footer.enabled) {
     return null;
   }
 
-  const logoUrl = toAssetUrl(footer?.logo?.url || landingConfig.header?.logo?.url);
-  const socialLinks = (footer?.socialLinks ?? []).filter((link) => link.enabled !== false && link.url);
+  if (loading) {
+    return (
+      <footer className="bg-moria-black text-white">
+        <div className="container mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-pulse">
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item}>
+                <div className="h-16 bg-gray-700 rounded mb-4 w-1/2"></div>
+                <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                <div className="h-4 bg-gray-700 rounded mb-2 w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  const { logo, description, contactInfo, businessHours, services = [], socialLinks = [], certifications = [], copyright, bottomLinks = [] } =
+    config.footer;
+
+  const getIcon = (iconName: string) => {
+    const IconComponent = (Icons as any)[iconName];
+    return IconComponent || Icons.Circle;
+  };
 
   return (
-    <footer className="bg-secondary py-12 border-t border-primary/10">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-8 items-start mb-8">
+    <footer className="bg-moria-black text-white">
+      <div className="container mx-auto px-4 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 bg-primary rounded-md flex items-center justify-center overflow-hidden">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt={footer?.logo?.alt || settings.storeName || "Logo da loja"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex gap-0.5">
-                    <div className="w-0.5 h-4 bg-primary-foreground rounded-sm" />
-                    <div className="w-0.5 h-4 bg-primary-foreground rounded-sm" />
-                    <div className="w-0.5 h-4 bg-primary-foreground rounded-sm" />
-                  </div>
-                )}
+            <img src={logo.url} alt={logo.alt} className="h-16 mb-4" />
+            <p className="text-gray-300 mb-6">{description}</p>
+            <div className="flex flex-col space-y-4">
+              <div className="flex space-x-4">
+                {socialLinks
+                  .filter((social) => social.enabled)
+                  .map((social) => {
+                    const SocialIcon =
+                      social.platform === 'facebook' ? Icons.Facebook : Icons.Instagram;
+
+                    return (
+                      <Button
+                        key={social.id}
+                        variant="ghost"
+                        size="icon"
+                        className="hover:text-moria-orange"
+                        onClick={() => window.open(social.url, '_blank', 'noopener,noreferrer')}
+                      >
+                        <SocialIcon className="h-5 w-5" />
+                      </Button>
+                    );
+                  })}
               </div>
-              <span className="font-heading text-xl font-bold text-primary-foreground tracking-wider">
-                {brandShortName}
-              </span>
+
+              <Link to="/store-panel">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-moria-orange text-moria-orange hover:bg-moria-orange hover:text-white"
+                >
+                  <Icons.Settings className="h-4 w-4 mr-2" />
+                  Painel do Lojista
+                </Button>
+              </Link>
             </div>
-            <p className="text-secondary-foreground/50 text-sm mb-4">
-              {footer?.description ||
-                "Tudo que seu carro precisa, voce encontra aqui."}
-            </p>
-            {addressLines.length ? (
-              <p className="text-secondary-foreground/60 text-sm">{addressLines.join(" | ")}</p>
-            ) : null}
-            {settings.phone ? (
-              <p className="text-secondary-foreground/60 text-sm mt-2">
-                {formatPhoneNumber(settings.phone)}
-              </p>
-            ) : null}
           </div>
 
           <div>
-            <div className="flex flex-wrap gap-4 mb-4">
-              {menuItems.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.href}
-                  className="text-secondary-foreground/60 hover:text-primary text-sm transition-colors"
-                >
-                  {item.label}
-                </a>
+            <h4 className="text-lg font-bold mb-4 text-moria-orange">Contato</h4>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <Icons.MapPin className="h-5 w-5 text-moria-orange mt-1" />
+                <div>
+                  <p className="text-gray-300">{contactInfo.address.street}</p>
+                  <p className="text-gray-300">{contactInfo.address.city}</p>
+                  <p className="text-gray-300">{contactInfo.address.zipCode}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Icons.Phone className="h-5 w-5 text-moria-orange" />
+                <p className="text-gray-300">{contactInfo.phone}</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Icons.Mail className="h-5 w-5 text-moria-orange" />
+                <p className="text-gray-300">{contactInfo.email}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-lg font-bold mb-4 text-moria-orange">Horario de Funcionamento</h4>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <Icons.Clock className="h-5 w-5 text-moria-orange" />
+                <div>
+                  <p className="text-gray-300 whitespace-pre-line">{businessHours.weekdays}</p>
+                </div>
+              </div>
+              <div className="ml-8">
+                <p className="text-gray-300 whitespace-pre-line">{businessHours.saturday}</p>
+              </div>
+              <div className="ml-8">
+                <p className="text-gray-400 whitespace-pre-line">{businessHours.sunday}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-lg font-bold mb-4 text-moria-orange">Servicos</h4>
+            <ul className="space-y-2">
+              {services.map((service) => (
+                <li key={service.id} className="flex items-center space-x-2">
+                  <Icons.Wrench className="h-4 w-4 text-moria-orange" />
+                  <span className="text-gray-300 text-sm">{service.name}</span>
+                </li>
               ))}
-            </div>
-            {businessHoursLines.length ? (
-              <div className="space-y-1">
-                {businessHoursLines.slice(0, 3).map((line) => (
-                  <p key={line} className="text-secondary-foreground/50 text-sm">
-                    {line}
-                  </p>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="md:text-right">
-            <div className="flex gap-3 md:justify-end mb-4">
-              {socialLinks.map((link) => {
-                const Icon = resolveSocialIcon(link.platform);
-
-                return (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors"
-                  >
-                    <Icon size={18} />
-                  </a>
-                );
-              })}
-              {!socialLinks.some((link) => (link.platform ?? "").toLowerCase().includes("whatsapp")) ? (
-                <a
-                  href={whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary hover:bg-primary/25 transition-colors"
-                >
-                  <MessageCircle size={18} />
-                </a>
-              ) : null}
-            </div>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-primary/10 pt-6 text-center">
-          <p className="text-secondary-foreground/40 text-sm">
-            {footer?.copyright || "(c) 2026 M2 Auto Center. Todos os direitos reservados."}
-          </p>
+        <div className="border-t border-gray-700 mt-12 pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            {certifications.map((certification) => {
+              const CertIcon = getIcon(certification.icon);
+
+              return (
+                <div key={certification.id} className="flex flex-col items-center">
+                  <div
+                    className="p-4 rounded-full mb-3"
+                    style={colorOrGradientToCSS(certification.iconBackground)}
+                  >
+                    <CertIcon className="h-8 w-8 text-white" />
+                  </div>
+                  <h5 className="font-bold text-white mb-2">{certification.title}</h5>
+                  <p className="text-gray-400 text-sm">{certification.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-700">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm mb-4 md:mb-0">{copyright}</p>
+            <div className="flex space-x-6 text-sm">
+              {bottomLinks.map((link) => (
+                <a key={link.id} href={link.href} className="text-gray-400 hover:text-moria-orange transition-colors">
+                  {link.text}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}

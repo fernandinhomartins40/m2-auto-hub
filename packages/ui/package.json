@@ -1,0 +1,25 @@
+{
+  "name": "@moria/ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./pwa-install": "./pwa-install/index.ts",
+    "./pwa-install/styles": "./pwa-install/styles/animations.css"
+  },
+  "scripts": {
+    "lint": "echo 'Lint skipped'",
+    "type-check": "echo 'Type check skipped'"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "dependencies": {
+    "lucide-react": "^0.462.0",
+    "clsx": "^2.1.1"
+  }
+}

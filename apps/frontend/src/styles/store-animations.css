@@ -1,0 +1,445 @@
+/* =========================================
+   STORE PANEL - ANIMATIONS
+   Animações PWA e transições suaves
+   ========================================= */
+
+/* Slide Animations */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Fade Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Scale Animations */
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-out {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Bounce Animation */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Spin Animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Shake Animation */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Shimmer Animation (Loading) */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Ripple Effect */
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* =========================================
+   UTILITY CLASSES
+   ========================================= */
+
+/* Slide Animations */
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Fade Animations */
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.3s ease-out;
+}
+
+/* Scale Animations */
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+.animate-scale-out {
+  animation: scale-out 0.2s ease-out;
+}
+
+/* Other Animations */
+.animate-bounce {
+  animation: bounce 0.6s ease-in-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 0%,
+    #e5e7eb 50%,
+    #f3f4f6 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* =========================================
+   PAGE TRANSITIONS
+   ========================================= */
+
+.page-enter {
+  animation: fade-in 0.3s ease-out;
+}
+
+.page-exit {
+  animation: fade-out 0.3s ease-out;
+}
+
+/* =========================================
+   COMPONENT-SPECIFIC ANIMATIONS
+   ========================================= */
+
+/* Bottom Navigation */
+.store-bottom-nav {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Mobile Drawer */
+.store-drawer-enter {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.store-drawer-exit {
+  animation: slide-in-right 0.3s ease-out reverse;
+}
+
+/* Drawer Backdrop */
+.store-backdrop-enter {
+  animation: fade-in 0.3s ease-out;
+}
+
+.store-backdrop-exit {
+  animation: fade-out 0.3s ease-out;
+}
+
+/* Modal */
+.store-modal-enter {
+  animation: scale-in 0.3s ease-out;
+}
+
+.store-modal-exit {
+  animation: scale-out 0.3s ease-out;
+}
+
+/* Toast/Notification */
+.store-toast {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.store-toast-exit {
+  animation: slide-in-right 0.3s ease-out reverse;
+}
+
+/* Card Hover Effect */
+.store-card-interactive {
+  transition: all 0.2s ease-out;
+  cursor: pointer;
+}
+
+.store-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+}
+
+.store-card-interactive:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Button Ripple Effect */
+.store-btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.store-btn-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.store-btn-ripple:active::after {
+  width: 300px;
+  height: 300px;
+  animation: ripple 0.6s ease-out;
+}
+
+/* Loading Spinner */
+.store-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top-color: var(--store-orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.store-spinner-sm {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.store-spinner-lg {
+  width: 60px;
+  height: 60px;
+  border-width: 6px;
+}
+
+/* Progress Bar */
+.store-progress-bar {
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.store-progress-fill {
+  height: 100%;
+  background-color: var(--store-orange);
+  transition: width 0.3s ease-out;
+}
+
+.store-progress-fill-animated {
+  background: linear-gradient(
+    90deg,
+    var(--store-orange-light),
+    var(--store-orange),
+    var(--store-orange-light)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Skeleton Loading */
+.store-skeleton-text {
+  height: 1rem;
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+}
+
+.store-skeleton-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Badge Pulse */
+.store-badge-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Notification Dot */
+.store-notification-dot {
+  position: relative;
+}
+
+.store-notification-dot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Stagger Animation for Lists */
+.store-list-item {
+  animation: fade-in 0.3s ease-out;
+}
+
+.store-list-item:nth-child(1) { animation-delay: 0.05s; }
+.store-list-item:nth-child(2) { animation-delay: 0.1s; }
+.store-list-item:nth-child(3) { animation-delay: 0.15s; }
+.store-list-item:nth-child(4) { animation-delay: 0.2s; }
+.store-list-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* =========================================
+   ACCESSIBILITY
+   ========================================= */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .store-card-interactive:hover {
+    transform: none;
+  }
+}

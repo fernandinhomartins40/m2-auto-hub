@@ -1,0 +1,83 @@
+/* 
+ * Estilos específicos para páginas públicas (Home, Sobre, Contato)
+ * Moria Peças e Serviços
+ */
+
+/* Hero e Seções Públicas */
+.gold-metallic {
+  background: linear-gradient(45deg, #ffd700, #ffed4e, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
+}
+
+.gold-metallic-bg {
+  background: linear-gradient(45deg, #ffd700, #ffed4e, #fbbf24);
+}
+
+/* Animações de Produtos */
+.product-hover {
+  transition: all 0.3s ease;
+}
+
+.product-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Marquee Animation */
+.marquee {
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Gradientes específicos das páginas públicas */
+.hero-gradient {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+.section-gradient {
+  background: linear-gradient(to right, #ff6b35, #fbbf24);
+}
+
+/* Botões personalizados públicos */
+.btn-hero {
+  background: linear-gradient(45deg, #ff6b35, #fbbf24);
+  border: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-hero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+}
+
+/* Cards e componentes das páginas públicas */
+.public-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.public-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Responsivo para páginas públicas */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+}

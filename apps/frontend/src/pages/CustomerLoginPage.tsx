@@ -1,0 +1,44 @@
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { Navigate, useLocation } from "react-router-dom";
+
+import { CustomerAuthCard } from "@/components/customer/CustomerAuthCard";
+import { useAuth } from "@/contexts/AuthContext";
+
+export default function CustomerLoginPage() {
+  const location = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    const shell = document
+      .querySelector('meta[name="moria-pwa-shell"]')
+      ?.getAttribute("content");
+
+    if (shell === "customer") {
+      return;
+    }
+
+    window.location.replace(`/customer-login/${location.search}${location.hash}`);
+  }, [location.hash, location.search]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-moria-orange mx-auto mb-4" />
+          <p className="text-gray-600">Verificando autenticacao...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/customer" replace />;
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4">
+      <CustomerAuthCard showInstallBanner />
+    </div>
+  );
+}

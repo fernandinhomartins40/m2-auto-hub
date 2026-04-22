@@ -1,0 +1,455 @@
+/* =========================================
+   STORE PANEL - MOBILE STYLES
+   Otimizações específicas para mobile
+   ========================================= */
+
+/* Mobile Breakpoint: 768px */
+@media (max-width: 768px) {
+  /* Prevenir scroll horizontal global */
+  html.store-page, body.store-page {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body.store-page {
+    position: relative;
+    min-height: 100%;
+  }
+
+  .store-mobile-layout {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .store-mobile-viewport {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .store-mobile-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+  }
+
+  .store-mobile-layout.drawer-open .store-mobile-scroll {
+    overflow: hidden;
+  }
+
+  /* Layout Adjustments */
+  .store-content {
+    padding: 1rem;
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .store-card {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Garantir que todos os containers respeitem a largura da tela */
+  body.store-page .lojista-content,
+  body.store-page .lojista-layout,
+  body.store-page main,
+  body.store-page section,
+  body.store-page article,
+  body.store-page div[class*="space-y"],
+  body.store-page div[class*="space-x"] {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Cards e containers de conteúdo */
+  body.store-page [class*="Card"],
+  body.store-page [class*="card"],
+  body.store-page .border.rounded-lg {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* Grids responsivos */
+  body.store-page .grid {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Flex containers */
+  body.store-page .flex {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Typography */
+  .store-stat-value {
+    font-size: 1.5rem;
+  }
+
+  /* Header Mobile Fixes - Layout vertical organizado */
+  .lojista-header {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+    margin: -1rem -1rem 1rem -1rem !important;
+    align-items: stretch !important;
+  }
+
+  .lojista-header > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .lojista-title {
+    font-size: 1.125rem !important;
+    line-height: 1.5rem !important;
+    margin-bottom: 0 !important;
+    font-weight: 700 !important;
+  }
+
+  .lojista-subtitle {
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+    color: #64748b !important;
+    margin-top: 0 !important;
+  }
+
+  /* Botões em linha (horizontal) no mobile - APENAS no header da página */
+  .lojista-header > div > .flex,
+  .lojista-header > div > div > .flex {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .lojista-header > div button,
+  .lojista-header > div > div button {
+    white-space: nowrap !important;
+    font-size: 0.8125rem !important;
+    padding: 0.5rem 0.875rem !important;
+    min-height: 36px !important;
+    flex: 0 1 auto !important;
+  }
+
+  /* Garantir que grupos de botões fiquem horizontais */
+  .lojista-header button + button {
+    margin-left: 0 !important;
+  }
+
+  /* NÃO aplicar aos cards internos do conteúdo - permitir classes Tailwind */
+  .lojista-content [class*="Card"] .flex,
+  .lojista-content .border.rounded-lg .flex,
+  .lojista-content .space-y-4 .flex,
+  .lojista-content .space-y-6 .flex {
+    flex-direction: inherit !important;
+  }
+
+  /* Tables -> Cards */
+  .store-table-mobile {
+    display: block;
+  }
+
+  .store-table-mobile thead {
+    display: none;
+  }
+
+  .store-table-mobile tbody {
+    display: block;
+  }
+
+  .store-table-mobile tr {
+    display: block;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border: 1px solid var(--store-border);
+    border-radius: 0.5rem;
+  }
+
+  .store-table-mobile td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .store-table-mobile td:last-child {
+    border-bottom: none;
+  }
+
+  .store-table-mobile td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+  }
+
+  /* Forms */
+  .store-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Buttons */
+  .store-btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .store-btn-group .store-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Modal Adjustments */
+  .store-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Dialog/Modal - Garantir margens laterais e espaço do menu fixo inferior */
+  /* EXCETO Drawers (que devem ficar na lateral) */
+  body.store-page [data-radix-dialog-content]:not([data-drawer]):not(.drawer-content),
+  body.store-page [role="dialog"]:not([data-drawer]):not(.drawer-content) {
+    /* Forçar margens laterais em mobile */
+    left: 1rem !important;
+    right: 1rem !important;
+    width: auto !important;
+    max-width: calc(100% - 2rem) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+
+    /* Remover transform-x para não centralizar com translate */
+    transform: translateY(-50%) !important;
+
+    /* Ajustar posição vertical para não sobrepor menu fixo */
+    top: calc(50% - 2rem) !important;
+  }
+
+  /* Garantir que apenas o conteúdo scrollável tenha overflow */
+  body.store-page [data-radix-dialog-content]:not([data-drawer]):not(.drawer-content) > .flex-1,
+  body.store-page [role="dialog"]:not([data-drawer]):not(.drawer-content) > .flex-1 {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Tabs horizontais scrolláveis em modais mobile */
+  body.store-page [data-radix-dialog-content]:not([data-drawer]):not(.drawer-content) [role="tablist"] {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  body.store-page [data-radix-dialog-content]:not([data-drawer]):not(.drawer-content) [role="tablist"]::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  /* Garantir que dialog overlay não interfira */
+  body.store-page [data-radix-dialog-overlay] {
+    position: fixed !important;
+    inset: 0 !important;
+  }
+
+  /* Sidebar Hidden in Mobile (shown via drawer) */
+  .lojista-sidebar {
+    display: none;
+  }
+
+  /* Hide Desktop-Only Elements */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Show Mobile-Only Elements */
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Touch Feedback */
+  body.store-page button:active,
+  body.store-page a:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+
+  /* Scroll Optimizations */
+  body.store-page {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent Text Selection on UI Elements */
+  .store-nav-item,
+  .store-btn,
+  .store-tab {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Bottom Padding for Bottom Nav */
+  .store-mobile-scroll {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Standalone Mode (PWA Installed) */
+@media (display-mode: standalone) {
+  .store-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .store-bottom-nav {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  /* Hide Browser-Only Elements */
+  .browser-only {
+    display: none !important;
+  }
+
+  /* Status Bar */
+  .store-mobile-layout {
+    height: calc(100vh + env(safe-area-inset-top));
+    height: calc(100dvh + env(safe-area-inset-top));
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .store-stat-card {
+    padding: 1rem;
+  }
+
+  .store-stat-value {
+    font-size: 1.25rem;
+  }
+
+  .store-content {
+    padding: 0.75rem;
+  }
+}
+
+/* Small Phones (<400px) */
+@media (max-width: 400px) {
+  .store-content {
+    padding: 0.75rem;
+  }
+
+  .store-card {
+    padding: 0.75rem;
+  }
+
+  .store-btn {
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Bottom Nav Adjustments */
+  .store-bottom-nav span {
+    font-size: 0.65rem;
+  }
+
+  .store-bottom-nav svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+/* iOS Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safe Area */
+  .store-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .store-bottom-nav {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  /* iOS Rubber Band Effect Prevention */
+  html.store-page,
+  body.store-page {
+    height: auto;
+    min-height: 100%;
+  }
+
+  body.store-page .store-mobile-layout {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  body.store-page .store-mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* iOS Input Zoom Prevention */
+  body.store-page input[type="text"],
+  body.store-page input[type="number"],
+  body.store-page input[type="email"],
+  body.store-page input[type="tel"],
+  body.store-page input[type="search"],
+  body.store-page select,
+  body.store-page textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Android Specific */
+@media (max-width: 768px) {
+  /* Chrome Address Bar Color */
+  meta[name="theme-color"] {
+    content: #ff6b35;
+  }
+}
+
+/* High DPI Screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .store-card {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Dark Mode Preparation (Future) */
+@media (prefers-color-scheme: dark) {
+  /* Preparado para implementação futura */
+  /* :root {
+    --store-bg: #111827;
+    --store-card-bg: #1f2937;
+    --store-border: #374151;
+  } */
+}
+
+/* Print Styles */
+@media print {
+  .store-header,
+  .store-bottom-nav,
+  .store-drawer,
+  .store-btn,
+  body.store-page button,
+  .no-print {
+    display: none !important;
+  }
+
+  .store-layout {
+    padding: 0;
+  }
+
+  .store-card {
+    break-inside: avoid;
+  }
+}

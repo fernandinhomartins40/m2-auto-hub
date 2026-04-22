@@ -11,15 +11,19 @@
 
     --card: 0 0% 100%;
     --card-foreground: 222 84% 5%;
+    --card-dark: 0 0% 10%;
+    --card-dark-foreground: 0 0% 98%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 84% 5%;
 
     --primary: 217 94% 53%;
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 94% 48%;
 
     --secondary: 222 84% 5%;
     --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 217 33% 17%;
 
     --muted: 220 14% 90%;
     --muted-foreground: 220 9% 46%;
@@ -37,6 +41,13 @@
     --radius: 0.5rem;
 
     /* Custom tokens */
+    --moria-black: 0 0% 10%;
+    --moria-orange: 16 100% 60%;
+    --moria-orange-hover: 16 100% 55%;
+    --gold-start: 51 100% 50%;
+    --gold-mid: 39 100% 50%;
+    --gold-end: 45 76% 38%;
+    --gold-accent: 51 78% 42%;
     --surface-dark: 222 84% 5%;
     --surface-dark-foreground: 0 0% 100%;
     --blue-glow: 217 94% 53%;
@@ -47,6 +58,12 @@
     --badge-economy: 142 71% 40%;
     --whatsapp: 142 70% 45%;
     --gold-star: 45 93% 58%;
+    --gradient-gold: linear-gradient(135deg, hsl(var(--gold-start)) 0%, hsl(var(--gold-mid)) 50%, hsl(var(--gold-end)) 100%);
+    --gradient-orange: linear-gradient(135deg, hsl(var(--moria-orange)) 0%, hsl(var(--moria-orange-hover)) 100%);
+    --gradient-marquee: linear-gradient(90deg, hsl(var(--moria-orange)) 0%, hsl(var(--gold-mid)) 100%);
+    --shadow-gold: 0 4px 20px hsl(var(--gold-accent) / 0.3);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--moria-black) / 0.4);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -122,6 +139,120 @@
   }
   .blue-shadow {
     box-shadow: 0 8px 30px -8px hsl(var(--primary) / 0.35);
+  }
+  .gradient-gold {
+    background: var(--gradient-gold);
+  }
+  .gradient-orange {
+    background: var(--gradient-orange);
+  }
+  .gradient-marquee {
+    background: var(--gradient-marquee);
+  }
+  .gold-metallic {
+    background: var(--gradient-gold);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px hsl(var(--gold-accent) / 0.3));
+  }
+  .gold-metallic-bg {
+    background: var(--gradient-gold);
+    box-shadow: var(--shadow-gold);
+  }
+  .hover-lift {
+    transition: var(--transition-smooth);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elegant);
+  }
+  .product-hover {
+    transition: var(--transition-smooth);
+  }
+  .product-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-elegant);
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--moria-orange) / 0.6) hsl(var(--muted));
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--moria-orange) / 0.6);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--moria-orange));
+  }
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(75, 85, 99) rgb(31, 41, 55);
+  }
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: rgb(31, 41, 55);
+    border-radius: 4px;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(75, 85, 99);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--moria-orange));
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  button[role="switch"] {
+    position: relative;
+    padding: 0 !important;
+  }
+  button[role="switch"] span[data-state] {
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+  }
+  button[role="switch"][data-state="checked"] span[data-state] {
+    transform: translate(20px, -50%);
+  }
+  button[role="switch"][data-state="unchecked"] span[data-state] {
+    transform: translate(0, -50%);
   }
 }
 
