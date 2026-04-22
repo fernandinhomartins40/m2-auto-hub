@@ -239,8 +239,12 @@ jobs:
                 exit 1
               fi
 
-              cp "$ROOT_ENV_FILE" "$CURRENT_DIR/.env"
-              chmod 600 "$CURRENT_DIR/.env"
+              if [ ! -f "$RELEASE_DIR/.env" ]; then
+                echo "Release env file missing after promotion" >&2
+                exit 1
+              fi
+
+              chmod 600 "$RELEASE_DIR/.env"
 
               echo "Current release promoted to $CURRENT_TARGET"
             }
@@ -372,7 +376,7 @@ jobs:
             compose run --rm migrator
 
             echo "Starting application services..."
-            compose up -d --remove-orphans postgres alpr backend frontend gateway
+            compose up -d --force-recreate --remove-orphans postgres alpr backend frontend gateway
 
             wait_for_service_state backend running 24 5
             wait_for_service_health backend 36 5
