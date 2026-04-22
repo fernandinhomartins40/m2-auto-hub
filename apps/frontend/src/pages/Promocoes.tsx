@@ -96,7 +96,7 @@ export default function Promocoes() {
   return (
     <>
       <Helmet>
-        <title>Promoções Ativas - Moria Peças e Serviços</title>
+        <title>Promocoes Ativas - M2 Center Auto</title>
         <meta name="description" content="Confira todas as promoções ativas e economize na compra de peças e serviços automotivos" />
       </Helmet>
 

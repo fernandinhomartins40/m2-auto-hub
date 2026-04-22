@@ -79,7 +79,7 @@ export default function StoreLayout({
       >
         <div className="store-mobile-viewport">
           <StoreHeader
-            title={variant === 'admin' ? 'Moria Admin' : 'Moria Mecanico'}
+            title={variant === 'admin' ? 'M2 Center Auto' : 'M2 Oficina'}
             variant={variant}
           />
 

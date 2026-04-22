@@ -177,7 +177,7 @@ export const buildRevisionPdfHtml = (revision: AdminRevision) => {
     <section class="pdf-document pdf-document--revision">
       <header class="pdf-header">
         <div class="pdf-brand">
-          <span class="pdf-chip">Moria Pecas</span>
+          <span class="pdf-chip">M2 Center Auto</span>
           <div class="pdf-title">Revisao #${escapeHtml(revision.id.slice(0, 8))}</div>
           <p class="pdf-subtitle">Resumo completo da revisao veicular gerado pelo painel administrativo.</p>
         </div>

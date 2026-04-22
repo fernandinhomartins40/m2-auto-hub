@@ -162,7 +162,7 @@ export function RichTextEditor({
             onChange={(event) => onChange(event.target.value)}
             className="min-h-[180px] font-mono text-xs"
             style={{ minHeight }}
-            placeholder="<p><strong>Moria Peças</strong></p>"
+            placeholder="<p><strong>M2 Center Auto</strong></p>"
           />
         </TabsContent>
       </Tabs>

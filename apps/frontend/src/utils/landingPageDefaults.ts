@@ -1,6 +1,6 @@
 /**
- * Valores padrão da Landing Page da Moria
- * Baseado no design atual, mantendo 100% a identidade visual
+ * Valores padrao da Landing Page da M2
+ * Baseado no design atual, ajustado para a identidade visual da M2
  */
 
 import { LandingPageConfig } from '@/types/landingPage';
@@ -15,8 +15,8 @@ export const getDefaultConfig = (): LandingPageConfig => ({
   header: {
     enabled: true,
     logo: {
-      url: '/logo_moria.png',
-      alt: 'Moria Peças e Serviços',
+      url: '',
+      alt: 'M2 Center Auto',
     },
     menuItems: [
       { id: '1', label: 'Início', href: '#inicio', isLink: false },
@@ -26,9 +26,9 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       { id: '5', label: 'Sobre', href: '/about', isLink: true },
       { id: '6', label: 'Contato', href: '/contact', isLink: true },
     ],
-    backgroundColor: '#1a1a1a', // moria-black
+    backgroundColor: '#171b22',
     textColor: '#ffffff',
-    hoverColor: '#ff6933', // moria-orange
+    hoverColor: '#c62828',
   },
 
   // ============================================================================
@@ -36,8 +36,8 @@ export const getDefaultConfig = (): LandingPageConfig => ({
   // ============================================================================
   hero: {
     enabled: true,
-    title: 'MORIA',
-    subtitle: 'Peças & Serviços',
+    title: 'M2',
+    subtitle: 'Center Auto',
     description:
       'Especialistas em peças automotivas e serviços de qualidade. Mais de 15 anos cuidando do seu veículo com excelência.',
     features: [
@@ -71,7 +71,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
     ],
     backgroundImage: {
       url: '/assets/hero-garage.jpg',
-      alt: 'Oficina Moria',
+      alt: 'Oficina M2',
     },
     overlayOpacity: 70, // 70% de opacidade preta
   },
@@ -89,7 +89,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       { id: '5', icon: '💰', text: 'PROMOÇÕES IMPERDÍVEIS - CONFIRA NOSSAS OFERTAS' },
     ],
     speed: 30, // 30 segundos para completar o loop
-    backgroundColor: 'linear-gradient(90deg, #ff6933 0%, #ffa600 100%)', // gradient-marquee (Laranja → Dourado)
+    backgroundColor: 'linear-gradient(90deg, #c62828 0%, #ffa600 100%)', // gradient-marquee (Vermelho → Dourado)
     textColor: '#ffffff',
   },
 
@@ -119,14 +119,14 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       {
         id: '3',
         icon: 'Wrench',
-        iconBackground: '#ff6933', // Laranja Moria
+        iconBackground: '#c62828',
         title: 'Expertise',
         description: '15+ anos de experiência',
       },
       {
         id: '4',
         icon: 'Zap',
-        iconBackground: '#ff6933', // Laranja Moria
+        iconBackground: '#c62828',
         title: 'Tecnologia',
         description: 'Equipamentos modernos',
       },
@@ -178,7 +178,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
         id: '3',
         icon: 'Mail',
         title: 'E-mail',
-        content: ['contato@moriapecas.com.br', 'Resposta em até 24h'],
+        content: ['contato@m2centerauto.com.br', 'Resposta em até 24h'],
         color: { type: 'solid', solid: '#dc2626' }, // text-red-600
       },
       {
@@ -224,7 +224,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
     historyTitle: 'Nossa História',
     historySubtitle: 'Uma jornada de dedicação, crescimento e compromisso com a excelência no setor automotivo.',
     milestones: [
-      { id: '1', year: '2009', title: 'Fundação', description: 'Início da Moria Peças e Serviços' },
+      { id: '1', year: '2009', title: 'Fundacao', description: 'Inicio da M2 Center Auto' },
       { id: '2', year: '2012', title: 'Expansão', description: 'Ampliação do estoque e serviços' },
       { id: '3', year: '2015', title: 'Modernização', description: 'Investimento em equipamentos de diagnóstico' },
       { id: '4', year: '2018', title: 'Certificação', description: 'Certificação ISO 9001' },
@@ -293,8 +293,8 @@ export const getDefaultConfig = (): LandingPageConfig => ({
   footer: {
     enabled: true,
     logo: {
-      url: '/logo_moria.png',
-      alt: 'Moria Peças e Serviços',
+      url: '',
+      alt: 'M2 Center Auto',
     },
     description:
       'Especialistas em peças automotivas e serviços de qualidade há mais de 15 anos. Sua tranquilidade é nossa prioridade.',
@@ -305,7 +305,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
         zipCode: 'CEP: 01234-567',
       },
       phone: '(11) 99999-9999',
-      email: 'contato@moriapecas.com.br',
+      email: 'contato@m2centerauto.com.br',
     },
     businessHours: {
       weekdays: 'Segunda a Sexta:\n8:00h às 18:00h',
@@ -321,8 +321,8 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       { id: '6', name: 'Sistema Elétrico' },
     ],
     socialLinks: [
-      { id: '1', platform: 'facebook', url: 'https://facebook.com/moriapecas', enabled: true },
-      { id: '2', platform: 'instagram', url: 'https://instagram.com/moriapecas', enabled: true },
+      { id: '1', platform: 'facebook', url: 'https://facebook.com/m2centerauto', enabled: true },
+      { id: '2', platform: 'instagram', url: 'https://instagram.com/m2centerauto', enabled: true },
     ],
     certifications: [
       {
@@ -335,7 +335,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       {
         id: '2',
         icon: 'Clock',
-        iconBackground: '#ff6933', // Laranja Moria
+        iconBackground: '#c62828',
         title: 'Atendimento Rápido',
         description: 'Diagnóstico em até 30 minutos',
       },
@@ -347,7 +347,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
         description: 'Peças entregues em até 24h',
       },
     ],
-    copyright: '© 2024 Moria Peças e Serviços. Todos os direitos reservados.',
+    copyright: '© 2026 M2 Center Auto. Todos os direitos reservados.',
     bottomLinks: [
       { id: '1', text: 'Política de Privacidade', href: '#' },
       { id: '2', text: 'Termos de Uso', href: '#' },

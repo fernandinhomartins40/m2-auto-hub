@@ -1,6 +1,6 @@
 /**
  * ColorPicker - Seletor de cores com preview
- * Adaptado do Ferraco para Moria (paleta laranja/dourado)
+ * Adaptado do Ferraco para M2 (paleta vermelho/grafite)
  */
 
 import { useState } from 'react';
@@ -17,14 +17,15 @@ interface ColorPickerProps {
   description?: string;
 }
 
-// Presets Moria: Laranja, dourado, preto
+// Presets M2: vermelho, grafite e neutros
 const MORIA_PRESETS = [
-  '#ff6b35', // moria-orange
-  '#000000', // moria-black
+  '#c62828', // m2 red
+  '#a61d1d', // m2 red dark
+  '#171b22', // graphite
   '#ffffff', // white
   '#f59e0b', // gold/amber
   '#d97706', // gold darker
-  '#fbbf24', // gold lighter
+  '#e15656', // red lighter
   '#292524', // stone-800
   '#57534e', // stone-600
   '#78716c', // stone-500
@@ -88,7 +89,7 @@ export const ColorPicker = ({
 
               {presets.length > 0 && (
                 <div>
-                  <Label>Cores Moria</Label>
+                  <Label>Cores M2</Label>
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
                     {presets.map((preset) => (
                       <button
@@ -97,7 +98,7 @@ export const ColorPicker = ({
                         className="w-8 h-8 rounded border-2 hover:scale-110 transition-transform"
                         style={{
                           backgroundColor: preset,
-                          borderColor: preset === localValue ? '#ff6b35' : 'transparent',
+                          borderColor: preset === localValue ? '#c62828' : 'transparent',
                         }}
                         title={preset}
                       />

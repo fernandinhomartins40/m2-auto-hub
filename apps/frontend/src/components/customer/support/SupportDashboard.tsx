@@ -130,7 +130,7 @@ export function SupportDashboard() {
 
         <QuickContactCard
           title="Email"
-          description={config?.contacts.email || 'suporte@moriapecas.com.br'}
+          description={config?.contacts.email || 'contato@m2centerauto.com.br'}
           icon={Mail}
           color="bg-blue-500"
           action="Enviar Email"

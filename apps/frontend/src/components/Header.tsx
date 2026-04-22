@@ -124,10 +124,10 @@ export function Header() {
     ? { color: '#ff6933' }
     : colorOrGradientToCSS(config.header.hoverColor, { forText: true });
 
-  const logoSrc = loading ? '/logo_moria.png' : config.header.logo.url || '/logo_moria.png';
+  const logoSrc = loading ? '' : config.header.logo.url || '';
   const logoAlt = loading
-    ? 'Moria Pecas e Servicos'
-    : config.header.logo.alt || 'Moria Pecas e Servicos';
+    ? 'M2 Center Auto'
+    : config.header.logo.alt || 'M2 Center Auto';
 
   return (
     <>
@@ -136,7 +136,13 @@ export function Header() {
           <div className="flex items-center justify-between h-28">
             <div className="flex-shrink-0">
               <Link to="/">
-                <img src={logoSrc} alt={logoAlt} className="h-20 w-auto" />
+                {logoSrc ? (
+                  <img src={logoSrc} alt={logoAlt} className="h-20 w-auto" />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-moria-orange to-rose-700 text-lg font-black tracking-[0.28em] text-white shadow-lg">
+                    M2
+                  </div>
+                )}
               </Link>
             </div>
 

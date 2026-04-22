@@ -9,7 +9,7 @@ export class SupportConfigService {
           number: process.env.SUPPORT_WHATSAPP || '5511999999999',
           message: 'Olá! Preciso de ajuda. Podem me atender?',
         },
-        email: process.env.SUPPORT_EMAIL || 'suporte@moriapecas.com.br',
+        email: process.env.SUPPORT_EMAIL || 'contato@m2centerauto.com.br',
         phone: process.env.SUPPORT_PHONE || '(11) 99999-9999',
       },
       businessHours: {

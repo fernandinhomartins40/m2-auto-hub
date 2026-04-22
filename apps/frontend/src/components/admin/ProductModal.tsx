@@ -1017,7 +1017,7 @@ export function ProductModal({
             <Button type="button" variant="outline" onClick={onClose} disabled={isSaving || loading} size="sm">
               Cancelar
             </Button>
-            <Button type="button" onClick={handleSave} disabled={isSaving || loading} size="sm" className="bg-moria-orange hover:bg-orange-600">
+            <Button type="button" onClick={handleSave} disabled={isSaving || loading} size="sm" className="bg-moria-orange hover:bg-moria-orange/90">
               {(isSaving || loading) && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
               {isSaving
                 ? (isEditing ? 'Salvando...' : 'Criando...')

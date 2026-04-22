@@ -85,11 +85,11 @@ export class SettingsService {
     const reset = await prisma.settings.update({
       where: { id: settings.id },
       data: {
-        storeName: 'Moria Peças & Serviços',
+        storeName: 'M2 Center Auto',
         cnpj: '',
         phone: '',
         whatsapp: '5511999999999',
-        email: 'contato@moriapecas.com',
+        email: 'contato@m2centerauto.com.br',
         address: '',
         city: '',
         state: '',
@@ -115,7 +115,7 @@ export class SettingsService {
         paymentGatewayKey: null,
         googleAnalyticsId: null,
         pdfHeaderLogoUrl: null,
-        pdfHeaderHtml: '<p><strong>Moria Peças &amp; Serviços</strong></p><p>contato@moriapecas.com • WhatsApp: (11) 99999-9999</p>',
+        pdfHeaderHtml: '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
         pdfFooterLogoUrl: null,
         pdfFooterHtml: '<p>Obrigado pela preferência.</p>',
         whatsappConnected: false,
@@ -134,11 +134,11 @@ export class SettingsService {
   private async createDefaultSettings(): Promise<Settings> {
     const settings = await prisma.settings.create({
       data: {
-        storeName: 'Moria Peças & Serviços',
+        storeName: 'M2 Center Auto',
         cnpj: '',
         phone: '',
         whatsapp: '5511999999999',
-        email: 'contato@moriapecas.com',
+        email: 'contato@m2centerauto.com.br',
         address: '',
         city: '',
         state: '',
@@ -160,7 +160,7 @@ export class SettingsService {
         notifyLowStock: true,
         notifyWeeklyReports: false,
         pdfHeaderLogoUrl: null,
-        pdfHeaderHtml: '<p><strong>Moria Peças &amp; Serviços</strong></p><p>contato@moriapecas.com • WhatsApp: (11) 99999-9999</p>',
+        pdfHeaderHtml: '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
         pdfFooterLogoUrl: null,
         pdfFooterHtml: '<p>Obrigado pela preferência.</p>',
       } as any,

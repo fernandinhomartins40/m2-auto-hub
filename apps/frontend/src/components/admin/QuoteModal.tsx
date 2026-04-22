@@ -398,7 +398,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
               onClick={handleSaveQuote}
               disabled={isUpdating || total === 0}
               size="sm"
-              className="flex-1 bg-moria-orange hover:bg-orange-600"
+              className="flex-1 bg-moria-orange hover:bg-moria-orange/90"
             >
               {isUpdating ? (
                 <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />

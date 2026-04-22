@@ -36,7 +36,7 @@ export default function About() {
     historyTitle: "Nossa História",
     historySubtitle: "Uma jornada de dedicação, crescimento e compromisso com a excelência no setor automotivo.",
     milestones: [
-      { id: "1", year: "2009", title: "Fundação", description: "Início da Moria Peças e Serviços" },
+      { id: "1", year: "2009", title: "Fundacao", description: "Inicio da M2 Center Auto" },
       { id: "2", year: "2012", title: "Expansão", description: "Ampliação do estoque e serviços" },
       { id: "3", year: "2015", title: "Modernização", description: "Investimento em equipamentos de diagnóstico" },
       { id: "4", year: "2018", title: "Certificação", description: "Certificação ISO 9001" },

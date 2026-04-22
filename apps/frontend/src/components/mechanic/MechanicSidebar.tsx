@@ -39,22 +39,18 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
           <div className={cn("flex items-center space-x-3", isCollapsed && "justify-center")}>
             {!isCollapsed ? (
               <>
-                <img
-                  src="/logo_moria.png"
-                  alt="Moria"
-                  className="h-8 w-auto"
-                />
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-moria-orange to-rose-700 text-sm font-black tracking-[0.22em] text-white shadow-lg">
+                  M2
+                </div>
                 <div>
-                  <h2 className="font-bold text-lg">Painel Mecanico</h2>
-                  <p className="text-xs text-gray-400">Moria Pecas & Servicos</p>
+                  <h2 className="font-bold text-lg">Painel Oficina</h2>
+                  <p className="text-xs uppercase tracking-[0.26em] text-gray-400">M2 Center Auto</p>
                 </div>
               </>
             ) : (
-              <img
-                src="/logo_moria.png"
-                alt="Moria"
-                className="h-8 w-auto"
-              />
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-moria-orange to-rose-700 text-sm font-black tracking-[0.22em] text-white shadow-lg">
+                M2
+              </div>
             )}
           </div>
 
@@ -77,7 +73,7 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{admin.name}</p>
-              <p className="text-xs text-gray-400 truncate">Mecanico</p>
+              <p className="text-xs text-gray-400 truncate">Equipe Oficina</p>
             </div>
           </div>
         </div>

@@ -200,7 +200,7 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
   const generateWhatsAppMessage = (order: any): string => {
     const { customer, items, total, hasProducts, hasServices, quoteStatus } = order;
 
-    let message = `🔧 *Moria Peças e Serviços*\n`;
+    let message = `🔧 *M2 Center Auto*\n`;
     message += `📋 *Pedido:* #${order.id.slice(0, 8)}\n`;
     message += `👤 *Cliente:* ${customer.name}\n`;
     message += `📞 *WhatsApp:* ${customer.phone}\n\n`;

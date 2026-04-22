@@ -162,7 +162,7 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
                 },
               })
             }
-            placeholder="contato@moria.com.br"
+            placeholder="contato@m2centerauto.com.br"
           />
         </div>
       </Card>
@@ -280,7 +280,7 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
                 <Input
                   value={item.url}
                   onChange={(e) => update({ url: e.target.value })}
-                  placeholder="https://instagram.com/moriapecas"
+                  placeholder="https://instagram.com/m2centerauto"
                 />
               </div>
 
@@ -366,7 +366,7 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
           <Input
             value={config.copyright}
             onChange={(e) => updateConfig({ copyright: e.target.value })}
-            placeholder="© 2025 Moria Peças. Todos os direitos reservados."
+            placeholder="© 2026 M2 Center Auto. Todos os direitos reservados."
           />
         </div>
 

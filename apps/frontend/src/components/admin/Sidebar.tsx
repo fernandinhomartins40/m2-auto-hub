@@ -55,13 +55,14 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     <div className="bg-moria-black text-white flex flex-col fixed md:relative bottom-0 left-0 right-0 md:h-screen md:w-64 z-50 border-t md:border-t-0 border-gray-700">
       {/* Header - Hidden on Mobile */}
       <div className="hidden md:block p-4 border-b border-gray-700">
-        <div className="flex flex-col items-center space-y-2">
-          <img
-            src="/logo_moria.png"
-            alt="Moria"
-            className="h-12 w-auto"
-          />
-          <h2 className="font-bold text-lg">Painel Lojista</h2>
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-moria-orange to-rose-700 text-base font-black tracking-[0.24em] text-white shadow-lg">
+            M2
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-400">M2 Center Auto</p>
+            <h2 className="font-bold text-lg leading-tight">Painel Lojista</h2>
+          </div>
         </div>
       </div>
 

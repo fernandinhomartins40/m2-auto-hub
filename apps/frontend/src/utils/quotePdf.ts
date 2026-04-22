@@ -118,7 +118,7 @@ export const buildQuotePdfHtml = (
     <section class="pdf-document pdf-document--quote">
       <header class="pdf-header">
         <div class="pdf-brand">
-          <span class="pdf-chip">Moria Peças</span>
+          <span class="pdf-chip">M2 Center Auto</span>
           <div class="pdf-title">Orçamento #${escapeHtml(quote.id.slice(0, 8))}</div>
           <p class="pdf-subtitle">Documento gerado pelo painel administrativo para acompanhamento do orçamento.</p>
         </div>

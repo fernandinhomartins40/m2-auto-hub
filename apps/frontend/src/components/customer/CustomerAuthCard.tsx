@@ -122,11 +122,11 @@ export function CustomerAuthCard({
 
   return (
     <div className="w-full max-w-md space-y-4">
-      {showInstallBanner && <InstallBanner appName="Moria Cliente" variant="customer" />}
+      {showInstallBanner && <InstallBanner appName="M2 Cliente" variant="customer" />}
 
       <Card className="border-none shadow-2xl">
         <CardHeader className="text-center pb-4">
-          <CardTitle className="text-2xl">Area do Cliente</CardTitle>
+          <CardTitle className="text-2xl">Area do Cliente M2</CardTitle>
           <CardDescription>Entre para acompanhar pedidos, veiculos e revisoes</CardDescription>
         </CardHeader>
 

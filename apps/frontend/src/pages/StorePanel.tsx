@@ -128,5 +128,5 @@ function getPageDescription(tab: string): string {
     "landing-page": "Configure todos os elementos visuais da página inicial",
     settings: "Configurações do sistema e preferências"
   };
-  return descriptions[tab] || "Painel administrativo da Moria Peças e Serviços";
+  return descriptions[tab] || "Painel administrativo da M2 Center Auto";
 }

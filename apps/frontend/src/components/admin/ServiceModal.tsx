@@ -406,7 +406,7 @@ export function ServiceModal({
             <Button type="button" variant="outline" onClick={onClose} disabled={loading} size="sm">
               Cancelar
             </Button>
-            <Button type="button" onClick={handleSave} disabled={loading} size="sm" className="bg-moria-orange hover:bg-orange-600">
+            <Button type="button" onClick={handleSave} disabled={loading} size="sm" className="bg-moria-orange hover:bg-moria-orange/90">
               {loading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
               {isEditing ? 'Salvar AlteraÃ§Ãµes' : 'Criar ServiÃ§o'}
             </Button>

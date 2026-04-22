@@ -9,19 +9,19 @@ const DEFAULT_ADMIN_PASSWORD = 'Test123!';
 
 const defaultAdminSeeds = [
   {
-    email: 'admin@moria.com',
+    email: 'admin@m2centerauto.com.br',
     name: 'Administrador M2',
     role: AdminRole.SUPER_ADMIN,
     permissions: ['ALL'],
   },
   {
-    email: 'gerente@moria.com',
+    email: 'gerente@m2centerauto.com.br',
     name: 'Gerente M2',
     role: AdminRole.MANAGER,
     permissions: ['products', 'services', 'orders', 'customers', 'revisions'],
   },
   {
-    email: 'mecanico@moria.com',
+    email: 'mecanico@m2centerauto.com.br',
     name: 'Mecanico M2',
     role: AdminRole.STAFF,
     permissions: ['revisions', 'vehicles', 'checklist'],
@@ -65,18 +65,14 @@ export async function ensureLandingPageConfig(): Promise<LandingPageConfig> {
 }
 
 export async function ensureDefaultAdmins(): Promise<void> {
-  const adminCount = await prisma.admin.count();
-
-  if (adminCount > 0) {
-    return;
-  }
-
   const hashedPassword = await HashUtil.hashPassword(getBootstrapPassword());
 
   await prisma.$transaction(
     defaultAdminSeeds.map((admin) =>
-      prisma.admin.create({
-        data: {
+      prisma.admin.upsert({
+        where: { email: admin.email },
+        update: {},
+        create: {
           email: admin.email,
           password: hashedPassword,
           name: admin.name,
@@ -88,7 +84,7 @@ export async function ensureDefaultAdmins(): Promise<void> {
     )
   );
 
-  logger.warn('No admins found, created default admin accounts', {
+  logger.warn('Ensured default admin accounts are available', {
     emails: defaultAdminSeeds.map((admin) => admin.email),
   });
 }

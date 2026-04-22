@@ -51,7 +51,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
           <Input
             value={config.title}
             onChange={(event) => updateConfig({ title: event.target.value })}
-            placeholder="MORIA"
+            placeholder="M2"
           />
         </div>
 
@@ -243,7 +243,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
             <div className="relative z-10 p-8 w-full">
               <div className="max-w-2xl">
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                  <span className="gold-metallic">{config.title || 'MORIA'}</span>
+                  <span className="gold-metallic">{config.title || 'M2'}</span>
                   <br />
                   <span className="text-white">{config.subtitle || 'Pecas & Servicos'}</span>
                 </h1>

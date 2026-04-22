@@ -259,7 +259,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
                 <Input
                   value={item.description}
                   onChange={(e) => update({ description: e.target.value })}
-                  placeholder="Início da Moria Peças e Serviços"
+                  placeholder="Inicio da M2 Center Auto"
                 />
               </div>
             </div>

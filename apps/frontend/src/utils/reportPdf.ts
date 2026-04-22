@@ -92,7 +92,7 @@ export const buildReportPdfHtml = (
     <section class="pdf-document pdf-document--report">
       <header class="pdf-header">
         <div class="pdf-brand">
-          <span class="pdf-chip">Moria Pecas</span>
+          <span class="pdf-chip">M2 Center Auto</span>
           <div class="pdf-title">Relatorio gerencial ${year}</div>
           <p class="pdf-subtitle">Resumo de vendas, crescimento e operacao exportado pelo painel administrativo.</p>
         </div>

@@ -41,9 +41,9 @@
     --radius: 0.5rem;
 
     /* Custom tokens */
-    --moria-black: 0 0% 10%;
-    --moria-orange: 16 100% 60%;
-    --moria-orange-hover: 16 100% 55%;
+    --moria-black: 220 18% 11%;
+    --moria-orange: 358 72% 46%;
+    --moria-orange-hover: 358 72% 40%;
     --gold-start: 51 100% 50%;
     --gold-mid: 39 100% 50%;
     --gold-end: 45 76% 38%;

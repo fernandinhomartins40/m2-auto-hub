@@ -4,11 +4,11 @@
    ========================================= */
 
 :root {
-  --store-orange: #ff6b35;
-  --store-orange-dark: #e55a2b;
-  --store-orange-light: #ff8559;
+  --store-orange: #c62828;
+  --store-orange-dark: #a61d1d;
+  --store-orange-light: #e15656;
   --store-bg: #f8fafc;
-  --store-sidebar-bg: #1a1a1a;
+  --store-sidebar-bg: #171b22;
   --store-card-bg: #ffffff;
   --store-border: #e5e7eb;
 }
@@ -286,7 +286,7 @@ html {
 .store-input:focus {
   outline: none;
   border-color: var(--store-orange);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12);
 }
 
 .store-select {
@@ -316,7 +316,7 @@ html {
 .store-textarea:focus {
   outline: none;
   border-color: var(--store-orange);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12);
 }
 
 /* Store Loading States */

@@ -218,7 +218,7 @@ export const useFavoriteNotifications = () => {
 
     // Try to show browser notification
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Moria - Favorito Atualizado', {
+      new Notification('M2 Center Auto - Favorito Atualizado', {
         body: notification.message,
         icon: '/logo.png'
       });

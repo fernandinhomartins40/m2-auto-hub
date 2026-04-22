@@ -281,7 +281,7 @@ export const useLandingPageConfig = (): UseLandingPageConfigResult => {
     const anchor = document.createElement('a');
 
     anchor.href = url;
-    anchor.download = `moria-landing-page-config-${new Date().toISOString().split('T')[0]}.json`;
+    anchor.download = `m2-center-auto-landing-page-config-${new Date().toISOString().split('T')[0]}.json`;
     anchor.click();
 
     URL.revokeObjectURL(url);

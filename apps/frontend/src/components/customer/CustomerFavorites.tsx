@@ -342,7 +342,7 @@ export function CustomerFavorites() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Meus Favoritos - Moria',
+          title: 'Meus Favoritos - M2 Center Auto',
           text: text,
           url: window.location.href
         });

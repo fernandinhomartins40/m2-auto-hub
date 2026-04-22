@@ -1244,7 +1244,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
                       variant={paymentMethod === method.value ? 'default' : 'outline'}
                       className={`w-full min-h-[52px] h-auto py-3 flex flex-col items-center gap-1 transition-all touch-manipulation ${
                         paymentMethod === method.value
-                          ? 'bg-moria-orange hover:bg-orange-600 ring-2 ring-moria-orange/30'
+                          ? 'bg-moria-orange hover:bg-moria-orange/90 ring-2 ring-moria-orange/30'
                           : 'hover:border-moria-orange hover:bg-moria-orange/5'
                       }`}
                       onClick={() => setPaymentMethod(method.value)}
@@ -1362,7 +1362,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
             <Button
               onClick={handleCreateOrder}
               disabled={isCreating}
-              className="bg-moria-orange hover:bg-orange-600 min-h-[44px] h-11 touch-manipulation"
+              className="bg-moria-orange hover:bg-moria-orange/90 min-h-[44px] h-11 touch-manipulation"
             >
               {isCreating ? (
                 <>

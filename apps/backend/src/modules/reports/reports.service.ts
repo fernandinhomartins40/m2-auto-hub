@@ -213,7 +213,7 @@ export class ReportsService {
   async exportToCSV(year: number = new Date().getFullYear()): Promise<string> {
     const report = await this.getCompleteReport(year);
 
-    let csv = 'RELATÓRIO DE VENDAS - MORIA PEÇAS E SERVIÇOS\n\n';
+    let csv = 'RELATÓRIO DE VENDAS - M2 CENTER AUTO\n\n';
 
     // Sales by month
     csv += 'VENDAS POR MÊS\n';

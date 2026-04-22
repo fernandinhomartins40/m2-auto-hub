@@ -475,7 +475,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   };
 
   const handleCustomerContact = (customer: CustomerListItem) => {
-    const message = `Ola ${customer.name}! Aqui e da equipe Moria. Vi seu cadastro em nossa base e estou entrando em contato para ajudar no que precisar.`;
+    const message = `Ola ${customer.name}! Aqui e da equipe M2 Center Auto. Vi seu cadastro em nossa base e estou entrando em contato para ajudar no que precisar.`;
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${customer.whatsapp.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
@@ -820,7 +820,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             <Button
               size="sm"
               onClick={() => setIsCreateQuoteModalOpen(true)}
-              className="bg-moria-orange hover:bg-orange-600"
+              className="bg-moria-orange hover:bg-moria-orange/90"
             >
               <Plus className="h-4 w-4 mr-2" />
               Criar Orçamento
@@ -1202,7 +1202,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               variant="default"
               size="sm"
               onClick={() => setIsCreateOrderModalOpen(true)}
-              className="bg-moria-orange hover:bg-orange-600"
+              className="bg-moria-orange hover:bg-moria-orange/90"
             >
               <Plus className="h-4 w-4 mr-2" />
               Novo Pedido
@@ -2052,7 +2052,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Nome da Loja</label>
-                  <Input defaultValue="Moria Peças & Serviços" />
+                  <Input defaultValue="M2 Center Auto" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">CNPJ</label>
@@ -2064,7 +2064,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">E-mail</label>
-                  <Input defaultValue="contato@moriapecas.com" />
+                  <Input defaultValue="contato@m2centerauto.com.br" />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium">Endereço</label>

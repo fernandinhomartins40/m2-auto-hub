@@ -44,7 +44,13 @@ export function Footer() {
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <img src={logo.url} alt={logo.alt} className="h-16 mb-4" />
+            {logo.url ? (
+              <img src={logo.url} alt={logo.alt} className="h-16 mb-4" />
+            ) : (
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-moria-orange to-rose-700 text-sm font-black tracking-[0.24em] text-white shadow-lg">
+                M2
+              </div>
+            )}
             <p className="text-gray-300 mb-6">{description}</p>
             <div className="flex flex-col space-y-4">
               <div className="flex space-x-4">

@@ -1,6 +1,6 @@
 /* 
  * Estilos específicos para o painel do lojista (admin)
- * Moria Peças e Serviços
+ * M2 Center Auto
  */
 
 /* Layout Principal do Admin */
@@ -11,7 +11,7 @@
 }
 
 .lojista-sidebar {
-  background: #1a1a1a;
+  background: #171b22;
   color: white;
   transition: width 0.3s ease;
   flex-shrink: 0;
@@ -46,9 +46,9 @@
 }
 
 .lojista-nav-item.active {
-  background: #ff6b35;
+  background: #c62828;
   color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.28);
 }
 
 /* Cards do Dashboard */
@@ -73,13 +73,13 @@
   padding: 1.5rem;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border-left: 4px solid #ff6b35;
+  border-left: 4px solid #c62828;
 }
 
 .metrica-numero {
   font-size: 2rem;
   font-weight: bold;
-  color: #ff6b35;
+  color: #c62828;
   margin-bottom: 0.5rem;
 }
 
@@ -154,7 +154,7 @@
 
 /* Botões do Admin */
 .lojista-btn-primary {
-  background: #ff6b35;
+  background: #c62828;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -165,9 +165,9 @@
 }
 
 .lojista-btn-primary:hover {
-  background: #e55a2b;
+  background: #a61d1d;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.28);
 }
 
 .lojista-btn-secondary {
@@ -183,8 +183,8 @@
 
 .lojista-btn-secondary:hover {
   background: #f8fafc;
-  border-color: #ff6b35;
-  color: #ff6b35;
+  border-color: #c62828;
+  color: #c62828;
 }
 
 /* Filtros e Busca */
@@ -211,8 +211,8 @@
 
 .lojista-search input:focus {
   outline: none;
-  border-color: #ff6b35;
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  border-color: #c62828;
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12);
 }
 
 /* Header do Admin */

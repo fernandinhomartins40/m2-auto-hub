@@ -362,7 +362,7 @@ export function SettingsContent() {
                   id="storeName"
                   value={formData.storeName}
                   onChange={(e) => handleInputChange('storeName', e.target.value)}
-                  placeholder="Moria Peças & Serviços"
+                  placeholder="M2 Center Auto"
                   className={validationErrors.storeName ? 'border-red-500' : ''}
                 />
                 {validationErrors.storeName && (
@@ -424,7 +424,7 @@ export function SettingsContent() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="contato@moriapecas.com"
+                  placeholder="contato@m2centerauto.com.br"
                   className={validationErrors.email ? 'border-red-500' : ''}
                 />
                 {validationErrors.email && (

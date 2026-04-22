@@ -151,7 +151,7 @@ export function CustomerLayout({
           <div className="px-4 py-3">
             <div className="flex items-center justify-between">
               <h1 className="text-lg font-bold text-gray-800">
-                Moria Cliente
+                M2 Cliente
               </h1>
 
               <Button

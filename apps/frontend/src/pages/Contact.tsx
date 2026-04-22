@@ -65,7 +65,7 @@ export default function Contact() {
         id: "3",
         icon: "Mail",
         title: "E-mail",
-        content: ["contato@moriapecas.com.br", "Resposta em até 24h"],
+        content: ["contato@m2centerauto.com.br", "Resposta em até 24h"],
         color: { type: 'solid', solid: '#dc2626' } // text-red-600
       },
       {
@@ -116,7 +116,7 @@ export default function Contact() {
       
       // Gerar mensagem WhatsApp
       const whatsappMessage = `
-🔧 *CONTATO - MORIA PEÇAS E SERVIÇOS*
+🔧 *CONTATO - M2 CENTER AUTO*
 
 👤 *Nome:* ${formData.name}
 📧 *E-mail:* ${formData.email}
@@ -157,7 +157,7 @@ ${new Date().toLocaleString('pt-BR')}
   };
 
   const handleWhatsAppDirect = () => {
-    const message = "Olá! Gostaria de falar com a equipe da Moria Peças e Serviços.";
+    const message = "Olá! Gostaria de falar com a equipe da M2 Center Auto.";
     const whatsappNumber = storeSettings?.whatsapp || "5511999999999";
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');

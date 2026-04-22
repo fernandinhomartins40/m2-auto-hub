@@ -23,19 +23,19 @@ interface GradientColorPickerProps {
   presets?: { name: string; value: string }[];
 }
 
-// Presets de gradientes Moria
+// Presets de gradientes M2
 const MORIA_GRADIENT_PRESETS = [
   {
     name: 'Dourado Premium',
     value: 'linear-gradient(135deg, #ffd900 0%, #ffa600 50%, #ab8617 100%)',
   },
   {
-    name: 'Laranja Moria',
-    value: 'linear-gradient(135deg, #ff6933 0%, #ff571a 100%)',
+    name: 'Vermelho M2',
+    value: 'linear-gradient(135deg, #c62828 0%, #a61d1d 100%)',
   },
   {
-    name: 'Marquee (Laranja → Dourado)',
-    value: 'linear-gradient(90deg, #ff6933 0%, #ffa600 100%)',
+    name: 'Marquee (Vermelho → Dourado)',
+    value: 'linear-gradient(90deg, #c62828 0%, #ffa600 100%)',
   },
 ];
 
@@ -63,7 +63,7 @@ export const GradientColorPicker = ({
       });
     }
 
-    return stops.length > 0 ? stops : [{ color: '#ff6933', position: 0 }];
+    return stops.length > 0 ? stops : [{ color: '#c62828', position: 0 }];
   };
 
   const [stops, setStops] = useState<GradientStop[]>(parseGradient(value));
@@ -71,7 +71,7 @@ export const GradientColorPicker = ({
 
   // Gera CSS gradient a partir dos stops
   const generateGradient = (gradientStops: GradientStop[], gradientAngle: number = angle) => {
-    if (gradientStops.length === 0) return '#ff6933';
+    if (gradientStops.length === 0) return '#c62828';
     if (gradientStops.length === 1) return gradientStops[0].color;
 
     const stopsStr = gradientStops
@@ -90,7 +90,7 @@ export const GradientColorPicker = ({
   };
 
   const addStop = () => {
-    const newStops = [...stops, { color: '#ffa600', position: 50 }];
+    const newStops = [...stops, { color: '#e15656', position: 50 }];
     updateGradient(newStops);
   };
 

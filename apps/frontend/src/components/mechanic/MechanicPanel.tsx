@@ -64,5 +64,5 @@ function getPageDescription(tab: string): string {
     settings: "Gerencie seu perfil, seguranca e preferencias",
   };
 
-  return descriptions[tab] || "Painel do mecanico da Moria Pecas e Servicos";
+  return descriptions[tab] || "Painel da oficina M2 Center Auto";
 }

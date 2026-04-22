@@ -1214,7 +1214,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
                 <Button
                   onClick={() => handleCreateQuote(true)}
                   disabled={isCreating}
-                  className="bg-moria-orange hover:bg-orange-600"
+                  className="bg-moria-orange hover:bg-moria-orange/90"
                   size="sm"
                 >
                   {isCreating ? (

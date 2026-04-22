@@ -91,7 +91,7 @@ export function useWebShare(): UseWebShareReturn {
  */
 export function shareProduct(product: { name: string; price: number; url?: string }) {
   const shareData: ShareData = {
-    title: `${product.name} - Moria Peças`,
+    title: `${product.name} - M2 Center Auto`,
     text: `Confira este produto: ${product.name} por R$ ${product.price.toFixed(2)}`,
     url: product.url || window.location.href,
   };
@@ -104,8 +104,8 @@ export function shareProduct(product: { name: string; price: number; url?: strin
  */
 export function shareOrder(order: { id: string; total: number }) {
   const shareData: ShareData = {
-    title: `Pedido #${order.id} - Moria Peças`,
-    text: `Meu pedido na Moria Peças - Total: R$ ${order.total.toFixed(2)}`,
+    title: `Pedido #${order.id} - M2 Center Auto`,
+    text: `Meu pedido na M2 Center Auto - Total: R$ ${order.total.toFixed(2)}`,
     url: `${window.location.origin}/customer?order=${order.id}`,
   };
 

@@ -55,9 +55,9 @@ export const useStoreSettings = (): UseStoreSettingsResult => {
       // Fallback para valores padrão se cache estiver vazio
       if (!cachedSettings) {
         cachedSettings = {
-          storeName: 'Moria Peças & Serviços',
+          storeName: 'M2 Center Auto',
           whatsapp: '5511999999999',
-          email: 'contato@moriapecas.com',
+          email: 'contato@m2centerauto.com.br',
           phone: '',
           freeShippingMin: 150,
           deliveryFee: 15.90,

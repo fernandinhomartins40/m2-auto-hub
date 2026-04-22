@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, LogOut, User } from 'lucide-react';
+import { X, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { NavItem } from './StoreLayout';
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
@@ -90,17 +90,10 @@ export default function StoreMobileDrawer({
         </div>
 
         {/* Admin/Mechanic Info */}
-        <div className="p-4 bg-gradient-to-r from-moria-orange/10 to-moria-orange/5 border-b border-gray-200">
+        <div className="p-4 bg-gradient-to-r from-moria-orange/10 via-rose-50 to-stone-100 border-b border-gray-200">
           <div className="flex items-center gap-3">
             {/* Avatar */}
-            <div
-              className={cn(
-                'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold',
-                variant === 'admin'
-                  ? 'bg-moria-orange'
-                  : 'bg-blue-500'
-              )}
-            >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold bg-gradient-to-br from-moria-orange to-rose-700 shadow-sm">
               {getInitials(adminName)}
             </div>
 
@@ -115,14 +108,9 @@ export default function StoreMobileDrawer({
                 </p>
               )}
               <span
-                className={cn(
-                  'inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded',
-                  variant === 'admin'
-                    ? 'bg-moria-orange/20 text-moria-orange'
-                    : 'bg-blue-100 text-blue-700'
-                )}
+                className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded bg-moria-orange/15 text-moria-orange"
               >
-                {variant === 'admin' ? 'Administrador' : 'Mecânico'}
+                {variant === 'admin' ? 'Lojista M2' : 'Oficina M2'}
               </span>
             </div>
           </div>

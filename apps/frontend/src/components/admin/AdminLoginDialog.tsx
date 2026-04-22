@@ -70,17 +70,17 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-white to-stone-100 p-4">
       <div className="w-full max-w-md space-y-4">
-        {showInstallBanner && <InstallBanner appName="Moria Admin" variant="admin" />}
+        {showInstallBanner && <InstallBanner appName="M2 Center Auto Admin" variant="admin" />}
 
         <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <Shield className="w-8 h-8 text-blue-600" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-moria-orange/10 rounded-full mb-4">
+              <Shield className="w-8 h-8 text-moria-orange" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Painel Administrativo</h1>
-            <p className="text-gray-600">Faca login para acessar o painel da loja, mecanica e equipe</p>
+            <p className="text-gray-600">Faca login para acessar o painel da loja, oficina e equipe</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,7 +95,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@moria.com"
+                placeholder="admin@m2centerauto.com.br"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -141,7 +141,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-xs h-9"
-                onClick={() => handleAutoFill("admin@moria.com", "Test123!")}
+                onClick={() => handleAutoFill("admin@m2centerauto.com.br", "Test123!")}
                 disabled={isSubmitting}
               >
                 <Shield className="mr-2 h-3 w-3" />
@@ -152,7 +152,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-xs h-9"
-                onClick={() => handleAutoFill("gerente@moria.com", "Test123!")}
+                onClick={() => handleAutoFill("gerente@m2centerauto.com.br", "Test123!")}
                 disabled={isSubmitting}
               >
                 <Shield className="mr-2 h-3 w-3" />
@@ -163,7 +163,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-xs h-9"
-                onClick={() => handleAutoFill("mecanico@moria.com", "Test123!")}
+                onClick={() => handleAutoFill("mecanico@m2centerauto.com.br", "Test123!")}
                 disabled={isSubmitting}
               >
                 <Shield className="mr-2 h-3 w-3" />
@@ -174,7 +174,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
         </div>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">© 2026 Moria Pecas e Servicos</p>
+          <p className="text-sm text-gray-600">© 2026 M2 Center Auto</p>
         </div>
       </div>
     </div>

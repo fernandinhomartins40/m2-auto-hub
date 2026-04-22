@@ -178,7 +178,7 @@ export const GradientPicker = ({
   );
 };
 
-// Presets de gradientes da identidade Moria
+// Presets de gradientes da identidade M2
 export const MORIA_GRADIENT_PRESETS = {
   goldMetallic: {
     type: 'linear' as const,
@@ -188,17 +188,17 @@ export const MORIA_GRADIENT_PRESETS = {
   orangeToGold: {
     type: 'linear' as const,
     angle: 90,
-    colors: ['#ff6933', '#ffa600']
+    colors: ['#c62828', '#ffa600']
   },
   darkHero: {
     type: 'linear' as const,
     direction: 'to-br',
-    colors: ['#1a1a1a', '#374151']
+    colors: ['#171b22', '#374151']
   },
   darkToGray: {
     type: 'linear' as const,
     direction: 'to-br',
-    colors: ['#1a1a1a', '#374151']
+    colors: ['#171b22', '#374151']
   },
   darkElegant: {
     type: 'linear' as const,
@@ -208,6 +208,6 @@ export const MORIA_GRADIENT_PRESETS = {
   orangeOverlay: {
     type: 'linear' as const,
     direction: 'to-r',
-    colors: ['rgba(255, 107, 53, 0.1)', 'transparent']
+    colors: ['rgba(198, 40, 40, 0.12)', 'transparent']
   }
 } as const;

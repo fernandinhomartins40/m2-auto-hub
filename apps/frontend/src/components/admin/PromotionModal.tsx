@@ -1163,7 +1163,7 @@ export function PromotionModal({ isOpen, onClose, onSave, promotion, loading = f
             type="button"
             onClick={handleSave}
             disabled={loading}
-            className="bg-moria-orange hover:bg-orange-600 min-w-[140px]"
+            className="bg-moria-orange hover:bg-moria-orange/90 min-w-[140px]"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditing ? 'Salvar Alterações' : 'Criar Promoção'}
