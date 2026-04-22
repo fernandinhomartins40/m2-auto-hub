@@ -1,25 +1,11 @@
-import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import { AdminLoginDialog } from "@/components/admin/AdminLoginDialog";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 export default function AdminLoginPage() {
-  const location = useLocation();
   const { admin, isAuthenticated, isLoading } = useAdminAuth();
-
-  useEffect(() => {
-    const shell = document
-      .querySelector('meta[name="moria-pwa-shell"]')
-      ?.getAttribute("content");
-
-    if (shell === "admin") {
-      return;
-    }
-
-    window.location.replace(`/admin-login/${location.search}${location.hash}`);
-  }, [location.hash, location.search]);
 
   if (isLoading) {
     return (

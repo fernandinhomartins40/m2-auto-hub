@@ -15,11 +15,11 @@ interface AdminLoginDialogProps {
   showInstallBanner?: boolean;
 }
 
-function getSafeRedirect(search: string, fallback: string): string {
+function getSafeRedirect(search: string): string | null {
   const params = new URLSearchParams(search);
   const redirect = params.get("redirect");
   if (!redirect || !redirect.startsWith("/")) {
-    return fallback;
+    return null;
   }
 
   return redirect;
@@ -35,7 +35,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const redirectTarget = getSafeRedirect(location.search, "/store-panel");
+  const redirectTarget = getSafeRedirect(location.search);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +60,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
       description: "Bem-vindo ao painel administrativo.",
     });
 
-    navigate(redirectTarget || result.redirectTo || "/store-panel");
+    navigate(redirectTarget ?? result.redirectTo ?? "/store-panel");
   };
 
   const handleAutoFill = (userEmail: string, userPassword: string) => {
