@@ -11,6 +11,7 @@ x-backend-env: &backend-env
   JWT_SECRET: ${JWT_SECRET:-replace_me_with_at_least_32_chars_1234567890}
   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
   BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-10}
+  DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-Test123!}
   CORS_ORIGIN: "${CORS_ORIGIN:-https://www.m2centerauto.com.br,https://m2centerauto.com.br}"
   COOKIE_SECURE: ${COOKIE_SECURE:-true}
   COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}
@@ -56,6 +57,16 @@ services:
         condition: service_healthy
     environment: *backend-env
     command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
+
+  bootstrap:
+    image: m2centerauto/backend:${RELEASE_VERSION:-local}
+    build: *backend-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *backend-env
+    command: ["node", "dist/scripts/bootstrap-production.js"]
     restart: "no"
 
   backend:

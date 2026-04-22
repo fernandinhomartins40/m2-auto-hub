@@ -30,36 +30,27 @@ import landingPageRoutes from '@modules/landing-page/landing-page.routes.js';
 import settingsRoutes from '@modules/settings/settings.routes.js';
 import notificationsRoutes from '@modules/notifications/notifications.routes.js';
 
+import { ensureLandingPageConfig } from './bootstrap/essential-data.js';
+
 export function createApp(): Express {
   const app = express();
 
-  // Trust proxy
   app.set('trust proxy', 1);
 
-  // Security middleware
   app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
-  // CORS
   app.use(cors(corsOptions));
-
-  // Cookie parsing
   app.use(cookieParser());
-
-  // Body parsing
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-  // Compression
   app.use(compression());
 
-  // Servir arquivos estáticos de upload
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-  // Request logging
   app.use((req, _res, next) => {
     logger.info(`${req.method} ${req.path}`, {
       ip: req.ip,
@@ -68,7 +59,6 @@ export function createApp(): Express {
     next();
   });
 
-  // Health check
   app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({
       success: true,
@@ -77,50 +67,50 @@ export function createApp(): Express {
     });
   });
 
-  // API Routes - Fase 1
+  app.get('/landing-page/config', async (_req: Request, res: Response) => {
+    const config = await ensureLandingPageConfig();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: config.id,
+        header: JSON.parse(config.header),
+        hero: JSON.parse(config.hero),
+        marquee: JSON.parse(config.marquee),
+        about: JSON.parse(config.about),
+        products: JSON.parse(config.products),
+        services: JSON.parse(config.services),
+        contactPage: config.contactPage ? JSON.parse(config.contactPage) : undefined,
+        aboutPage: config.aboutPage ? JSON.parse(config.aboutPage) : undefined,
+        contact: JSON.parse(config.contact),
+        footer: JSON.parse(config.footer),
+        updatedAt: config.updatedAt,
+      },
+    });
+  });
+
   app.use('/auth', authRoutes);
   app.use('/addresses', addressesRoutes);
-
-  // API Routes - Fase 2
   app.use('/products', productsRoutes);
   app.use('/services', servicesRoutes);
   app.use('/vehicles', vehiclesRoutes);
   app.use('/compatibility', compatibilityRoutes);
-
-  // API Routes - Fase 3
   app.use('/orders', ordersRoutes);
   app.use('/promotions', promotionsRoutes);
   app.use('/coupons', couponsRoutes);
   app.use('/favorites', favoritesRoutes);
-
-  // API Routes - Fase 4
   app.use('/customer-vehicles', customerVehiclesRoutes);
   app.use('/checklist', checklistRoutes);
   app.use('/revisions', revisionsRoutes);
   app.use('/customer-revisions', customerRevisionsRoutes);
-
-  // Admin Routes
   app.use('/admin', adminRoutes);
-
-  // Customer Routes
   app.use('/customers', customerRoutes);
-
-  // Support Routes
   app.use('/support', supportRoutes);
-
-  // Reports Routes (Admin only)
   app.use('/admin/reports', reportsRoutes);
-
-  // Landing Page Routes (NEW - Padrão Ferraco)
   app.use('/landing-page', landingPageRoutes);
-
-  // Settings Routes (Sistema de Configurações)
   app.use('/settings', settingsRoutes);
-
-  // Notifications Routes
   app.use('/', notificationsRoutes);
 
-  // 404 handler
   app.use((_req: Request, res: Response) => {
     res.status(404).json({
       success: false,
@@ -128,7 +118,6 @@ export function createApp(): Express {
     });
   });
 
-  // Error handling middleware (must be last)
   app.use(ErrorMiddleware.handle);
 
   return app;

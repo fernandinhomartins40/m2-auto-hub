@@ -5,38 +5,38 @@ import { logger } from '@shared/utils/logger.util.js';
 import { validateEnvironment } from '@config/validate-env.js';
 import { setupPrismaRLS } from '@middlewares/prisma-rls.middleware.js';
 
+import { ensureEssentialData } from './bootstrap/essential-data.js';
+
 async function bootstrap(): Promise<void> {
   try {
-    logger.info('🔄 Starting bootstrap process...');
+    logger.info('Starting bootstrap process...');
 
-    // Validate environment variables first
-    logger.info('📋 Validating environment variables...');
+    logger.info('Validating environment variables...');
     validateEnvironment();
-    logger.info('✅ Environment variables validated');
+    logger.info('Environment variables validated');
 
-    // Connect to database
-    logger.info('🔌 Connecting to database...');
+    logger.info('Connecting to database...');
     await connectDatabase();
-    logger.info('✅ Database connected');
+    logger.info('Database connected');
 
-    // Setup Prisma Row-Level Security middleware
-    logger.info('🔐 Setting up Prisma RLS middleware...');
+    logger.info('Ensuring essential data...');
+    await ensureEssentialData();
+    logger.info('Essential data is ready');
+
+    logger.info('Setting up Prisma RLS middleware...');
     await setupPrismaRLS();
-    logger.info('✅ Prisma RLS middleware initialized');
+    logger.info('Prisma RLS middleware initialized');
 
-    // Create Express app
-    logger.info('⚙️  Creating Express application...');
+    logger.info('Creating Express application...');
     const app = createApp();
-    logger.info('✅ Express app created');
+    logger.info('Express app created');
 
-    // Start server
     const server = app.listen(environment.port, () => {
-      logger.info(`🚀 Server running on port ${environment.port}`);
-      logger.info(`📝 Environment: ${environment.nodeEnv}`);
-      logger.info(`🔗 Health check: http://localhost:${environment.port}/health`);
+      logger.info(`Server running on port ${environment.port}`);
+      logger.info(`Environment: ${environment.nodeEnv}`);
+      logger.info(`Health check: http://localhost:${environment.port}/health`);
     });
 
-    // Graceful shutdown
     const gracefulShutdown = async (signal: string) => {
       logger.info(`\n${signal} received, starting graceful shutdown...`);
 
@@ -47,18 +47,16 @@ async function bootstrap(): Promise<void> {
         process.exit(0);
       });
 
-      // Force shutdown after 10 seconds
       setTimeout(() => {
         logger.error('Forcing shutdown after timeout');
         process.exit(1);
       }, 10000);
     };
 
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
+    process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
   } catch (error) {
-    logger.error('❌ FATAL ERROR - Failed to start server');
+    logger.error('FATAL ERROR - Failed to start server');
     logger.error('Error details:', error);
 
     if (error instanceof Error) {
@@ -67,12 +65,10 @@ async function bootstrap(): Promise<void> {
       logger.error('Error stack:', error.stack);
     }
 
-    // Give time for logs to flush
     setTimeout(() => {
       process.exit(1);
     }, 1000);
   }
 }
 
-bootstrap();
-
+void bootstrap();

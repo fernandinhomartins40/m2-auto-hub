@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "nodemon",
     "build": "npm run prisma:generate && tsc && tsc-alias",
+    "bootstrap:dev": "tsx src/scripts/bootstrap-production.ts",
+    "bootstrap:production": "node dist/scripts/bootstrap-production.js",
     "start": "node dist/server.js",
     "start:prod": "node dist/server.js",
     "prisma:generate": "prisma generate",

@@ -1,12 +1,12 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 
 interface Admin {
   id: string;
   email: string;
   name: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'STAFF';
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  role: "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "STAFF";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
   permissions?: string[];
 }
 
@@ -28,14 +28,14 @@ interface AdminAuthContextType {
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
-const API_URL = (import.meta.env.VITE_API_BASE_URL?.trim() || '/api').replace(/\/$/, '');
+const API_URL = (import.meta.env.VITE_API_BASE_URL?.trim() || "/api").replace(/\/$/, "");
+const ADMIN_SESSION_HINT_KEY = "moria_admin_session_active";
 
-// Role hierarchy for permission checking
 const roleHierarchy = {
-  'STAFF': 1,
-  'MANAGER': 2,
-  'ADMIN': 3,
-  'SUPER_ADMIN': 4,
+  STAFF: 1,
+  MANAGER: 2,
+  ADMIN: 3,
+  SUPER_ADMIN: 4,
 };
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
@@ -50,75 +50,81 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isInitializing.current) return;
 
-    // Skip admin auth initialization on customer routes
     const pathname = location.pathname;
-    const isAdminRoute = pathname.startsWith('/store-panel') ||
-                         pathname.startsWith('/admin') ||
-                         pathname.startsWith('/mechanic-panel') ||
-                         pathname.startsWith('/admin-login') ||
-                         pathname.startsWith('/app');
+    const isAdminProtectedRoute =
+      pathname.startsWith("/store-panel") ||
+      pathname.startsWith("/mechanic-panel") ||
+      (pathname.startsWith("/admin") && !pathname.startsWith("/admin-login"));
+    const isPwaLaunchRoute = pathname.startsWith("/app");
+    const hasSessionHint = localStorage.getItem(ADMIN_SESSION_HINT_KEY) === "true";
+    const shouldCheckProfile =
+      isAdminProtectedRoute || isPwaLaunchRoute || (!state.isAuthenticated && hasSessionHint);
 
-    if (!isAdminRoute) {
-      setState(prev => ({ ...prev, isLoading: false }));
+    if (!shouldCheckProfile) {
+      setState((prev) => ({ ...prev, isLoading: false }));
       return;
     }
 
     if (state.isAuthenticated && state.admin) {
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState((prev) => ({ ...prev, isLoading: false }));
       return;
     }
 
-    // Check for existing admin session (cookie-based)
     isInitializing.current = true;
+
     const initializeAuth = async () => {
       try {
-        // Try to get admin profile using the httpOnly cookie
         const response = await fetch(`${API_URL}/auth/admin/profile`, {
-          credentials: 'include', // Send cookies
+          credentials: "include",
         });
 
         if (response.ok) {
           const data = await response.json();
+          localStorage.setItem(ADMIN_SESSION_HINT_KEY, "true");
+
           setState({
             admin: data.data,
             isAuthenticated: true,
             isLoading: false,
           });
-        } else {
-          // 401 is expected when not logged in - don't log as error
-          setState(prev => ({ ...prev, isLoading: false }));
+
+          return;
         }
-      } catch (error) {
-        // Network errors or invalid responses - this is expected when not authenticated
-        setState(prev => ({ ...prev, isLoading: false }));
+
+        if (response.status === 401) {
+          localStorage.removeItem(ADMIN_SESSION_HINT_KEY);
+        }
+
+        setState((prev) => ({ ...prev, isLoading: false }));
+      } catch {
+        localStorage.removeItem(ADMIN_SESSION_HINT_KEY);
+        setState((prev) => ({ ...prev, isLoading: false }));
       } finally {
         isInitializing.current = false;
       }
     };
 
-    initializeAuth();
+    void initializeAuth();
   }, [location.pathname, state.admin, state.isAuthenticated]);
 
   const login = async (email: string, password: string) => {
-    setState(prev => ({ ...prev, isLoading: true }));
+    setState((prev) => ({ ...prev, isLoading: true }));
 
     try {
       const response = await fetch(`${API_URL}/auth/admin/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include', // Send/receive cookies
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // O token agora é enviado apenas via httpOnly cookie pelo backend
-        // Não precisamos mais armazenar no localStorage (segurança contra XSS)
-
         const adminData = data.data.admin;
+        localStorage.setItem(ADMIN_SESSION_HINT_KEY, "true");
 
         setState({
           admin: adminData,
@@ -126,30 +132,32 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
         });
 
-        // Determine redirect based on role
-        const redirectTo = adminData.role === 'STAFF' ? '/mechanic-panel' : '/store-panel';
+        const redirectTo = adminData.role === "STAFF" ? "/mechanic-panel" : "/store-panel";
 
         return { success: true, redirectTo };
-      } else {
-        setState(prev => ({ ...prev, isLoading: false }));
-        return { success: false, error: data.error || 'Falha no login' };
       }
-    } catch (error) {
-      setState(prev => ({ ...prev, isLoading: false }));
-      return { success: false, error: 'Erro ao conectar com o servidor' };
+
+      setState((prev) => ({ ...prev, isLoading: false }));
+      return {
+        success: false,
+        error: data.error || data.message || "Falha no login",
+      };
+    } catch {
+      setState((prev) => ({ ...prev, isLoading: false }));
+      return { success: false, error: "Erro ao conectar com o servidor" };
     }
   };
 
   const logout = async () => {
     try {
-      // Chama o backend para limpar o httpOnly cookie
       await fetch(`${API_URL}/auth/admin/logout`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
       });
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      console.error("Erro ao fazer logout:", error);
     } finally {
+      localStorage.removeItem(ADMIN_SESSION_HINT_KEY);
       setState({
         admin: null,
         isAuthenticated: false,
@@ -181,17 +189,15 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     hasMinRole,
   };
 
-  return (
-    <AdminAuthContext.Provider value={contextValue}>
-      {children}
-    </AdminAuthContext.Provider>
-  );
+  return <AdminAuthContext.Provider value={contextValue}>{children}</AdminAuthContext.Provider>;
 }
 
 export function useAdminAuth() {
   const context = useContext(AdminAuthContext);
+
   if (context === undefined) {
-    throw new Error('useAdminAuth must be used within an AdminAuthProvider');
+    throw new Error("useAdminAuth must be used within an AdminAuthProvider");
   }
+
   return context;
 }

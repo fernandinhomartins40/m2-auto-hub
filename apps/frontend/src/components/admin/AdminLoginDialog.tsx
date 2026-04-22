@@ -60,7 +60,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
       description: "Bem-vindo ao painel administrativo.",
     });
 
-    navigate(redirectTarget ?? result.redirectTo ?? "/store-panel");
+    navigate(redirectTarget ?? result.redirectTo ?? "/store-panel", { replace: true });
   };
 
   const handleAutoFill = (userEmail: string, userPassword: string) => {

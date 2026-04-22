@@ -362,7 +362,7 @@ jobs:
             }
 
             cd "$RELEASE_DIR"
-            compose build --no-cache alpr backend frontend migrator
+            compose build --no-cache alpr backend frontend migrator bootstrap
 
             echo "Starting postgres and alpr..."
             compose up -d postgres alpr
@@ -374,6 +374,9 @@ jobs:
 
             echo "Running migrations..."
             compose run --rm migrator
+
+            echo "Bootstrapping essential data..."
+            compose run --rm bootstrap
 
             echo "Starting application services..."
             compose up -d --force-recreate --remove-orphans postgres alpr backend frontend gateway
