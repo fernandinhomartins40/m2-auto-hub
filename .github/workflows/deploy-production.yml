@@ -376,7 +376,11 @@ jobs:
             compose run --rm migrator
 
             echo "Bootstrapping essential data..."
-            compose run --rm bootstrap
+            if ! timeout 240s compose run --rm bootstrap; then
+              echo "Bootstrap step failed or timed out after 240s" >&2
+              dump_service_logs backend
+              exit 1
+            fi
 
             echo "Starting application services..."
             compose up -d --force-recreate --remove-orphans postgres alpr backend frontend gateway

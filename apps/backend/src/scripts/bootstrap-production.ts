@@ -5,6 +5,8 @@ import { logger } from '@shared/utils/logger.util.js';
 import { ensureEssentialData } from '../bootstrap/essential-data.js';
 
 async function main(): Promise<void> {
+  let exitCode = 0;
+
   try {
     logger.info('Starting production bootstrap script');
 
@@ -15,9 +17,11 @@ async function main(): Promise<void> {
     logger.info('Production bootstrap completed successfully');
   } catch (error) {
     logger.error('Production bootstrap failed', error);
+    exitCode = 1;
     process.exitCode = 1;
   } finally {
     await disconnectDatabase();
+    process.exit(exitCode);
   }
 }
 
