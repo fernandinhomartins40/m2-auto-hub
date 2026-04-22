@@ -82,7 +82,8 @@ services:
   frontend:
     image: m2centerauto/frontend:${RELEASE_VERSION:-local}
     build:
-      context: ./apps/frontend
+      context: .
+      dockerfile: apps/frontend/Dockerfile
       args:
         VITE_API_BASE_URL: /api
         RELEASE_VERSION: ${RELEASE_VERSION:-local}
