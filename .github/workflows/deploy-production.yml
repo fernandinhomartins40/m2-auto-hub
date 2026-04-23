@@ -223,9 +223,10 @@ jobs:
             ROOT_ENV_FILE="$APP_ROOT/.env"
             COMPOSE_FILE="$RELEASE_DIR/docker-compose.production.yml"
             ENV_FILE="$RELEASE_DIR/.env"
+            COMPOSE=(docker compose -p m2centerauto -f "$COMPOSE_FILE" --env-file "$ENV_FILE")
 
             compose() {
-              docker compose -p m2centerauto -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
+              "${COMPOSE[@]}" "$@"
             }
 
             service_id() {
@@ -366,7 +367,7 @@ jobs:
 
             cd "$RELEASE_DIR"
             log_step "Building images with cache"
-            timeout 30m compose build alpr backend frontend
+            timeout 30m "${COMPOSE[@]}" build alpr backend frontend
 
             log_step "Starting postgres and alpr"
             compose up -d --no-build postgres alpr
@@ -375,10 +376,10 @@ jobs:
             cleanup_failed_bootstrap_migration
 
             log_step "Running migrations"
-            timeout 20m compose run --rm --no-build migrator
+            timeout 20m "${COMPOSE[@]}" run --rm --no-build migrator
 
             log_step "Bootstrapping essential data"
-            if ! timeout 240s compose run --rm --no-build bootstrap; then
+            if ! timeout 240s "${COMPOSE[@]}" run --rm --no-build bootstrap; then
               echo "Bootstrap step failed or timed out after 240s" >&2
               dump_service_logs backend
               exit 1
