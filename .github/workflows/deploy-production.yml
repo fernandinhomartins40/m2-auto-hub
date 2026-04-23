@@ -3,6 +3,9 @@ name: Deploy Production
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
   workflow_dispatch:
 
 concurrency:
@@ -53,11 +56,18 @@ jobs:
             --exclude=.github \
             --exclude=.turbo \
             --exclude=.env \
+            --exclude=*.md \
+            --exclude=*.log \
+            --exclude=docs \
+            --exclude=tests \
+            --exclude=.vscode \
+            --exclude=.idea \
             --exclude=node_modules \
             --exclude=apps/backend/node_modules \
             --exclude=apps/frontend/node_modules \
             --exclude=apps/backend/dist \
             --exclude=apps/frontend/dist \
+            --exclude=apps/backend/uploads \
             --exclude=coverage \
             -czf - . | \
             sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
@@ -370,9 +380,8 @@ jobs:
             timeout 30m "${COMPOSE[@]}" build alpr backend frontend
 
             log_step "Starting postgres and alpr"
-            compose up -d --no-build postgres alpr
-            wait_for_service_health postgres 36 5
-            wait_for_service_health alpr 36 5
+            compose up -d --no-build --no-deps postgres alpr
+            wait_for_service_health postgres 12 5
             cleanup_failed_bootstrap_migration
 
             log_step "Running migrations"
@@ -385,12 +394,20 @@ jobs:
               exit 1
             fi
 
-            log_step "Starting application services"
-            compose up -d --no-build --force-recreate --remove-orphans postgres alpr backend frontend gateway
+            log_step "Waiting for alpr"
+            wait_for_service_health alpr 18 5
 
-            wait_for_service_health backend 36 5
-            wait_for_service_health frontend 30 5
-            wait_for_service_health gateway 30 5
+            log_step "Starting backend"
+            compose up -d --no-build --no-deps backend
+            wait_for_service_health backend 18 5
+
+            log_step "Starting frontend"
+            compose up -d --no-build --no-deps frontend
+            wait_for_service_health frontend 15 5
+
+            log_step "Starting gateway"
+            compose up -d --no-build --no-deps gateway
+            wait_for_service_health gateway 15 5
 
             BACKEND_ID="$(service_id backend)"
             DEPLOYED_VERSION="$(docker exec "$BACKEND_ID" cat /app/.release-version 2>/dev/null || true)"
@@ -400,12 +417,12 @@ jobs:
             fi
 
             log_step "Verifying gateway, frontend and API on external port"
-            if ! wait_for_http_200 "http://127.0.0.1:${DEPLOY_PORT}/health" 18 5; then
+            if ! wait_for_http_200 "http://127.0.0.1:${DEPLOY_PORT}/health" 8 5; then
               dump_service_logs gateway
               exit 1
             fi
 
-            if ! wait_for_http_200 "http://127.0.0.1:${DEPLOY_PORT}/api/health" 18 5; then
+            if ! wait_for_http_200 "http://127.0.0.1:${DEPLOY_PORT}/api/health" 8 5; then
               dump_service_logs backend
               dump_service_logs gateway
               exit 1
@@ -542,121 +559,6 @@ jobs:
 
             nginx -t
             systemctl reload nginx
-          ENDSSH
-
-      - name: Post-deploy health check
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash -s" <<'ENDSSH'
-            set -euo pipefail
-
-            CURRENT_DIR="$APP_ROOT/current"
-            ROOT_ENV_FILE="$APP_ROOT/.env"
-            RELEASE_DIR=""
-            if [ -d "$CURRENT_DIR" ] && [ -f "$CURRENT_DIR/docker-compose.production.yml" ]; then
-              RELEASE_DIR="$CURRENT_DIR"
-            else
-              RELEASE_DIR="$(ls -dt "$APP_ROOT/releases"/*/ 2>/dev/null | head -n 1 | sed 's:/$::')"
-            fi
-
-            if [ -z "$RELEASE_DIR" ] || [ ! -f "$RELEASE_DIR/docker-compose.production.yml" ]; then
-              echo "No release compose file found for post-deploy health check" >&2
-              exit 1
-            fi
-
-            COMPOSE_FILE="$RELEASE_DIR/docker-compose.production.yml"
-            ENV_FILE="$ROOT_ENV_FILE"
-
-            if [ -f "$RELEASE_DIR/.env" ]; then
-              ENV_FILE="$RELEASE_DIR/.env"
-            fi
-
-            compose() {
-              docker compose -p m2centerauto -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
-            }
-
-            service_id() {
-              compose ps -q "$1"
-            }
-
-            service_state() {
-              local id
-              id="$(service_id "$1")"
-              if [ -z "$id" ]; then
-                echo "not_found"
-                return
-              fi
-              docker inspect --format '{{.State.Status}}' "$id" 2>/dev/null || echo "not_found"
-            }
-
-            service_health() {
-              local id
-              id="$(service_id "$1")"
-              if [ -z "$id" ]; then
-                echo "not_found"
-                return
-              fi
-              docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}no_healthcheck{{end}}' "$id" 2>/dev/null || echo "not_found"
-            }
-
-            dump_logs() {
-              local service="$1"
-              echo "--- logs: $service ---" >&2
-              compose logs --no-color --tail=100 "$service" >&2 || true
-            }
-
-            echo "Running post-deploy health check..."
-            compose ps || true
-
-            for i in $(seq 1 30); do
-              BACKEND_STATE="$(service_state backend)"
-              BACKEND_HEALTH="$(service_health backend)"
-              FRONTEND_STATE="$(service_state frontend)"
-              FRONTEND_HEALTH="$(service_health frontend)"
-              GATEWAY_STATE="$(service_state gateway)"
-              GATEWAY_HEALTH="$(service_health gateway)"
-              PORT_HTTP="$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://127.0.0.1:${DEPLOY_PORT}/health" 2>/dev/null || true)"
-              API_HTTP="$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://127.0.0.1:${DEPLOY_PORT}/api/health" 2>/dev/null || true)"
-              ROOT_HTTP="$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://127.0.0.1:${DEPLOY_PORT}/" 2>/dev/null || true)"
-              PORT_HTTP="${PORT_HTTP:-000}"
-              API_HTTP="${API_HTTP:-000}"
-              ROOT_HTTP="${ROOT_HTTP:-000}"
-
-              if [ "$BACKEND_STATE" = "running" ] && [ "$BACKEND_HEALTH" = "healthy" ] && \
-                 [ "$FRONTEND_STATE" = "running" ] && [ "$FRONTEND_HEALTH" = "healthy" ] && \
-                 [ "$GATEWAY_STATE" = "running" ] && [ "$GATEWAY_HEALTH" = "healthy" ] && \
-                 [ "$PORT_HTTP" = "200" ] && [ "$API_HTTP" = "200" ] && [ "$ROOT_HTTP" = "200" ]; then
-                echo "Health check passed: backend=${BACKEND_HEALTH} frontend=${FRONTEND_HEALTH} gateway=${GATEWAY_HEALTH} port=${PORT_HTTP} api=${API_HTTP} root=${ROOT_HTTP}"
-                exit 0
-              fi
-
-              if [ "$BACKEND_STATE" = "exited" ] || [ "$BACKEND_STATE" = "dead" ] || [ "$BACKEND_STATE" = "not_found" ]; then
-                dump_logs backend
-                exit 1
-              fi
-
-              if [ "$FRONTEND_STATE" = "exited" ] || [ "$FRONTEND_STATE" = "dead" ] || [ "$FRONTEND_STATE" = "not_found" ]; then
-                dump_logs frontend
-                exit 1
-              fi
-
-              if [ "$GATEWAY_STATE" = "exited" ] || [ "$GATEWAY_STATE" = "dead" ] || [ "$GATEWAY_STATE" = "not_found" ]; then
-                dump_logs gateway
-                exit 1
-              fi
-
-              echo "Attempt $i/30: backend_state=$BACKEND_STATE backend_health=$BACKEND_HEALTH frontend_state=$FRONTEND_STATE frontend_health=$FRONTEND_HEALTH gateway_state=$GATEWAY_STATE gateway_health=$GATEWAY_HEALTH port_http=$PORT_HTTP api_http=$API_HTTP root_http=$ROOT_HTTP"
-              sleep 5
-            done
-
-            echo "Health check failed after 150s" >&2
-            compose ps >&2 || true
-            dump_logs backend
-            dump_logs frontend
-            dump_logs gateway
-            exit 1
           ENDSSH
 
       - name: Notify success

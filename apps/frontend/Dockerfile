@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 FROM node:20-alpine AS build
 WORKDIR /repo
 
@@ -7,7 +9,7 @@ COPY apps/frontend/package.json apps/frontend/package.json
 COPY packages/types/package.json packages/types/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci --prefer-offline --no-audit --no-fund
 
 COPY apps/frontend ./apps/frontend
 COPY packages ./packages
