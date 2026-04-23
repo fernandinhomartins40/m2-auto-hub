@@ -292,9 +292,11 @@ jobs:
       - name: Deploy on VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ needs.build.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' bash -s" <<'ENDSSH'
+            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ needs.build.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
             log_step() {
@@ -447,6 +449,9 @@ jobs:
             set -a
             . "$ENV_FILE"
             set +a
+
+            log_step "Logging in to GHCR"
+            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
 
             log_step "Pulling pre-built images from registry"
             docker pull "${IMAGE_PREFIX}/m2-backend:${RELEASE}"
