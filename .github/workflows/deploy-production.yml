@@ -21,16 +21,20 @@ env:
   SECONDARY_DOMAIN: www.m2centerauto.com.br
   CANONICAL_URL: https://www.m2centerauto.com.br
   SSL_EMAIL: admin@m2centerauto.com.br
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  deploy:
-    name: Deploy to VPS
+  build:
+    name: Build & push images
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
 
-    environment:
-      name: production
-      url: https://www.m2centerauto.com.br
+    outputs:
+      version: ${{ steps.release.outputs.version }}
 
     steps:
       - name: Checkout
@@ -40,6 +44,75 @@ jobs:
         id: release
         run: echo "version=$(git rev-parse --short HEAD)-$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/backend
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/m2-backend:${{ steps.release.outputs.version }}
+            ${{ env.IMAGE_PREFIX }}/m2-backend:latest
+          build-args: RELEASE_VERSION=${{ steps.release.outputs.version }}
+          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-backend:cache
+          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-backend:cache,mode=max
+
+      - name: Cache pip wheels for ALPR
+        uses: actions/cache@v4
+        with:
+          path: /tmp/pip-wheels
+          key: alpr-pip-${{ hashFiles('services/alpr-service/requirements.txt') }}
+          restore-keys: alpr-pip-
+
+      - name: Build & push alpr
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/alpr-service
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/m2-alpr:${{ steps.release.outputs.version }}
+            ${{ env.IMAGE_PREFIX }}/m2-alpr:latest
+          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-alpr:cache
+          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-alpr:cache,mode=max
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/m2-frontend:${{ steps.release.outputs.version }}
+            ${{ env.IMAGE_PREFIX }}/m2-frontend:latest
+          build-args: |
+            VITE_API_BASE_URL=/api
+            RELEASE_VERSION=${{ steps.release.outputs.version }}
+          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-frontend:cache
+          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-frontend:cache,mode=max
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 30
+
+    environment:
+      name: production
+      url: https://www.m2centerauto.com.br
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
@@ -47,7 +120,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          RELEASE_DIR="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}"
+          RELEASE_DIR="${{ env.APP_ROOT }}/releases/${{ needs.build.outputs.version }}"
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "mkdir -p '$RELEASE_DIR'"
 
@@ -221,7 +294,7 @@ jobs:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ steps.release.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash -s" <<'ENDSSH'
+            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ needs.build.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
             log_step() {
@@ -284,7 +357,6 @@ jobs:
               fi
 
               chmod 600 "$RELEASE_DIR/.env"
-
               echo "Current release promoted to $CURRENT_TARGET"
             }
 
@@ -336,18 +408,6 @@ jobs:
               return 1
             }
 
-            docker volume create m2centerauto-postgres-data >/dev/null
-            docker volume create m2centerauto-uploads >/dev/null
-
-            cp "$ROOT_ENV_FILE" "$ENV_FILE"
-            printf 'RELEASE_VERSION=%s\n' "$RELEASE" >> "$ENV_FILE"
-            set -a
-            . "$ENV_FILE"
-            set +a
-            export DOCKER_BUILDKIT=1
-            export COMPOSE_DOCKER_CLI_BUILD=1
-            export BUILDKIT_PROGRESS=plain
-
             cleanup_failed_bootstrap_migration() {
               local app_table_count
               local migrations_table_exists
@@ -378,17 +438,25 @@ jobs:
               compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'DROP TABLE IF EXISTS "_prisma_migrations";'
             }
 
-            cd "$RELEASE_DIR"
-            log_step "Preserving Docker cache for incremental builds"
+            docker volume create m2centerauto-postgres-data >/dev/null
+            docker volume create m2centerauto-uploads >/dev/null
 
-            log_step "Building alpr image with cache"
-            timeout 35m "${COMPOSE[@]}" build alpr
+            cp "$ROOT_ENV_FILE" "$ENV_FILE"
+            printf 'RELEASE_VERSION=%s\n' "$RELEASE" >> "$ENV_FILE"
+            printf 'IMAGE_PREFIX=%s\n' "$IMAGE_PREFIX" >> "$ENV_FILE"
+            set -a
+            . "$ENV_FILE"
+            set +a
 
-            log_step "Building backend image with cache"
-            timeout 25m "${COMPOSE[@]}" build backend
+            log_step "Pulling pre-built images from registry"
+            docker pull "${IMAGE_PREFIX}/m2-backend:${RELEASE}"
+            docker pull "${IMAGE_PREFIX}/m2-alpr:${RELEASE}"
+            docker pull "${IMAGE_PREFIX}/m2-frontend:${RELEASE}"
 
-            log_step "Building frontend image with cache"
-            timeout 15m "${COMPOSE[@]}" build frontend
+            log_step "Tagging images for docker compose"
+            docker tag "${IMAGE_PREFIX}/m2-backend:${RELEASE}" "m2centerauto/backend:${RELEASE}"
+            docker tag "${IMAGE_PREFIX}/m2-alpr:${RELEASE}" "m2centerauto/alpr:${RELEASE}"
+            docker tag "${IMAGE_PREFIX}/m2-frontend:${RELEASE}" "m2centerauto/frontend:${RELEASE}"
 
             log_step "Starting postgres and alpr"
             compose up -d --no-build --no-deps postgres alpr
@@ -479,6 +547,7 @@ jobs:
               printf '%s\n' '        proxy_set_header Connection "upgrade";'
               printf '%s\n' '        proxy_set_header Host $host;'
               printf '%s\n' '        proxy_set_header X-Real-IP $remote_addr;'
+              printf '%s\n' '        proxy_set_header Host $host;'
               printf '%s\n' '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;'
               printf '%s\n' '        proxy_set_header X-Forwarded-Proto $scheme;'
               printf '%s\n' '        proxy_read_timeout 86400;'
@@ -577,5 +646,5 @@ jobs:
 
       - name: Notify success
         run: |
-          echo "Deployment ${{ steps.release.outputs.version }} completed successfully"
+          echo "Deployment ${{ needs.build.outputs.version }} completed successfully"
           echo "URL: ${{ env.CANONICAL_URL }}"

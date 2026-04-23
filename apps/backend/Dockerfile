@@ -1,6 +1,5 @@
-FROM mcr.microsoft.com/playwright:v1.58.2-jammy AS base
+FROM node:20-slim AS base
 WORKDIR /app
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \

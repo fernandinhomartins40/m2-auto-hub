@@ -1,9 +1,3 @@
-x-backend-build: &backend-build
-  context: ./apps/backend
-  target: production
-  args:
-    RELEASE_VERSION: ${RELEASE_VERSION:-local}
-
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 3001
@@ -37,8 +31,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   alpr:
-    build:
-      context: ./services/alpr-service
+    image: ${IMAGE_PREFIX:-m2centerauto}/m2-alpr:${RELEASE_VERSION:-local}
     restart: unless-stopped
     healthcheck:
       test:
@@ -52,8 +45,7 @@ services:
       retries: 6
 
   migrator:
-    image: m2centerauto/backend:${RELEASE_VERSION:-local}
-    build: *backend-build
+    image: ${IMAGE_PREFIX:-m2centerauto}/m2-backend:${RELEASE_VERSION:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,8 +54,7 @@ services:
     restart: "no"
 
   bootstrap:
-    image: m2centerauto/backend:${RELEASE_VERSION:-local}
-    build: *backend-build
+    image: ${IMAGE_PREFIX:-m2centerauto}/m2-backend:${RELEASE_VERSION:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,8 +63,7 @@ services:
     restart: "no"
 
   backend:
-    image: m2centerauto/backend:${RELEASE_VERSION:-local}
-    build: *backend-build
+    image: ${IMAGE_PREFIX:-m2centerauto}/m2-backend:${RELEASE_VERSION:-local}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -94,13 +84,7 @@ services:
       - uploads_data:/app/uploads
 
   frontend:
-    image: m2centerauto/frontend:${RELEASE_VERSION:-local}
-    build:
-      context: .
-      dockerfile: apps/frontend/Dockerfile
-      args:
-        VITE_API_BASE_URL: /api
-        RELEASE_VERSION: ${RELEASE_VERSION:-local}
+    image: ${IMAGE_PREFIX:-m2centerauto}/m2-frontend:${RELEASE_VERSION:-local}
     restart: unless-stopped
     depends_on:
       backend:
