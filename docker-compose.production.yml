@@ -1,3 +1,9 @@
+x-backend-build: &backend-build
+  context: ./apps/backend
+  target: production
+  args:
+    RELEASE_VERSION: ${RELEASE_VERSION:-local}
+
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 3001
@@ -31,7 +37,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   alpr:
-    image: m2centerauto/alpr:${RELEASE_VERSION:-local}
+    build:
+      context: ./services/alpr-service
     restart: unless-stopped
     healthcheck:
       test:
@@ -45,7 +52,7 @@ services:
       retries: 6
 
   migrator:
-    image: m2centerauto/backend:${RELEASE_VERSION:-local}
+    build: *backend-build
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,7 +61,7 @@ services:
     restart: "no"
 
   bootstrap:
-    image: m2centerauto/backend:${RELEASE_VERSION:-local}
+    build: *backend-build
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,7 +70,7 @@ services:
     restart: "no"
 
   backend:
-    image: m2centerauto/backend:${RELEASE_VERSION:-local}
+    build: *backend-build
     restart: unless-stopped
     depends_on:
       postgres:
@@ -84,7 +91,12 @@ services:
       - uploads_data:/app/uploads
 
   frontend:
-    image: m2centerauto/frontend:${RELEASE_VERSION:-local}
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        RELEASE_VERSION: ${RELEASE_VERSION:-local}
     restart: unless-stopped
     depends_on:
       backend:
@@ -107,7 +119,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${DEPLOY_PORT:-7001}:80"
+      - "127.0.0.1:7001:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro

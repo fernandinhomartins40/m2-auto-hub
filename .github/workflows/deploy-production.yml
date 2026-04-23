@@ -12,738 +12,248 @@ concurrency:
   group: deploy-production
   cancel-in-progress: true
 
-env:
-  VPS_HOST: 72.60.10.112
-  VPS_USER: root
-  APP_ROOT: /opt/m2centerauto
-  DEPLOY_PORT: "7001"
-  PRIMARY_DOMAIN: m2centerauto.com.br
-  SECONDARY_DOMAIN: www.m2centerauto.com.br
-  CANONICAL_URL: https://www.m2centerauto.com.br
-  SSL_EMAIL: admin@m2centerauto.com.br
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
-
 jobs:
-  # ─── Job 1: Build the heavy Playwright base image (only when it changes) ────
-  build-base:
-    name: Build backend base image
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      packages: write
-    outputs:
-      base_image: ${{ steps.meta.outputs.base_image }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check if base Dockerfile changed
-        id: changed
-        run: |
-          if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -q 'apps/backend/Dockerfile.base'; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif ! docker manifest inspect "${{ env.IMAGE_PREFIX }}/m2-backend-base:latest" >/dev/null 2>&1; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Log in to GHCR
-        if: steps.changed.outputs.changed == 'true'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        if: steps.changed.outputs.changed == 'true'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build & push backend base image
-        if: steps.changed.outputs.changed == 'true'
-        uses: docker/build-push-action@v6
-        with:
-          context: ./apps/backend
-          file: ./apps/backend/Dockerfile.base
-          push: true
-          tags: ${{ env.IMAGE_PREFIX }}/m2-backend-base:latest
-          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-backend-base:cache
-          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-backend-base:cache,mode=max
-
-      - name: Set base image output
-        id: meta
-        run: echo "base_image=${{ env.IMAGE_PREFIX }}/m2-backend-base:latest" >> "$GITHUB_OUTPUT"
-
-  # ─── Job 2: Build app images (fast, only app layers change) ─────────────────
-  build:
-    name: Build & push app images
-    runs-on: ubuntu-latest
-    needs: build-base
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      packages: write
-
-    outputs:
-      version: ${{ steps.release.outputs.version }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set release version
-        id: release
-        run: echo "version=$(git rev-parse --short HEAD)-$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build & push backend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./apps/backend
-          push: true
-          tags: |
-            ${{ env.IMAGE_PREFIX }}/m2-backend:${{ steps.release.outputs.version }}
-            ${{ env.IMAGE_PREFIX }}/m2-backend:latest
-          build-args: |
-            BASE_IMAGE=${{ needs.build-base.outputs.base_image }}
-            RELEASE_VERSION=${{ steps.release.outputs.version }}
-          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-backend:cache
-          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-backend:cache,mode=max
-
-      - name: Build & push alpr
-        uses: docker/build-push-action@v6
-        with:
-          context: ./services/alpr-service
-          push: true
-          tags: |
-            ${{ env.IMAGE_PREFIX }}/m2-alpr:${{ steps.release.outputs.version }}
-            ${{ env.IMAGE_PREFIX }}/m2-alpr:latest
-          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-alpr:cache
-          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-alpr:cache,mode=max
-
-      - name: Build & push frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/frontend/Dockerfile
-          push: true
-          tags: |
-            ${{ env.IMAGE_PREFIX }}/m2-frontend:${{ steps.release.outputs.version }}
-            ${{ env.IMAGE_PREFIX }}/m2-frontend:latest
-          build-args: |
-            VITE_API_BASE_URL=/api
-            RELEASE_VERSION=${{ steps.release.outputs.version }}
-          cache-from: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-frontend:cache
-          cache-to: type=registry,ref=${{ env.IMAGE_PREFIX }}/m2-frontend:cache,mode=max
-
-  # ─── Job 3: Deploy ───────────────────────────────────────────────────────────
   deploy:
-    name: Deploy to VPS
     runs-on: ubuntu-latest
-    needs: build
-    timeout-minutes: 30
 
     environment:
       name: production
       url: https://www.m2centerauto.com.br
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
+      - name: Install deploy tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass rsync
 
-      - name: Log in to GHCR (runner)
-        uses: docker/login-action@v3
+      - name: Sync code to VPS
+        env:
+          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "$VPS_PASSWORD" > ~/.ssh/vps_password
+          chmod 600 ~/.ssh/vps_password
+
+          sshpass -f ~/.ssh/vps_password ssh -o StrictHostKeyChecking=no root@72.60.10.112 \
+            "mkdir -p /opt/m2centerauto"
+
+          sshpass -f ~/.ssh/vps_password rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='apps/backend/node_modules' \
+            --exclude='apps/frontend/node_modules' \
+            --exclude='apps/backend/dist' \
+            --exclude='apps/frontend/dist' \
+            --exclude='apps/backend/uploads' \
+            --exclude='.env' \
+            --exclude='*.log' \
+            --exclude='coverage' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ root@72.60.10.112:/opt/m2centerauto/
+
+      - name: Prepare VPS environment
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          host: 72.60.10.112
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 120s
+          script: |
+            set -e
 
-      # Pull base image on VPS first (only downloads if not already cached there)
-      - name: Warm base image on VPS
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
-        run: |
-          sshpass -e ssh \
-            -o StrictHostKeyChecking=no \
-            -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=20 \
-            ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' BASE_IMAGE='${{ env.IMAGE_PREFIX }}/m2-backend-base:latest' bash -s" <<'ENDSSH'
-            set -euo pipefail
-            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin 2>/dev/null
-            if docker image inspect "${BASE_IMAGE}" >/dev/null 2>&1; then
-              echo "Base image already present on VPS, skipping pull."
-            else
-              echo "Pulling base image for the first time (~1.7 GB, one-time cost)..."
-              docker pull "${BASE_IMAGE}"
-            fi
-          ENDSSH
-
-      # App images are small (~50-100 MB) — pull directly from GHCR on VPS
-      - name: Pull app images on VPS
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
-          VERSION: ${{ needs.build.outputs.version }}
-        run: |
-          sshpass -e ssh \
-            -o StrictHostKeyChecking=no \
-            -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=20 \
-            ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' VERSION='${VERSION}' bash -s" <<'ENDSSH'
-            set -euo pipefail
-            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin 2>/dev/null
-
-            docker pull "${IMAGE_PREFIX}/m2-backend:${VERSION}"
-            docker pull "${IMAGE_PREFIX}/m2-alpr:${VERSION}"
-            docker pull "${IMAGE_PREFIX}/m2-frontend:${VERSION}"
-
-            docker tag "${IMAGE_PREFIX}/m2-backend:${VERSION}"  "m2centerauto/backend:${VERSION}"
-            docker tag "${IMAGE_PREFIX}/m2-alpr:${VERSION}"     "m2centerauto/alpr:${VERSION}"
-            docker tag "${IMAGE_PREFIX}/m2-frontend:${VERSION}" "m2centerauto/frontend:${VERSION}"
-          ENDSSH
-
-      - name: Upload source to VPS
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          RELEASE_DIR="${{ env.APP_ROOT }}/releases/${{ needs.build.outputs.version }}"
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "mkdir -p '$RELEASE_DIR'"
-
-          tar \
-            --exclude=.git \
-            --exclude=.github \
-            --exclude=.turbo \
-            --exclude=.env \
-            --exclude=*.md \
-            --exclude=*.log \
-            --exclude=docs \
-            --exclude=tests \
-            --exclude=.vscode \
-            --exclude=.idea \
-            --exclude=node_modules \
-            --exclude=apps/backend/node_modules \
-            --exclude=apps/frontend/node_modules \
-            --exclude=apps/backend/dist \
-            --exclude=apps/frontend/dist \
-            --exclude=apps/backend/uploads \
-            --exclude=coverage \
-            -czf - . | \
-            sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-              "tar -xzf - -C '$RELEASE_DIR'"
-
-      - name: Prepare VPS runtime
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh \
-            -o StrictHostKeyChecking=no \
-            -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=20 \
-            ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "bash -s" <<'ENDSSH'
-            set -euo pipefail
-
-            if ! command -v apt-get >/dev/null 2>&1; then
-              echo "Unsupported VPS distribution: apt-get is required" >&2
-              exit 1
-            fi
-
-            need_bootstrap=0
-            for binary in curl nginx certbot tar openssl docker; do
-              if ! command -v "$binary" >/dev/null 2>&1; then
-                need_bootstrap=1
-                break
-              fi
-            done
-
-            if ! docker compose version >/dev/null 2>&1; then
-              need_bootstrap=1
-            fi
-
-            if [ "$need_bootstrap" -eq 1 ]; then
-              echo "Bootstrapping VPS runtime dependencies..."
-              export DEBIAN_FRONTEND=noninteractive
-              APT_OPTS=(
-                -o Dpkg::Use-Pty=0
-                -o Acquire::Retries=3
-                -o Acquire::http::Timeout=30
-                -o Acquire::https::Timeout=30
-              )
-
-              timeout 10m apt-get "${APT_OPTS[@]}" update
-              timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
-                ca-certificates \
-                certbot \
-                curl \
-                nginx \
-                openssl \
-                tar
-
-              if ! command -v docker >/dev/null 2>&1; then
-                timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends docker.io
-              fi
-
-              if ! docker compose version >/dev/null 2>&1; then
-                timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends docker-compose-v2 || \
-                timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends docker-compose-plugin
-              fi
-            else
-              echo "VPS runtime dependencies already present; skipping apt bootstrap."
-            fi
-
-            systemctl enable --now docker
-            systemctl enable --now nginx
-            systemctl enable --now certbot.timer || true
-
-            docker compose version >/dev/null
-            nginx -v >/dev/null 2>&1
-            certbot --version >/dev/null
-          ENDSSH
-
-      - name: Ensure .env exists on VPS
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' bash -s" <<'ENDSSH'
-            set -euo pipefail
-
-            ENV_FILE="$APP_ROOT/.env"
-            mkdir -p "$APP_ROOT"
+            APP_DIR="/opt/m2centerauto"
+            ENV_FILE="$APP_DIR/.env"
+            mkdir -p "$APP_DIR"
             touch "$ENV_FILE"
             chmod 600 "$ENV_FILE"
 
-            get_env() {
-              local key="$1"
-              awk -F= -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print $0; exit }' "$ENV_FILE"
-            }
-
+            get_env() { awk -F= -v k="$1" '$1==k{sub(/^[^=]*=/,"",$0);print $0;exit}' "$ENV_FILE"; }
             upsert_env() {
-              local key="$1"
-              local value="$2"
-              local tmp_file
-              tmp_file="$(mktemp)"
-              awk -v key="$key" -v value="$value" '
-                BEGIN { updated = 0 }
-                index($0, key "=") == 1 { print key "=" value; updated = 1; next }
-                { print }
-                END { if (!updated) print key "=" value }
-              ' "$ENV_FILE" > "$tmp_file"
-              mv "$tmp_file" "$ENV_FILE"
+              local k="$1" v="$2" tmp
+              tmp="$(mktemp)"
+              awk -v k="$k" -v v="$v" 'BEGIN{u=0} index($0,k"=")==1{print k"="v;u=1;next}{print} END{if(!u)print k"="v}' "$ENV_FILE" > "$tmp"
+              mv "$tmp" "$ENV_FILE"
             }
-
             ensure_env() {
-              local key="$1"
-              local default_value="$2"
-              local current_value
-              current_value="$(get_env "$key" | tr -d '\r')"
-              if [ -z "$current_value" ]; then
-                upsert_env "$key" "$default_value"
-              fi
+              local cur; cur="$(get_env "$1" | tr -d '\r')"
+              [ -z "$cur" ] && upsert_env "$1" "$2"
+            }
+            ensure_hex() {
+              local cur; cur="$(get_env "$1" | tr -d '\r')"
+              [ -z "$cur" ] && upsert_env "$1" "$(openssl rand -hex "$2")"
             }
 
-            ensure_random_hex() {
-              local key="$1"
-              local bytes="$2"
-              local current_value
-              current_value="$(get_env "$key" | tr -d '\r')"
-              if [ -z "$current_value" ]; then
-                upsert_env "$key" "$(openssl rand -hex "$bytes")"
-              fi
-            }
+            ensure_env  "POSTGRES_USER"     "m2"
+            ensure_env  "POSTGRES_DB"       "m2_auto_hub"
+            ensure_hex  "POSTGRES_PASSWORD" 32
+            ensure_hex  "JWT_SECRET"        32
+            ensure_env  "JWT_EXPIRES_IN"    "7d"
+            ensure_env  "BCRYPT_ROUNDS"     "10"
+            ensure_env  "LOG_LEVEL"         "info"
 
-            ensure_env "POSTGRES_USER" "m2"
-            ensure_env "POSTGRES_DB" "m2_auto_hub"
-            ensure_random_hex "POSTGRES_PASSWORD" 32
-            ensure_random_hex "JWT_SECRET" 32
-            ensure_env "JWT_EXPIRES_IN" "7d"
-            ensure_env "BCRYPT_ROUNDS" "10"
-            ensure_env "LOG_LEVEL" "info"
-
-            upsert_env "NODE_ENV" "production"
-            upsert_env "PORT" "3001"
-            upsert_env "DEPLOY_PORT" "$DEPLOY_PORT"
-            upsert_env "PRIMARY_DOMAIN" "$PRIMARY_DOMAIN"
-            upsert_env "SECONDARY_DOMAIN" "$SECONDARY_DOMAIN"
-            upsert_env "CANONICAL_URL" "$CANONICAL_URL"
-            upsert_env "CORS_ORIGIN" "https://$PRIMARY_DOMAIN,https://$SECONDARY_DOMAIN,http://$PRIMARY_DOMAIN,http://$SECONDARY_DOMAIN"
-            upsert_env "COOKIE_SECURE" "true"
+            upsert_env "NODE_ENV"        "production"
+            upsert_env "PORT"            "3001"
+            upsert_env "DEPLOY_PORT"     "7001"
+            upsert_env "PRIMARY_DOMAIN"  "m2centerauto.com.br"
+            upsert_env "SECONDARY_DOMAIN" "www.m2centerauto.com.br"
+            upsert_env "CANONICAL_URL"   "https://www.m2centerauto.com.br"
+            upsert_env "CORS_ORIGIN"     "https://m2centerauto.com.br,https://www.m2centerauto.com.br,http://m2centerauto.com.br,http://www.m2centerauto.com.br"
+            upsert_env "COOKIE_SECURE"   "true"
             upsert_env "COOKIE_SAME_SITE" "lax"
-            upsert_env "COOKIE_DOMAIN" ".m2centerauto.com.br"
+            upsert_env "COOKIE_DOMAIN"   ".m2centerauto.com.br"
 
-            POSTGRES_USER_VALUE="$(get_env "POSTGRES_USER" | tr -d '\r')"
-            POSTGRES_PASSWORD_VALUE="$(get_env "POSTGRES_PASSWORD" | tr -d '\r')"
-            POSTGRES_DB_VALUE="$(get_env "POSTGRES_DB" | tr -d '\r')"
-            upsert_env "DATABASE_URL" "postgresql://${POSTGRES_USER_VALUE}:${POSTGRES_PASSWORD_VALUE}@postgres:5432/${POSTGRES_DB_VALUE}?schema=public"
+            PG_USER="$(get_env POSTGRES_USER | tr -d '\r')"
+            PG_PASS="$(get_env POSTGRES_PASSWORD | tr -d '\r')"
+            PG_DB="$(get_env POSTGRES_DB | tr -d '\r')"
+            upsert_env "DATABASE_URL" "postgresql://${PG_USER}:${PG_PASS}@postgres:5432/${PG_DB}?schema=public"
 
             chmod 600 "$ENV_FILE"
-          ENDSSH
+            echo ".env prepared."
+
+      - name: Bootstrap VPS runtime
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 72.60.10.112
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 300s
+          script: |
+            set -e
+            need=0
+            for b in curl nginx certbot docker; do command -v "$b" >/dev/null 2>&1 || need=1; break; done
+            docker compose version >/dev/null 2>&1 || need=1
+
+            if [ "$need" -eq 1 ]; then
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get -o Dpkg::Use-Pty=0 update
+              apt-get -o Dpkg::Use-Pty=0 install -y --no-install-recommends \
+                ca-certificates curl nginx certbot openssl tar docker.io
+              apt-get -o Dpkg::Use-Pty=0 install -y --no-install-recommends docker-compose-v2 2>/dev/null || \
+              apt-get -o Dpkg::Use-Pty=0 install -y --no-install-recommends docker-compose-plugin || true
+            fi
+
+            systemctl enable --now docker nginx || true
+            systemctl enable --now certbot.timer 2>/dev/null || true
 
       - name: Deploy on VPS
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh \
-            -o StrictHostKeyChecking=no \
-            -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=20 \
-            ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ needs.build.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash -s" <<'ENDSSH'
-            set -euo pipefail
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 72.60.10.112
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 2400s
+          script: |
+            set -e
+            chmod +x /opt/m2centerauto/deploy-vps.sh
+            bash /opt/m2centerauto/deploy-vps.sh
 
-            log_step() {
-              echo "[$(date -u +%H:%M:%S)] $*"
-            }
-
-            RELEASE_DIR="$APP_ROOT/releases/$RELEASE"
-            CURRENT_DIR="$APP_ROOT/current"
-            ROOT_ENV_FILE="$APP_ROOT/.env"
-            COMPOSE_FILE="$RELEASE_DIR/docker-compose.production.yml"
-            ENV_FILE="$RELEASE_DIR/.env"
-            COMPOSE=(docker compose -p m2centerauto -f "$COMPOSE_FILE" --env-file "$ENV_FILE")
-
-            compose() {
-              "${COMPOSE[@]}" "$@"
-            }
-
-            service_id() {
-              compose ps -q "$1"
-            }
-
-            service_state() {
-              local id
-              id="$(service_id "$1")"
-              if [ -z "$id" ]; then
-                echo "not_found"
-                return
-              fi
-              docker inspect --format '{{.State.Status}}' "$id" 2>/dev/null || echo "not_found"
-            }
-
-            service_health() {
-              local id
-              id="$(service_id "$1")"
-              if [ -z "$id" ]; then
-                echo "not_found"
-                return
-              fi
-              docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}no_healthcheck{{end}}' "$id" 2>/dev/null || echo "not_found"
-            }
-
-            dump_service_logs() {
-              local service="$1"
-              echo "--- logs: $service ---" >&2
-              compose logs --no-color --tail=120 "$service" >&2 || true
-            }
-
-            promote_release() {
-              ln -sfn "$RELEASE_DIR" "$CURRENT_DIR"
-
-              CURRENT_TARGET="$(readlink -f "$CURRENT_DIR" 2>/dev/null || true)"
-              if [ "$CURRENT_TARGET" != "$RELEASE_DIR" ]; then
-                echo "Failed to promote release: current=$CURRENT_TARGET expected=$RELEASE_DIR" >&2
-                exit 1
-              fi
-
-              if [ ! -f "$RELEASE_DIR/.env" ]; then
-                echo "Release env file missing after promotion" >&2
-                exit 1
-              fi
-
-              chmod 600 "$RELEASE_DIR/.env"
-              echo "Current release promoted to $CURRENT_TARGET"
-            }
-
-            wait_for_service_health() {
-              local service="$1"
-              local attempts="$2"
-              local delay_seconds="$3"
-              local i state health
-
-              for i in $(seq 1 "$attempts"); do
-                state="$(service_state "$service")"
-                health="$(service_health "$service")"
-                echo "  $service[$i/$attempts]: state=$state health=$health"
-
-                if [ "$state" = "exited" ] || [ "$state" = "dead" ]; then
-                  dump_service_logs "$service"
-                  return 1
-                fi
-
-                if [ "$health" = "healthy" ] || [ "$health" = "no_healthcheck" ]; then
-                  return 0
-                fi
-
-                sleep "$delay_seconds"
-              done
-
-              dump_service_logs "$service"
-              return 1
-            }
-
-            wait_for_http_200() {
-              local url="$1"
-              local attempts="$2"
-              local delay_seconds="$3"
-              local i
-
-              for i in $(seq 1 "$attempts"); do
-                if curl -fsS --max-time 10 "$url" >/dev/null; then
-                  echo "HTTP OK: $url"
-                  return 0
-                fi
-                echo "  http[$i/$attempts]: waiting for $url"
-                sleep "$delay_seconds"
-              done
-
-              return 1
-            }
-
-            cleanup_failed_bootstrap_migration() {
-              local app_table_count migrations_table_exists failed_migration_count
-
-              app_table_count="$(compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name <> '_prisma_migrations';")"
-
-              if [ "${app_table_count:-0}" != "0" ]; then
-                echo "Database already has application tables, skipping bootstrap cleanup"
-                return 0
-              fi
-
-              migrations_table_exists="$(compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_prisma_migrations';")"
-
-              if [ "${migrations_table_exists:-0}" != "1" ]; then
-                echo "No Prisma migration table found in empty database"
-                return 0
-              fi
-
-              failed_migration_count="$(compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT COUNT(*) FROM \"_prisma_migrations\" WHERE finished_at IS NULL AND rolled_back_at IS NULL;")"
-
-              if [ "${failed_migration_count:-0}" = "0" ]; then
-                echo "No failed Prisma migrations found in empty database"
-                return 0
-              fi
-
-              echo "Cleaning failed Prisma migration state in empty database..."
-              compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'DROP TABLE IF EXISTS "_prisma_migrations";'
-            }
-
-            docker volume create m2centerauto-postgres-data >/dev/null
-            docker volume create m2centerauto-uploads >/dev/null
-
-            cp "$ROOT_ENV_FILE" "$ENV_FILE"
-            printf 'RELEASE_VERSION=%s\n' "$RELEASE" >> "$ENV_FILE"
-            set -a
-            . "$ENV_FILE"
-            set +a
-
-            log_step "Images already loaded — skipping build"
-
-            log_step "Starting postgres and alpr"
-            compose up -d --no-build --no-deps postgres alpr
-            wait_for_service_health postgres 12 5
-            cleanup_failed_bootstrap_migration
-
-            log_step "Running migrations"
-            timeout 20m "${COMPOSE[@]}" run --rm --no-build migrator
-
-            log_step "Bootstrapping essential data"
-            if ! timeout 240s "${COMPOSE[@]}" run --rm --no-build bootstrap; then
-              echo "Bootstrap step failed or timed out after 240s" >&2
-              dump_service_logs backend
-              exit 1
-            fi
-
-            log_step "Waiting for alpr"
-            wait_for_service_health alpr 18 5
-
-            log_step "Starting backend"
-            compose up -d --no-build --no-deps backend
-            wait_for_service_health backend 18 5
-
-            log_step "Starting frontend"
-            compose up -d --no-build --no-deps frontend
-            wait_for_service_health frontend 15 5
-
-            log_step "Starting gateway"
-            compose up -d --no-build --no-deps gateway
-            wait_for_service_health gateway 15 5
-
-            BACKEND_ID="$(service_id backend)"
-            DEPLOYED_VERSION="$(docker exec "$BACKEND_ID" cat /app/.release-version 2>/dev/null || true)"
-            if [ "$DEPLOYED_VERSION" != "$RELEASE" ]; then
-              echo "Release version mismatch: expected=$RELEASE got=$DEPLOYED_VERSION" >&2
-              exit 1
-            fi
-
-            log_step "Verifying gateway, frontend and API on external port"
-            if ! wait_for_http_200 "http://127.0.0.1:${DEPLOY_PORT}/health" 8 5; then
-              dump_service_logs gateway
-              exit 1
-            fi
-
-            if ! wait_for_http_200 "http://127.0.0.1:${DEPLOY_PORT}/api/health" 8 5; then
-              dump_service_logs backend
-              dump_service_logs gateway
-              exit 1
-            fi
-
-            if ! curl -fsS --max-time 10 -o /dev/null "http://127.0.0.1:${DEPLOY_PORT}/"; then
-              dump_service_logs frontend
-              dump_service_logs gateway
-              exit 1
-            fi
-
-            promote_release
-
-            log_step "Pruning dangling Docker images after deploy"
-            docker image prune -f >/dev/null 2>&1 || true
-
-            ls -dt "$APP_ROOT/releases"/*/ 2>/dev/null | tail -n +4 | xargs rm -rf 2>/dev/null || true
-          ENDSSH
-
-      - name: Configure Nginx (HTTP)
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' bash -s" <<'ENDSSH'
-            set -euo pipefail
+      - name: Configure Nginx
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 72.60.10.112
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 120s
+          script: |
+            set -e
+            PRIMARY=m2centerauto.com.br
+            SECONDARY=www.m2centerauto.com.br
+            CANONICAL=https://www.m2centerauto.com.br
+            PORT=7001
 
             mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /var/www/certbot
-            {
-              printf '%s\n' 'server {'
-              printf '%s\n' '    listen 80;'
-              printf '%s\n' "    server_name ${PRIMARY_DOMAIN} ${SECONDARY_DOMAIN};"
-              printf '%s\n' '    client_max_body_size 25m;'
-              printf '%s\n' ''
-              printf '%s\n' '    location /.well-known/acme-challenge/ {'
-              printf '%s\n' '        root /var/www/certbot;'
-              printf '%s\n' '    }'
-              printf '%s\n' ''
-              printf '%s\n' '    location / {'
-              printf '%s\n' "        proxy_pass http://127.0.0.1:${DEPLOY_PORT};"
-              printf '%s\n' '        proxy_http_version 1.1;'
-              printf '%s\n' '        proxy_set_header Upgrade $http_upgrade;'
-              printf '%s\n' '        proxy_set_header Connection "upgrade";'
-              printf '%s\n' '        proxy_set_header Host $host;'
-              printf '%s\n' '        proxy_set_header X-Real-IP $remote_addr;'
-              printf '%s\n' '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;'
-              printf '%s\n' '        proxy_set_header X-Forwarded-Proto $scheme;'
-              printf '%s\n' '        proxy_read_timeout 86400;'
-              printf '%s\n' '    }'
-              printf '%s\n' '}'
-            } > /etc/nginx/sites-available/m2centerauto
+
+            # HTTP config (also handles ACME challenge)
+            cat > /etc/nginx/sites-available/m2centerauto <<NGINX
+            server {
+                listen 80;
+                server_name $PRIMARY $SECONDARY;
+                client_max_body_size 25m;
+
+                location /.well-known/acme-challenge/ {
+                    root /var/www/certbot;
+                }
+
+                location / {
+                    proxy_pass http://127.0.0.1:$PORT;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection "upgrade";
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                    proxy_read_timeout 86400;
+                }
+            }
+            NGINX
 
             ln -sf /etc/nginx/sites-available/m2centerauto /etc/nginx/sites-enabled/m2centerauto
-            nginx -t
-            systemctl reload nginx
-          ENDSSH
+            nginx -t && systemctl reload nginx
 
-      - name: Obtain SSL certificate
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' SSL_EMAIL='${{ env.SSL_EMAIL }}' bash -s" <<'ENDSSH'
-            set -euo pipefail
-
-            mkdir -p /var/www/certbot
-            pkill -f certbot 2>/dev/null || true
-            sleep 2
-
-            if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
-              if ! timeout 10m certbot certonly --webroot \
-                -w /var/www/certbot \
-                -d "$PRIMARY_DOMAIN" \
-                -d "$SECONDARY_DOMAIN" \
-                --email "$SSL_EMAIL" \
-                --agree-tos \
-                --non-interactive; then
-                echo "Warning: certbot failed, keeping HTTP-only config for this deploy" >&2
-              fi
-            else
-              echo "Certificate already exists, skipping renewal"
-            fi
-          ENDSSH
-
-      - name: Configure Nginx (HTTPS)
-        env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' bash -s" <<'ENDSSH'
-            set -euo pipefail
-
-            if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
-              echo "SSL cert not found, keeping HTTP-only config"
-              exit 0
+            # SSL
+            if [ ! -f "/etc/letsencrypt/live/$PRIMARY/fullchain.pem" ]; then
+              certbot certonly --webroot -w /var/www/certbot \
+                -d "$PRIMARY" -d "$SECONDARY" \
+                --email admin@m2centerauto.com.br \
+                --agree-tos --non-interactive 2>/dev/null || echo "certbot failed, keeping HTTP"
             fi
 
-            {
-              printf '%s\n' 'server {'
-              printf '%s\n' '    listen 80;'
-              printf '%s\n' "    server_name ${PRIMARY_DOMAIN} ${SECONDARY_DOMAIN};"
-              printf '%s\n' ''
-              printf '%s\n' '    location /.well-known/acme-challenge/ {'
-              printf '%s\n' '        root /var/www/certbot;'
-              printf '%s\n' '    }'
-              printf '%s\n' ''
-              printf '%s\n' "    location / { return 301 ${CANONICAL_URL}\$request_uri; }"
-              printf '%s\n' '}'
-              printf '%s\n' ''
-              printf '%s\n' 'server {'
-              printf '%s\n' '    listen 443 ssl http2;'
-              printf '%s\n' "    server_name ${PRIMARY_DOMAIN} ${SECONDARY_DOMAIN};"
-              printf '%s\n' '    client_max_body_size 25m;'
-              printf '%s\n' ''
-              printf '%s\n' "    ssl_certificate /etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem;"
-              printf '%s\n' "    ssl_certificate_key /etc/letsencrypt/live/${PRIMARY_DOMAIN}/privkey.pem;"
-              printf '%s\n' '    ssl_protocols TLSv1.2 TLSv1.3;'
-              printf '%s\n' '    ssl_ciphers HIGH:!aNULL:!MD5;'
-              printf '%s\n' ''
-              printf '%s\n' '    if ($host != "www.m2centerauto.com.br") {'
-              printf '%s\n' "        return 301 ${CANONICAL_URL}\$request_uri;"
-              printf '%s\n' '    }'
-              printf '%s\n' ''
-              printf '%s\n' '    location / {'
-              printf '%s\n' "        proxy_pass http://127.0.0.1:${DEPLOY_PORT};"
-              printf '%s\n' '        proxy_http_version 1.1;'
-              printf '%s\n' '        proxy_set_header Upgrade $http_upgrade;'
-              printf '%s\n' '        proxy_set_header Connection "upgrade";'
-              printf '%s\n' '        proxy_set_header Host $host;'
-              printf '%s\n' '        proxy_set_header X-Real-IP $remote_addr;'
-              printf '%s\n' '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;'
-              printf '%s\n' '        proxy_set_header X-Forwarded-Proto $scheme;'
-              printf '%s\n' '        proxy_read_timeout 86400;'
-              printf '%s\n' '    }'
-              printf '%s\n' '}'
-            } > /etc/nginx/sites-available/m2centerauto
+            # HTTPS config if cert exists
+            if [ -f "/etc/letsencrypt/live/$PRIMARY/fullchain.pem" ]; then
+              cat > /etc/nginx/sites-available/m2centerauto <<NGINX
+            server {
+                listen 80;
+                server_name $PRIMARY $SECONDARY;
+                location /.well-known/acme-challenge/ { root /var/www/certbot; }
+                location / { return 301 $CANONICAL\$request_uri; }
+            }
+            server {
+                listen 443 ssl http2;
+                server_name $PRIMARY $SECONDARY;
+                client_max_body_size 25m;
+                ssl_certificate /etc/letsencrypt/live/$PRIMARY/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/$PRIMARY/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers HIGH:!aNULL:!MD5;
+                if (\$host != "www.m2centerauto.com.br") { return 301 $CANONICAL\$request_uri; }
+                location / {
+                    proxy_pass http://127.0.0.1:$PORT;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection "upgrade";
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                    proxy_read_timeout 86400;
+                }
+            }
+            NGINX
+              nginx -t && systemctl reload nginx
+            fi
 
-            nginx -t
-            systemctl reload nginx
-          ENDSSH
-
-      - name: Notify success
-        run: |
-          echo "Deployment ${{ needs.build.outputs.version }} completed successfully"
-          echo "URL: ${{ env.CANONICAL_URL }}"
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 72.60.10.112
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 30s
+          script: |
+            curl -fsS http://localhost:7001/health
+            echo "Deploy OK: https://www.m2centerauto.com.br"

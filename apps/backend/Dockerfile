@@ -1,5 +1,12 @@
-ARG BASE_IMAGE=ghcr.io/fernandinhomartins40/m2-backend-base:latest
-FROM ${BASE_IMAGE} AS base
+FROM mcr.microsoft.com/playwright:v1.58.2-jammy AS base
+WORKDIR /app
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    openssl \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
 COPY package*.json ./
