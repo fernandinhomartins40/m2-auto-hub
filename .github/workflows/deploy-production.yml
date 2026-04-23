@@ -376,14 +376,18 @@ jobs:
             }
 
             cd "$RELEASE_DIR"
+            log_step "Pruning unused Docker cache before builds"
+            docker image prune -af >/dev/null 2>&1 || true
+            docker builder prune -af >/dev/null 2>&1 || true
+
             log_step "Building alpr image with cache"
-            timeout 35m "${COMPOSE[@]}" build alpr
+            DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 timeout 35m "${COMPOSE[@]}" build alpr
 
             log_step "Building backend image with cache"
-            timeout 25m "${COMPOSE[@]}" build backend
+            DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 timeout 25m "${COMPOSE[@]}" build backend
 
             log_step "Building frontend image with cache"
-            timeout 15m "${COMPOSE[@]}" build frontend
+            DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 timeout 15m "${COMPOSE[@]}" build frontend
 
             log_step "Starting postgres and alpr"
             compose up -d --no-build --no-deps postgres alpr
@@ -441,6 +445,9 @@ jobs:
             fi
 
             promote_release
+
+            log_step "Pruning unused Docker images after deploy"
+            docker image prune -af >/dev/null 2>&1 || true
 
             ls -dt "$APP_ROOT/releases"/*/ 2>/dev/null | tail -n +4 | xargs rm -rf 2>/dev/null || true
           ENDSSH
