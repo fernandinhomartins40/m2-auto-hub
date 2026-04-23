@@ -214,6 +214,10 @@ jobs:
             "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ steps.release.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
+            log_step() {
+              echo "[$(date -u +%H:%M:%S)] $*"
+            }
+
             RELEASE_DIR="$APP_ROOT/releases/$RELEASE"
             CURRENT_DIR="$APP_ROOT/current"
             ROOT_ENV_FILE="$APP_ROOT/.env"
@@ -271,31 +275,6 @@ jobs:
               chmod 600 "$RELEASE_DIR/.env"
 
               echo "Current release promoted to $CURRENT_TARGET"
-            }
-
-            wait_for_service_state() {
-              local service="$1"
-              local desired_state="$2"
-              local attempts="$3"
-              local delay_seconds="$4"
-              local i
-              local state
-
-              for i in $(seq 1 "$attempts"); do
-                state="$(service_state "$service")"
-                echo "  $service[$i/$attempts]: state=$state"
-                if [ "$state" = "$desired_state" ]; then
-                  return 0
-                fi
-                if [ "$state" = "exited" ] || [ "$state" = "dead" ]; then
-                  dump_service_logs "$service"
-                  return 1
-                fi
-                sleep "$delay_seconds"
-              done
-
-              dump_service_logs "$service"
-              return 1
             }
 
             wait_for_service_health() {
@@ -386,34 +365,30 @@ jobs:
             }
 
             cd "$RELEASE_DIR"
-            compose build --no-cache alpr backend frontend migrator bootstrap
+            log_step "Building images with cache"
+            timeout 30m compose build alpr backend frontend
 
-            echo "Starting postgres and alpr..."
-            compose up -d postgres alpr
-            wait_for_service_state postgres running 24 5
+            log_step "Starting postgres and alpr"
+            compose up -d --no-build postgres alpr
             wait_for_service_health postgres 36 5
-            wait_for_service_state alpr running 24 5
             wait_for_service_health alpr 36 5
             cleanup_failed_bootstrap_migration
 
-            echo "Running migrations..."
-            compose run --rm migrator
+            log_step "Running migrations"
+            timeout 20m compose run --rm --no-build migrator
 
-            echo "Bootstrapping essential data..."
-            if ! timeout 240s compose run --rm bootstrap; then
+            log_step "Bootstrapping essential data"
+            if ! timeout 240s compose run --rm --no-build bootstrap; then
               echo "Bootstrap step failed or timed out after 240s" >&2
               dump_service_logs backend
               exit 1
             fi
 
-            echo "Starting application services..."
-            compose up -d --force-recreate --remove-orphans postgres alpr backend frontend gateway
+            log_step "Starting application services"
+            compose up -d --no-build --force-recreate --remove-orphans postgres alpr backend frontend gateway
 
-            wait_for_service_state backend running 24 5
             wait_for_service_health backend 36 5
-            wait_for_service_state frontend running 24 5
             wait_for_service_health frontend 30 5
-            wait_for_service_state gateway running 24 5
             wait_for_service_health gateway 30 5
 
             BACKEND_ID="$(service_id backend)"
@@ -423,7 +398,7 @@ jobs:
               exit 1
             fi
 
-            echo "Verifying gateway, frontend and API on external port..."
+            log_step "Verifying gateway, frontend and API on external port"
             if ! wait_for_http_200 "http://127.0.0.1:${DEPLOY_PORT}/health" 18 5; then
               dump_service_logs gateway
               exit 1
@@ -497,7 +472,7 @@ jobs:
             sleep 2
 
             if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
-              if ! certbot certonly --webroot \
+              if ! timeout 10m certbot certonly --webroot \
                 -w /var/www/certbot \
                 -d "$PRIMARY_DOMAIN" \
                 -d "$SECONDARY_DOMAIN" \
