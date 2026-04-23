@@ -377,7 +377,7 @@ jobs:
 
             cd "$RELEASE_DIR"
             log_step "Building alpr image with cache"
-            timeout 20m "${COMPOSE[@]}" build alpr
+            timeout 35m "${COMPOSE[@]}" build alpr
 
             log_step "Building backend image with cache"
             timeout 25m "${COMPOSE[@]}" build backend
