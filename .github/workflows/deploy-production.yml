@@ -26,7 +26,7 @@ jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     environment:
       name: production
@@ -344,6 +344,9 @@ jobs:
             set -a
             . "$ENV_FILE"
             set +a
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            export BUILDKIT_PROGRESS=plain
 
             cleanup_failed_bootstrap_migration() {
               local app_table_count
@@ -376,18 +379,16 @@ jobs:
             }
 
             cd "$RELEASE_DIR"
-            log_step "Pruning unused Docker cache before builds"
-            docker image prune -af >/dev/null 2>&1 || true
-            docker builder prune -af >/dev/null 2>&1 || true
+            log_step "Preserving Docker cache for incremental builds"
 
             log_step "Building alpr image with cache"
-            DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 timeout 35m "${COMPOSE[@]}" build alpr
+            timeout 35m "${COMPOSE[@]}" build alpr
 
             log_step "Building backend image with cache"
-            DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 timeout 25m "${COMPOSE[@]}" build backend
+            timeout 25m "${COMPOSE[@]}" build backend
 
             log_step "Building frontend image with cache"
-            DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 timeout 15m "${COMPOSE[@]}" build frontend
+            timeout 15m "${COMPOSE[@]}" build frontend
 
             log_step "Starting postgres and alpr"
             compose up -d --no-build --no-deps postgres alpr
@@ -446,8 +447,8 @@ jobs:
 
             promote_release
 
-            log_step "Pruning unused Docker images after deploy"
-            docker image prune -af >/dev/null 2>&1 || true
+            log_step "Pruning dangling Docker images after deploy"
+            docker image prune -f >/dev/null 2>&1 || true
 
             ls -dt "$APP_ROOT/releases"/*/ 2>/dev/null | tail -n +4 | xargs rm -rf 2>/dev/null || true
           ENDSSH
