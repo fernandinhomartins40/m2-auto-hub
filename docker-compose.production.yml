@@ -31,7 +31,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   alpr:
-    image: ${IMAGE_PREFIX:-m2centerauto}/m2-alpr:${RELEASE_VERSION:-local}
+    image: m2centerauto/alpr:${RELEASE_VERSION:-local}
     restart: unless-stopped
     healthcheck:
       test:
@@ -45,7 +45,7 @@ services:
       retries: 6
 
   migrator:
-    image: ${IMAGE_PREFIX:-m2centerauto}/m2-backend:${RELEASE_VERSION:-local}
+    image: m2centerauto/backend:${RELEASE_VERSION:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,7 +54,7 @@ services:
     restart: "no"
 
   bootstrap:
-    image: ${IMAGE_PREFIX:-m2centerauto}/m2-backend:${RELEASE_VERSION:-local}
+    image: m2centerauto/backend:${RELEASE_VERSION:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,7 +63,7 @@ services:
     restart: "no"
 
   backend:
-    image: ${IMAGE_PREFIX:-m2centerauto}/m2-backend:${RELEASE_VERSION:-local}
+    image: m2centerauto/backend:${RELEASE_VERSION:-local}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -84,7 +84,7 @@ services:
       - uploads_data:/app/uploads
 
   frontend:
-    image: ${IMAGE_PREFIX:-m2centerauto}/m2-frontend:${RELEASE_VERSION:-local}
+    image: m2centerauto/frontend:${RELEASE_VERSION:-local}
     restart: unless-stopped
     depends_on:
       backend:

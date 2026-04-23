@@ -116,6 +116,35 @@ jobs:
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
+      - name: Log in to GHCR (runner)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Transfer images to VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          SSH="sshpass -e ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=40"
+
+          transfer() {
+            local image="$1"
+            local tag="$2"
+            echo ">>> Transferring ${image} as ${tag}"
+            docker pull "${image}"
+            docker tag "${image}" "${tag}"
+            docker save "${tag}" | gzip | \
+              $SSH ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+                "docker load"
+          }
+
+          transfer "${{ env.IMAGE_PREFIX }}/m2-backend:${VERSION}"  "m2centerauto/backend:${VERSION}"
+          transfer "${{ env.IMAGE_PREFIX }}/m2-alpr:${VERSION}"     "m2centerauto/alpr:${VERSION}"
+          transfer "${{ env.IMAGE_PREFIX }}/m2-frontend:${VERSION}" "m2centerauto/frontend:${VERSION}"
+
       - name: Upload source to VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
@@ -292,15 +321,13 @@ jobs:
       - name: Deploy on VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
         run: |
           sshpass -e ssh \
             -o StrictHostKeyChecking=no \
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=20 \
             ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ needs.build.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" <<'ENDSSH'
+            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ needs.build.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
             log_step() {
@@ -449,33 +476,11 @@ jobs:
 
             cp "$ROOT_ENV_FILE" "$ENV_FILE"
             printf 'RELEASE_VERSION=%s\n' "$RELEASE" >> "$ENV_FILE"
-            printf 'IMAGE_PREFIX=%s\n' "$IMAGE_PREFIX" >> "$ENV_FILE"
             set -a
             . "$ENV_FILE"
             set +a
 
-            log_step "Logging in to GHCR"
-            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
-
-            pull_image() {
-              local image="$1"
-              log_step "Pulling ${image}"
-              # heartbeat every 20s so SSH does not time out during large pulls
-              while sleep 20; do echo "  [pull] still downloading ${image}..."; done &
-              local hb_pid=$!
-              docker pull "${image}"
-              kill "${hb_pid}" 2>/dev/null || true
-              wait "${hb_pid}" 2>/dev/null || true
-            }
-
-            pull_image "${IMAGE_PREFIX}/m2-backend:${RELEASE}"
-            pull_image "${IMAGE_PREFIX}/m2-alpr:${RELEASE}"
-            pull_image "${IMAGE_PREFIX}/m2-frontend:${RELEASE}"
-
-            log_step "Tagging images for docker compose"
-            docker tag "${IMAGE_PREFIX}/m2-backend:${RELEASE}" "m2centerauto/backend:${RELEASE}"
-            docker tag "${IMAGE_PREFIX}/m2-alpr:${RELEASE}" "m2centerauto/alpr:${RELEASE}"
-            docker tag "${IMAGE_PREFIX}/m2-frontend:${RELEASE}" "m2centerauto/frontend:${RELEASE}"
+            log_step "Images already loaded via docker load"
 
             log_step "Starting postgres and alpr"
             compose up -d --no-build --no-deps postgres alpr
