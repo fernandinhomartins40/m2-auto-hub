@@ -75,23 +75,47 @@ jobs:
               exit 1
             fi
 
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update
-            apt-get install -y --no-install-recommends \
-              ca-certificates \
-              certbot \
-              curl \
-              nginx \
-              openssl \
-              tar
-
-            if ! command -v docker >/dev/null 2>&1; then
-              apt-get install -y --no-install-recommends docker.io
-            fi
+            need_bootstrap=0
+            for binary in curl nginx certbot tar openssl docker; do
+              if ! command -v "$binary" >/dev/null 2>&1; then
+                need_bootstrap=1
+                break
+              fi
+            done
 
             if ! docker compose version >/dev/null 2>&1; then
-              apt-get install -y --no-install-recommends docker-compose-v2 || \
-              apt-get install -y --no-install-recommends docker-compose-plugin
+              need_bootstrap=1
+            fi
+
+            if [ "$need_bootstrap" -eq 1 ]; then
+              echo "Bootstrapping VPS runtime dependencies..."
+              export DEBIAN_FRONTEND=noninteractive
+              APT_OPTS=(
+                -o Dpkg::Use-Pty=0
+                -o Acquire::Retries=3
+                -o Acquire::http::Timeout=30
+                -o Acquire::https::Timeout=30
+              )
+
+              timeout 10m apt-get "${APT_OPTS[@]}" update
+              timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
+                ca-certificates \
+                certbot \
+                curl \
+                nginx \
+                openssl \
+                tar
+
+              if ! command -v docker >/dev/null 2>&1; then
+                timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends docker.io
+              fi
+
+              if ! docker compose version >/dev/null 2>&1; then
+                timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends docker-compose-v2 || \
+                timeout 10m apt-get "${APT_OPTS[@]}" install -y --no-install-recommends docker-compose-plugin
+              fi
+            else
+              echo "VPS runtime dependencies already present; skipping apt bootstrap."
             fi
 
             systemctl enable --now docker
