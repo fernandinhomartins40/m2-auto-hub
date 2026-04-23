@@ -376,8 +376,14 @@ jobs:
             }
 
             cd "$RELEASE_DIR"
-            log_step "Building images with cache"
-            timeout 30m "${COMPOSE[@]}" build alpr backend frontend
+            log_step "Building alpr image with cache"
+            timeout 20m "${COMPOSE[@]}" build alpr
+
+            log_step "Building backend image with cache"
+            timeout 25m "${COMPOSE[@]}" build backend
+
+            log_step "Building frontend image with cache"
+            timeout 15m "${COMPOSE[@]}" build frontend
 
             log_step "Starting postgres and alpr"
             compose up -d --no-build --no-deps postgres alpr
