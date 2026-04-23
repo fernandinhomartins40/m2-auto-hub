@@ -66,7 +66,7 @@ export default function Contact() {
         icon: "Mail",
         title: "E-mail",
         content: ["contato@m2centerauto.com.br", "Resposta em até 24h"],
-        color: { type: 'solid', solid: '#dc2626' } // text-red-600
+        color: { type: 'solid', solid: '#2563eb' } // text-blue-600
       },
       {
         id: "4",

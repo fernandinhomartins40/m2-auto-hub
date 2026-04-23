@@ -90,10 +90,10 @@ export default function StoreMobileDrawer({
         </div>
 
         {/* Admin/Mechanic Info */}
-        <div className="p-4 bg-gradient-to-r from-moria-orange/10 via-rose-50 to-stone-100 border-b border-gray-200">
+        <div className="p-4 bg-gradient-to-r from-primary/10 via-blue-50 to-stone-100 border-b border-gray-200">
           <div className="flex items-center gap-3">
             {/* Avatar */}
-            <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold bg-gradient-to-br from-moria-orange to-rose-700 shadow-sm">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold bg-gradient-to-br from-primary to-primary-hover shadow-sm">
               {getInitials(adminName)}
             </div>
 

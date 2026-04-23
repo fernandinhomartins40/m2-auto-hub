@@ -56,7 +56,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       {/* Header - Hidden on Mobile */}
       <div className="hidden md:block p-4 border-b border-gray-700">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-moria-orange to-rose-700 text-base font-black tracking-[0.24em] text-white shadow-lg">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-base font-black tracking-[0.24em] text-white shadow-lg">
             M2
           </div>
           <div>

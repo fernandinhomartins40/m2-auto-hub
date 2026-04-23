@@ -86,7 +86,7 @@ export const ContactEditor = ({ config, onChange }: ContactEditorProps) => {
           label="Cor de Fundo CTA / Gradiente"
           value={config.ctaBackgroundColor || { type: 'solid', solid: '#ff6600' }}
           onChange={(ctaBackgroundColor) => updateConfig({ ctaBackgroundColor })}
-          defaultGradientPreset="orangeToGold"
+          defaultGradientPreset="blueToGold"
           description="Cor de fundo do CTA final (WhatsApp)"
         />
       </Card>
@@ -178,7 +178,7 @@ export const ContactEditor = ({ config, onChange }: ContactEditorProps) => {
                 label="Cor do Ícone / Gradiente"
                 value={stringToColorOrGradient(item.color) || { type: 'solid', solid: '#ff6600' }}
                 onChange={(color) => update({ color })}
-                defaultGradientPreset="orangeToGold"
+                defaultGradientPreset="blueToGold"
                 description="Cor sólida ou gradiente para o ícone"
               />
             </div>

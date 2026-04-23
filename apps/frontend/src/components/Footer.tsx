@@ -47,7 +47,7 @@ export function Footer() {
             {logo.url ? (
               <img src={logo.url} alt={logo.alt} className="h-16 mb-4" />
             ) : (
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-moria-orange to-rose-700 text-sm font-black tracking-[0.24em] text-white shadow-lg">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-primary to-primary-hover text-sm font-black tracking-[0.24em] text-white shadow-lg">
                 M2
               </div>
             )}

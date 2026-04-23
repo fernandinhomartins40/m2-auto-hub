@@ -95,7 +95,7 @@ export const TAILWIND_COLOR_MAP: Record<string, string> = {
   'text-gray-900': '#111827',
 
   // Moria Custom Colors
-  'text-moria-orange': '#ff6933',
+  'text-moria-orange': '#2563eb',
   'text-moria-black': '#1a1a1a',
   'text-gold-accent': '#ffa600',
 };
@@ -122,8 +122,8 @@ export const convertTailwindToHex = (tailwindClass: string): string => {
   }
 
   // Fallback: cor laranja Moria
-  console.warn(`[colorHelpers] Cor Tailwind não mapeada: "${className}", usando fallback #ff6933`);
-  return '#ff6933';
+  console.warn(`[colorHelpers] Cor Tailwind não mapeada: "${className}", usando fallback #2563eb`);
+  return '#2563eb';
 };
 
 /**
@@ -186,7 +186,7 @@ export const stringToColorOrGradient = (colorString: string | ColorOrGradientVal
   if (colorString === null || colorString === undefined) {
     return {
       type: 'solid',
-      solid: '#ff6933',
+      solid: '#2563eb',
     };
   }
 
@@ -200,13 +200,13 @@ export const stringToColorOrGradient = (colorString: string | ColorOrGradientVal
     if (colorString.type === 'solid' && !colorString.solid) {
       return {
         type: 'solid',
-        solid: '#ff6933',
+        solid: '#2563eb',
       };
     }
     if (colorString.type === 'gradient' && (!colorString.gradient || !colorString.gradient.colors)) {
       return {
         type: 'solid',
-        solid: '#ff6933',
+        solid: '#2563eb',
       };
     }
   }
@@ -223,7 +223,7 @@ export const stringToColorOrGradient = (colorString: string | ColorOrGradientVal
   // Fallback para qualquer outro caso
   return {
     type: 'solid',
-    solid: '#ff6933',
+    solid: '#2563eb',
   };
 };
 

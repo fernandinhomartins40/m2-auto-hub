@@ -39,7 +39,7 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
           <div className={cn("flex items-center space-x-3", isCollapsed && "justify-center")}>
             {!isCollapsed ? (
               <>
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-moria-orange to-rose-700 text-sm font-black tracking-[0.22em] text-white shadow-lg">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-sm font-black tracking-[0.22em] text-white shadow-lg">
                   M2
                 </div>
                 <div>
@@ -48,7 +48,7 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
                 </div>
               </>
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-moria-orange to-rose-700 text-sm font-black tracking-[0.22em] text-white shadow-lg">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-sm font-black tracking-[0.22em] text-white shadow-lg">
                 M2
               </div>
             )}

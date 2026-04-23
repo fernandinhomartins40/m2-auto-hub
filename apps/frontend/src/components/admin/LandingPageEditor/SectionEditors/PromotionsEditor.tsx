@@ -135,11 +135,11 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
                     <Timer className="h-12 w-12 text-moria-orange" />
                   </div>
                   <div className="p-4">
-                    <Badge className="bg-red-500 text-white mb-2">-{product.discount}%</Badge>
+                    <Badge className="bg-primary text-primary-foreground mb-2">-{product.discount}%</Badge>
                     <p className="text-sm font-semibold text-gray-900 mb-2">{product.title}</p>
                     <div>
                       <span className="text-xs text-gray-500 line-through">R$ {product.oldPrice.toFixed(2)}</span>
-                      <span className="text-xl font-bold text-red-600 ml-2">R$ {product.newPrice.toFixed(2)}</span>
+                      <span className="text-xl font-bold text-primary ml-2">R$ {product.newPrice.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

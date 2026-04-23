@@ -47,7 +47,7 @@ export default function About() {
     valuesSubtitle: "Os princípios que guiam nossa empresa e nosso compromisso com cada cliente.",
     values: [
       { id: "1", icon: "Shield", title: "Qualidade", description: "Compromisso com peças originais e serviços de alta qualidade", color: { type: 'solid', solid: '#2563eb' } }, // text-blue-600
-      { id: "2", icon: "Heart", title: "Confiança", description: "Relacionamento baseado na transparência e honestidade", color: { type: 'solid', solid: '#dc2626' } }, // text-red-600
+      { id: "2", icon: "Heart", title: "Confiança", description: "Relacionamento baseado na transparência e honestidade", color: { type: 'solid', solid: '#2563eb' } }, // text-blue-600
       { id: "3", icon: "Target", title: "Excelência", description: "Busca constante pela melhoria contínua dos nossos serviços", color: { type: 'solid', solid: '#16a34a' } }, // text-green-600
       { id: "4", icon: "Users", title: "Relacionamento", description: "Foco no atendimento personalizado e duradouro", color: { type: 'solid', solid: '#9333ea' } } // text-purple-600
     ],

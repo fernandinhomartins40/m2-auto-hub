@@ -121,7 +121,7 @@ export function Header() {
     ? { color: '#ffffff' }
     : colorOrGradientToCSS(config.header.textColor, { forText: true });
   const hoverTextStyle = loading
-    ? { color: '#ff6933' }
+    ? { color: '#2563eb' }
     : colorOrGradientToCSS(config.header.hoverColor, { forText: true });
 
   const logoSrc = loading ? '' : config.header.logo.url || '';
@@ -139,7 +139,7 @@ export function Header() {
                 {logoSrc ? (
                   <img src={logoSrc} alt={logoAlt} className="h-20 w-auto" />
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-moria-orange to-rose-700 text-lg font-black tracking-[0.28em] text-white shadow-lg">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-primary to-primary-hover text-lg font-black tracking-[0.28em] text-white shadow-lg">
                     M2
                   </div>
                 )}

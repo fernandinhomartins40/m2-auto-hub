@@ -1,6 +1,6 @@
 /**
  * ColorPicker - Seletor de cores com preview
- * Adaptado do Ferraco para M2 (paleta vermelho/grafite)
+ * Adaptado do Ferraco para M2 (paleta azul/grafite)
  */
 
 import { useState } from 'react';
@@ -17,15 +17,15 @@ interface ColorPickerProps {
   description?: string;
 }
 
-// Presets M2: vermelho, grafite e neutros
+// Presets M2: azul, grafite e neutros
 const MORIA_PRESETS = [
-  '#c62828', // m2 red
-  '#a61d1d', // m2 red dark
+  '#2563eb', // m2 blue
+  '#1d4ed8', // m2 blue dark
   '#171b22', // graphite
   '#ffffff', // white
   '#f59e0b', // gold/amber
   '#d97706', // gold darker
-  '#e15656', // red lighter
+  '#60a5fa', // blue lighter
   '#292524', // stone-800
   '#57534e', // stone-600
   '#78716c', // stone-500
@@ -98,7 +98,7 @@ export const ColorPicker = ({
                         className="w-8 h-8 rounded border-2 hover:scale-110 transition-transform"
                         style={{
                           backgroundColor: preset,
-                          borderColor: preset === localValue ? '#c62828' : 'transparent',
+                          borderColor: preset === localValue ? '#2563eb' : 'transparent',
                         }}
                         title={preset}
                       />

@@ -46,9 +46,9 @@
 }
 
 .lojista-nav-item.active {
-  background: #c62828;
+  background: hsl(var(--primary));
   color: white;
-  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.28);
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.28);
 }
 
 /* Cards do Dashboard */
@@ -73,13 +73,13 @@
   padding: 1.5rem;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border-left: 4px solid #c62828;
+  border-left: 4px solid hsl(var(--primary));
 }
 
 .metrica-numero {
   font-size: 2rem;
   font-weight: bold;
-  color: #c62828;
+  color: hsl(var(--primary));
   margin-bottom: 0.5rem;
 }
 
@@ -154,7 +154,7 @@
 
 /* Botões do Admin */
 .lojista-btn-primary {
-  background: #c62828;
+  background: hsl(var(--primary));
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -165,9 +165,9 @@
 }
 
 .lojista-btn-primary:hover {
-  background: #a61d1d;
+  background: hsl(var(--primary-hover));
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.28);
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.28);
 }
 
 .lojista-btn-secondary {
@@ -183,8 +183,8 @@
 
 .lojista-btn-secondary:hover {
   background: #f8fafc;
-  border-color: #c62828;
-  color: #c62828;
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
 }
 
 /* Filtros e Busca */
@@ -211,8 +211,8 @@
 
 .lojista-search input:focus {
   outline: none;
-  border-color: #c62828;
-  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12);
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
 }
 
 /* Header do Admin */

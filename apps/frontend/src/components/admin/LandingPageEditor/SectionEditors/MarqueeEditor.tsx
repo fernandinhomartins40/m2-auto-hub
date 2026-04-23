@@ -112,7 +112,7 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
           label="Cor de Fundo / Gradiente"
           value={config.backgroundColor || { type: 'solid', solid: '#ff6600' }}
           onChange={(backgroundColor) => updateConfig({ backgroundColor })}
-          defaultGradientPreset="orangeToGold"
+          defaultGradientPreset="blueToGold"
           description="Cor ou gradiente do fundo do banner"
         />
 

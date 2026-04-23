@@ -107,7 +107,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
           label="Cor de Fundo Compromisso / Gradiente"
           value={config.commitmentBackgroundColor || { type: 'solid', solid: '#ff6600' }}
           onChange={(commitmentBackgroundColor) => updateConfig({ commitmentBackgroundColor })}
-          defaultGradientPreset="orangeToGold"
+          defaultGradientPreset="blueToGold"
           description="Cor de fundo da seção de compromisso (CTA final)"
         />
       </Card>
@@ -347,7 +347,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
                 label="Cor do Ícone / Gradiente"
                 value={stringToColorOrGradient(item.color) || { type: 'solid', solid: '#ff6600' }}
                 onChange={(color) => update({ color })}
-                defaultGradientPreset="orangeToGold"
+                defaultGradientPreset="blueToGold"
                 description="Cor sólida ou gradiente para o ícone"
               />
             </div>

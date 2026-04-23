@@ -185,10 +185,10 @@ export const MORIA_GRADIENT_PRESETS = {
     angle: 45,
     colors: ['#ffd700', '#ffed4e', '#fbbf24']
   },
-  orangeToGold: {
+  blueToGold: {
     type: 'linear' as const,
     angle: 90,
-    colors: ['#c62828', '#ffa600']
+    colors: ['#2563eb', '#f59e0b']
   },
   darkHero: {
     type: 'linear' as const,
@@ -205,9 +205,9 @@ export const MORIA_GRADIENT_PRESETS = {
     direction: 'to-br',
     colors: ['#0f172a', '#1e293b', '#334155']
   },
-  orangeOverlay: {
+  blueOverlay: {
     type: 'linear' as const,
     direction: 'to-r',
-    colors: ['rgba(198, 40, 40, 0.12)', 'transparent']
+    colors: ['rgba(37, 99, 235, 0.12)', 'transparent']
   }
 } as const;

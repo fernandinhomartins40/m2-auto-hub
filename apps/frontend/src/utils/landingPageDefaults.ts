@@ -28,7 +28,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
     ],
     backgroundColor: '#171b22',
     textColor: '#ffffff',
-    hoverColor: '#c62828',
+    hoverColor: '#2563eb',
   },
 
   // ============================================================================
@@ -89,7 +89,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       { id: '5', icon: '💰', text: 'PROMOÇÕES IMPERDÍVEIS - CONFIRA NOSSAS OFERTAS' },
     ],
     speed: 30, // 30 segundos para completar o loop
-    backgroundColor: 'linear-gradient(90deg, #c62828 0%, #ffa600 100%)', // gradient-marquee (Vermelho → Dourado)
+    backgroundColor: 'linear-gradient(90deg, #2563eb 0%, #f59e0b 100%)', // gradient-marquee (Azul → Dourado)
     textColor: '#ffffff',
   },
 
@@ -119,14 +119,14 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       {
         id: '3',
         icon: 'Wrench',
-        iconBackground: '#c62828',
+        iconBackground: '#2563eb',
         title: 'Expertise',
         description: '15+ anos de experiência',
       },
       {
         id: '4',
         icon: 'Zap',
-        iconBackground: '#c62828',
+        iconBackground: '#2563eb',
         title: 'Tecnologia',
         description: 'Equipamentos modernos',
       },
@@ -179,7 +179,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
         icon: 'Mail',
         title: 'E-mail',
         content: ['contato@m2centerauto.com.br', 'Resposta em até 24h'],
-        color: { type: 'solid', solid: '#dc2626' }, // text-red-600
+        color: { type: 'solid', solid: '#2563eb' }, // text-blue-600
       },
       {
         id: '4',
@@ -246,7 +246,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
         icon: 'Heart',
         title: 'Confiança',
         description: 'Relacionamento baseado na transparência e honestidade',
-        color: { type: 'solid', solid: '#dc2626' }, // text-red-600
+        color: { type: 'solid', solid: '#2563eb' }, // text-blue-600
       },
       {
         id: '3',
@@ -335,7 +335,7 @@ export const getDefaultConfig = (): LandingPageConfig => ({
       {
         id: '2',
         icon: 'Clock',
-        iconBackground: '#c62828',
+        iconBackground: '#2563eb',
         title: 'Atendimento Rápido',
         description: 'Diagnóstico em até 30 minutos',
       },

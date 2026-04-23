@@ -128,7 +128,7 @@ export const HeaderEditor = ({ config, onChange }: HeaderEditorProps) => {
           label="Cor do Hover / Gradiente"
           value={config.hoverColor || { type: 'solid', solid: '#ff6600' }}
           onChange={(hoverColor) => updateConfig({ hoverColor })}
-          defaultGradientPreset="orangeToGold"
+          defaultGradientPreset="blueToGold"
           description="Cor ou gradiente ao passar o mouse sobre os itens do menu"
         />
       </Card>
