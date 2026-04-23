@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.7
-
 FROM mcr.microsoft.com/playwright:v1.58.2-jammy AS base
 WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
@@ -12,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 FROM base AS deps
 COPY package*.json ./
-RUN --mount=type=cache,target=/root/.npm npm install --prefer-offline --no-audit --no-fund
+RUN npm install --prefer-offline --no-audit --no-fund
 
 FROM deps AS build
 COPY . .
