@@ -129,7 +129,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
         <Button
           variant="ghost"
-          className="w-full justify-start text-gray-300 hover:bg-gray-700 hover:text-red-400"
+          className="w-full justify-start text-gray-300 hover:bg-primary/10 hover:text-primary"
           onClick={handleLogout}
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />

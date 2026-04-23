@@ -180,7 +180,7 @@ export default function Promocoes() {
                           {getTypeIcon(promo.type)}
                         </div>
                         {isExpiringSoon && (
-                          <Badge className="bg-red-500 animate-pulse">
+                          <Badge className="bg-primary text-white animate-pulse">
                             ⏰ {daysRemaining}d
                           </Badge>
                         )}

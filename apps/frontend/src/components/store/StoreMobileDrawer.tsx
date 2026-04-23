@@ -154,8 +154,8 @@ export default function StoreMobileDrawer({
             onClick={handleLogout}
             className={cn(
               'w-full flex items-center justify-center gap-2 px-4 py-3',
-              'bg-red-50 text-red-600 rounded-lg font-medium',
-              'hover:bg-red-100 active:bg-red-200',
+              'bg-primary/10 text-primary rounded-lg font-medium',
+              'hover:bg-primary/15 active:bg-primary/20',
               'transition-colors touch-manipulation',
               'min-h-[44px]'
             )}

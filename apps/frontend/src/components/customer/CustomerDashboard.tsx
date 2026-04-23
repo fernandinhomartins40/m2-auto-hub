@@ -181,7 +181,7 @@ export function CustomerDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <Heart className="h-8 w-8 text-red-600" />
+              <Heart className="h-8 w-8 text-moria-orange" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Favoritos</p>
                 <p className="text-2xl font-bold">{favoritesCount}</p>

@@ -155,7 +155,7 @@ export function MobileDrawer({
         <div className="p-4">
           <Button
             variant="outline"
-            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            className="w-full border-primary/20 text-primary hover:text-primary-hover hover:bg-primary/10"
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4 mr-2" />
