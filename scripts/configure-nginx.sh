@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEPLOY_PORT="${DEPLOY_PORT:-7001}"
+DEPLOY_PORT="${DEPLOY_PORT:-3092}"
 PRIMARY_DOMAIN="${PRIMARY_DOMAIN:-m2centerauto.com.br}"
 SECONDARY_DOMAIN="${SECONDARY_DOMAIN:-www.m2centerauto.com.br}"
 CANONICAL_URL="${CANONICAL_URL:-https://www.m2centerauto.com.br}"

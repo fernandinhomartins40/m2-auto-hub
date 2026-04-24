@@ -57,9 +57,9 @@ Roteamento interno:
 ## Deploy de producao
 
 - Workflow: `.github/workflows/deploy-production.yml`
-- VPS: `72.60.10.112`
-- Porta externa local na VPS: `7001`
+- VPS: `72.60.10.108`
+- Porta externa local na VPS: `3092`
 - Dominios: `m2centerauto.com.br` e `www.m2centerauto.com.br`
 - Secret exigida no GitHub: `VPS_PASSWORD`
 
-O deploy sobe o stack via `docker-compose.production.yml`, publica o gateway apenas em `127.0.0.1:7001` e deixa o Nginx da VPS fazer o proxy reverso e o SSL.
+O deploy sobe o stack via `docker-compose.production.yml`, publica o gateway apenas em `127.0.0.1:3092` e deixa o Nginx da VPS fazer o proxy reverso e o SSL.

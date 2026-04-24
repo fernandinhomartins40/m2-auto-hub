@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_ROOT="${APP_ROOT:-/opt/m2centerauto}"
 RELEASE="${RELEASE:-}"
-DEPLOY_PORT="${DEPLOY_PORT:-7001}"
+DEPLOY_PORT="${DEPLOY_PORT:-3092}"
 
 APP_DIR="$APP_ROOT/releases/$RELEASE"
 COMPOSE_FILE="$APP_DIR/docker-compose.production.yml"

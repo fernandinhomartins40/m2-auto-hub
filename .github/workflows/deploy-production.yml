@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VPS_HOST: 72.60.10.112
+  VPS_HOST: 72.60.10.108
   VPS_USER: root
   APP_ROOT: /opt/m2centerauto
-  DEPLOY_PORT: "7001"
+  DEPLOY_PORT: "3092"
   PRIMARY_DOMAIN: m2centerauto.com.br
   SECONDARY_DOMAIN: www.m2centerauto.com.br
   CANONICAL_URL: https://www.m2centerauto.com.br
