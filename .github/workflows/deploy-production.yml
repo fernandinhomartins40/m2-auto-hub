@@ -71,33 +71,36 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            bash ${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/scripts/bootstrap-runtime.sh
+          SCRIPT="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/scripts/bootstrap-runtime.sh"
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "bash $SCRIPT"
 
       - name: Ensure .env exists on VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
+          SCRIPT="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/scripts/prepare-env.sh"
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' bash ${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/scripts/prepare-env.sh"
+            "export APP_ROOT=${{ env.APP_ROOT }} DEPLOY_PORT=${{ env.DEPLOY_PORT }} PRIMARY_DOMAIN=${{ env.PRIMARY_DOMAIN }} SECONDARY_DOMAIN=${{ env.SECONDARY_DOMAIN }} CANONICAL_URL=${{ env.CANONICAL_URL }}; bash $SCRIPT"
 
       - name: Deploy on VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
+          SCRIPT="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/deploy-vps.sh"
           sshpass -e ssh \
             -o StrictHostKeyChecking=no \
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=40 \
             ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ steps.release.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash ${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/deploy-vps.sh"
+            "export APP_ROOT=${{ env.APP_ROOT }} RELEASE=${{ steps.release.outputs.version }} DEPLOY_PORT=${{ env.DEPLOY_PORT }}; bash $SCRIPT"
 
       - name: Configure Nginx
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
+          SCRIPT="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/scripts/configure-nginx.sh"
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' SSL_EMAIL='${{ env.SSL_EMAIL }}' bash ${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/scripts/configure-nginx.sh"
+            "export DEPLOY_PORT=${{ env.DEPLOY_PORT }} PRIMARY_DOMAIN=${{ env.PRIMARY_DOMAIN }} SECONDARY_DOMAIN=${{ env.SECONDARY_DOMAIN }} CANONICAL_URL=${{ env.CANONICAL_URL }} SSL_EMAIL=${{ env.SSL_EMAIL }}; bash $SCRIPT"
 
       - name: Verify deployment
         env:
