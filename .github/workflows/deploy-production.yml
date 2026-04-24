@@ -15,7 +15,7 @@ concurrency:
 env:
   VPS: root@72.60.10.112
   APP_DIR: /opt/m2centerauto
-  SSH_OPTS: -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=20
+  SSH: sshpass -f ~/.ssh/vps_password ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=20
 
 jobs:
   deploy:
@@ -43,8 +43,7 @@ jobs:
 
       - name: Sync code to VPS
         run: |
-          sshpass -f ~/.ssh/vps_password ssh ${{ env.SSH_OPTS }} ${{ env.VPS }} \
-            "mkdir -p ${{ env.APP_DIR }}"
+          ${{ env.SSH }} ${{ env.VPS }} "mkdir -p ${{ env.APP_DIR }}"
 
           sshpass -f ~/.ssh/vps_password rsync -az --delete \
             --exclude='.git' \
@@ -58,75 +57,16 @@ jobs:
             --exclude='.env' \
             --exclude='*.log' \
             --exclude='coverage' \
-            -e "ssh ${{ env.SSH_OPTS }}" \
+            -e "ssh -o StrictHostKeyChecking=no" \
             ./ ${{ env.VPS }}:${{ env.APP_DIR }}/
 
       - name: Prepare .env on VPS
         run: |
-          sshpass -f ~/.ssh/vps_password ssh ${{ env.SSH_OPTS }} ${{ env.VPS }} "bash -s" <<'ENDSSH'
-          set -euo pipefail
-
-          ENV_FILE="/opt/m2centerauto/.env"
-          touch "$ENV_FILE"
-          chmod 600 "$ENV_FILE"
-
-          get_env()    { awk -F= -v k="$1" '$1==k{sub(/^[^=]*=/,"",$0);print $0;exit}' "$ENV_FILE"; }
-          upsert_env() {
-            local k="$1" v="$2" tmp; tmp="$(mktemp)"
-            awk -v k="$k" -v v="$v" 'BEGIN{u=0} index($0,k"=")==1{print k"="v;u=1;next}{print} END{if(!u)print k"="v}' "$ENV_FILE" > "$tmp"
-            mv "$tmp" "$ENV_FILE"
-          }
-          ensure_env() { local c; c="$(get_env "$1"|tr -d '\r')"; [ -z "$c" ] && upsert_env "$1" "$2"; }
-          ensure_hex() { local c; c="$(get_env "$1"|tr -d '\r')"; [ -z "$c" ] && upsert_env "$1" "$(openssl rand -hex "$2")"; }
-
-          ensure_env  POSTGRES_USER     m2
-          ensure_env  POSTGRES_DB       m2_auto_hub
-          ensure_hex  POSTGRES_PASSWORD 32
-          ensure_hex  JWT_SECRET        32
-          ensure_env  JWT_EXPIRES_IN    7d
-          ensure_env  BCRYPT_ROUNDS     10
-          ensure_env  LOG_LEVEL         info
-
-          upsert_env NODE_ENV          production
-          upsert_env PORT              3001
-          upsert_env DEPLOY_PORT       7001
-          upsert_env PRIMARY_DOMAIN    m2centerauto.com.br
-          upsert_env SECONDARY_DOMAIN  www.m2centerauto.com.br
-          upsert_env CANONICAL_URL     https://www.m2centerauto.com.br
-          upsert_env CORS_ORIGIN       "https://m2centerauto.com.br,https://www.m2centerauto.com.br,http://m2centerauto.com.br,http://www.m2centerauto.com.br"
-          upsert_env COOKIE_SECURE     true
-          upsert_env COOKIE_SAME_SITE  lax
-          upsert_env COOKIE_DOMAIN     .m2centerauto.com.br
-
-          PG_USER="$(get_env POSTGRES_USER|tr -d '\r')"
-          PG_PASS="$(get_env POSTGRES_PASSWORD|tr -d '\r')"
-          PG_DB="$(get_env POSTGRES_DB|tr -d '\r')"
-          upsert_env DATABASE_URL "postgresql://${PG_USER}:${PG_PASS}@postgres:5432/${PG_DB}?schema=public"
-
-          chmod 600 "$ENV_FILE"
-          echo ".env OK"
-          ENDSSH
+          ${{ env.SSH }} ${{ env.VPS }} "bash ${{ env.APP_DIR }}/scripts/prepare-env.sh"
 
       - name: Bootstrap VPS runtime
         run: |
-          sshpass -f ~/.ssh/vps_password ssh ${{ env.SSH_OPTS }} ${{ env.VPS }} "bash -s" <<'ENDSSH'
-          set -euo pipefail
-          need=0
-          for b in curl nginx docker; do command -v "$b" >/dev/null 2>&1 || { need=1; break; }; done
-          docker compose version >/dev/null 2>&1 || need=1
-
-          if [ "$need" -eq 1 ]; then
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get -qq update
-            apt-get -qq install -y --no-install-recommends \
-              ca-certificates curl nginx certbot openssl tar docker.io
-            apt-get -qq install -y --no-install-recommends docker-compose-v2 2>/dev/null || \
-            apt-get -qq install -y --no-install-recommends docker-compose-plugin || true
-          fi
-
-          systemctl enable --now docker nginx 2>/dev/null || true
-          echo "Runtime OK"
-          ENDSSH
+          ${{ env.SSH }} ${{ env.VPS }} "bash ${{ env.APP_DIR }}/scripts/bootstrap-runtime.sh"
 
       - name: Deploy on VPS
         run: |
@@ -134,88 +74,12 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=40 \
-            ${{ env.VPS }} "bash -s" <<'ENDSSH'
-          set -euo pipefail
-          chmod +x /opt/m2centerauto/deploy-vps.sh
-          bash /opt/m2centerauto/deploy-vps.sh
-          ENDSSH
+            ${{ env.VPS }} "bash ${{ env.APP_DIR }}/deploy-vps.sh"
 
       - name: Configure Nginx
         run: |
-          sshpass -f ~/.ssh/vps_password ssh ${{ env.SSH_OPTS }} ${{ env.VPS }} "bash -s" <<'ENDSSH'
-          set -euo pipefail
-          PRIMARY=m2centerauto.com.br
-          SECONDARY=www.m2centerauto.com.br
-          CANONICAL=https://www.m2centerauto.com.br
-          PORT=7001
-
-          mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /var/www/certbot
-
-          cat > /etc/nginx/sites-available/m2centerauto <<NGINX
-          server {
-              listen 80;
-              server_name $PRIMARY $SECONDARY;
-              client_max_body_size 25m;
-              location /.well-known/acme-challenge/ { root /var/www/certbot; }
-              location / {
-                  proxy_pass http://127.0.0.1:$PORT;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection "upgrade";
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-                  proxy_read_timeout 86400;
-              }
-          }
-          NGINX
-
-          ln -sf /etc/nginx/sites-available/m2centerauto /etc/nginx/sites-enabled/m2centerauto
-          nginx -t && systemctl reload nginx
-
-          if [ ! -f "/etc/letsencrypt/live/$PRIMARY/fullchain.pem" ]; then
-            certbot certonly --webroot -w /var/www/certbot \
-              -d "$PRIMARY" -d "$SECONDARY" \
-              --email admin@m2centerauto.com.br \
-              --agree-tos --non-interactive 2>/dev/null || echo "certbot failed, keeping HTTP"
-          fi
-
-          if [ -f "/etc/letsencrypt/live/$PRIMARY/fullchain.pem" ]; then
-            cat > /etc/nginx/sites-available/m2centerauto <<NGINX
-          server {
-              listen 80;
-              server_name $PRIMARY $SECONDARY;
-              location /.well-known/acme-challenge/ { root /var/www/certbot; }
-              location / { return 301 $CANONICAL\$request_uri; }
-          }
-          server {
-              listen 443 ssl http2;
-              server_name $PRIMARY $SECONDARY;
-              client_max_body_size 25m;
-              ssl_certificate /etc/letsencrypt/live/$PRIMARY/fullchain.pem;
-              ssl_certificate_key /etc/letsencrypt/live/$PRIMARY/privkey.pem;
-              ssl_protocols TLSv1.2 TLSv1.3;
-              ssl_ciphers HIGH:!aNULL:!MD5;
-              if (\$host != "www.m2centerauto.com.br") { return 301 $CANONICAL\$request_uri; }
-              location / {
-                  proxy_pass http://127.0.0.1:$PORT;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection "upgrade";
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-                  proxy_read_timeout 86400;
-              }
-          }
-          NGINX
-            nginx -t && systemctl reload nginx
-          fi
-          ENDSSH
+          ${{ env.SSH }} ${{ env.VPS }} "bash ${{ env.APP_DIR }}/scripts/configure-nginx.sh"
 
       - name: Verify deployment
         run: |
-          sshpass -f ~/.ssh/vps_password ssh ${{ env.SSH_OPTS }} ${{ env.VPS }} \
-            "curl -fsS http://localhost:7001/health && echo 'Deploy OK: https://www.m2centerauto.com.br'"
+          ${{ env.SSH }} ${{ env.VPS }} "curl -fsS http://localhost:7001/health && echo 'Deploy OK'"
