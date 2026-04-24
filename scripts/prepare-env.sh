@@ -18,8 +18,8 @@ upsert_env() {
   awk -v k="$k" -v v="$v" 'BEGIN{u=0} index($0,k"=")==1{print k"="v;u=1;next}{print} END{if(!u)print k"="v}' "$ENV_FILE" > "$tmp"
   mv "$tmp" "$ENV_FILE"
 }
-ensure_env() { local c; c="$(get_env "$1"|tr -d '\r')"; [ -z "$c" ] && upsert_env "$1" "$2"; }
-ensure_hex() { local c; c="$(get_env "$1"|tr -d '\r')"; [ -z "$c" ] && upsert_env "$1" "$(openssl rand -hex "$2")"; }
+ensure_env() { local c; c="$(get_env "$1"|tr -d '\r')"; if [ -z "$c" ]; then upsert_env "$1" "$2"; fi; }
+ensure_hex() { local c; c="$(get_env "$1"|tr -d '\r')"; if [ -z "$c" ]; then upsert_env "$1" "$(openssl rand -hex "$2")"; fi; }
 
 ensure_env  POSTGRES_USER     m2
 ensure_env  POSTGRES_DB       m2_auto_hub

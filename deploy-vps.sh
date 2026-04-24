@@ -17,13 +17,13 @@ compose() { "${COMPOSE[@]}" "$@"; }
 
 service_health() {
   local id; id="$(compose ps -q "$1" 2>/dev/null || true)"
-  [ -z "$id" ] && echo "not_found" && return
+  if [ -z "$id" ]; then echo "not_found"; return; fi
   docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}no_healthcheck{{end}}' "$id" 2>/dev/null || echo "not_found"
 }
 
 service_state() {
   local id; id="$(compose ps -q "$1" 2>/dev/null || true)"
-  [ -z "$id" ] && echo "not_found" && return
+  if [ -z "$id" ]; then echo "not_found"; return; fi
   docker inspect --format '{{.State.Status}}' "$id" 2>/dev/null || echo "not_found"
 }
 
