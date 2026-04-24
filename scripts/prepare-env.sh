@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENV_FILE="/opt/m2centerauto/.env"
+APP_ROOT="${APP_ROOT:-/opt/m2centerauto}"
+DEPLOY_PORT="${DEPLOY_PORT:-7001}"
+PRIMARY_DOMAIN="${PRIMARY_DOMAIN:-m2centerauto.com.br}"
+SECONDARY_DOMAIN="${SECONDARY_DOMAIN:-www.m2centerauto.com.br}"
+CANONICAL_URL="${CANONICAL_URL:-https://www.m2centerauto.com.br}"
+
+ENV_FILE="$APP_ROOT/.env"
+mkdir -p "$APP_ROOT"
 touch "$ENV_FILE"
 chmod 600 "$ENV_FILE"
 
@@ -24,14 +31,14 @@ ensure_env  LOG_LEVEL         info
 
 upsert_env NODE_ENV         production
 upsert_env PORT             3001
-upsert_env DEPLOY_PORT      7001
-upsert_env PRIMARY_DOMAIN   m2centerauto.com.br
-upsert_env SECONDARY_DOMAIN www.m2centerauto.com.br
-upsert_env CANONICAL_URL    https://www.m2centerauto.com.br
-upsert_env CORS_ORIGIN      "https://m2centerauto.com.br,https://www.m2centerauto.com.br,http://m2centerauto.com.br,http://www.m2centerauto.com.br"
+upsert_env DEPLOY_PORT      "$DEPLOY_PORT"
+upsert_env PRIMARY_DOMAIN   "$PRIMARY_DOMAIN"
+upsert_env SECONDARY_DOMAIN "$SECONDARY_DOMAIN"
+upsert_env CANONICAL_URL    "$CANONICAL_URL"
+upsert_env CORS_ORIGIN      "https://${PRIMARY_DOMAIN},https://${SECONDARY_DOMAIN},http://${PRIMARY_DOMAIN},http://${SECONDARY_DOMAIN}"
 upsert_env COOKIE_SECURE    true
 upsert_env COOKIE_SAME_SITE lax
-upsert_env COOKIE_DOMAIN    .m2centerauto.com.br
+upsert_env COOKIE_DOMAIN    ".m2centerauto.com.br"
 
 PG_USER="$(get_env POSTGRES_USER|tr -d '\r')"
 PG_PASS="$(get_env POSTGRES_PASSWORD|tr -d '\r')"
