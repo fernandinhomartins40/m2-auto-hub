@@ -41,14 +41,8 @@ jobs:
           chmod 700 "$HOME/.ssh"
           printf '%s' "$VPS_PASSWORD" > "$HOME/.ssh/vps_password"
           chmod 600 "$HOME/.ssh/vps_password"
-          cat > "$HOME/.ssh/config" <<EOF
-          Host vps
-            HostName ${{ env.VPS_HOST }}
-            User ${{ env.VPS_USER }}
-            StrictHostKeyChecking no
-            ServerAliveInterval 30
-            ServerAliveCountMax 40
-          EOF
+          printf 'Host vps\n  HostName %s\n  User %s\n  StrictHostKeyChecking no\n  ServerAliveInterval 30\n  ServerAliveCountMax 40\n' \
+            "${{ env.VPS_HOST }}" "${{ env.VPS_USER }}" > "$HOME/.ssh/config"
           chmod 600 "$HOME/.ssh/config"
 
       - name: Sync code to VPS
