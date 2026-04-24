@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-set -x
 
 ENV_FILE="/opt/m2centerauto/.env"
 touch "$ENV_FILE"

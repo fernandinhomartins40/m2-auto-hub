@@ -41,8 +41,13 @@ wait_healthy() {
     state="$(service_state "$svc")"
     health="$(service_health "$svc")"
     log "  $svc [$i/$attempts]: state=$state health=$health"
-    [ "$state" = "exited" ] || [ "$state" = "dead" ] && compose logs --no-color --tail=80 "$svc" >&2 && return 1
-    [ "$health" = "healthy" ] || [ "$health" = "no_healthcheck" ] && return 0
+    if [ "$state" = "exited" ] || [ "$state" = "dead" ]; then
+      compose logs --no-color --tail=80 "$svc" >&2
+      return 1
+    fi
+    if [ "$health" = "healthy" ] || [ "$health" = "no_healthcheck" ]; then
+      return 0
+    fi
     sleep "$delay"
   done
   compose logs --no-color --tail=80 "$svc" >&2
@@ -107,9 +112,9 @@ compose up -d --no-build --no-deps gateway
 wait_healthy gateway 12 5
 
 # Smoke tests
-wait_http "http://127.0.0.1:7001/health"   8 5 || (compose logs --no-color --tail=40 gateway >&2; exit 1)
-wait_http "http://127.0.0.1:7001/api/health" 8 5 || (compose logs --no-color --tail=40 backend >&2; exit 1)
-curl -fsS --max-time 10 -o /dev/null "http://127.0.0.1:7001/" || (compose logs --no-color --tail=40 frontend >&2; exit 1)
+wait_http "http://127.0.0.1:7001/health"     8 5 || { compose logs --no-color --tail=40 gateway  >&2; exit 1; }
+wait_http "http://127.0.0.1:7001/api/health" 8 5 || { compose logs --no-color --tail=40 backend  >&2; exit 1; }
+curl -fsS --max-time 10 -o /dev/null "http://127.0.0.1:7001/" || { compose logs --no-color --tail=40 frontend >&2; exit 1; }
 
 log "Pruning dangling images"
 docker image prune -f >/dev/null 2>&1 || true
