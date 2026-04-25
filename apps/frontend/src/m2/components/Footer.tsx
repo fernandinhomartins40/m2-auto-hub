@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useStorefront } from "@/context/StorefrontContext";
 import {
   formatPhoneNumber,
+  formatBusinessHoursLines,
   resolveSocialIcon,
   toAssetUrl,
 } from "@/lib/storefront-helpers";
@@ -12,7 +13,6 @@ import {
 const Footer = () => {
   const {
     addressLines,
-    brandShortName,
     businessHoursLines,
     landingConfig,
     menuItems,
@@ -25,7 +25,22 @@ const Footer = () => {
     return null;
   }
 
-  const logoUrl = toAssetUrl(footer?.logo?.url || landingConfig.header?.logo?.url);
+  const logoUrl = toAssetUrl(footer?.logo?.url);
+  const footerAddressLines = [
+    footer?.contactInfo?.address?.street,
+    footer?.contactInfo?.address?.city,
+    footer?.contactInfo?.address?.zipCode,
+  ].filter(Boolean) as string[];
+  const visibleAddressLines = footerAddressLines.length ? footerAddressLines : addressLines;
+  const visiblePhone = footer?.contactInfo?.phone || settings.phone;
+  const visibleBusinessHoursLines =
+    footer?.businessHours
+      ? formatBusinessHoursLines({
+          monday: footer.businessHours.weekdays,
+          saturday: footer.businessHours.saturday,
+          sunday: footer.businessHours.sunday,
+        })
+      : businessHoursLines;
   const socialLinks = (footer?.socialLinks ?? []).filter((link) => link.enabled !== false && link.url);
 
   return (
@@ -33,36 +48,25 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8 items-start mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 bg-primary rounded-md flex items-center justify-center overflow-hidden">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt={footer?.logo?.alt || settings.storeName || "Logo da loja"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex gap-0.5">
-                    <div className="w-0.5 h-4 bg-primary-foreground rounded-sm" />
-                    <div className="w-0.5 h-4 bg-primary-foreground rounded-sm" />
-                    <div className="w-0.5 h-4 bg-primary-foreground rounded-sm" />
-                  </div>
-                )}
+            {logoUrl ? (
+              <div className="mb-3">
+                <img
+                  src={logoUrl}
+                  alt={footer?.logo?.alt || settings.storeName || "Logo da loja"}
+                  className="h-12 w-auto object-contain"
+                />
               </div>
-              <span className="font-heading text-xl font-bold text-primary-foreground tracking-wider">
-                {brandShortName}
-              </span>
-            </div>
+            ) : null}
             <p className="text-secondary-foreground/50 text-sm mb-4">
               {footer?.description ||
                 "Tudo que seu carro precisa, voce encontra aqui."}
             </p>
-            {addressLines.length ? (
-              <p className="text-secondary-foreground/60 text-sm">{addressLines.join(" | ")}</p>
+            {visibleAddressLines.length ? (
+              <p className="text-secondary-foreground/60 text-sm">{visibleAddressLines.join(" | ")}</p>
             ) : null}
-            {settings.phone ? (
+            {visiblePhone ? (
               <p className="text-secondary-foreground/60 text-sm mt-2">
-                {formatPhoneNumber(settings.phone)}
+                {formatPhoneNumber(visiblePhone)}
               </p>
             ) : null}
           </div>
@@ -79,9 +83,9 @@ const Footer = () => {
                 </a>
               ))}
             </div>
-            {businessHoursLines.length ? (
+            {visibleBusinessHoursLines.length ? (
               <div className="space-y-1">
-                {businessHoursLines.slice(0, 3).map((line) => (
+                {visibleBusinessHoursLines.slice(0, 3).map((line) => (
                   <p key={line} className="text-secondary-foreground/50 text-sm">
                     {line}
                   </p>
