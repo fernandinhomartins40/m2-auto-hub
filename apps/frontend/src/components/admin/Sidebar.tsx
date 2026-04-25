@@ -55,31 +55,8 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     <div className="bg-moria-black text-white flex flex-col fixed md:relative bottom-0 left-0 right-0 md:h-screen md:w-64 z-50 border-t md:border-t-0 border-gray-700">
       {/* Header - Hidden on Mobile */}
       <div className="hidden md:block p-4 border-b border-gray-700">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-base font-black tracking-[0.24em] text-white shadow-lg">
-            M2
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-400">M2 Center Auto</p>
-            <h2 className="font-bold text-lg leading-tight">Painel Lojista</h2>
-          </div>
-        </div>
+        <h2 className="font-bold text-lg leading-tight">Painel do Lojista</h2>
       </div>
-
-      {/* Admin Info - Hidden on Mobile */}
-      {admin && (
-        <div className="hidden md:block p-4 border-b border-gray-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-moria-orange rounded-full flex items-center justify-center">
-              <User className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{admin.name}</p>
-              <p className="text-xs text-gray-400 truncate">{admin.role.replace(/_/g, " ")}</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Navigation - Horizontal on Mobile, Vertical on Desktop */}
       <nav className="flex md:flex-1 overflow-x-auto md:overflow-y-auto md:overflow-x-visible p-2 md:p-4 md:space-y-2 sidebar-scrollbar">
@@ -117,6 +94,20 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       {/* Footer Actions - Hidden on Mobile */}
       <div className="hidden md:block p-4 border-t border-gray-700 space-y-2">
+        {admin && (
+          <div className="mb-4 rounded-xl border border-gray-700 bg-gray-800/40 p-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-moria-orange rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">{admin.name}</p>
+                <p className="text-xs text-gray-400 truncate">{admin.role.replace(/_/g, " ")}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <Link to="/">
           <Button
             variant="ghost"
