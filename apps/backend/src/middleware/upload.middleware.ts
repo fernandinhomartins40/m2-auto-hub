@@ -181,8 +181,14 @@ export async function processLandingPageImage(
   inputPath: string,
   category: string // 'hero', 'header', 'footer', 'logo', etc.
 ): Promise<string> {
+  const metadata = await sharp(inputPath).metadata();
+  const preserveTransparency = metadata.hasAlpha === true;
+  const outputFormat: 'jpeg' | 'png' | 'webp' =
+    preserveTransparency ? 'png' : metadata.format === 'webp' ? 'webp' : 'jpeg';
+  const fileExtension =
+    outputFormat === 'png' ? 'png' : outputFormat === 'webp' ? 'webp' : 'jpg';
   const fileId = uuidv4();
-  const filename = `${category}-${fileId}.jpg`;
+  const filename = `${category}-${fileId}.${fileExtension}`;
   const outputPath = path.join(LANDING_PAGE_DIR, filename);
 
   // Processar imagem com qualidade alta para landing page
@@ -190,7 +196,7 @@ export async function processLandingPageImage(
     width: 1920,
     height: 1080,
     quality: 90,
-    format: 'jpeg'
+    format: outputFormat
   });
 
   // Remover arquivo temporário

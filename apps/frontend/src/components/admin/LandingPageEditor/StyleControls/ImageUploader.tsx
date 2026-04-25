@@ -36,6 +36,7 @@ export const ImageUploader = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const isLogoUpload = category === 'header-logo' || category === 'footer-logo' || category === 'logo';
 
   useEffect(() => {
     setPreview(toAssetUrl(value.url) || '');
@@ -209,7 +210,11 @@ export const ImageUploader = ({
 
         {/* Preview com Loading State */}
         {preview && (
-          <div className="relative rounded-lg border overflow-hidden bg-muted">
+          <div
+            className={`relative rounded-lg border overflow-hidden ${
+              isLogoUpload ? 'bg-white' : 'bg-muted'
+            }`}
+          >
             {isUploading && (
               <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10">
                 <Loader2 className="h-8 w-8 text-white animate-spin mb-2" />
@@ -227,7 +232,7 @@ export const ImageUploader = ({
             <img
               src={preview}
               alt={value.alt || 'Preview'}
-              className="w-full h-48 object-cover"
+              className={isLogoUpload ? 'w-full h-48 object-contain p-4' : 'w-full h-48 object-cover'}
             />
             <Button
               size="icon"
