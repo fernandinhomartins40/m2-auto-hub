@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
 
 import { StorefrontContext, type StorefrontContextValue } from '@/context/StorefrontContext';
 import { AuthContext, type AuthContextType } from '@/contexts/AuthContext';
@@ -108,14 +107,12 @@ export function PreviewProviders({ children, config }: PreviewProvidersProps) {
   };
 
   return (
-    <MemoryRouter>
-      <AuthContext.Provider value={authValue}>
-        <CartContext.Provider value={cartValue}>
-          <StorefrontContext.Provider value={storefrontValue}>
-            {children}
-          </StorefrontContext.Provider>
-        </CartContext.Provider>
-      </AuthContext.Provider>
-    </MemoryRouter>
+    <AuthContext.Provider value={authValue}>
+      <CartContext.Provider value={cartValue}>
+        <StorefrontContext.Provider value={storefrontValue}>
+          {children}
+        </StorefrontContext.Provider>
+      </CartContext.Provider>
+    </AuthContext.Provider>
   );
 }
