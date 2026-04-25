@@ -1,15 +1,19 @@
 /**
- * MarqueeEditor - Editor da seção Marquee (Banner de mensagens)
+ * MarqueeEditor - Editor da secao Marquee (Banner de mensagens)
  */
 
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { MarqueeConfig, MarqueeItem } from '@/types/landingPage';
-import { ArrayEditor, ColorOrGradientPicker, colorOrGradientToCSS, SliderControl } from '../StyleControls';
 import { Eye } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { MarqueeConfig, MarqueeItem } from '@/types/landingPage';
+import { Marquee } from '@/components/Marquee';
+
+import { ArrayEditor, ColorOrGradientPicker, SliderControl } from '../StyleControls';
+import { PreviewProviders } from './PreviewProviders';
 
 interface MarqueeEditorProps {
   config: MarqueeConfig;
@@ -23,23 +27,18 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Habilitado */}
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label>Seção Ativa</Label>
+            <Label>Secao Ativa</Label>
             <p className="text-sm text-muted-foreground">
               Exibir ou ocultar o marquee na landing page
             </p>
           </div>
-          <Switch
-            checked={config.enabled}
-            onCheckedChange={(enabled) => updateConfig({ enabled })}
-          />
+          <Switch checked={config.enabled} onCheckedChange={(enabled) => updateConfig({ enabled })} />
         </div>
       </Card>
 
-      {/* Mensagens do Marquee */}
       <Card className="p-6">
         <ArrayEditor<MarqueeItem>
           label="Mensagens do Marquee"
@@ -54,16 +53,13 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
           renderItem={(item, _, update) => (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Ícone/Emoji</Label>
+                <Label>Icone/Emoji</Label>
                 <Input
                   value={item.icon}
                   onChange={(e) => update({ icon: e.target.value })}
                   placeholder="🔧"
                   maxLength={2}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Use emojis como: 🔧 ⚡ 🚗 🛠️ 💰 ✨ 🎉
-                </p>
               </div>
 
               <div className="space-y-2">
@@ -71,12 +67,9 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
                 <Input
                   value={item.text}
                   onChange={(e) => update({ text: e.target.value.toUpperCase() })}
-                  placeholder="PEÇAS ORIGINAIS COM ATÉ 30% DE DESCONTO"
+                  placeholder="PECAS ORIGINAIS COM ATE 30% DE DESCONTO"
                   className="uppercase"
                 />
-                <p className="text-xs text-muted-foreground">
-                  O texto será convertido automaticamente para MAIÚSCULAS
-                </p>
               </div>
             </div>
           )}
@@ -85,26 +78,24 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
         />
       </Card>
 
-      {/* Velocidade de Animação */}
       <Card className="p-6">
         <SliderControl
-          label="Velocidade da Animação"
+          label="Velocidade da Animacao"
           value={config.speed}
           onChange={(speed) => updateConfig({ speed })}
           min={10}
           max={60}
           step={5}
           unit="s"
-          description="Tempo em segundos para completar um ciclo completo da animação"
+          description="Tempo em segundos para completar um ciclo completo"
         />
       </Card>
 
-      {/* Cores e Gradientes */}
       <Card className="p-6 space-y-4">
         <div>
-          <h3 className="text-lg font-semibold mb-2">Cores e Gradientes</h3>
+          <h3 className="mb-2 text-lg font-semibold">Cores e Gradientes</h3>
           <p className="text-sm text-muted-foreground">
-            Configure cores sólidas ou gradientes para o banner
+            Configure cores solidas ou gradientes para o banner
           </p>
         </div>
 
@@ -125,8 +116,6 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
         />
       </Card>
 
-
-      {/* Preview */}
       <Card className="bg-gradient-to-r from-moria-orange/5 to-gold-accent/5 border-moria-orange/20">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -136,61 +125,36 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
             </div>
             <Badge className="bg-green-100 text-green-800">
               <div className="h-2 w-2 bg-green-600 rounded-full mr-2"></div>
-              Atualização em tempo real
+              Atualizacao em tempo real
             </Badge>
           </div>
           <CardDescription>
-            Veja como o banner de mensagens aparecerá na landing page
+            Preview usando a mesma estrutura da faixa real da landing
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            className="overflow-hidden rounded-lg"
-            style={{
-              ...colorOrGradientToCSS(config.backgroundColor),
-              ...colorOrGradientToCSS(config.textColor, { forText: true }),
-            }}
-          >
-            <div className="py-3 px-4 flex items-center">
-              <div className="whitespace-nowrap text-sm font-bold animate-marquee-slow flex items-center gap-8">
-                {config.items.map((item, i) => (
-                  <span key={i} className="flex items-center gap-2">
-                    <span className="text-lg">{item.icon}</span>
-                    <span>{item.text}</span>
-                  </span>
-                ))}
-                {/* Duplicate for seamless loop */}
-                {config.items.map((item, i) => (
-                  <span key={`dup-${i}`} className="flex items-center gap-2">
-                    <span className="text-lg">{item.icon}</span>
-                    <span>{item.text}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
+          <div className="overflow-hidden rounded-lg border bg-background">
+            <PreviewProviders config={{ marquee: config }}>
+              <Marquee />
+            </PreviewProviders>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            💡 Velocidade configurada: {config.speed}s por ciclo. A animação real terá movimento contínuo e suave.
+          <p className="mt-2 text-xs text-gray-500">
+            Velocidade configurada: {config.speed}s por ciclo.
           </p>
         </CardContent>
       </Card>
 
-      {/* Informação */}
-      <Card className="p-6 bg-amber-50 border-amber-200">
+      <Card className="border-amber-200 bg-amber-50 p-6">
         <div className="flex items-start gap-3">
-          <div className="bg-amber-500 text-white p-2 rounded-full">
+          <div className="rounded-full bg-amber-500 p-2 text-white">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div className="flex-1">
-            <h4 className="font-semibold text-amber-900 mb-1">Configuração do Marquee</h4>
+            <h4 className="mb-1 font-semibold text-amber-900">Configuracao do Marquee</h4>
             <p className="text-sm text-amber-800">
-              O marquee é o banner de mensagens que rola continuamente no topo da página.
-              Use-o para destacar promoções, novidades e informações importantes.
-            </p>
-            <p className="text-sm text-amber-800 mt-2">
-              <strong>Dica:</strong> Mantenha as mensagens curtas e impactantes para melhor legibilidade.
+              O marquee e o banner de mensagens que rola continuamente no topo da pagina.
             </p>
           </div>
         </div>
