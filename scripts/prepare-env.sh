@@ -39,6 +39,7 @@ upsert_env CORS_ORIGIN      "https://${PRIMARY_DOMAIN},https://${SECONDARY_DOMAI
 upsert_env COOKIE_SECURE    true
 upsert_env COOKIE_SAME_SITE lax
 upsert_env COOKIE_DOMAIN    ".m2centerauto.com.br"
+upsert_env SEED_DEMO_DATA   true
 
 PG_USER="$(get_env POSTGRES_USER|tr -d '\r')"
 PG_PASS="$(get_env POSTGRES_PASSWORD|tr -d '\r')"
