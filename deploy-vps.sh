@@ -14,6 +14,7 @@ log() { echo "[$(date -u +%H:%M:%S)] $*"; }
 
 COMPOSE=(docker compose -p m2centerauto -f "$COMPOSE_FILE" --env-file "$ENV_FILE")
 compose() { "${COMPOSE[@]}" "$@"; }
+compose_timeout() { local duration="$1"; shift; timeout "$duration" "${COMPOSE[@]}" "$@"; }
 
 service_health() {
   local id; id="$(compose ps -q "$1" 2>/dev/null || true)"
@@ -89,10 +90,10 @@ if [ "${APP_TABLES:-0}" = "0" ]; then
 fi
 
 log "Running migrations"
-timeout 10m compose run --rm --no-build migrator
+compose_timeout 10m run --rm --no-build migrator
 
 log "Bootstrapping data"
-timeout 4m compose run --rm --no-build bootstrap || true
+compose_timeout 4m run --rm --no-build bootstrap || true
 
 log "Starting alpr"
 compose up -d --no-build --no-deps alpr
