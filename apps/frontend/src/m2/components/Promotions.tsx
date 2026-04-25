@@ -7,7 +7,7 @@ import {
   formatCurrency,
   toAssetUrl,
 } from "@/lib/storefront-helpers";
-import type { StorefrontOffer } from "@/types/storefront";
+import type { StorefrontOffer, StorefrontPromotion } from "@/types/storefront";
 
 function getBadgeClass(text?: string | null) {
   const normalized = (text ?? "").toLowerCase();
@@ -66,13 +66,14 @@ function useCountdown(targetDate?: string) {
 
 function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsappNumber?: string }) {
   const imageUrl = toAssetUrl(offer.images?.[0]);
-  const salePrice = formatCurrency(offer.salePrice);
-  const promoPrice = formatCurrency(offer.promoPrice);
-  const savings = formatCurrency(offer.salePrice - offer.promoPrice);
-  const discountPercent = Math.max(
-    0,
-    Math.round(((offer.salePrice - offer.promoPrice) / offer.salePrice) * 100)
-  );
+  const hasPrice = offer.salePrice > 0 && offer.promoPrice > 0 && offer.promoPrice < offer.salePrice;
+  const salePrice = hasPrice ? formatCurrency(offer.salePrice) : null;
+  const promoPrice = hasPrice ? formatCurrency(offer.promoPrice) : null;
+  const savings = hasPrice ? formatCurrency(offer.salePrice - offer.promoPrice) : null;
+  const discountPercent =
+    hasPrice && offer.salePrice > 0
+      ? Math.max(0, Math.round(((offer.salePrice - offer.promoPrice) / offer.salePrice) * 100))
+      : null;
   const whatsappLink = buildWhatsAppHref(
     whatsappNumber,
     `Ola! Quero aproveitar a oferta ${offer.name}.`
@@ -94,9 +95,11 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
         )}
 
         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-          <span className="rounded-full bg-primary px-3 py-1 text-xs font-heading font-bold text-primary-foreground">
-            -{discountPercent}% OFF
-          </span>
+          {discountPercent !== null ? (
+            <span className="rounded-full bg-primary px-3 py-1 text-xs font-heading font-bold text-primary-foreground">
+              -{discountPercent}% OFF
+            </span>
+          ) : null}
           <span
             className={`rounded-full px-3 py-1 text-xs font-heading font-bold text-primary-foreground ${getBadgeClass(
               offer.offerBadge || offer.offerType
@@ -117,13 +120,21 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
         <p className="mb-4 min-h-12 text-sm text-secondary-foreground/60">{offer.description}</p>
 
         <div className="mb-5 rounded-lg border border-primary/15 bg-primary/10 p-4">
-          <div className="flex items-center gap-3">
-            <span className="font-heading text-xl font-bold text-primary">{promoPrice}</span>
-            <span className="text-sm text-secondary-foreground/40 line-through">{salePrice}</span>
-          </div>
-          <p className="mt-1 text-xs font-medium text-secondary-foreground/70">
-            Economia de {savings}
-          </p>
+          {hasPrice ? (
+            <>
+              <div className="flex items-center gap-3">
+                <span className="font-heading text-xl font-bold text-primary">{promoPrice}</span>
+                <span className="text-sm text-secondary-foreground/40 line-through">{salePrice}</span>
+              </div>
+              <p className="mt-1 text-xs font-medium text-secondary-foreground/70">
+                Economia de {savings}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm font-medium text-secondary-foreground/70">
+              Consulte as condicoes comerciais desta campanha.
+            </p>
+          )}
         </div>
 
         <a
@@ -137,6 +148,56 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
       </div>
     </div>
   );
+}
+
+function toPromotionOffer(
+  promotion: StorefrontPromotion,
+  offerType: StorefrontOffer["offerType"]
+): StorefrontOffer {
+  const category =
+    promotion.targetCategories?.find(Boolean) ||
+    (offerType === "DIA" ? "Oferta Relampago" : offerType === "SEMANA" ? "Campanha Semanal" : "Campanha Mensal");
+
+  return {
+    id: promotion.id,
+    name: promotion.name,
+    description: promotion.shortDescription || promotion.description,
+    category,
+    salePrice: 0,
+    promoPrice: 0,
+    images: promotion.bannerImage ? [promotion.bannerImage] : [],
+    offerType,
+    offerStartDate: promotion.startDate || new Date().toISOString(),
+    offerEndDate: promotion.endDate || new Date().toISOString(),
+    offerBadge: promotion.badgeText || undefined,
+    slug: promotion.code || undefined,
+  };
+}
+
+function getPromotionBucket(promotion: StorefrontPromotion): StorefrontOffer["offerType"] {
+  const recurringType = promotion.schedule?.recurringType;
+
+  if (recurringType === "DAILY") {
+    return "DIA";
+  }
+  if (recurringType === "WEEKLY") {
+    return "SEMANA";
+  }
+  if (recurringType === "MONTHLY") {
+    return "MES";
+  }
+
+  const start = promotion.startDate ? new Date(promotion.startDate).getTime() : Date.now();
+  const end = promotion.endDate ? new Date(promotion.endDate).getTime() : Date.now();
+  const diffInDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+
+  if (diffInDays <= 1) {
+    return "DIA";
+  }
+  if (diffInDays <= 10) {
+    return "SEMANA";
+  }
+  return "MES";
 }
 
 function OfferGroup({
@@ -156,10 +217,6 @@ function OfferGroup({
   countdown?: { hours: string; minutes: string; seconds: string };
   accent?: "default" | "gold";
 }) {
-  if (!offers.length) {
-    return null;
-  }
-
   const Icon = icon;
 
   return (
@@ -195,11 +252,22 @@ function OfferGroup({
         ) : null}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {offers.map((offer) => (
-          <OfferCard key={offer.id} offer={offer} whatsappNumber={whatsappNumber} />
-        ))}
-      </div>
+      {offers.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {offers.map((offer) => (
+            <OfferCard key={offer.id} offer={offer} whatsappNumber={whatsappNumber} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-primary/20 bg-secondary/30 p-6 text-center">
+          <p className="font-heading text-lg font-semibold text-secondary-foreground">
+            Nenhuma oferta ativa nesta faixa
+          </p>
+          <p className="mt-2 text-sm text-secondary-foreground/60">
+            Assim que houver campanhas publicadas no backend para este periodo, elas aparecerao aqui.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -215,19 +283,34 @@ const Promotions = () => {
   } = useStorefront();
   const section = landingConfig.services;
   const marqueeItems = landingConfig.marquee?.items ?? [];
+  const fallbackPromotionOffers = useMemo(() => {
+    return promotions.reduce(
+      (accumulator, promotion) => {
+        const bucket = getPromotionBucket(promotion);
+        accumulator[bucket].push(toPromotionOffer(promotion, bucket));
+        return accumulator;
+      },
+      { DIA: [] as StorefrontOffer[], SEMANA: [] as StorefrontOffer[], MES: [] as StorefrontOffer[] }
+    );
+  }, [promotions]);
+
+  const resolvedDailyOffers = dailyOffers.length ? dailyOffers : fallbackPromotionOffers.DIA;
+  const resolvedWeeklyOffers = weeklyOffers.length ? weeklyOffers : fallbackPromotionOffers.SEMANA;
+  const resolvedMonthlyOffers = monthlyOffers.length ? monthlyOffers : fallbackPromotionOffers.MES;
 
   const nextDailyExpiration = useMemo(() => {
-    if (!dailyOffers.length) {
+    if (!resolvedDailyOffers.length) {
       return undefined;
     }
 
-    return dailyOffers
+    return resolvedDailyOffers
       .map((offer) => offer.offerEndDate)
       .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())[0];
-  }, [dailyOffers]);
+  }, [resolvedDailyOffers]);
 
   const countdown = useCountdown(nextDailyExpiration);
-  const hasStructuredOffers = dailyOffers.length || weeklyOffers.length || monthlyOffers.length;
+  const hasStructuredOffers =
+    resolvedDailyOffers.length || resolvedWeeklyOffers.length || resolvedMonthlyOffers.length;
 
   if (section?.enabled === false) {
     return null;
@@ -261,7 +344,7 @@ const Promotions = () => {
           title="Ofertas do Dia"
           subtitle="Condicoes validas por tempo limitado."
           icon={Clock3}
-          offers={dailyOffers}
+          offers={resolvedDailyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
           countdown={nextDailyExpiration ? countdown : undefined}
         />
@@ -270,7 +353,7 @@ const Promotions = () => {
           title="Ofertas da Semana"
           subtitle="Selecao especial para os proximos dias."
           icon={TrendingDown}
-          offers={weeklyOffers}
+          offers={resolvedWeeklyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
         />
 
@@ -278,76 +361,10 @@ const Promotions = () => {
           title="Ofertas do Mes"
           subtitle="Kits e condicoes de maior economia para aproveitar no periodo."
           icon={Package2}
-          offers={monthlyOffers}
+          offers={resolvedMonthlyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
           accent="gold"
         />
-
-        {!hasStructuredOffers && promotions.length > 0 ? (
-          <div className="mb-12 grid gap-6 md:grid-cols-3">
-            {promotions.slice(0, 3).map((promotion) => {
-              const bannerImage = toAssetUrl(promotion.bannerImage);
-              const highlight =
-                promotion.shortDescription ||
-                (promotion.endDate
-                  ? `Valido ate ${new Date(promotion.endDate).toLocaleDateString("pt-BR")}`
-                  : "Consulte as condicoes da promocao");
-              const badgeText = promotion.badgeText || promotion.type || "DESTAQUE";
-              const whatsappLink = buildWhatsAppHref(
-                settings.whatsapp || settings.phone,
-                `Ola! Quero aproveitar a promocao ${promotion.name}${
-                  promotion.code ? ` com o codigo ${promotion.code}` : ""
-                }.`
-              );
-
-              return (
-                <div
-                  key={promotion.id}
-                  className="relative overflow-hidden rounded-xl border border-primary/25 bg-secondary/80 p-6 card-glow"
-                >
-                  {bannerImage ? (
-                    <div className="absolute inset-0 opacity-10">
-                      <img
-                        src={bannerImage}
-                        alt={promotion.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ) : null}
-
-                  <div className="relative z-10">
-                    <span
-                      className={`mb-4 inline-block rounded-full px-3 py-1 text-xs font-heading font-bold text-primary-foreground ${getBadgeClass(
-                        badgeText
-                      )}`}
-                    >
-                      {badgeText}
-                    </span>
-                    <h3 className="mb-2 font-heading text-2xl font-bold text-secondary-foreground">
-                      {promotion.name}
-                    </h3>
-                    <p className="mb-4 text-sm text-secondary-foreground/60">
-                      {promotion.description}
-                    </p>
-                    <div className="mb-3 rounded-md border border-primary/20 bg-primary/10 px-4 py-2">
-                      <span className="text-sm font-heading font-semibold text-primary">
-                        {highlight}
-                      </span>
-                    </div>
-                    <a
-                      href={whatsappLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded-md bg-primary px-6 py-3 text-center font-heading font-bold text-primary-foreground transition-all hover:scale-105 hover:bg-primary/90"
-                    >
-                      Aproveitar Agora
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
 
         {!hasStructuredOffers && promotions.length === 0 ? (
           <div className="mb-12 rounded-xl border border-primary/20 bg-secondary/70 p-8 text-center">
