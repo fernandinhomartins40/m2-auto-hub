@@ -50,6 +50,7 @@ export const HeaderEditor = ({ config, onChange }: HeaderEditorProps) => {
           recommendedHeight={60}
           aspectRatio={null}
           maxFileSizeMB={2}
+          category="header-logo"
         />
       </Card>
 
@@ -155,25 +156,20 @@ export const HeaderEditor = ({ config, onChange }: HeaderEditorProps) => {
             className="rounded-lg p-4 flex items-center justify-between bg-secondary/95 backdrop-blur-md"
           >
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center overflow-hidden">
+            <div className="flex items-center">
+              <div className="flex h-12 items-center overflow-hidden">
                 {config.logo.url ? (
                   <img
                     src={config.logo.url}
-                    alt="Logo"
-                    className="w-full h-full object-cover"
+                    alt={config.logo.alt || 'Logo'}
+                    className="h-full w-auto object-contain"
                   />
                 ) : (
-                  <div className="flex gap-0.5">
-                    <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
-                    <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
-                    <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
-                  </div>
+                  <span className="text-sm font-medium text-secondary-foreground/60">
+                    Logo nao configurada
+                  </span>
                 )}
               </div>
-              <span className="font-heading text-xl font-bold text-primary-foreground tracking-wider">
-                m2
-              </span>
             </div>
 
             {/* Menu Items */}

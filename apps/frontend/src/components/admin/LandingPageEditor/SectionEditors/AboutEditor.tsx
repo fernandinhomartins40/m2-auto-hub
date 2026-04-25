@@ -1,5 +1,5 @@
 /**
- * AboutEditor - Editor completo da Página Sobre Nós
+ * AboutEditor - Editor da seção Sobre da Home e da página Sobre Nós
  */
 
 import { Label } from '@/components/ui/label';
@@ -41,9 +41,9 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <Label>Página Ativa</Label>
+            <Label>Seção e Página Ativas</Label>
             <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar a página Sobre Nós no menu
+              Controla a seção "Mais de 14 anos cuidando do seu veículo" da landing e a página Sobre no menu
             </p>
           </div>
           <Switch
@@ -114,7 +114,10 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
 
       {/* Hero Section */}
       <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold">Seção Hero</h3>
+        <h3 className="text-lg font-semibold">Seção Sobre da Home</h3>
+        <p className="text-sm text-muted-foreground">
+          Esses textos alimentam diretamente o bloco institucional da landing pública e também o topo da página Sobre.
+        </p>
 
         <div className="space-y-2">
           <Label>Badge</Label>
@@ -450,7 +453,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Eye className="h-5 w-5 text-moria-orange" />
-              <CardTitle>Preview da Página Sobre Nós</CardTitle>
+              <CardTitle>Preview da Seção Sobre da Home</CardTitle>
             </div>
             <Badge className="bg-green-100 text-green-800">
               <div className="h-2 w-2 bg-green-600 rounded-full mr-2"></div>
@@ -458,7 +461,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
             </Badge>
           </div>
           <CardDescription>
-            Veja como a página Sobre Nós aparecerá no site
+            Veja como o bloco "Mais de 14 anos cuidando do seu veículo" aparecerá na landing pública
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -673,14 +676,14 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
             </svg>
           </div>
           <div className="flex-1">
-            <h4 className="font-semibold text-purple-900 mb-1">Página Sobre Nós</h4>
+            <h4 className="font-semibold text-purple-900 mb-1">Seção Sobre da Home</h4>
             <p className="text-sm text-purple-800">
-              Configure todos os elementos da página institucional: história, valores,
-              estatísticas, serviços e compromisso com os clientes.
+              Configure aqui a seção institucional da landing pública e também os dados usados na página Sobre:
+              história, valores, estatísticas, serviços e compromisso com os clientes.
             </p>
             <p className="text-sm text-purple-800 mt-2">
-              <strong>Dica:</strong> Use essa página para transmitir credibilidade e
-              construir confiança com seus clientes.
+              <strong>Dica:</strong> o título e o destaque desta aba são exatamente os que aparecem na seção
+              "Mais de 14 anos cuidando do seu veículo" da home.
             </p>
           </div>
         </div>

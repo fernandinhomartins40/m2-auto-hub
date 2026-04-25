@@ -3,7 +3,7 @@
  * Usa ProductImageCropper (react-image-crop) para interface consistente
  */
 
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { ImageConfig } from '@/types/landingPage';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ProductImageCropper } from '@/components/admin/ProductImageCropper';
 import imageCompression from 'browser-image-compression';
+import { toAssetUrl } from '@/lib/storefront-helpers';
 
 interface ImageUploaderWithCropProps {
   label: string;
@@ -41,9 +42,10 @@ export const ImageUploaderWithCrop = ({
   maxFileSizeMB = 5,
   category = 'general',
 }: ImageUploaderWithCropProps) => {
-  const [preview, setPreview] = useState(value.url);
+  const [preview, setPreview] = useState(() => toAssetUrl(value.url) || '');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const localPreviewUrlRef = useRef<string | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -52,6 +54,26 @@ export const ImageUploaderWithCrop = ({
   // Estado do crop
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (localPreviewUrlRef.current && preview === localPreviewUrlRef.current) {
+      return;
+    }
+
+    setPreview(toAssetUrl(value.url) || '');
+  }, [preview, value.url]);
+
+  useEffect(() => {
+    return () => {
+      if (tempImageUrl) {
+        URL.revokeObjectURL(tempImageUrl);
+      }
+
+      if (localPreviewUrlRef.current) {
+        URL.revokeObjectURL(localPreviewUrlRef.current);
+      }
+    };
+  }, [tempImageUrl]);
 
   /**
    * Upload de imagem via API
@@ -141,13 +163,17 @@ export const ImageUploaderWithCrop = ({
 
       // Criar preview local imediatamente
       const localPreview = URL.createObjectURL(compressedFile);
+      if (localPreviewUrlRef.current) {
+        URL.revokeObjectURL(localPreviewUrlRef.current);
+      }
+      localPreviewUrlRef.current = localPreview;
       setPreview(localPreview);
 
       // Upload para servidor com categoria
       const imageUrl = await uploadImage(compressedFile, category);
 
       // Atualizar com URL real do servidor
-      setPreview(imageUrl);
+      setPreview(toAssetUrl(imageUrl) || imageUrl);
       onChange({
         ...value,
         url: imageUrl,
@@ -160,6 +186,10 @@ export const ImageUploaderWithCrop = ({
         URL.revokeObjectURL(tempImageUrl);
         setTempImageUrl(null);
       }
+      if (localPreviewUrlRef.current) {
+        URL.revokeObjectURL(localPreviewUrlRef.current);
+        localPreviewUrlRef.current = null;
+      }
     } catch (error: any) {
       console.error('[ImageUploaderWithCrop] ❌ Upload falhou:', error);
 
@@ -167,7 +197,11 @@ export const ImageUploaderWithCrop = ({
       setUploadError(errorMsg);
 
       // Restaurar preview anterior
-      setPreview(value.url);
+      if (localPreviewUrlRef.current) {
+        URL.revokeObjectURL(localPreviewUrlRef.current);
+        localPreviewUrlRef.current = null;
+      }
+      setPreview(toAssetUrl(value.url) || '');
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -205,7 +239,11 @@ export const ImageUploaderWithCrop = ({
   };
 
   const handleUrlChange = (url: string) => {
-    setPreview(url);
+    if (localPreviewUrlRef.current) {
+      URL.revokeObjectURL(localPreviewUrlRef.current);
+      localPreviewUrlRef.current = null;
+    }
+    setPreview(toAssetUrl(url) || url);
     onChange({
       ...value,
       url,
@@ -356,12 +394,12 @@ export const ImageUploaderWithCrop = ({
 
         {/* URL Input */}
         <div className="space-y-2">
-          <Label>URL da Imagem (ou use upload acima)</Label>
+          <Label>URL ou Caminho da Imagem (ou use upload acima)</Label>
           <Input
-            type="url"
+            type="text"
             value={value.url}
             onChange={(e) => handleUrlChange(e.target.value)}
-            placeholder="https://exemplo.com/imagem.jpg"
+            placeholder="https://exemplo.com/imagem.jpg ou /uploads/landing-page/imagem.webp"
           />
         </div>
 

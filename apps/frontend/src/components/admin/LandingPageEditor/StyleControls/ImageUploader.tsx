@@ -3,13 +3,14 @@
  * Adaptado do Ferraco para Moria
  */
 
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { ImageConfig } from '@/types/landingPage';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toAssetUrl } from '@/lib/storefront-helpers';
 
 interface ImageUploaderProps {
   label: string;
@@ -26,13 +27,17 @@ export const ImageUploader = ({
   description,
   acceptedFormats = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
 }: ImageUploaderProps) => {
-  const [preview, setPreview] = useState(value.url);
+  const [preview, setPreview] = useState(() => toAssetUrl(value.url) || '');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  useEffect(() => {
+    setPreview(toAssetUrl(value.url) || '');
+  }, [value.url]);
 
   /**
    * Upload de imagem via API
@@ -98,7 +103,7 @@ export const ImageUploader = ({
       const imageUrl = await uploadImage(file);
 
       // Atualizar com URL real do servidor
-      setPreview(imageUrl);
+      setPreview(toAssetUrl(imageUrl) || imageUrl);
       onChange({
         ...value,
         url: imageUrl,
@@ -112,7 +117,7 @@ export const ImageUploader = ({
       setUploadError(errorMsg);
 
       // Restaurar preview anterior
-      setPreview(value.url);
+      setPreview(toAssetUrl(value.url) || '');
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -139,7 +144,7 @@ export const ImageUploader = ({
   };
 
   const handleUrlChange = (url: string) => {
-    setPreview(url);
+    setPreview(toAssetUrl(url) || url);
     onChange({
       ...value,
       url,
@@ -268,12 +273,12 @@ export const ImageUploader = ({
 
         {/* URL Input */}
         <div className="space-y-2">
-          <Label>URL da Imagem</Label>
+          <Label>URL ou Caminho da Imagem</Label>
           <Input
-            type="url"
+            type="text"
             value={value.url}
             onChange={(e) => handleUrlChange(e.target.value)}
-            placeholder="https://exemplo.com/imagem.jpg"
+            placeholder="https://exemplo.com/imagem.jpg ou /uploads/landing-page/imagem.webp"
           />
         </div>
 

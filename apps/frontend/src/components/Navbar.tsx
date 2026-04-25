@@ -9,7 +9,7 @@ import { normalizeLink, toAssetUrl } from "@/lib/storefront-helpers";
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { brandShortName, landingConfig, menuItems, settings, whatsappHref } = useStorefront();
+  const { landingConfig, menuItems, settings, whatsappHref } = useStorefront();
   const { isAuthenticated, customer } = useAuth();
   const { totalItems, openCart } = useCart();
 
@@ -50,27 +50,22 @@ const Navbar = () => {
         <button
           type="button"
           onClick={() => handleClick("#inicio")}
-          className="flex items-center gap-2 text-left"
+          className="flex items-center text-left"
           aria-label={`Ir para o inicio da ${storeName}`}
         >
-          <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center overflow-hidden">
+          <div className="flex h-12 items-center overflow-hidden">
             {logoUrl ? (
               <img
                 src={logoUrl}
                 alt={landingConfig.header?.logo?.alt || storeName}
-                className="w-full h-full object-cover"
+                className="h-full w-auto object-contain"
               />
             ) : (
-              <div className="flex gap-0.5">
-                <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
-                <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
-                <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
-              </div>
+              <span className="font-heading text-xl font-bold text-primary-foreground tracking-wide">
+                {storeName}
+              </span>
             )}
           </div>
-          <span className="font-heading text-2xl font-bold text-primary-foreground tracking-wider">
-            {brandShortName}
-          </span>
         </button>
 
         <nav className="hidden lg:flex items-center gap-6">

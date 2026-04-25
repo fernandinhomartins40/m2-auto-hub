@@ -252,7 +252,7 @@ export function LandingPageContent() {
                 <TabsTrigger value="about" className="text-xs">Serviços</TabsTrigger>
                 <TabsTrigger value="products" className="text-xs">Peças</TabsTrigger>
                 <TabsTrigger value="services" className="text-xs">Promoções</TabsTrigger>
-                <TabsTrigger value="aboutPage" className="text-xs">Sobre</TabsTrigger>
+                <TabsTrigger value="aboutPage" className="text-xs">Sobre da Home</TabsTrigger>
                 <TabsTrigger value="contactPage" className="text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="footer" className="text-xs">Footer</TabsTrigger>
               </TabsList>
@@ -268,7 +268,7 @@ export function LandingPageContent() {
                 <TabsTrigger value="about" className="text-sm">Serviços</TabsTrigger>
                 <TabsTrigger value="products" className="text-sm">Peças</TabsTrigger>
                 <TabsTrigger value="services" className="text-sm">Promoções</TabsTrigger>
-                <TabsTrigger value="aboutPage" className="text-sm">Sobre</TabsTrigger>
+                <TabsTrigger value="aboutPage" className="text-sm">Sobre da Home</TabsTrigger>
                 <TabsTrigger value="contactPage" className="text-sm">Contato</TabsTrigger>
                 <TabsTrigger value="footer" className="text-sm">Footer</TabsTrigger>
               </TabsList>
