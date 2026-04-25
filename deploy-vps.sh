@@ -90,10 +90,10 @@ if [ "${APP_TABLES:-0}" = "0" ]; then
 fi
 
 log "Running migrations"
-compose_timeout 10m run --rm --no-build migrator
+compose_timeout 10m run --rm migrator
 
 log "Bootstrapping data"
-compose_timeout 4m run --rm --no-build bootstrap || true
+compose_timeout 4m run --rm bootstrap || true
 
 log "Starting alpr"
 compose up -d --no-build --no-deps alpr
