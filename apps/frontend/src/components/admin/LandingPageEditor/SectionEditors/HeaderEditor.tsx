@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { HeaderConfig, HeaderMenuItem } from '@/types/landingPage';
-import { ImageUploaderWithCrop, ArrayEditor, ColorOrGradientPicker, colorOrGradientToCSS } from '../StyleControls';
+import { ImageUploader, ArrayEditor, ColorOrGradientPicker, colorOrGradientToCSS } from '../StyleControls';
 import { Eye } from 'lucide-react';
 
 interface HeaderEditorProps {
@@ -41,15 +41,11 @@ export const HeaderEditor = ({ config, onChange }: HeaderEditorProps) => {
 
       {/* Logo */}
       <Card className="p-6">
-        <ImageUploaderWithCrop
+        <ImageUploader
           label="Logo do Header"
           value={config.logo}
           onChange={(logo) => updateConfig({ logo })}
-          description="Logo exibida no canto superior esquerdo"
-          recommendedWidth={200}
-          recommendedHeight={60}
-          aspectRatio={null}
-          maxFileSizeMB={2}
+          description="Logo exibida no canto superior esquerdo, sem recorte ou compressao automatica"
           category="header-logo"
         />
       </Card>

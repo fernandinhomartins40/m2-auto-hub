@@ -18,6 +18,7 @@ interface ImageUploaderProps {
   onChange: (image: ImageConfig) => void;
   description?: string;
   acceptedFormats?: string[];
+  category?: string;
 }
 
 export const ImageUploader = ({
@@ -26,6 +27,7 @@ export const ImageUploader = ({
   onChange,
   description,
   acceptedFormats = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
+  category = 'general',
 }: ImageUploaderProps) => {
   const [preview, setPreview] = useState(() => toAssetUrl(value.url) || '');
   const [isDragging, setIsDragging] = useState(false);
@@ -48,6 +50,7 @@ export const ImageUploader = ({
 
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('category', category);
 
       setUploadProgress(30);
 
