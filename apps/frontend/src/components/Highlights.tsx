@@ -2,7 +2,7 @@ import { useStorefront } from "@/context/StorefrontContext";
 import { formatPhoneNumber, resolveIcon } from "@/lib/storefront-helpers";
 
 const Highlights = () => {
-  const { landingConfig, productsCount, promotions, servicesCount, settings } = useStorefront();
+  const { landingConfig, offers, promotions, productsCount, servicesCount, settings } = useStorefront();
   const section = landingConfig.contact;
 
   if (section?.enabled === false) {
@@ -26,7 +26,7 @@ const Highlights = () => {
       case "services":
         return `${servicesCount} servicos`;
       case "promotions":
-        return `${promotions.length} ofertas`;
+        return `${offers.length || promotions.length} ofertas`;
       case "whatsapp":
         return settings.whatsapp ? formatPhoneNumber(settings.whatsapp) : "WhatsApp direto";
       case "custom":

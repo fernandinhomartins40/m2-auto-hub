@@ -2,6 +2,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
+  getActiveOffers,
   getActivePromotions,
   getLandingPageConfig,
   getPublicSettings,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/storefront-helpers";
 import {
   fallbackLandingConfig,
+  fallbackOffers,
   fallbackProducts,
   fallbackPromotions,
   fallbackPublicSettings,
@@ -28,6 +30,7 @@ import type {
   LandingPageConfig,
   LandingMenuItem,
   PublicSettings,
+  StorefrontOffer,
   StorefrontProduct,
   StorefrontPromotion,
   StorefrontService,
@@ -40,6 +43,10 @@ export interface StorefrontContextValue {
   servicesCount: number;
   products: StorefrontProduct[];
   productsCount: number;
+  offers: StorefrontOffer[];
+  dailyOffers: StorefrontOffer[];
+  weeklyOffers: StorefrontOffer[];
+  monthlyOffers: StorefrontOffer[];
   promotions: StorefrontPromotion[];
   loading: boolean;
   usingFallback: boolean;
@@ -123,6 +130,12 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     retry: false,
   });
 
+  const offersQuery = useQuery({
+    queryKey: ["storefront", "offers"],
+    queryFn: getActiveOffers,
+    retry: false,
+  });
+
   const landingConfig = landingQuery.data
     ? mergeDeep(fallbackLandingConfig, landingQuery.data)
     : fallbackLandingConfig;
@@ -135,7 +148,11 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     : fallbackPublicSettings;
   const services = servicesQuery.data ? servicesQuery.data.data : fallbackServices;
   const products = productsQuery.data ? productsQuery.data.data : fallbackProducts;
+  const offers = offersQuery.data ?? fallbackOffers;
   const promotions = promotionsQuery.data ?? fallbackPromotions;
+  const dailyOffers = offers.filter((offer) => offer.offerType === "DIA");
+  const weeklyOffers = offers.filter((offer) => offer.offerType === "SEMANA");
+  const monthlyOffers = offers.filter((offer) => offer.offerType === "MES");
 
   const menuItems = normalizeMenuItems(
     landingConfig.header?.menuItems ?? fallbackLandingConfig.header?.menuItems
@@ -155,6 +172,7 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     settingsQuery.error instanceof Error ? settingsQuery.error.message : null,
     servicesQuery.error instanceof Error ? servicesQuery.error.message : null,
     productsQuery.error instanceof Error ? productsQuery.error.message : null,
+    offersQuery.error instanceof Error ? offersQuery.error.message : null,
     promotionsQuery.error instanceof Error ? promotionsQuery.error.message : null,
   ].filter(Boolean) as string[];
 
@@ -165,12 +183,17 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     servicesCount: servicesQuery.data ? servicesQuery.data.meta.totalCount : fallbackServices.length,
     products,
     productsCount: productsQuery.data ? productsQuery.data.meta.totalCount : fallbackProducts.length,
+    offers,
+    dailyOffers,
+    weeklyOffers,
+    monthlyOffers,
     promotions,
     loading:
       landingQuery.isLoading ||
       settingsQuery.isLoading ||
       servicesQuery.isLoading ||
       productsQuery.isLoading ||
+      offersQuery.isLoading ||
       promotionsQuery.isLoading,
     usingFallback: errors.length > 0 || !landingQuery.data || !settingsQuery.data,
     errors,

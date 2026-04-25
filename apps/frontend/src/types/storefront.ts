@@ -267,6 +267,23 @@ export interface StorefrontProduct {
   status?: string;
 }
 
+export type StorefrontOfferType = "DIA" | "SEMANA" | "MES";
+
+export interface StorefrontOffer {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  promoPrice: number;
+  salePrice: number;
+  images?: string[];
+  offerType: StorefrontOfferType;
+  offerStartDate: string;
+  offerEndDate: string;
+  offerBadge?: string | null;
+  slug?: string;
+}
+
 export interface StorefrontPromotion {
   id: string;
   name: string;

@@ -5,6 +5,7 @@ import { AuthContext, type AuthContextType } from '@/contexts/AuthContext';
 import { CartContext, type CartContextType } from '@/contexts/CartContext';
 import {
   fallbackLandingConfig,
+  fallbackOffers,
   fallbackProducts,
   fallbackPromotions,
   fallbackPublicSettings,
@@ -74,6 +75,10 @@ export function PreviewProviders({ children, config }: PreviewProvidersProps) {
   const settings = fallbackPublicSettings;
   const services = fallbackServices;
   const products = fallbackProducts;
+  const offers = fallbackOffers;
+  const dailyOffers = offers.filter((offer) => offer.offerType === 'DIA');
+  const weeklyOffers = offers.filter((offer) => offer.offerType === 'SEMANA');
+  const monthlyOffers = offers.filter((offer) => offer.offerType === 'MES');
   const promotions = fallbackPromotions;
   const menuItems = normalizeMenuItems(landingConfig.header?.menuItems ?? []);
   const addressLines = buildAddressLines(settings, landingConfig.footer);
@@ -90,6 +95,10 @@ export function PreviewProviders({ children, config }: PreviewProvidersProps) {
     servicesCount: services.length,
     products,
     productsCount: products.length,
+    offers,
+    dailyOffers,
+    weeklyOffers,
+    monthlyOffers,
     promotions,
     loading: false,
     usingFallback: true,

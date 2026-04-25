@@ -2,6 +2,7 @@ import type {
   LandingPageConfig,
   PaginatedResult,
   PaginationMeta,
+  StorefrontOffer,
   PublicSettings,
   StorefrontProduct,
   StorefrontPromotion,
@@ -124,5 +125,10 @@ export async function getStorefrontProducts(limit = 8): Promise<PaginatedResult<
 
 export async function getActivePromotions() {
   const response = await request<ApiEnvelope<StorefrontPromotion[]>>("/promotions/active");
+  return response.data ?? [];
+}
+
+export async function getActiveOffers() {
+  const response = await request<ApiEnvelope<StorefrontOffer[]>>("/products/offers/active");
   return response.data ?? [];
 }

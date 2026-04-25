@@ -1,6 +1,7 @@
 import type {
   LandingPageConfig,
   PublicSettings,
+  StorefrontOffer,
   StorefrontProduct,
   StorefrontPromotion,
   StorefrontService,
@@ -281,5 +282,44 @@ export const fallbackPromotions: StorefrontPromotion[] = [
     description: "Compre seu escapamento e ganhe a instalacao por nossa equipe.",
     shortDescription: "Instalacao inclusa na compra",
     badgeText: "ECONOMIA",
+  },
+];
+
+export const fallbackOffers: StorefrontOffer[] = [
+  {
+    id: "m2-offer-day-1",
+    name: "Kit Troca de Oleo 5W30 + Filtro",
+    description: "Troca rapida com oleo sintetico e filtro incluso.",
+    category: "Lubrificacao",
+    salePrice: 249.9,
+    promoPrice: 199.9,
+    offerType: "DIA",
+    offerStartDate: new Date().toISOString(),
+    offerEndDate: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+    offerBadge: "OFERTA DO DIA",
+  },
+  {
+    id: "m2-offer-week-1",
+    name: "Pastilhas de Freio + Instalacao",
+    description: "Desconto especial em freios com mao de obra da equipe.",
+    category: "Freios",
+    salePrice: 389.9,
+    promoPrice: 319.9,
+    offerType: "SEMANA",
+    offerStartDate: new Date().toISOString(),
+    offerEndDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    offerBadge: "OFERTA DA SEMANA",
+  },
+  {
+    id: "m2-offer-month-1",
+    name: "Amortecedores + Alinhamento",
+    description: "Kit completo para suspensao com valor promocional no mes.",
+    category: "Suspensao",
+    salePrice: 1299.9,
+    promoPrice: 999.9,
+    offerType: "MES",
+    offerStartDate: new Date().toISOString(),
+    offerEndDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+    offerBadge: "OFERTA DO MES",
   },
 ];
