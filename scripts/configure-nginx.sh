@@ -9,6 +9,23 @@ SSL_EMAIL="${SSL_EMAIL:-admin@m2centerauto.com.br}"
 
 mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /var/www/certbot
 
+obtain_certificate() {
+  local attempts="${1:-5}" delay="${2:-15}" i
+  for i in $(seq 1 "$attempts"); do
+    echo "Certbot attempt $i/$attempts"
+    if certbot certonly --webroot \
+      -w /var/www/certbot \
+      -d "$PRIMARY_DOMAIN" -d "$SECONDARY_DOMAIN" \
+      --email "$SSL_EMAIL" \
+      --agree-tos --non-interactive; then
+      return 0
+    fi
+    [ "$i" -lt "$attempts" ] || break
+    sleep "$delay"
+  done
+  return 1
+}
+
 # HTTP config (always applied first)
 {
   printf 'server {\n'
@@ -36,19 +53,15 @@ echo "Nginx HTTP OK"
 
 # Try to obtain SSL certificate
 if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
-  certbot certonly --webroot \
-    -w /var/www/certbot \
-    -d "$PRIMARY_DOMAIN" -d "$SECONDARY_DOMAIN" \
-    --email "$SSL_EMAIL" \
-    --agree-tos --non-interactive 2>/dev/null || echo "certbot failed, keeping HTTP"
+  obtain_certificate 5 15
 else
   echo "SSL certificate already exists, skipping"
 fi
 
 # HTTPS config if cert exists
 if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
-  echo "Nginx OK (HTTP only)"
-  exit 0
+  echo "SSL certificate missing for ${PRIMARY_DOMAIN}; aborting HTTPS configuration" >&2
+  exit 1
 fi
 
 {
@@ -66,7 +79,7 @@ fi
   printf "    ssl_certificate_key /etc/letsencrypt/live/%s/privkey.pem;\n" "$PRIMARY_DOMAIN"
   printf '    ssl_protocols TLSv1.2 TLSv1.3;\n'
   printf '    ssl_ciphers HIGH:!aNULL:!MD5;\n'
-  printf "    if (\$host != \"www.m2centerauto.com.br\") { return 301 %s\$request_uri; }\n" "$CANONICAL_URL"
+  printf "    if (\$host != \"%s\") { return 301 %s\$request_uri; }\n" "$SECONDARY_DOMAIN" "$CANONICAL_URL"
   printf '    location / {\n'
   printf "        proxy_pass http://127.0.0.1:%s;\n" "$DEPLOY_PORT"
   printf '        proxy_http_version 1.1;\n'
