@@ -6,13 +6,16 @@ import { useCart } from "@/contexts/CartContext";
 import {
   buildWhatsAppHref,
   formatCurrency,
+  resolveIcon,
   resolveServiceIcon,
+  toCssBackgroundStyle,
 } from "@/lib/storefront-helpers";
 
 const Services = () => {
   const { landingConfig, services, settings } = useStorefront();
   const { addItem, openCart } = useCart();
   const section = landingConfig.about;
+  const trustIndicators = section?.trustIndicators ?? [];
 
   if (section?.enabled === false) {
     return null;
@@ -111,6 +114,34 @@ const Services = () => {
             );
           })}
         </div>
+
+        {trustIndicators.length ? (
+          <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {trustIndicators.slice(0, 4).map((indicator) => {
+              const Icon = resolveIcon(indicator.icon);
+
+              return (
+                <div
+                  key={indicator.id}
+                  className="rounded-lg border border-primary/15 bg-secondary/70 p-6 text-center"
+                >
+                  <div
+                    className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full"
+                    style={toCssBackgroundStyle(indicator.iconBackground)}
+                  >
+                    <Icon className="text-white" size={24} />
+                  </div>
+                  <h3 className="font-heading text-lg font-bold text-secondary-foreground">
+                    {indicator.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-secondary-foreground/65">
+                    {indicator.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </section>
   );

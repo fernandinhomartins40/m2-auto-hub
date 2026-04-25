@@ -46,6 +46,8 @@ export interface LandingHeroButton {
   href: string;
   variant?: string;
   enabled?: boolean;
+  background?: string | LandingColorValue;
+  textColor?: string | LandingColorValue;
 }
 
 export interface LandingFeatureItem {
@@ -54,10 +56,23 @@ export interface LandingFeatureItem {
   text?: string;
 }
 
+export interface LandingGradientValue {
+  type: "linear" | "radial";
+  angle?: number;
+  direction?: string;
+  colors?: string[];
+}
+
+export interface LandingColorValue {
+  type: "solid" | "gradient";
+  solid?: string;
+  gradient?: LandingGradientValue;
+}
+
 export interface LandingTrustIndicator {
   id: string;
   icon?: string;
-  iconBackground?: string;
+  iconBackground?: string | LandingColorValue;
   title?: string;
   description?: string;
 }
@@ -89,9 +104,9 @@ export interface LandingHeaderConfig {
   enabled?: boolean;
   logo?: LandingImage;
   menuItems?: LandingMenuItem[];
-  backgroundColor?: string;
-  textColor?: string;
-  hoverColor?: string;
+  backgroundColor?: string | LandingColorValue;
+  textColor?: string | LandingColorValue;
+  hoverColor?: string | LandingColorValue;
 }
 
 export interface LandingHeroConfig {
@@ -113,8 +128,8 @@ export interface LandingMarqueeConfig {
   enabled?: boolean;
   items?: LandingMarqueeItem[];
   speed?: number;
-  backgroundColor?: string;
-  textColor?: string;
+  backgroundColor?: string | LandingColorValue;
+  textColor?: string | LandingColorValue;
 }
 
 export interface LandingContactInfoCard {
@@ -122,6 +137,27 @@ export interface LandingContactInfoCard {
   icon?: string;
   title?: string;
   content?: string[];
+  color?: string | LandingColorValue;
+}
+
+export type LandingHighlightValueType =
+  | "products"
+  | "services"
+  | "promotions"
+  | "whatsapp"
+  | "custom";
+
+export interface LandingHighlightItem {
+  id: string;
+  icon?: string;
+  title?: string;
+  valueType?: LandingHighlightValueType;
+  customValue?: string;
+}
+
+export interface LandingHighlightsConfig {
+  enabled?: boolean;
+  items?: LandingHighlightItem[];
 }
 
 export interface LandingContactPageConfig {
@@ -203,9 +239,9 @@ export interface LandingPageConfig {
   about?: LandingAboutConfig;
   products?: LandingSectionHeader;
   services?: LandingSectionHeader;
+  contact?: LandingHighlightsConfig;
   contactPage?: LandingContactPageConfig;
   aboutPage?: LandingAboutPageConfig;
-  contact?: Record<string, unknown>;
   footer?: LandingFooterConfig;
 }
 

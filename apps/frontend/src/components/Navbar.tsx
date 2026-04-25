@@ -4,7 +4,12 @@ import { CircleUserRound, Menu, ShoppingCart, X } from "lucide-react";
 import { useStorefront } from "@/context/StorefrontContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { normalizeLink, toAssetUrl } from "@/lib/storefront-helpers";
+import {
+  normalizeLink,
+  toAssetUrl,
+  toCssBackgroundStyle,
+  toCssTextStyle,
+} from "@/lib/storefront-helpers";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -26,6 +31,12 @@ const Navbar = () => {
   const logoUrl = toAssetUrl(landingConfig.header?.logo?.url);
   const storeName = settings.storeName || "M2 Auto Center";
   const customerHref = isAuthenticated ? "/customer" : "/customer-login/?redirect=%2Fcustomer";
+  const headerBackgroundStyle = landingConfig.header?.backgroundColor
+    ? toCssBackgroundStyle(landingConfig.header.backgroundColor)
+    : { background: scrolled ? "rgba(23, 27, 34, 0.95)" : "rgba(23, 27, 34, 0.8)" };
+  const headerTextStyle = landingConfig.header?.textColor
+    ? toCssTextStyle(landingConfig.header.textColor)
+    : {};
 
   const handleClick = (href: string) => {
     setMobileOpen(false);
@@ -42,9 +53,10 @@ const Navbar = () => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-secondary/95 backdrop-blur-md shadow-lg"
-          : "bg-secondary/80 backdrop-blur-sm"
+          ? "backdrop-blur-md shadow-lg"
+          : "backdrop-blur-sm"
       }`}
+      style={headerBackgroundStyle}
     >
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <button
@@ -68,7 +80,10 @@ const Navbar = () => {
               </div>
             )}
           </div>
-          <span className="font-heading text-2xl font-bold text-primary-foreground tracking-wider">
+          <span
+            className="font-heading text-2xl font-bold tracking-wider"
+            style={headerTextStyle}
+          >
             {brandShortName}
           </span>
         </button>
@@ -79,7 +94,8 @@ const Navbar = () => {
               key={item.id}
               type="button"
               onClick={() => handleClick(normalizeLink(item.label, item.href))}
-              className="text-sm font-medium text-secondary-foreground/80 hover:text-primary transition-colors"
+              className="text-sm font-medium transition-colors"
+              style={headerTextStyle}
             >
               {item.label}
             </button>
@@ -90,6 +106,7 @@ const Navbar = () => {
           <a
             href={customerHref}
             className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/20 bg-secondary/60 text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+            style={headerTextStyle}
             aria-label={isAuthenticated ? `Acessar painel do cliente de ${customer?.name ?? "cliente"}` : "Entrar no painel do cliente"}
             title={isAuthenticated ? "Painel do cliente" : "Entrar no painel do cliente"}
           >
@@ -100,6 +117,7 @@ const Navbar = () => {
             type="button"
             onClick={openCart}
             className="relative inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/20 bg-secondary/60 text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+            style={headerTextStyle}
             aria-label="Abrir carrinho"
             title="Abrir carrinho"
           >
@@ -138,7 +156,8 @@ const Navbar = () => {
               key={item.id}
               type="button"
               onClick={() => handleClick(normalizeLink(item.label, item.href))}
-              className="block w-full text-left py-3 text-secondary-foreground/80 hover:text-primary font-medium transition-colors border-b border-primary/10 last:border-0"
+              className="block w-full border-b border-primary/10 py-3 text-left font-medium transition-colors last:border-0"
+              style={headerTextStyle}
             >
               {item.label}
             </button>
@@ -147,6 +166,7 @@ const Navbar = () => {
             <a
               href={customerHref}
               className="inline-flex items-center justify-center gap-2 rounded-md border border-primary/20 px-4 py-3 text-sm font-semibold text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+              style={headerTextStyle}
             >
               <CircleUserRound size={18} />
               Cliente
@@ -158,6 +178,7 @@ const Navbar = () => {
                 openCart();
               }}
               className="inline-flex items-center justify-center gap-2 rounded-md border border-primary/20 px-4 py-3 text-sm font-semibold text-secondary-foreground hover:border-primary hover:text-primary transition-colors"
+              style={headerTextStyle}
             >
               <ShoppingCart size={18} />
               Carrinho

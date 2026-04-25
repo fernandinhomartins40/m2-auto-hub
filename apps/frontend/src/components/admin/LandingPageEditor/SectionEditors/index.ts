@@ -10,3 +10,4 @@ export { ServicesEditor } from './ServicesEditor';
 export { ProductsEditor } from './ProductsEditor';
 export { PromotionsEditor } from './PromotionsEditor';
 export { ContactEditor } from './ContactEditor';
+export { HighlightsEditor } from './HighlightsEditor';

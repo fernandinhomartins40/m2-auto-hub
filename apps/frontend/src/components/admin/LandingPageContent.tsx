@@ -35,6 +35,7 @@ import {
   ProductsEditor,
   PromotionsEditor,
   ContactEditor,
+  HighlightsEditor,
 } from '@/components/admin/LandingPageEditor/SectionEditors';
 import { AboutEditor } from '@/components/admin/LandingPageEditor/SectionEditors/AboutEditor';
 import { toast } from 'sonner';
@@ -244,14 +245,15 @@ export function LandingPageContent() {
             {/* Mobile: Scroll Horizontal sem barra visível */}
             <div className="md:hidden overflow-x-auto scrollbar-hide -mx-4 px-4">
               <TabsList className="inline-flex w-auto">
-                <TabsTrigger value="hero" className="text-xs">Hero</TabsTrigger>
                 <TabsTrigger value="header" className="text-xs">Header</TabsTrigger>
+                <TabsTrigger value="hero" className="text-xs">Hero</TabsTrigger>
+                <TabsTrigger value="contact" className="text-xs">Destaques</TabsTrigger>
                 <TabsTrigger value="marquee" className="text-xs">Marquee</TabsTrigger>
                 <TabsTrigger value="about" className="text-xs">Serviços</TabsTrigger>
                 <TabsTrigger value="products" className="text-xs">Peças</TabsTrigger>
                 <TabsTrigger value="services" className="text-xs">Promoções</TabsTrigger>
-                <TabsTrigger value="contactPage" className="text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="aboutPage" className="text-xs">Sobre</TabsTrigger>
+                <TabsTrigger value="contactPage" className="text-xs">Contato</TabsTrigger>
                 <TabsTrigger value="footer" className="text-xs">Footer</TabsTrigger>
               </TabsList>
             </div>
@@ -259,14 +261,15 @@ export function LandingPageContent() {
             {/* Desktop: Scroll Horizontal sem barra visível */}
             <div className="hidden md:block overflow-x-auto scrollbar-hide -mx-6 px-6">
               <TabsList className="inline-flex w-auto min-w-full">
-                <TabsTrigger value="hero" className="text-sm">Hero</TabsTrigger>
                 <TabsTrigger value="header" className="text-sm">Header</TabsTrigger>
+                <TabsTrigger value="hero" className="text-sm">Hero</TabsTrigger>
+                <TabsTrigger value="contact" className="text-sm">Destaques</TabsTrigger>
                 <TabsTrigger value="marquee" className="text-sm">Marquee</TabsTrigger>
                 <TabsTrigger value="about" className="text-sm">Serviços</TabsTrigger>
                 <TabsTrigger value="products" className="text-sm">Peças</TabsTrigger>
                 <TabsTrigger value="services" className="text-sm">Promoções</TabsTrigger>
-                <TabsTrigger value="contactPage" className="text-sm">Contato</TabsTrigger>
                 <TabsTrigger value="aboutPage" className="text-sm">Sobre</TabsTrigger>
+                <TabsTrigger value="contactPage" className="text-sm">Contato</TabsTrigger>
                 <TabsTrigger value="footer" className="text-sm">Footer</TabsTrigger>
               </TabsList>
             </div>
@@ -290,6 +293,13 @@ export function LandingPageContent() {
             <MarqueeEditor
               config={config.marquee}
               onChange={(marquee) => updateConfig('marquee', marquee)}
+            />
+          </TabsContent>
+
+          <TabsContent value="contact" className="space-y-4 mt-0">
+            <HighlightsEditor
+              config={config.contact}
+              onChange={(contact) => updateConfig('contact', contact)}
             />
           </TabsContent>
 

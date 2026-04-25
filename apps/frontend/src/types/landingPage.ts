@@ -148,7 +148,31 @@ export interface PromotionsSectionConfig {
 }
 
 // ============================================================================
-// 7. CONTACT PAGE CONFIG
+// 7. HOME HIGHLIGHTS CONFIG
+// ============================================================================
+
+export type HighlightValueType =
+  | 'products'
+  | 'services'
+  | 'promotions'
+  | 'whatsapp'
+  | 'custom';
+
+export interface HighlightItem {
+  id: string;
+  icon: string;
+  title: string;
+  valueType: HighlightValueType;
+  customValue?: string;
+}
+
+export interface HighlightsConfig {
+  enabled: boolean;
+  items: HighlightItem[];
+}
+
+// ============================================================================
+// 8. CONTACT PAGE CONFIG
 // ============================================================================
 
 export interface ContactInfoCard {
@@ -191,7 +215,7 @@ export interface ContactConfig {
 }
 
 // ============================================================================
-// 8. ABOUT PAGE CONFIG
+// 9. ABOUT PAGE CONFIG
 // ============================================================================
 
 export interface AboutMilestone {
@@ -255,7 +279,7 @@ export interface AboutConfig {
 }
 
 // ============================================================================
-// 7. FOOTER CONFIG
+// 10. FOOTER CONFIG
 // ============================================================================
 
 export interface FooterContactInfo {
@@ -326,9 +350,9 @@ export interface LandingPageConfig {
   about: ServicesSectionConfig; // Seção "Nossos Serviços"
   products: ProductsSectionConfig; // Seção "Peças Originais"
   services: PromotionsSectionConfig; // Seção "Promoções" (mantém nome 'services' do schema)
+  contact: HighlightsConfig; // Seção "Destaques" da home (mantém chave 'contact' do schema)
   contactPage: ContactConfig; // Página de Contato
   aboutPage: AboutConfig; // Página Sobre Nós
-  contact: any; // Placeholder (não usado por enquanto)
   footer: FooterConfig;
 }
 
@@ -336,7 +360,17 @@ export interface LandingPageConfig {
 // TIPOS PARA O EDITOR
 // ============================================================================
 
-export type SectionKey = 'header' | 'hero' | 'marquee' | 'about' | 'products' | 'services' | 'contactPage' | 'aboutPage' | 'footer';
+export type SectionKey =
+  | 'header'
+  | 'hero'
+  | 'marquee'
+  | 'about'
+  | 'products'
+  | 'services'
+  | 'contact'
+  | 'contactPage'
+  | 'aboutPage'
+  | 'footer';
 
 export interface EditorState {
   config: LandingPageConfig;

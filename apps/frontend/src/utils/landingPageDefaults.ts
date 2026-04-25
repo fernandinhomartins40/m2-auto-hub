@@ -283,9 +283,37 @@ export const getDefaultConfig = (): LandingPageConfig => ({
   },
 
   // ============================================================================
-  // CONTACT (placeholder - não usado)
+  // CONTACT (Seção "Destaques" da home - mantém chave legacy do schema)
   // ============================================================================
-  contact: {},
+  contact: {
+    enabled: true,
+    items: [
+      {
+        id: '1',
+        icon: 'Package',
+        title: 'Catalogo Integrado',
+        valueType: 'products',
+      },
+      {
+        id: '2',
+        icon: 'Wrench',
+        title: 'Servicos Ativos',
+        valueType: 'services',
+      },
+      {
+        id: '3',
+        icon: 'BadgePercent',
+        title: 'Promocoes no Ar',
+        valueType: 'promotions',
+      },
+      {
+        id: '4',
+        icon: 'MessageCircle',
+        title: 'Atendimento Rapido',
+        valueType: 'whatsapp',
+      },
+    ],
+  },
 
   // ============================================================================
   // FOOTER

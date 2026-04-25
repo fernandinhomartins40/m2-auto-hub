@@ -1,6 +1,12 @@
 import heroBg from "@/assets/hero-bg.jpg";
 import { useStorefront } from "@/context/StorefrontContext";
-import { buildWhatsAppHref, normalizeLink, toAssetUrl } from "@/lib/storefront-helpers";
+import {
+  buildWhatsAppHref,
+  normalizeLink,
+  toAssetUrl,
+  toCssBackgroundStyle,
+  toCssTextStyle,
+} from "@/lib/storefront-helpers";
 
 const primaryButtonClasses =
   "inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-md font-heading font-bold text-lg transition-all blue-shadow hover:scale-105";
@@ -66,6 +72,10 @@ const Hero = () => {
                   : normalizeLink(button.text, button.href);
               const classes =
                 index === 0 || button.variant === "hero" ? primaryButtonClasses : secondaryButtonClasses;
+              const buttonStyle = {
+                ...toCssBackgroundStyle(button.background),
+                ...toCssTextStyle(button.textColor),
+              };
 
               if (normalizedHref.startsWith("#")) {
                 return (
@@ -74,6 +84,7 @@ const Hero = () => {
                     type="button"
                     onClick={() => handleAnchorClick(normalizedHref)}
                     className={classes}
+                    style={buttonStyle}
                   >
                     {button.text}
                   </button>
@@ -91,6 +102,7 @@ const Hero = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={classes}
+                  style={buttonStyle}
                 >
                   {button.text}
                 </a>

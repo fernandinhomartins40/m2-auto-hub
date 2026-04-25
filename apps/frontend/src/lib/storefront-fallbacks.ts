@@ -93,6 +93,15 @@ export const fallbackLandingConfig: LandingPageConfig = {
     title: "Promocoes da Semana",
     subtitle: "Aproveite nossas ofertas especiais por tempo limitado.",
   },
+  contact: {
+    enabled: true,
+    items: [
+      { id: "1", icon: "Package", title: "Catalogo Integrado", valueType: "products" },
+      { id: "2", icon: "Wrench", title: "Servicos Ativos", valueType: "services" },
+      { id: "3", icon: "BadgePercent", title: "Promocoes no Ar", valueType: "promotions" },
+      { id: "4", icon: "MessageCircle", title: "Atendimento Rapido", valueType: "whatsapp" },
+    ],
+  },
   contactPage: {
     enabled: true,
     heroBadge: "Entre em Contato",

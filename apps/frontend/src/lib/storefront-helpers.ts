@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   BatteryCharging,
@@ -27,6 +28,7 @@ import {
 
 import type {
   BusinessHours,
+  LandingColorValue,
   LandingFooterConfig,
   LandingMenuItem,
   PublicSettings,
@@ -167,6 +169,62 @@ export function resolveSocialIcon(platform?: string): LucideIcon {
   }
 
   return CircleHelp;
+}
+
+function buildGradient(value: LandingColorValue) {
+  const gradient = value.gradient;
+
+  if (!gradient?.colors?.length) {
+    return undefined;
+  }
+
+  if (gradient.type === "radial") {
+    return `radial-gradient(circle, ${gradient.colors.join(", ")})`;
+  }
+
+  if (gradient.direction) {
+    return `linear-gradient(${gradient.direction}, ${gradient.colors.join(", ")})`;
+  }
+
+  return `linear-gradient(${gradient.angle ?? 135}deg, ${gradient.colors.join(", ")})`;
+}
+
+function resolveSolidColor(value?: string | LandingColorValue) {
+  if (!value) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value.type === "solid") {
+    return value.solid;
+  }
+
+  return value.gradient?.colors?.[value.gradient.colors.length - 1];
+}
+
+export function toCssBackgroundStyle(value?: string | LandingColorValue): CSSProperties {
+  if (!value) {
+    return {};
+  }
+
+  if (typeof value === "string") {
+    return { background: value };
+  }
+
+  if (value.type === "gradient") {
+    const background = buildGradient(value);
+    return background ? { background } : {};
+  }
+
+  return value.solid ? { background: value.solid } : {};
+}
+
+export function toCssTextStyle(value?: string | LandingColorValue): CSSProperties {
+  const color = resolveSolidColor(value);
+  return color ? { color } : {};
 }
 
 export function buildWhatsAppHref(number?: string, message?: string) {
