@@ -7,7 +7,7 @@ import {
   formatCurrency,
   toAssetUrl,
 } from "@/lib/storefront-helpers";
-import type { StorefrontOffer, StorefrontPromotion } from "@/types/storefront";
+import type { StorefrontOffer } from "@/types/storefront";
 
 function getBadgeClass(text?: string | null) {
   const normalized = (text ?? "").toLowerCase();
@@ -150,56 +150,6 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
   );
 }
 
-function toPromotionOffer(
-  promotion: StorefrontPromotion,
-  offerType: StorefrontOffer["offerType"]
-): StorefrontOffer {
-  const category =
-    promotion.targetCategories?.find(Boolean) ||
-    (offerType === "DIA" ? "Oferta Relampago" : offerType === "SEMANA" ? "Campanha Semanal" : "Campanha Mensal");
-
-  return {
-    id: promotion.id,
-    name: promotion.name,
-    description: promotion.shortDescription || promotion.description,
-    category,
-    salePrice: 0,
-    promoPrice: 0,
-    images: promotion.bannerImage ? [promotion.bannerImage] : [],
-    offerType,
-    offerStartDate: promotion.startDate || new Date().toISOString(),
-    offerEndDate: promotion.endDate || new Date().toISOString(),
-    offerBadge: promotion.badgeText || undefined,
-    slug: promotion.code || undefined,
-  };
-}
-
-function getPromotionBucket(promotion: StorefrontPromotion): StorefrontOffer["offerType"] {
-  const recurringType = promotion.schedule?.recurringType;
-
-  if (recurringType === "DAILY") {
-    return "DIA";
-  }
-  if (recurringType === "WEEKLY") {
-    return "SEMANA";
-  }
-  if (recurringType === "MONTHLY") {
-    return "MES";
-  }
-
-  const start = promotion.startDate ? new Date(promotion.startDate).getTime() : Date.now();
-  const end = promotion.endDate ? new Date(promotion.endDate).getTime() : Date.now();
-  const diffInDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
-
-  if (diffInDays <= 1) {
-    return "DIA";
-  }
-  if (diffInDays <= 10) {
-    return "SEMANA";
-  }
-  return "MES";
-}
-
 function OfferGroup({
   title,
   subtitle,
@@ -273,44 +223,23 @@ function OfferGroup({
 }
 
 const Promotions = () => {
-  const {
-    dailyOffers,
-    weeklyOffers,
-    monthlyOffers,
-    landingConfig,
-    promotions,
-    settings,
-  } = useStorefront();
+  const { dailyOffers, weeklyOffers, monthlyOffers, landingConfig, promotions, settings } =
+    useStorefront();
   const section = landingConfig.services;
   const marqueeItems = landingConfig.marquee?.items ?? [];
-  const fallbackPromotionOffers = useMemo(() => {
-    return promotions.reduce(
-      (accumulator, promotion) => {
-        const bucket = getPromotionBucket(promotion);
-        accumulator[bucket].push(toPromotionOffer(promotion, bucket));
-        return accumulator;
-      },
-      { DIA: [] as StorefrontOffer[], SEMANA: [] as StorefrontOffer[], MES: [] as StorefrontOffer[] }
-    );
-  }, [promotions]);
-
-  const resolvedDailyOffers = dailyOffers.length ? dailyOffers : fallbackPromotionOffers.DIA;
-  const resolvedWeeklyOffers = weeklyOffers.length ? weeklyOffers : fallbackPromotionOffers.SEMANA;
-  const resolvedMonthlyOffers = monthlyOffers.length ? monthlyOffers : fallbackPromotionOffers.MES;
 
   const nextDailyExpiration = useMemo(() => {
-    if (!resolvedDailyOffers.length) {
+    if (!dailyOffers.length) {
       return undefined;
     }
 
-    return resolvedDailyOffers
+    return dailyOffers
       .map((offer) => offer.offerEndDate)
       .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())[0];
-  }, [resolvedDailyOffers]);
+  }, [dailyOffers]);
 
   const countdown = useCountdown(nextDailyExpiration);
-  const hasStructuredOffers =
-    resolvedDailyOffers.length || resolvedWeeklyOffers.length || resolvedMonthlyOffers.length;
+  const hasStructuredOffers = dailyOffers.length || weeklyOffers.length || monthlyOffers.length;
 
   if (section?.enabled === false) {
     return null;
@@ -344,7 +273,7 @@ const Promotions = () => {
           title="Ofertas do Dia"
           subtitle="Condicoes validas por tempo limitado."
           icon={Clock3}
-          offers={resolvedDailyOffers}
+          offers={dailyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
           countdown={nextDailyExpiration ? countdown : undefined}
         />
@@ -353,7 +282,7 @@ const Promotions = () => {
           title="Ofertas da Semana"
           subtitle="Selecao especial para os proximos dias."
           icon={TrendingDown}
-          offers={resolvedWeeklyOffers}
+          offers={weeklyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
         />
 
@@ -361,7 +290,7 @@ const Promotions = () => {
           title="Ofertas do Mes"
           subtitle="Kits e condicoes de maior economia para aproveitar no periodo."
           icon={Package2}
-          offers={resolvedMonthlyOffers}
+          offers={monthlyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
           accent="gold"
         />

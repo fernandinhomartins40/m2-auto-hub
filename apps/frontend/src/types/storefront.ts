@@ -295,13 +295,6 @@ export interface StorefrontPromotion {
   type?: string;
   startDate?: string;
   endDate?: string;
-  schedule?: {
-    recurringType?: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
-    days?: string[];
-    daysOfWeek?: number[];
-    timezone?: string;
-  } | null;
-  targetCategories?: string[] | null;
 }
 
 export interface PaginationMeta {
