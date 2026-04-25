@@ -43,11 +43,24 @@ const Products = () => {
           {products.map((product) => {
             const ProductIcon = resolveProductIcon(product.category, product.name);
             const imageUrl = toAssetUrl(product.images?.[0]);
-            const displayPriceValue = product.promoPrice ?? product.salePrice ?? null;
-            const salePrice = formatCurrency(product.salePrice);
-            const promoPrice = formatCurrency(product.promoPrice);
+            const salePriceValue =
+              typeof product.salePrice === "number"
+                ? product.salePrice
+                : product.salePrice
+                  ? Number(product.salePrice)
+                  : null;
+            const promoPriceValue =
+              typeof product.promoPrice === "number"
+                ? product.promoPrice
+                : product.promoPrice
+                  ? Number(product.promoPrice)
+                  : null;
+            const displayPriceValue = promoPriceValue ?? salePriceValue ?? null;
+            const salePrice = formatCurrency(salePriceValue);
+            const promoPrice = formatCurrency(promoPriceValue);
             const canAddToCart =
               typeof displayPriceValue === "number" &&
+              !Number.isNaN(displayPriceValue) &&
               displayPriceValue > 0 &&
               (product.stock ?? 1) > 0 &&
               product.status !== "INACTIVE";
