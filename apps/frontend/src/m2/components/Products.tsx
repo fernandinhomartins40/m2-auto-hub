@@ -59,47 +59,47 @@ const Products = () => {
             return (
               <div
                 key={product.id}
-                className="bg-secondary border border-primary/15 rounded-lg overflow-hidden card-glow group"
+                className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className="aspect-[4/3] bg-secondary/80 border-b border-primary/10">
+                <div className="aspect-[4/3] border-b border-slate-200 bg-slate-50">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="flex h-full w-full items-center justify-center">
                       <ProductIcon className="text-primary" size={40} />
                     </div>
                   )}
                 </div>
                 <div className="p-5">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <span className="inline-block bg-primary/15 text-primary text-xs font-heading font-semibold px-3 py-1 rounded-full">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-heading font-semibold text-primary">
                       {product.category}
                     </span>
                     {product.stock !== undefined ? (
-                      <span className="text-xs text-secondary-foreground/50">
+                      <span className="text-xs text-slate-500">
                         Estoque: {product.stock}
                       </span>
                     ) : null}
                   </div>
-                  <h3 className="font-heading font-bold text-lg text-secondary-foreground mb-2">
+                  <h3 className="mb-2 font-heading text-lg font-bold text-slate-900">
                     {product.name}
                   </h3>
-                  <p className="text-secondary-foreground/60 text-sm mb-4 min-h-12">
+                  <p className="mb-4 min-h-12 text-sm text-slate-600">
                     {product.description}
                   </p>
                   {salePrice || promoPrice ? (
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="mb-4 flex items-center gap-3">
                       {promoPrice ? (
                         <>
                           <span className="text-primary font-heading font-bold text-lg">
                             {promoPrice}
                           </span>
                           {salePrice ? (
-                            <span className="text-secondary-foreground/40 line-through text-sm">
+                            <span className="text-sm text-slate-400 line-through">
                               {salePrice}
                             </span>
                           ) : null}

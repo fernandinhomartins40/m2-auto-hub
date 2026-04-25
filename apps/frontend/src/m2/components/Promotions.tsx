@@ -80,8 +80,8 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
   );
 
   return (
-    <div className="group overflow-hidden rounded-xl border border-primary/20 bg-secondary/80 card-glow">
-      <div className="relative aspect-[4/3] overflow-hidden border-b border-primary/10 bg-secondary/70">
+    <div className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="relative aspect-[4/3] overflow-hidden border-b border-slate-200 bg-slate-50">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -111,27 +111,27 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
       </div>
 
       <div className="p-5">
-        <span className="mb-3 inline-block rounded-full bg-primary/15 px-3 py-1 text-xs font-heading font-semibold text-primary">
+        <span className="mb-3 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-heading font-semibold text-primary">
           {offer.category}
         </span>
-        <h3 className="mb-2 font-heading text-xl font-bold text-secondary-foreground">
+        <h3 className="mb-2 font-heading text-xl font-bold text-slate-900">
           {offer.name}
         </h3>
-        <p className="mb-4 min-h-12 text-sm text-secondary-foreground/60">{offer.description}</p>
+        <p className="mb-4 min-h-12 text-sm text-slate-600">{offer.description}</p>
 
-        <div className="mb-5 rounded-lg border border-primary/15 bg-primary/10 p-4">
+        <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
           {hasPrice ? (
             <>
               <div className="flex items-center gap-3">
                 <span className="font-heading text-xl font-bold text-primary">{promoPrice}</span>
-                <span className="text-sm text-secondary-foreground/40 line-through">{salePrice}</span>
+                <span className="text-sm text-slate-400 line-through">{salePrice}</span>
               </div>
-              <p className="mt-1 text-xs font-medium text-secondary-foreground/70">
+              <p className="mt-1 text-xs font-medium text-slate-600">
                 Economia de {savings}
               </p>
             </>
           ) : (
-            <p className="text-sm font-medium text-secondary-foreground/70">
+            <p className="text-sm font-medium text-slate-600">
               Consulte as condicoes comerciais desta campanha.
             </p>
           )}
@@ -173,8 +173,8 @@ function OfferGroup({
     <div
       className={`mb-12 rounded-2xl border p-6 md:p-8 ${
         accent === "gold"
-          ? "border-primary/30 bg-primary/10"
-          : "border-primary/15 bg-secondary/40"
+          ? "border-primary/25 bg-white/95"
+          : "border-white/20 bg-white/95"
       }`}
     >
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -183,19 +183,19 @@ function OfferGroup({
             <Icon className="text-primary" size={28} />
           </div>
           <div>
-            <h3 className="font-heading text-2xl font-bold text-secondary-foreground">{title}</h3>
-            <p className="text-sm text-secondary-foreground/60">{subtitle}</p>
+            <h3 className="font-heading text-2xl font-bold text-slate-900">{title}</h3>
+            <p className="text-sm text-slate-600">{subtitle}</p>
           </div>
         </div>
 
         {countdown ? (
-          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-secondary/60 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <Clock3 className="text-primary" size={18} />
             <div className="flex items-center gap-2 text-center font-heading">
               <span className="text-primary">{countdown.hours}</span>
-              <span className="text-secondary-foreground/50">:</span>
+              <span className="text-slate-400">:</span>
               <span className="text-primary">{countdown.minutes}</span>
-              <span className="text-secondary-foreground/50">:</span>
+              <span className="text-slate-400">:</span>
               <span className="text-primary">{countdown.seconds}</span>
             </div>
           </div>
@@ -209,11 +209,11 @@ function OfferGroup({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-primary/20 bg-secondary/30 p-6 text-center">
-          <p className="font-heading text-lg font-semibold text-secondary-foreground">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+          <p className="font-heading text-lg font-semibold text-slate-900">
             Nenhuma oferta ativa nesta faixa
           </p>
-          <p className="mt-2 text-sm text-secondary-foreground/60">
+          <p className="mt-2 text-sm text-slate-600">
             Assim que houver campanhas publicadas no backend para este periodo, elas aparecerao aqui.
           </p>
         </div>
