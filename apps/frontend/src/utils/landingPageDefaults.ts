@@ -3,17 +3,162 @@ import { LandingPageConfig } from '@/types/landingPage';
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
-export const getDefaultConfig = (): LandingPageConfig => ({
+const deepMerge = (target: any, source: any): any => {
+  if (!source) {
+    return target;
+  }
+
+  if (!target) {
+    return source;
+  }
+
+  const output = { ...target };
+
+  for (const key in source) {
+    if (source[key] === null || source[key] === undefined) {
+      continue;
+    }
+
+    if (Array.isArray(source[key])) {
+      output[key] = [...source[key]];
+      continue;
+    }
+
+    if (typeof source[key] === 'object') {
+      output[key] = deepMerge(target[key] || {}, source[key]);
+      continue;
+    }
+
+    output[key] = source[key];
+  }
+
+  return output;
+};
+
+const buildSafeBaseConfig = (): LandingPageConfig => ({
   version: '1.0.0',
   lastModified: new Date().toISOString(),
-  header: clone(fallbackLandingConfig.header as LandingPageConfig['header']),
-  hero: clone(fallbackLandingConfig.hero as LandingPageConfig['hero']),
-  marquee: clone(fallbackLandingConfig.marquee as LandingPageConfig['marquee']),
-  about: clone(fallbackLandingConfig.about as LandingPageConfig['about']),
-  products: clone(fallbackLandingConfig.products as LandingPageConfig['products']),
-  services: clone(fallbackLandingConfig.services as LandingPageConfig['services']),
-  contact: clone(fallbackLandingConfig.contact as LandingPageConfig['contact']),
-  contactPage: clone(fallbackLandingConfig.contactPage as LandingPageConfig['contactPage']),
-  aboutPage: clone(fallbackLandingConfig.aboutPage as LandingPageConfig['aboutPage']),
-  footer: clone(fallbackLandingConfig.footer as LandingPageConfig['footer']),
+  header: {
+    enabled: true,
+    logo: {
+      url: '',
+      alt: 'M2 Center Auto',
+    },
+    menuItems: [],
+    backgroundColor: '#171b22',
+    textColor: '#ffffff',
+    hoverColor: '#2563eb',
+  },
+  hero: {
+    enabled: true,
+    title: '',
+    subtitle: '',
+    description: '',
+    features: [],
+    buttons: [],
+    backgroundImage: {
+      url: '',
+      alt: 'Hero',
+    },
+    overlayOpacity: 70,
+  },
+  marquee: {
+    enabled: true,
+    items: [],
+    speed: 30,
+    backgroundColor: '#2563eb',
+    textColor: '#ffffff',
+  },
+  about: {
+    enabled: true,
+    title: '',
+    subtitle: '',
+    trustIndicators: [],
+  },
+  products: {
+    enabled: true,
+    title: '',
+    subtitle: '',
+  },
+  services: {
+    enabled: true,
+    title: '',
+    subtitle: '',
+  },
+  contact: {
+    enabled: true,
+    items: [],
+  },
+  contactPage: {
+    enabled: true,
+    heroTitle: '',
+    heroSubtitle: '',
+    heroBadge: '',
+    contactInfoCards: [],
+    formTitle: '',
+    formSubtitle: '',
+    serviceTypes: [],
+    mapTitle: '',
+    mapSubtitle: '',
+    quickInfoEnabled: true,
+    ctaTitle: '',
+    ctaSubtitle: '',
+  },
+  aboutPage: {
+    enabled: true,
+    heroTitle: '',
+    heroHighlight: '',
+    heroSubtitle: '',
+    heroBadge: '',
+    stats: [],
+    historyTitle: '',
+    historySubtitle: '',
+    milestones: [],
+    valuesTitle: '',
+    valuesSubtitle: '',
+    values: [],
+    servicesTitle: '',
+    servicesSubtitle: '',
+    services: [],
+    commitmentTitle: '',
+    commitmentText: '',
+    commitmentYears: '',
+  },
+  footer: {
+    enabled: true,
+    logo: {
+      url: '',
+      alt: 'M2 Center Auto',
+    },
+    description: '',
+    contactInfo: {
+      address: {
+        street: '',
+        city: '',
+        zipCode: '',
+      },
+      phone: '',
+      email: '',
+    },
+    businessHours: {
+      weekdays: '',
+      saturday: '',
+      sunday: '',
+    },
+    services: [],
+    socialLinks: [],
+    certifications: [],
+    copyright: '',
+    bottomLinks: [],
+  },
 });
+
+export const getDefaultConfig = (): LandingPageConfig => {
+  const safeBase = buildSafeBaseConfig();
+
+  return {
+    ...deepMerge(safeBase, clone(fallbackLandingConfig)),
+    version: '1.0.0',
+    lastModified: new Date().toISOString(),
+  };
+};
