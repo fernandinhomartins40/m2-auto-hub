@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ServicesSectionConfig, TrustIndicator } from '@/types/landingPage';
+import Services from '@/m2/components/Services';
 
 import {
   ArrayEditor,
@@ -19,6 +20,7 @@ import {
   colorOrGradientToCSS,
   IconSelector,
 } from '../StyleControls';
+import { PreviewProviders } from './PreviewProviders';
 
 interface ServicesEditorProps {
   config: ServicesSectionConfig;
@@ -168,69 +170,10 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg bg-secondary p-8">
-            <div className="mb-8 text-center">
-              <h2 className="mb-2 text-3xl font-bold text-secondary-foreground">
-                {config.title || 'Nossos Servicos'}
-              </h2>
-              <div className="mx-auto mb-4 h-1 w-20 rounded-full bg-primary" />
-              <p className="mx-auto max-w-2xl text-lg text-secondary-foreground/60">
-                {config.subtitle || 'Oferecemos servicos automotivos completos'}
-              </p>
-            </div>
-
-            <div className="mb-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="rounded-lg border border-primary/20 bg-white p-6 text-left">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
-                    <Icons.Wrench className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="mb-3">
-                    <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                      Categoria
-                    </span>
-                  </div>
-                  <h3 className="mb-2 text-xl font-bold text-gray-900">Servico Exemplo {item}</h3>
-                  <p className="mb-4 min-h-12 text-sm text-gray-600">
-                    Descricao ilustrativa do servico, seguindo a estrutura real da landing.
-                  </p>
-                  <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                    <span className="rounded-full border border-primary/15 px-3 py-1">1h</span>
-                    <span className="rounded-full border border-primary/15 px-3 py-1">
-                      A partir de R$ 99,90
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {config.trustIndicators.length ? (
-              <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-                {config.trustIndicators.map((indicator) => {
-                  const IconComponent = (Icons as any)[indicator.icon] || Icons.Shield;
-
-                  return (
-                    <div
-                      key={indicator.id}
-                      className="flex flex-col items-center rounded-lg bg-white/70 p-5 text-center"
-                    >
-                      <div
-                        className="mb-3 flex items-center justify-center rounded-full p-4"
-                        style={colorOrGradientToCSS(indicator.iconBackground)}
-                      >
-                        <IconComponent className="h-8 w-8 text-white" />
-                      </div>
-                      <h4 className="mb-1 font-bold text-gray-900">{indicator.title}</h4>
-                      <p className="text-sm text-gray-600">{indicator.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-gray-400">
-                <p>Adicione indicadores de confianca acima para visualiza-los aqui</p>
-              </div>
-            )}
+          <div className="bg-background overflow-hidden rounded-lg border">
+            <PreviewProviders config={{ about: config }}>
+              <Services />
+            </PreviewProviders>
           </div>
         </CardContent>
       </Card>

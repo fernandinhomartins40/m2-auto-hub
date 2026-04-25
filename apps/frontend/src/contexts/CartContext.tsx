@@ -153,7 +153,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   }
 }
 
-interface CartContextType {
+export interface CartContextType {
   items: CartItem[];
   isOpen: boolean;
   totalItems: number;
@@ -174,7 +174,7 @@ interface CartContextType {
   removeCoupon: () => void;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+export const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   // Use lazy initialization to avoid accessing localStorage during module load

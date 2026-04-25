@@ -33,7 +33,7 @@ import type {
   StorefrontService,
 } from "@/types/storefront";
 
-interface StorefrontContextValue {
+export interface StorefrontContextValue {
   landingConfig: LandingPageConfig;
   settings: PublicSettings;
   services: StorefrontService[];
@@ -54,7 +54,7 @@ interface StorefrontContextValue {
   brandShortName: string;
 }
 
-const StorefrontContext = createContext<StorefrontContextValue | null>(null);
+export const StorefrontContext = createContext<StorefrontContextValue | null>(null);
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Object.prototype.toString.call(value) === "[object Object]";

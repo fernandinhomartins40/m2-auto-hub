@@ -2,7 +2,7 @@
  * PromotionsEditor - Editor da secao de promocoes
  */
 
-import { Eye, Timer } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { PromotionsSectionConfig } from '@/types/landingPage';
+import Promotions from '@/m2/components/Promotions';
+import { PreviewProviders } from './PreviewProviders';
 
 interface PromotionsEditorProps {
   config: PromotionsSectionConfig;
@@ -92,59 +94,10 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            className="rounded-lg p-8 text-white"
-            style={{ background: 'linear-gradient(135deg, hsl(215 50% 23%), hsl(222 84% 5%))' }}
-          >
-            <div className="mb-12 text-center">
-              <h2 className="mb-2 text-3xl font-bold text-secondary-foreground">
-                {config.title || 'Promocoes Ativas'}
-              </h2>
-              <p className="text-secondary-foreground/60">
-                {config.subtitle || 'Aproveite nossas ofertas especiais por tempo limitado.'}
-              </p>
-            </div>
-
-            <div className="mb-12 grid gap-6 md:grid-cols-3">
-              {[1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="relative overflow-hidden rounded-xl border border-primary/25 bg-secondary/80 p-6"
-                >
-                  <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/10 blur-3xl" />
-                  <div className="relative z-10">
-                    <span className="mb-4 inline-block rounded-full bg-badge-highlight px-3 py-1 text-xs font-bold text-primary-foreground">
-                      DESTAQUE
-                    </span>
-                    <h3 className="mb-2 text-2xl font-bold text-secondary-foreground">
-                      Promocao Exemplo {item}
-                    </h3>
-                    <p className="mb-4 text-sm text-secondary-foreground/60">
-                      Descricao ilustrativa da promocao, como aparece na landing.
-                    </p>
-                    <div className="mb-3 rounded-md border border-primary/20 bg-primary/10 px-4 py-2">
-                      <span className="text-sm font-semibold text-primary">
-                        Condicao especial por tempo limitado
-                      </span>
-                    </div>
-                    <div className="mb-5 text-xs text-secondary-foreground/70">
-                      Codigo promocional: <span className="font-bold text-primary">M2{item}0</span>
-                    </div>
-                    <div className="rounded-md bg-primary px-6 py-3 text-center font-bold text-primary-foreground">
-                      Aproveitar Agora
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="overflow-hidden rounded-lg border border-primary/15 bg-secondary/50 py-3">
-              <div className="whitespace-nowrap px-4 text-sm">
-                <span className="mx-8 font-semibold text-primary">* Promocoes validas enquanto durarem os estoques</span>
-                <span className="mx-8 text-secondary-foreground/70">* Fale com a equipe para conferir disponibilidade</span>
-                <span className="mx-8 font-semibold text-primary">* Condicoes sujeitas a alteracao</span>
-              </div>
-            </div>
+          <div className="bg-background overflow-hidden rounded-lg border">
+            <PreviewProviders config={{ services: config }}>
+              <Promotions />
+            </PreviewProviders>
           </div>
         </CardContent>
       </Card>

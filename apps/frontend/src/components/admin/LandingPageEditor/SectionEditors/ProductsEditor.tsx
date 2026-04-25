@@ -2,7 +2,7 @@
  * ProductsEditor - Editor da secao de produtos
  */
 
-import { Eye, Package } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ProductsSectionConfig } from '@/types/landingPage';
+import Products from '@/m2/components/Products';
+import { PreviewProviders } from './PreviewProviders';
 
 interface ProductsEditorProps {
   config: ProductsSectionConfig;
@@ -92,49 +94,10 @@ export const ProductsEditor = ({ config, onChange }: ProductsEditorProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg bg-secondary p-8">
-            <div className="mb-8 text-center">
-              <h2 className="mb-2 text-3xl font-bold text-foreground">
-                {config.title || 'Nossos Produtos'}
-              </h2>
-              <div className="mx-auto mb-4 h-1 w-20 rounded-full bg-primary" />
-              <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                {config.subtitle || 'Produtos de qualidade para seu veiculo'}
-              </p>
-            </div>
-
-            <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="overflow-hidden rounded-lg border border-primary/15 bg-white">
-                  <div className="flex h-32 items-center justify-center border-b border-primary/10 bg-secondary/80">
-                    <Package className="h-12 w-12 text-primary" />
-                  </div>
-                  <div className="p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <span className="inline-block rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
-                        Categoria
-                      </span>
-                      <span className="text-xs text-secondary-foreground/50">Estoque: 10</span>
-                    </div>
-                    <p className="mb-1 text-sm font-semibold text-gray-900">Produto Exemplo {i}</p>
-                    <p className="mb-3 text-xs text-gray-500">Descricao ilustrativa do produto</p>
-                    <p className="mb-3 text-lg font-bold text-primary">R$ 99,90</p>
-                    <div className="mb-2 rounded-md bg-primary px-3 py-2 text-center text-xs font-bold text-white">
-                      Adicionar ao carrinho
-                    </div>
-                    <div className="text-center text-xs font-semibold text-primary">
-                      Solicitar pelo WhatsApp
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-center">
-              <span className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-bold text-white">
-                Solicitar Produto pelo WhatsApp
-              </span>
-            </div>
+          <div className="bg-background overflow-hidden rounded-lg border">
+            <PreviewProviders config={{ products: config }}>
+              <Products />
+            </PreviewProviders>
           </div>
         </CardContent>
       </Card>

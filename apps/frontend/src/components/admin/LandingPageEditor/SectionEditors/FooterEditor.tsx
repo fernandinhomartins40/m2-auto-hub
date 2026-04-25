@@ -18,6 +18,8 @@ import {
 import { ImageUploaderWithCrop, ArrayEditor, IconSelector, ColorOrGradientPicker } from '../StyleControls';
 import { Eye, MapPin, Phone, Mail, Settings, MessageCircle } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import Footer from '@/m2/components/Footer';
+import { PreviewProviders } from './PreviewProviders';
 
 interface FooterEditorProps {
   config: FooterConfig;
@@ -413,91 +415,10 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg border-t border-primary/10 bg-secondary p-8 text-white">
-            <div className="mb-8 grid items-start gap-8 md:grid-cols-3">
-              <div>
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-primary">
-                    {config.logo.url ? (
-                      <img src={config.logo.url} alt="Logo" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex gap-0.5">
-                        <div className="h-4 w-0.5 rounded-sm bg-primary-foreground" />
-                        <div className="h-4 w-0.5 rounded-sm bg-primary-foreground" />
-                        <div className="h-4 w-0.5 rounded-sm bg-primary-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="font-heading text-xl font-bold tracking-wider text-primary-foreground">
-                    m2
-                  </span>
-                </div>
-                <p className="mb-4 text-sm text-secondary-foreground/50">
-                  {config.description || 'Descricao da empresa...'}
-                </p>
-                <p className="text-sm text-secondary-foreground/60">
-                  {[config.contactInfo.address.street, config.contactInfo.address.city]
-                    .filter(Boolean)
-                    .join(' | ') || 'Endereco da loja'}
-                </p>
-                {config.contactInfo.phone ? (
-                  <p className="mt-2 text-sm text-secondary-foreground/60">{config.contactInfo.phone}</p>
-                ) : null}
-              </div>
-
-              <div>
-                <div className="mb-4 flex flex-wrap gap-4">
-                  {config.bottomLinks.slice(0, 4).map((link) => (
-                    <span key={link.id} className="text-sm text-secondary-foreground/60">
-                      {link.text}
-                    </span>
-                  ))}
-                </div>
-                <div className="space-y-1">
-                  {[config.businessHours.weekdays, config.businessHours.saturday, config.businessHours.sunday]
-                    .filter(Boolean)
-                    .slice(0, 3)
-                    .map((line) => (
-                      <p key={line} className="text-sm text-secondary-foreground/50">
-                        {line}
-                      </p>
-                    ))}
-                </div>
-              </div>
-
-              <div className="md:text-right">
-                <div className="mb-4 flex gap-3 md:justify-end">
-                  {config.socialLinks.filter((social) => social.enabled).map((social) => {
-                    const IconComponent =
-                      social.platform === 'facebook'
-                        ? Icons.Facebook
-                        : social.platform === 'instagram'
-                          ? Icons.Instagram
-                          : MessageCircle;
-
-                    return (
-                      <div
-                        key={social.id}
-                        className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary"
-                      >
-                        <IconComponent className="h-4 w-4" />
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="inline-flex items-center gap-2 rounded-md border border-primary/40 px-4 py-2 text-sm font-semibold text-primary">
-                  <Settings className="h-4 w-4" />
-                  Painel do Lojista
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-primary/10 pt-6 text-center">
-              <p className="text-sm text-secondary-foreground/40">
-                {config.copyright || '© 2026 M2 Center Auto. Todos os direitos reservados.'}
-              </p>
-            </div>
+          <div className="bg-background overflow-hidden rounded-lg border">
+            <PreviewProviders config={{ footer: config }}>
+              <Footer />
+            </PreviewProviders>
           </div>
         </CardContent>
       </Card>

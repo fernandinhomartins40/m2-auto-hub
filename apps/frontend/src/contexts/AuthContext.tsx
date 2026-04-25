@@ -19,7 +19,7 @@ interface AuthState {
   isLoading: boolean;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   customer: Customer | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -36,7 +36,7 @@ interface AuthContextType {
   removeFromFavorites: (productId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const CUSTOMER_SESSION_HINT_KEY = 'moria_customer_session_active';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
