@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { resolveIcon } from '@/lib/storefront-helpers';
 import { HighlightsConfig, HighlightItem, HighlightValueType } from '@/types/landingPage';
 import { ArrayEditor, IconSelector } from '../StyleControls';
 
@@ -136,19 +137,23 @@ export const HighlightsEditor = ({ config, onChange }: HighlightsEditorProps) =>
           <div className="bg-white p-8 rounded-lg">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {config.items.length ? (
-                config.items.slice(0, 4).map((item) => (
-                  <div key={item.id} className="rounded-lg border border-moria-orange/10 bg-gray-50 p-4 text-center">
-                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-moria-orange/10 text-moria-orange">
-                      {item.icon}
+                config.items.slice(0, 4).map((item) => {
+                  const Icon = resolveIcon(item.icon);
+
+                  return (
+                    <div key={item.id} className="rounded-lg border border-moria-orange/10 bg-gray-50 p-4 text-center">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-moria-orange/10 text-moria-orange">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-moria-black">{item.title}</h4>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {item.valueType === 'custom'
+                          ? item.customValue || 'Texto personalizado'
+                          : valueTypeLabels[item.valueType]}
+                      </p>
                     </div>
-                    <h4 className="text-sm font-bold text-moria-black">{item.title}</h4>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {item.valueType === 'custom'
-                        ? item.customValue || 'Texto personalizado'
-                        : valueTypeLabels[item.valueType]}
-                    </p>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="col-span-full py-8 text-center text-gray-400">
                   Adicione destaques acima para visualiza-los aqui
