@@ -15,7 +15,7 @@ import {
   FooterCertification,
   FooterBottomLink,
 } from '@/types/landingPage';
-import { ImageUploaderWithCrop, ArrayEditor, IconSelector, ColorOrGradientPicker } from '../StyleControls';
+import { ImageUploader, ArrayEditor, IconSelector, ColorOrGradientPicker } from '../StyleControls';
 import { Eye, MapPin, Phone, Mail, Settings, MessageCircle } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import Footer from '@/m2/components/Footer';
@@ -49,15 +49,12 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
       </Card>
 
       <Card className="p-6">
-        <ImageUploaderWithCrop
+        <ImageUploader
           label="Logo do Footer"
           value={config.logo}
           onChange={(logo) => updateConfig({ logo })}
           description="Logo exibida no rodapé"
-          recommendedWidth={200}
-          recommendedHeight={60}
-          aspectRatio={null}
-          maxFileSizeMB={2}
+          category="footer-logo"
         />
       </Card>
 
