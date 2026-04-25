@@ -1,5 +1,5 @@
 /**
- * LandingPageContent - Conteúdo do editor da Landing Page
+ * LandingPageContent - Conteudo do editor da Landing Page
  * Integrado ao StorePanel - Responsivo mobile/desktop
  */
 
@@ -40,6 +40,19 @@ import {
 import { AboutEditor } from '@/components/admin/LandingPageEditor/SectionEditors/AboutEditor';
 import { toast } from 'sonner';
 
+const orderedTabs = [
+  { value: 'header', label: 'Header' },
+  { value: 'hero', label: 'Hero' },
+  { value: 'contact', label: 'Destaques' },
+  { value: 'aboutPage', label: 'Sobre da Home' },
+  { value: 'about', label: 'Serviços' },
+  { value: 'products', label: 'Peças' },
+  { value: 'services', label: 'Promoções' },
+  { value: 'contactPage', label: 'Contato' },
+  { value: 'footer', label: 'Footer' },
+  { value: 'marquee', label: 'Marquee' },
+] as const;
+
 export function LandingPageContent() {
   const {
     config,
@@ -54,7 +67,7 @@ export function LandingPageContent() {
     importConfig,
   } = useLandingPageConfig();
 
-  const [activeTab, setActiveTab] = useState('hero');
+  const [activeTab, setActiveTab] = useState('header');
 
   const handleSave = async () => {
     await save(false);
@@ -77,8 +90,8 @@ export function LandingPageContent() {
         try {
           const json = event.target?.result as string;
           importConfig(json);
-        } catch (err) {
-          toast.error('Erro ao importar: arquivo inválido');
+        } catch {
+          toast.error('Erro ao importar: arquivo invalido');
         }
       };
       reader.readAsText(file);
@@ -99,7 +112,7 @@ export function LandingPageContent() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-moria-orange" />
-          <p className="text-gray-600">Carregando configurações...</p>
+          <p className="text-gray-600">Carregando configuracoes...</p>
         </div>
       </div>
     );
@@ -107,43 +120,28 @@ export function LandingPageContent() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header Actions - Desktop e Mobile */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex-1">
           {isDirty && (
             <span className="text-sm text-orange-600 font-medium flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-orange-600 animate-pulse"></div>
-              Alterações não salvas
+              Alteracoes nao salvas
             </span>
           )}
         </div>
 
-        {/* Actions - Desktop */}
         <div className="hidden md:flex items-center gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            onClick={handlePreview}
-            size="sm"
-          >
+          <Button variant="outline" onClick={handlePreview} size="sm">
             <Eye className="h-4 w-4 mr-2" />
             Visualizar
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            title="Exportar (Ctrl+E)"
-            size="sm"
-          >
+          <Button variant="outline" onClick={handleExport} title="Exportar (Ctrl+E)" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={handleImport}
-            size="sm"
-          >
+          <Button variant="outline" onClick={handleImport} size="sm">
             <Upload className="h-4 w-4 mr-2" />
             Importar
           </Button>
@@ -155,7 +153,7 @@ export function LandingPageContent() {
             size="sm"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            Restaurar Padrão
+            Restaurar Padrao
           </Button>
 
           <Button
@@ -178,7 +176,6 @@ export function LandingPageContent() {
           </Button>
         </div>
 
-        {/* Actions - Mobile (Dropdown Menu) */}
         <div className="flex md:hidden items-center gap-2 w-full sm:w-auto">
           <Button
             onClick={handleSave}
@@ -222,14 +219,13 @@ export function LandingPageContent() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleReset} className="text-red-600">
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Restaurar Padrão
+                Restaurar Padrao
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* Alertas */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -237,50 +233,29 @@ export function LandingPageContent() {
         </Alert>
       )}
 
-      {/* Conteúdo Principal */}
       <Card className="p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          {/* TabsList - Mobile: Scroll Horizontal sem barra, Desktop: Grid */}
           <div className="mb-6">
-            {/* Mobile: Scroll Horizontal sem barra visível */}
             <div className="md:hidden overflow-x-auto scrollbar-hide -mx-4 px-4">
               <TabsList className="inline-flex w-auto">
-                <TabsTrigger value="header" className="text-xs">Header</TabsTrigger>
-                <TabsTrigger value="hero" className="text-xs">Hero</TabsTrigger>
-                <TabsTrigger value="contact" className="text-xs">Destaques</TabsTrigger>
-                <TabsTrigger value="marquee" className="text-xs">Marquee</TabsTrigger>
-                <TabsTrigger value="about" className="text-xs">Serviços</TabsTrigger>
-                <TabsTrigger value="products" className="text-xs">Peças</TabsTrigger>
-                <TabsTrigger value="services" className="text-xs">Promoções</TabsTrigger>
-                <TabsTrigger value="aboutPage" className="text-xs">Sobre da Home</TabsTrigger>
-                <TabsTrigger value="contactPage" className="text-xs">Contato</TabsTrigger>
-                <TabsTrigger value="footer" className="text-xs">Footer</TabsTrigger>
+                {orderedTabs.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="text-xs">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
 
-            {/* Desktop: Scroll Horizontal sem barra visível */}
             <div className="hidden md:block overflow-x-auto scrollbar-hide -mx-6 px-6">
               <TabsList className="inline-flex w-auto min-w-full">
-                <TabsTrigger value="header" className="text-sm">Header</TabsTrigger>
-                <TabsTrigger value="hero" className="text-sm">Hero</TabsTrigger>
-                <TabsTrigger value="contact" className="text-sm">Destaques</TabsTrigger>
-                <TabsTrigger value="marquee" className="text-sm">Marquee</TabsTrigger>
-                <TabsTrigger value="about" className="text-sm">Serviços</TabsTrigger>
-                <TabsTrigger value="products" className="text-sm">Peças</TabsTrigger>
-                <TabsTrigger value="services" className="text-sm">Promoções</TabsTrigger>
-                <TabsTrigger value="aboutPage" className="text-sm">Sobre da Home</TabsTrigger>
-                <TabsTrigger value="contactPage" className="text-sm">Contato</TabsTrigger>
-                <TabsTrigger value="footer" className="text-sm">Footer</TabsTrigger>
+                {orderedTabs.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="text-sm">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
           </div>
-
-          <TabsContent value="hero" className="space-y-4 mt-0">
-            <HeroEditor
-              config={config.hero}
-              onChange={(hero) => updateConfig('hero', hero)}
-            />
-          </TabsContent>
 
           <TabsContent value="header" className="space-y-4 mt-0">
             <HeaderEditor
@@ -289,11 +264,8 @@ export function LandingPageContent() {
             />
           </TabsContent>
 
-          <TabsContent value="marquee" className="space-y-4 mt-0">
-            <MarqueeEditor
-              config={config.marquee}
-              onChange={(marquee) => updateConfig('marquee', marquee)}
-            />
+          <TabsContent value="hero" className="space-y-4 mt-0">
+            <HeroEditor config={config.hero} onChange={(hero) => updateConfig('hero', hero)} />
           </TabsContent>
 
           <TabsContent value="contact" className="space-y-4 mt-0">
@@ -303,11 +275,15 @@ export function LandingPageContent() {
             />
           </TabsContent>
 
-          <TabsContent value="about" className="space-y-4 mt-0">
-            <ServicesEditor
-              config={config.about}
-              onChange={(about) => updateConfig('about', about)}
+          <TabsContent value="aboutPage" className="space-y-4 mt-0">
+            <AboutEditor
+              config={config.aboutPage}
+              onChange={(aboutPage) => updateConfig('aboutPage', aboutPage)}
             />
+          </TabsContent>
+
+          <TabsContent value="about" className="space-y-4 mt-0">
+            <ServicesEditor config={config.about} onChange={(about) => updateConfig('about', about)} />
           </TabsContent>
 
           <TabsContent value="products" className="space-y-4 mt-0">
@@ -331,23 +307,19 @@ export function LandingPageContent() {
             />
           </TabsContent>
 
-          <TabsContent value="aboutPage" className="space-y-4 mt-0">
-            <AboutEditor
-              config={config.aboutPage}
-              onChange={(aboutPage) => updateConfig('aboutPage', aboutPage)}
-            />
+          <TabsContent value="footer" className="space-y-4 mt-0">
+            <FooterEditor config={config.footer} onChange={(footer) => updateConfig('footer', footer)} />
           </TabsContent>
 
-          <TabsContent value="footer" className="space-y-4 mt-0">
-            <FooterEditor
-              config={config.footer}
-              onChange={(footer) => updateConfig('footer', footer)}
+          <TabsContent value="marquee" className="space-y-4 mt-0">
+            <MarqueeEditor
+              config={config.marquee}
+              onChange={(marquee) => updateConfig('marquee', marquee)}
             />
           </TabsContent>
         </Tabs>
       </Card>
 
-      {/* Shortcuts Help */}
       <Card className="p-4 bg-gray-50">
         <h3 className="text-sm font-semibold mb-2">Atalhos de Teclado</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs text-gray-600">

@@ -1,6 +1,7 @@
 import aboutImg from "@/assets/about-shop.jpg";
 
 import { useStorefront } from "@/context/StorefrontContext";
+import { toAssetUrl } from "@/lib/storefront-helpers";
 
 const About = () => {
   const { landingConfig } = useStorefront();
@@ -16,6 +17,19 @@ const About = () => {
     aboutPage?.heroSubtitle ||
     "A M2 Auto Center nasceu em Palmital com um proposito claro: oferecer pecas de qualidade e servicos confiaveis em um so lugar.";
   const stats = aboutPage?.stats?.slice(0, 4) ?? [];
+  const sectionImage = toAssetUrl(aboutPage?.sectionImage?.url) || aboutImg;
+  const sectionImageAlt = aboutPage?.sectionImage?.alt || "Equipe trabalhando na oficina";
+  const sectionImageFit = aboutPage?.sectionImage?.objectFit || "cover";
+  const decorativeSquare = {
+    enabled: aboutPage?.decorativeSquare?.enabled ?? true,
+    size: aboutPage?.decorativeSquare?.size ?? 96,
+    borderWidth: aboutPage?.decorativeSquare?.borderWidth ?? 4,
+    borderRadius: aboutPage?.decorativeSquare?.borderRadius ?? 12,
+    borderColor: aboutPage?.decorativeSquare?.borderColor || "#2563eb",
+    backgroundColor: aboutPage?.decorativeSquare?.backgroundColor || "#ffffff",
+    offsetX: aboutPage?.decorativeSquare?.offsetX ?? -16,
+    offsetY: aboutPage?.decorativeSquare?.offsetY ?? -16,
+  };
 
   return (
     <section id="sobre" className="py-20 section-light">
@@ -43,11 +57,27 @@ const About = () => {
           </div>
           <div className="relative">
             <img
-              src={aboutImg}
-              alt="Equipe trabalhando na oficina"
-              className="rounded-lg w-full h-80 object-cover blue-shadow"
+              src={sectionImage}
+              alt={sectionImageAlt}
+              className="rounded-lg w-full h-80 blue-shadow"
+              style={{ objectFit: sectionImageFit }}
             />
-            <div className="absolute -bottom-4 -left-4 w-24 h-24 border-4 border-primary rounded-lg" />
+            {decorativeSquare.enabled ? (
+              <div
+                className="absolute"
+                style={{
+                  left: `${decorativeSquare.offsetX}px`,
+                  bottom: `${decorativeSquare.offsetY}px`,
+                  width: `${decorativeSquare.size}px`,
+                  height: `${decorativeSquare.size}px`,
+                  borderWidth: `${decorativeSquare.borderWidth}px`,
+                  borderStyle: "solid",
+                  borderColor: decorativeSquare.borderColor,
+                  backgroundColor: decorativeSquare.backgroundColor,
+                  borderRadius: `${decorativeSquare.borderRadius}px`,
+                }}
+              />
+            ) : null}
           </div>
         </div>
       </div>

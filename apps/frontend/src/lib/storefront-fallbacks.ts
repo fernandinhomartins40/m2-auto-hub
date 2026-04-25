@@ -129,6 +129,20 @@ export const fallbackLandingConfig: LandingPageConfig = {
     heroHighlight: "cuidando do seu veiculo",
     heroSubtitle:
       "A M2 Auto Center nasceu em Palmital com um proposito claro: oferecer pecas de qualidade e servicos confiaveis em um so lugar.",
+    sectionImage: {
+      alt: "Equipe trabalhando na oficina",
+      objectFit: "cover",
+    },
+    decorativeSquare: {
+      enabled: true,
+      size: 96,
+      borderWidth: 4,
+      borderRadius: 12,
+      borderColor: "#2563eb",
+      backgroundColor: "#ffffff",
+      offsetX: -16,
+      offsetY: -16,
+    },
     stats: [
       { id: "1", number: "14+", label: "Anos de Experiencia" },
       { id: "2", number: "1000+", label: "Clientes Atendidos" },

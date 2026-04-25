@@ -239,6 +239,17 @@ export interface AboutStat {
   label: string; // "Anos de Experiência"
 }
 
+export interface AboutDecorativeSquareConfig {
+  enabled: boolean;
+  size: number;
+  borderWidth: number;
+  borderRadius: number;
+  borderColor: string;
+  backgroundColor: string;
+  offsetX: number;
+  offsetY: number;
+}
+
 export interface AboutService {
   id: string;
   name: string;
@@ -252,6 +263,8 @@ export interface AboutConfig {
   heroSubtitle: string;
   heroBadge: string; // "Sobre Nós"
   heroBackgroundColor?: ColorOrGradientValue; // Cor de fundo do hero
+  sectionImage: ImageConfig;
+  decorativeSquare: AboutDecorativeSquareConfig;
   // Stats
   stats: AboutStat[];
   statsBackgroundColor?: ColorOrGradientValue; // Cor de fundo da seção de stats

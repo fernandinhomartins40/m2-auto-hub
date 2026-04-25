@@ -83,6 +83,17 @@ export interface LandingStatItem {
   label?: string;
 }
 
+export interface LandingDecorativeSquareConfig {
+  enabled?: boolean;
+  size?: number;
+  borderWidth?: number;
+  borderRadius?: number;
+  borderColor?: string;
+  backgroundColor?: string;
+  offsetX?: number;
+  offsetY?: number;
+}
+
 export interface LandingListItem {
   id: string;
   name: string;
@@ -182,6 +193,10 @@ export interface LandingAboutPageConfig {
   heroTitle?: string;
   heroHighlight?: string;
   heroSubtitle?: string;
+  sectionImage?: LandingImage & {
+    objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
+  };
+  decorativeSquare?: LandingDecorativeSquareConfig;
   stats?: LandingStatItem[];
   historyTitle?: string;
   historySubtitle?: string;
