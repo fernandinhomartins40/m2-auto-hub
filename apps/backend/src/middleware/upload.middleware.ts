@@ -56,6 +56,7 @@ interface ProcessImageOptions {
   height?: number;
   quality?: number;
   format?: 'jpeg' | 'png' | 'webp';
+  pngCompressionLevel?: number;
 }
 
 // Processar e otimizar imagem
@@ -68,7 +69,8 @@ export async function processImage(
     width,
     height,
     quality = 85,
-    format = 'jpeg'
+    format = 'jpeg',
+    pngCompressionLevel = 6,
   } = options;
 
   let pipeline = sharp(inputPath);
@@ -84,13 +86,22 @@ export async function processImage(
   // Converter e otimizar
   switch (format) {
     case 'jpeg':
-      pipeline = pipeline.jpeg({ quality, progressive: true });
+      pipeline = pipeline.jpeg({
+        quality,
+        progressive: true,
+        mozjpeg: true,
+        chromaSubsampling: '4:4:4',
+      });
       break;
     case 'png':
-      pipeline = pipeline.png({ quality, compressionLevel: 9 });
+      pipeline = pipeline.png({
+        compressionLevel: pngCompressionLevel,
+        adaptiveFiltering: false,
+        palette: false,
+      });
       break;
     case 'webp':
-      pipeline = pipeline.webp({ quality });
+      pipeline = pipeline.webp({ quality, effort: 4 });
       break;
   }
 
@@ -190,13 +201,24 @@ export async function processLandingPageImage(
   const fileId = uuidv4();
   const filename = `${category}-${fileId}.${fileExtension}`;
   const outputPath = path.join(LANDING_PAGE_DIR, filename);
+  const isLogoCategory =
+    category.includes('logo') || category.includes('header') || category.includes('footer');
+  const dimensions = isLogoCategory
+    ? {}
+    : category === 'hero'
+      ? { width: 2880, height: 1800 }
+      : category === 'about-home'
+        ? { width: 2200, height: 1600 }
+        : { width: 2560, height: 1800 };
+  const quality = isLogoCategory ? 100 : 96;
+  const pngCompressionLevel = isLogoCategory ? 3 : 4;
 
   // Processar imagem com qualidade alta para landing page
   await processImage(inputPath, outputPath, {
-    width: 1920,
-    height: 1080,
-    quality: 90,
-    format: outputFormat
+    ...dimensions,
+    quality,
+    format: outputFormat,
+    pngCompressionLevel,
   });
 
   // Remover arquivo temporário
