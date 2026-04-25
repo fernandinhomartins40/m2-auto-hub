@@ -152,24 +152,28 @@ export const HeaderEditor = ({ config, onChange }: HeaderEditorProps) => {
         </CardHeader>
         <CardContent>
           <div
-            className="rounded-lg p-4 flex items-center justify-between"
-            style={{
-              ...colorOrGradientToCSS(config.backgroundColor)
-            }}
+            className="rounded-lg p-4 flex items-center justify-between bg-secondary/95 backdrop-blur-md"
           >
             {/* Logo */}
-            <div className="flex items-center">
-              {config.logo.url ? (
-                <img
-                  src={config.logo.url}
-                  alt="Logo"
-                  className="h-12 object-contain"
-                />
-              ) : (
-                <div className="px-4 py-2 bg-gray-200 rounded text-gray-500 text-sm">
-                  Logo
-                </div>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center overflow-hidden">
+                {config.logo.url ? (
+                  <img
+                    src={config.logo.url}
+                    alt="Logo"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex gap-0.5">
+                    <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
+                    <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
+                    <div className="w-1 h-5 bg-primary-foreground rounded-sm" />
+                  </div>
+                )}
+              </div>
+              <span className="font-heading text-xl font-bold text-primary-foreground tracking-wider">
+                m2
+              </span>
             </div>
 
             {/* Menu Items */}
@@ -177,8 +181,7 @@ export const HeaderEditor = ({ config, onChange }: HeaderEditorProps) => {
               {config.menuItems.slice(0, 5).map((item) => (
                 <span
                   key={item.id}
-                  className="text-sm font-medium cursor-pointer transition-colors"
-                  style={colorOrGradientToCSS(config.textColor, { forText: true })}
+                  className="text-sm font-medium text-secondary-foreground/80"
                 >
                   {item.label}
                 </span>

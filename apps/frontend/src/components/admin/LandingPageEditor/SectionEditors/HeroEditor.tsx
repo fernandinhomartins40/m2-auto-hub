@@ -241,36 +241,46 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
             <div className="absolute inset-0 bg-black" style={{ opacity: config.overlayOpacity / 100 }} />
 
             <div className="relative z-10 p-8 w-full">
-              <div className="max-w-2xl">
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                  <span className="gold-metallic">{config.title || 'M2'}</span>
-                  <br />
-                  <span className="text-white">{config.subtitle || 'Pecas & Servicos'}</span>
+              <div className="max-w-4xl mx-auto text-center">
+                <div className="inline-block rounded-full border border-moria-orange/30 bg-moria-orange/20 px-4 py-1.5 mb-6">
+                  <span className="text-moria-orange font-semibold text-sm tracking-wide">
+                    M2 CENTER AUTO
+                  </span>
+                </div>
+
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+                  {config.title || 'Tudo que seu carro precisa,'}{' '}
+                  <span className="text-moria-orange">
+                    {config.subtitle || 'voce encontra aqui.'}
+                  </span>
                 </h1>
 
-                <p className="text-lg text-gray-300 mb-6">
+                <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
                   {config.description || 'Descricao do seu negocio...'}
                 </p>
 
                 {config.features.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  <div className="mt-10 flex flex-wrap items-center justify-center gap-3 mb-8">
                     {config.features.map((feature) => {
                       const IconComponent = (Icons as any)[feature.icon] || Icons.Circle;
                       return (
-                        <div key={feature.id} className="flex items-center space-x-2 text-white">
+                        <span
+                          key={feature.id}
+                          className="rounded-full border border-moria-orange/20 bg-white/10 px-4 py-2 text-sm text-white/80 inline-flex items-center gap-2"
+                        >
                           <IconComponent className="h-4 w-4 text-moria-orange" />
-                          <span className="text-xs">{feature.text}</span>
-                        </div>
+                          {feature.text}
+                        </span>
                       );
                     })}
                   </div>
                 )}
 
                 {config.buttons.filter((button) => button.enabled).length > 0 && (
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap justify-center gap-4">
                     {config.buttons
                       .filter((button) => button.enabled)
-                      .map((button) => {
+                      .map((button, index) => {
                         const customStyle =
                           button.background || button.textColor
                             ? {
@@ -282,14 +292,18 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
                             : undefined;
 
                         return (
-                          <Button
+                          <button
                             key={button.id}
-                            variant={button.variant as any}
-                            size="sm"
+                            type="button"
                             style={customStyle}
+                            className={
+                              index === 0 || button.variant === 'hero'
+                                ? 'inline-flex items-center justify-center gap-2 rounded-md bg-moria-orange px-6 py-3 font-bold text-white shadow'
+                                : 'inline-flex items-center justify-center gap-2 rounded-md border-2 border-white/30 px-6 py-3 font-bold text-white'
+                            }
                           >
                             {button.text}
-                          </Button>
+                          </button>
                         );
                       })}
                   </div>

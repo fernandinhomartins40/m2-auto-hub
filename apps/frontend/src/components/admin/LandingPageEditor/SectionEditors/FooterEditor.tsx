@@ -16,7 +16,7 @@ import {
   FooterBottomLink,
 } from '@/types/landingPage';
 import { ImageUploaderWithCrop, ArrayEditor, IconSelector, ColorOrGradientPicker } from '../StyleControls';
-import { Eye, MapPin, Phone, Mail } from 'lucide-react';
+import { Eye, MapPin, Phone, Mail, Settings, MessageCircle } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
 interface FooterEditorProps {
@@ -31,7 +31,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Habilitado */}
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -47,7 +46,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         </div>
       </Card>
 
-      {/* Logo */}
       <Card className="p-6">
         <ImageUploaderWithCrop
           label="Logo do Footer"
@@ -61,7 +59,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         />
       </Card>
 
-      {/* Descrição */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold">Descrição</h3>
         <Textarea
@@ -72,7 +69,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         />
       </Card>
 
-      {/* Informações de Contato */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold">Informações de Contato</h3>
 
@@ -167,7 +163,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         </div>
       </Card>
 
-      {/* Horário de Funcionamento */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold">Horário de Funcionamento</h3>
 
@@ -223,7 +218,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         </div>
       </Card>
 
-      {/* Serviços */}
       <Card className="p-6">
         <ArrayEditor<FooterService>
           label="Lista de Serviços"
@@ -248,7 +242,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         />
       </Card>
 
-      {/* Redes Sociais */}
       <Card className="p-6">
         <ArrayEditor<FooterSocialLink>
           label="Redes Sociais"
@@ -297,7 +290,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         />
       </Card>
 
-      {/* Certificações */}
       <Card className="p-6">
         <ArrayEditor<FooterCertification>
           label="Certificações e Selos"
@@ -357,7 +349,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         />
       </Card>
 
-      {/* Copyright e Links Inferiores */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold">Rodapé Inferior</h3>
 
@@ -405,8 +396,6 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
         />
       </Card>
 
-
-      {/* Preview */}
       <Card className="bg-gradient-to-r from-moria-orange/5 to-gold-accent/5 border-moria-orange/20">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -420,68 +409,94 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
             </Badge>
           </div>
           <CardDescription>
-            Veja como o rodapé aparecerá na landing page
+            Estrutura alinhada com o footer real da landing publica
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="p-8 rounded-lg text-white bg-moria-black">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-              {/* Column 1: Logo & Description */}
+          <div className="rounded-lg border-t border-primary/10 bg-secondary p-8 text-white">
+            <div className="mb-8 grid items-start gap-8 md:grid-cols-3">
               <div>
-                {config.logo.url ? (
-                  <img src={config.logo.url} alt="Logo" className="h-12 mb-4 object-contain" />
-                ) : (
-                  <div className="h-12 mb-4 flex items-center">
-                    <span className="text-white font-bold text-xl">Logo</span>
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-primary">
+                    {config.logo.url ? (
+                      <img src={config.logo.url} alt="Logo" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex gap-0.5">
+                        <div className="h-4 w-0.5 rounded-sm bg-primary-foreground" />
+                        <div className="h-4 w-0.5 rounded-sm bg-primary-foreground" />
+                        <div className="h-4 w-0.5 rounded-sm bg-primary-foreground" />
+                      </div>
+                    )}
                   </div>
-                )}
-                <p className="text-sm text-gray-300">
-                  {config.description || 'Descrição da empresa...'}
+                  <span className="font-heading text-xl font-bold tracking-wider text-primary-foreground">
+                    m2
+                  </span>
+                </div>
+                <p className="mb-4 text-sm text-secondary-foreground/50">
+                  {config.description || 'Descricao da empresa...'}
                 </p>
+                <p className="text-sm text-secondary-foreground/60">
+                  {[config.contactInfo.address.street, config.contactInfo.address.city]
+                    .filter(Boolean)
+                    .join(' | ') || 'Endereco da loja'}
+                </p>
+                {config.contactInfo.phone ? (
+                  <p className="mt-2 text-sm text-secondary-foreground/60">{config.contactInfo.phone}</p>
+                ) : null}
               </div>
 
-              {/* Column 2: Contact Info */}
               <div>
-                <h3 className="font-bold text-lg mb-4">Contato</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>{config.contactInfo.address.street || 'Endereço'}, {config.contactInfo.address.city || 'Cidade'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    <span>{config.contactInfo.phone || '(00) 0000-0000'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    <span>{config.contactInfo.email || 'email@exemplo.com'}</span>
-                  </div>
+                <div className="mb-4 flex flex-wrap gap-4">
+                  {config.bottomLinks.slice(0, 4).map((link) => (
+                    <span key={link.id} className="text-sm text-secondary-foreground/60">
+                      {link.text}
+                    </span>
+                  ))}
+                </div>
+                <div className="space-y-1">
+                  {[config.businessHours.weekdays, config.businessHours.saturday, config.businessHours.sunday]
+                    .filter(Boolean)
+                    .slice(0, 3)
+                    .map((line) => (
+                      <p key={line} className="text-sm text-secondary-foreground/50">
+                        {line}
+                      </p>
+                    ))}
                 </div>
               </div>
 
-              {/* Column 3: Social Links */}
-              <div>
-                <h3 className="font-bold text-lg mb-4">Redes Sociais</h3>
-                <div className="flex gap-3">
+              <div className="md:text-right">
+                <div className="mb-4 flex gap-3 md:justify-end">
                   {config.socialLinks.filter((social) => social.enabled).map((social) => {
                     const IconComponent =
-                      social.platform === 'facebook' ? Icons.Facebook : Icons.Instagram;
+                      social.platform === 'facebook'
+                        ? Icons.Facebook
+                        : social.platform === 'instagram'
+                          ? Icons.Instagram
+                          : MessageCircle;
+
                     return (
                       <div
                         key={social.id}
-                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary"
                       >
-                        <IconComponent className="h-5 w-5" />
+                        <IconComponent className="h-4 w-4" />
                       </div>
                     );
                   })}
                 </div>
+
+                <div className="inline-flex items-center gap-2 rounded-md border border-primary/40 px-4 py-2 text-sm font-semibold text-primary">
+                  <Settings className="h-4 w-4" />
+                  Painel do Lojista
+                </div>
               </div>
             </div>
 
-            {/* Bottom Bar */}
-            <div className="border-t border-white/20 pt-6 text-center text-sm text-gray-300">
-              <p>{config.copyright || `© ${new Date().getFullYear()} Todos os direitos reservados`}</p>
+            <div className="border-t border-primary/10 pt-6 text-center">
+              <p className="text-sm text-secondary-foreground/40">
+                {config.copyright || '© 2026 M2 Center Auto. Todos os direitos reservados.'}
+              </p>
             </div>
           </div>
         </CardContent>
