@@ -15,9 +15,10 @@ import settingsService from '@/api/settingsService';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ResponsiveDialogBody, ResponsiveDialogContent, ResponsiveDialogHeader } from '@/components/ui/responsive-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
@@ -223,8 +224,8 @@ function PwaIconCropper({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="rounded-lg border-2 border-gray-200 bg-gray-50 p-3">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="min-w-0 rounded-lg border-2 border-gray-200 bg-gray-50 p-2 sm:p-3">
           <ReactCrop crop={crop} onChange={(next) => setCrop(next)} onComplete={(next) => setCompletedCrop(next)} aspect={1}>
             <img
               ref={imageRef}
@@ -232,12 +233,12 @@ function PwaIconCropper({
               alt="Crop do ícone"
               onLoad={onImageLoad}
               className="max-w-full"
-              style={{ maxHeight: 'min(520px, 60vh)' }}
+              style={{ maxHeight: 'min(480px, 52vh)' }}
             />
           </ReactCrop>
         </div>
 
-        <Card className="border-border/70">
+        <Card className="min-w-0 border-border/70">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Preview do Ícone</CardTitle>
             <CardDescription>Escolha como deseja validar visualmente os cantos do app.</CardDescription>
@@ -435,26 +436,28 @@ function PwaIconUploadCard({
       </Card>
 
       <Dialog open={showCropper} onOpenChange={(open) => !open && handleCropCancel()}>
-        <DialogContent className="max-w-5xl">
-          <DialogHeader>
+        <ResponsiveDialogContent size="xl" className="flex flex-col gap-0 p-0">
+          <ResponsiveDialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
               Recorte o ícone em proporção 1:1 e valide visualmente os cantos para Android, iOS ou formato livre.
             </DialogDescription>
-          </DialogHeader>
-          {tempImageUrl ? (
-            <PwaIconCropper
-              imageUrl={tempImageUrl}
-              slot={slot}
-              title={title}
-              previewShape={previewShape}
-              autoShape={autoShape}
-              onPreviewShapeChange={setPreviewShape}
-              onCancel={handleCropCancel}
-              onComplete={handleCropComplete}
-            />
-          ) : null}
-        </DialogContent>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogBody className="overflow-x-hidden">
+            {tempImageUrl ? (
+              <PwaIconCropper
+                imageUrl={tempImageUrl}
+                slot={slot}
+                title={title}
+                previewShape={previewShape}
+                autoShape={autoShape}
+                onPreviewShapeChange={setPreviewShape}
+                onCancel={handleCropCancel}
+                onComplete={handleCropComplete}
+              />
+            ) : null}
+          </ResponsiveDialogBody>
+        </ResponsiveDialogContent>
       </Dialog>
     </>
   );

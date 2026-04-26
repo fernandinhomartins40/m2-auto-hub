@@ -4,8 +4,9 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogDescription, DialogTitle } from '../ui/dialog';
 import { ProductImageCropper } from './ProductImageCropper';
+import { ResponsiveDialogBody, ResponsiveDialogContent, ResponsiveDialogHeader } from '../ui/responsive-dialog';
 import {
   Upload,
   Trash2,
@@ -547,15 +548,15 @@ export function ProductImageUpload({
 
       {/* Dialog de Crop */}
       <Dialog open={!!cropImageId} onOpenChange={(open) => !open && handleCropCancel()}>
-        <DialogContent className="max-w-5xl max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col p-0 gap-0">
-          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-gray-50/50 shrink-0">
+        <ResponsiveDialogContent size="xl" className="flex flex-col gap-0 p-0">
+          <ResponsiveDialogHeader className="bg-gray-50/50">
             <DialogTitle>Ajustar Imagem do Produto</DialogTitle>
             <DialogDescription>
               Recorte e ajuste a imagem antes de adicionar ao produto
             </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 min-h-0">
-            <div className="py-4">
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogBody className="overflow-x-hidden py-4">
+            <div>
               {(() => {
                 if (cropImage && cropImage.url) {
                   return (
@@ -578,8 +579,8 @@ export function ProductImageUpload({
                 }
               })()}
             </div>
-          </div>
-        </DialogContent>
+          </ResponsiveDialogBody>
+        </ResponsiveDialogContent>
       </Dialog>
     </>
   );

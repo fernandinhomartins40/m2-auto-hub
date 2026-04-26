@@ -4,8 +4,9 @@ import { Button } from './button';
 import { Card, CardContent } from './card';
 import { Badge } from './badge';
 import { Progress } from './progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog';
+import { Dialog, DialogDescription, DialogTitle } from './dialog';
 import { ImageCropper } from './ImageCropper';
+import { ResponsiveDialogBody, ResponsiveDialogContent, ResponsiveDialogHeader } from './responsive-dialog';
 import {
   Upload,
   Image as ImageIcon,
@@ -455,22 +456,24 @@ export function ImageUpload({
 
       {/* Dialog de Crop */}
       <Dialog open={!!cropImage} onOpenChange={(open) => !open && handleCropCancel()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
+        <ResponsiveDialogContent size="lg" className="flex flex-col gap-0 p-0">
+          <ResponsiveDialogHeader>
             <DialogTitle>Ajustar Imagem</DialogTitle>
             <DialogDescription>
               Recorte e ajuste a imagem antes de fazer upload
             </DialogDescription>
-          </DialogHeader>
-          {cropImage && (
-            <ImageCropper
-              imageUrl={cropImage.tempUrl!}
-              onCropComplete={handleCropComplete}
-              onCancel={handleCropCancel}
-              aspectRatio={aspectRatio}
-            />
-          )}
-        </DialogContent>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogBody className="overflow-x-hidden">
+            {cropImage && (
+              <ImageCropper
+                imageUrl={cropImage.tempUrl!}
+                onCropComplete={handleCropComplete}
+                onCancel={handleCropCancel}
+                aspectRatio={aspectRatio}
+              />
+            )}
+          </ResponsiveDialogBody>
+        </ResponsiveDialogContent>
       </Dialog>
     </>
   );
