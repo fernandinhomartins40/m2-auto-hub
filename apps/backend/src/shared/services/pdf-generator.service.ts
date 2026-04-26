@@ -258,6 +258,45 @@ export class PdfGeneratorService {
         gap: 24px;
       }
 
+      .pdf-hero {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: flex-start;
+        padding: 24px;
+        border-radius: 24px;
+        background:
+          radial-gradient(circle at top left, rgba(249, 115, 22, 0.14), transparent 42%),
+          linear-gradient(135deg, #0f172a 0%, #1e293b 62%, #334155 100%);
+        color: #ffffff;
+      }
+
+      .pdf-hero-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .pdf-hero-aside {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 12px;
+        min-width: 170px;
+      }
+
+      .pdf-eyebrow {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
       .pdf-header {
         display: flex;
         justify-content: space-between;
@@ -287,6 +326,23 @@ export class PdfGeneratorService {
         font-size: 13px;
       }
 
+      .pdf-hero .pdf-subtitle {
+        color: rgba(255, 255, 255, 0.82);
+        max-width: 520px;
+      }
+
+      .pdf-hero-code {
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
       .pdf-chip {
         display: inline-flex;
         align-items: center;
@@ -296,6 +352,56 @@ export class PdfGeneratorService {
         font-weight: 700;
         background: var(--accent-soft);
         color: var(--accent);
+      }
+
+      .pdf-chip-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .pdf-stat-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .pdf-stat-grid--triple {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .pdf-stat-grid--quad {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .pdf-stat-card {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px 18px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        min-height: 88px;
+      }
+
+      .pdf-stat-card--accent {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        border-color: rgba(249, 115, 22, 0.22);
+      }
+
+      .pdf-stat-label {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .pdf-stat-value {
+        display: block;
+        font-size: 18px;
+        line-height: 1.2;
+        font-weight: 800;
+        color: var(--text);
       }
 
       .pdf-grid {
@@ -309,6 +415,27 @@ export class PdfGeneratorService {
         border-radius: 16px;
         padding: 16px;
         background: var(--surface-alt);
+      }
+
+      .pdf-panel {
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 18px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      }
+
+      .pdf-section-heading {
+        margin-bottom: 12px;
+      }
+
+      .pdf-section-kicker {
+        display: inline-block;
+        margin-bottom: 6px;
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
       }
 
       .pdf-card-title {
@@ -343,6 +470,32 @@ export class PdfGeneratorService {
         border: 1px solid var(--border);
         border-radius: 16px;
         overflow: hidden;
+      }
+
+      .pdf-table-primary {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .pdf-table-index {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 800;
+        font-size: 11px;
+        flex: 0 0 28px;
+      }
+
+      .pdf-table-secondary {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 2px;
       }
 
       .pdf-items thead th {
@@ -399,9 +552,28 @@ export class PdfGeneratorService {
         padding: 16px;
       }
 
+      .pdf-notes--soft {
+        background: #f8fafc;
+      }
+
       .pdf-notes p {
         margin: 0;
         white-space: pre-wrap;
+      }
+
+      .pdf-note-inline {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .pdf-bullet-list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .pdf-bullet-list li + li {
+        margin-top: 6px;
       }
 
       .status-pending,
