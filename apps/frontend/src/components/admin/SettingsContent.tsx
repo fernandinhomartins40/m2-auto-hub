@@ -9,7 +9,6 @@ import { useSettings } from '@/hooks/useSettings';
 import { clearSettingsCache } from '@/hooks/useStoreSettings';
 import settingsService from '@/api/settingsService';
 import { PdfBrandingSection } from './settings/PdfBrandingSection';
-import { PwaSettingsSection } from './settings/PwaSettingsSection';
 import {
   MessageCircle,
   CheckCircle,
@@ -76,17 +75,6 @@ export function SettingsContent() {
     pdfHeaderHtml: '',
     pdfFooterLogoUrl: '',
     pdfFooterHtml: '',
-    pwaName: '',
-    pwaShortName: '',
-    pwaDescription: '',
-    pwaThemeColor: '#0f172a',
-    pwaBackgroundColor: '#0f172a',
-    pwaDisplay: 'standalone' as const,
-    pwaIcon192Url: '',
-    pwaIcon512Url: '',
-    pwaAppleTouchIconUrl: '',
-    pwaMaskableIconUrl: '',
-
     // Flags
     whatsappConnected: false,
     correiosConnected: false,
@@ -126,16 +114,6 @@ export function SettingsContent() {
         pdfHeaderHtml: settings.pdfHeaderHtml || '',
         pdfFooterLogoUrl: settings.pdfFooterLogoUrl || '',
         pdfFooterHtml: settings.pdfFooterHtml || '',
-        pwaName: settings.pwaName || settings.storeName || '',
-        pwaShortName: settings.pwaShortName || (settings.storeName || '').slice(0, 12),
-        pwaDescription: settings.pwaDescription || '',
-        pwaThemeColor: settings.pwaThemeColor || '#0f172a',
-        pwaBackgroundColor: settings.pwaBackgroundColor || '#0f172a',
-        pwaDisplay: settings.pwaDisplay || 'standalone',
-        pwaIcon192Url: settings.pwaIcon192Url || '',
-        pwaIcon512Url: settings.pwaIcon512Url || '',
-        pwaAppleTouchIconUrl: settings.pwaAppleTouchIconUrl || '',
-        pwaMaskableIconUrl: settings.pwaMaskableIconUrl || '',
         whatsappConnected: settings.whatsappConnected,
         correiosConnected: settings.correiosConnected,
         paymentConnected: settings.paymentConnected,
@@ -260,13 +238,6 @@ export function SettingsContent() {
         whatsapp: toWhatsAppFormat(formData.whatsapp),
         pdfHeaderLogoUrl: formData.pdfHeaderLogoUrl.trim() || null,
         pdfFooterLogoUrl: formData.pdfFooterLogoUrl.trim() || null,
-        pwaName: formData.pwaName.trim(),
-        pwaShortName: formData.pwaShortName.trim(),
-        pwaDescription: formData.pwaDescription.trim(),
-        pwaIcon192Url: formData.pwaIcon192Url.trim() || null,
-        pwaIcon512Url: formData.pwaIcon512Url.trim() || null,
-        pwaAppleTouchIconUrl: formData.pwaAppleTouchIconUrl.trim() || null,
-        pwaMaskableIconUrl: formData.pwaMaskableIconUrl.trim() || null,
       };
 
       await updateSettings(dataToSend);
@@ -800,23 +771,6 @@ export function SettingsContent() {
             pdfHeaderHtml={formData.pdfHeaderHtml}
             pdfFooterLogoUrl={formData.pdfFooterLogoUrl}
             pdfFooterHtml={formData.pdfFooterHtml}
-            onChange={handleInputChange}
-          />
-
-          <Separator />
-
-          <PwaSettingsSection
-            storeName={formData.storeName}
-            pwaName={formData.pwaName}
-            pwaShortName={formData.pwaShortName}
-            pwaDescription={formData.pwaDescription}
-            pwaThemeColor={formData.pwaThemeColor}
-            pwaBackgroundColor={formData.pwaBackgroundColor}
-            pwaDisplay={formData.pwaDisplay}
-            pwaIcon192Url={formData.pwaIcon192Url}
-            pwaIcon512Url={formData.pwaIcon512Url}
-            pwaAppleTouchIconUrl={formData.pwaAppleTouchIconUrl}
-            pwaMaskableIconUrl={formData.pwaMaskableIconUrl}
             onChange={handleInputChange}
           />
 

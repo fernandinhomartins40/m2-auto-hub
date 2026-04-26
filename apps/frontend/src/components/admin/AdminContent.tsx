@@ -49,6 +49,7 @@ import { CreateQuoteModal } from "./CreateQuoteModal";
 import { CreateCustomerModal } from "./CreateCustomerModal";
 import AdminUsersSection from "./AdminUsersSection";
 import { PromotionsManagement } from "./PromotionsManagement";
+import { PwaSettingsContent } from "./PwaSettingsContent";
 import { SettingsContent } from "./SettingsContent";
 import { AdminProductsSection } from "./AdminProductsSection";
 import { AdminServicesSection } from "./AdminServicesSection";
@@ -2366,6 +2367,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         return <AdminUsersSection />;
       case 'landing-page':
         return <LandingPageContent />;
+      case 'pwa-settings':
+        return <PwaSettingsContent />;
       case 'settings':
         return <SettingsContent />;
       default:

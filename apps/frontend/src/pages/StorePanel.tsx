@@ -1,21 +1,21 @@
 import { useState } from "react";
 import {
-  LayoutDashboard,
-  ShoppingBag,
-  FileText,
-  Package,
-  Menu,
-  Wrench,
-  ClipboardCheck,
-  Users,
-  Tag,
-  Percent,
-  UserCog,
   BarChart3,
+  ClipboardCheck,
+  FileText,
+  LayoutDashboard,
+  Menu,
+  Package,
+  Palette,
+  Percent,
   Settings,
-  Palette
+  ShoppingBag,
+  Smartphone,
+  Tag,
+  UserCog,
+  Users,
+  Wrench,
 } from "lucide-react";
-import { Sidebar } from "../components/admin/Sidebar";
 import { AdminContent } from "../components/admin/AdminContent";
 import { ProtectedAdminRoute } from "../components/admin/ProtectedAdminRoute";
 import MechanicPanel from "../components/mechanic/MechanicPanel";
@@ -38,7 +38,6 @@ export default function StorePanel() {
     );
   }
 
-  // Bottom Navigation Items (5 principais)
   const bottomNavItems = [
     { id: "dashboard", label: "Início", icon: LayoutDashboard },
     { id: "orders", label: "Pedidos", icon: ShoppingBag },
@@ -47,7 +46,6 @@ export default function StorePanel() {
     { id: "menu", label: "Mais", icon: Menu },
   ];
 
-  // Drawer Items (9 secundárias)
   const drawerItems = [
     { id: "services", label: "Serviços", icon: Wrench },
     { id: "revisions", label: "Revisões", icon: ClipboardCheck },
@@ -57,6 +55,7 @@ export default function StorePanel() {
     { id: "users", label: "Usuários", icon: UserCog, requiresPermission: "canManageAdmins" },
     { id: "reports", label: "Relatórios", icon: BarChart3 },
     { id: "landing-page", label: "Landing Page", icon: Palette },
+    { id: "pwa-settings", label: "PWA", icon: Smartphone },
     { id: "settings", label: "Configurações", icon: Settings },
   ];
 
@@ -72,19 +71,13 @@ export default function StorePanel() {
         variant="admin"
         onLogout={logout}
       >
-        {/* Header com título e descrição (apenas desktop, mobile tem StoreHeader) */}
         <div className="lojista-header desktop-only">
           <div>
-            <h1 className="lojista-title">
-              {getPageTitle(activeTab)}
-            </h1>
-            <p className="lojista-subtitle">
-              {getPageDescription(activeTab)}
-            </p>
+            <h1 className="lojista-title">{getPageTitle(activeTab)}</h1>
+            <p className="lojista-subtitle">{getPageDescription(activeTab)}</p>
           </div>
         </div>
 
-        {/* Conteúdo da aba ativa */}
         <div className="lojista-fade-in">
           <AdminContent activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
@@ -107,8 +100,10 @@ function getPageTitle(tab: string): string {
     reports: "Relatórios",
     users: "Gestão de Usuários",
     "landing-page": "Editor da Landing Page",
-    settings: "Configurações"
+    "pwa-settings": "Configurações do PWA",
+    settings: "Configurações",
   };
+
   return titles[tab] || "Dashboard";
 }
 
@@ -126,7 +121,9 @@ function getPageDescription(tab: string): string {
     reports: "Relatórios de vendas e análises detalhadas",
     users: "Gerencie usuários administrativos, mecânicos e permissões do sistema",
     "landing-page": "Configure todos os elementos visuais da página inicial",
-    settings: "Configurações do sistema e preferências"
+    "pwa-settings": "Gerencie manifesto, ícones e instalação do aplicativo",
+    settings: "Configurações do sistema e preferências gerais",
   };
+
   return descriptions[tab] || "Painel administrativo da M2 Center Auto";
 }
