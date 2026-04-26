@@ -182,6 +182,16 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
           />
         </div>
 
+        <SliderControl
+          label="Opacidade do fundo"
+          value={config.decorativeSquare?.backgroundOpacity ?? 100}
+          onChange={(backgroundOpacity) => updateDecorativeSquare({ backgroundOpacity })}
+          min={0}
+          max={100}
+          unit="%"
+          description="Use 0% para deixar apenas o tracado da borda."
+        />
+
         <div className="grid gap-4 md:grid-cols-2">
           <SliderControl
             label="Tamanho"

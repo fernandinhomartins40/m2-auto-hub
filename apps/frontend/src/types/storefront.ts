@@ -90,6 +90,7 @@ export interface LandingDecorativeSquareConfig {
   borderRadius?: number;
   borderColor?: string;
   backgroundColor?: string;
+  backgroundOpacity?: number;
   offsetX?: number;
   offsetY?: number;
 }

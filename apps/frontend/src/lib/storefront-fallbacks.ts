@@ -140,6 +140,7 @@ export const fallbackLandingConfig: LandingPageConfig = {
       borderRadius: 12,
       borderColor: "#2563eb",
       backgroundColor: "#ffffff",
+      backgroundOpacity: 100,
       offsetX: -16,
       offsetY: -16,
     },

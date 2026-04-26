@@ -3,6 +3,39 @@ import aboutImg from "@/assets/about-shop.jpg";
 import { useStorefront } from "@/context/StorefrontContext";
 import { toAssetUrl } from "@/lib/storefront-helpers";
 
+function withOpacity(color: string, opacityPercent: number) {
+  const alpha = Math.max(0, Math.min(100, opacityPercent)) / 100;
+
+  if (alpha === 1) {
+    return color;
+  }
+
+  const hex = color.replace("#", "").trim();
+  if (/^[0-9a-fA-F]{3}$/.test(hex)) {
+    const [r, g, b] = hex.split("").map((value) => parseInt(value + value, 16));
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  const rgbMatch = color.match(/^rgb\(\s*([^)]+)\s*\)$/i);
+  if (rgbMatch) {
+    return `rgba(${rgbMatch[1]}, ${alpha})`;
+  }
+
+  const rgbaMatch = color.match(/^rgba\(\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^)]+)\)$/i);
+  if (rgbaMatch) {
+    return `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, ${alpha})`;
+  }
+
+  return color;
+}
+
 const About = () => {
   const { landingConfig } = useStorefront();
   const aboutPage = landingConfig.aboutPage;
@@ -27,6 +60,7 @@ const About = () => {
     borderRadius: aboutPage?.decorativeSquare?.borderRadius ?? 12,
     borderColor: aboutPage?.decorativeSquare?.borderColor || "#2563eb",
     backgroundColor: aboutPage?.decorativeSquare?.backgroundColor || "#ffffff",
+    backgroundOpacity: aboutPage?.decorativeSquare?.backgroundOpacity ?? 100,
     offsetX: aboutPage?.decorativeSquare?.offsetX ?? -16,
     offsetY: aboutPage?.decorativeSquare?.offsetY ?? -16,
   };
@@ -73,7 +107,10 @@ const About = () => {
                   borderWidth: `${decorativeSquare.borderWidth}px`,
                   borderStyle: "solid",
                   borderColor: decorativeSquare.borderColor,
-                  backgroundColor: decorativeSquare.backgroundColor,
+                  backgroundColor: withOpacity(
+                    decorativeSquare.backgroundColor,
+                    decorativeSquare.backgroundOpacity
+                  ),
                   borderRadius: `${decorativeSquare.borderRadius}px`,
                 }}
               />
