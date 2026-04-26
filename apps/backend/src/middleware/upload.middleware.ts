@@ -250,7 +250,7 @@ export async function processPwaIcon(
       withoutEnlargement: false,
     })
     .png({
-      compressionLevel: 3,
+      compressionLevel: 0,
       adaptiveFiltering: false,
       palette: false,
     })
