@@ -6,8 +6,9 @@ import { settingsService } from '@modules/settings/settings.service.js';
 interface PdfPage {
   setContent: (
     html: string,
-    options: { waitUntil: 'networkidle'; timeout: number }
+    options: { waitUntil: 'domcontentloaded'; timeout: number }
   ) => Promise<void>;
+  waitForTimeout: (timeout: number) => Promise<void>;
   pdf: (options: {
     format: 'A4';
     printBackground: boolean;
@@ -68,9 +69,10 @@ export class PdfGeneratorService {
     try {
       const page = await browser.newPage();
       await page.setContent(this.wrapHtmlDocument(title, bodyHtml, branding), {
-        waitUntil: 'networkidle',
+        waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
+      await page.waitForTimeout(300);
 
       return await page.pdf({
         format: 'A4',
