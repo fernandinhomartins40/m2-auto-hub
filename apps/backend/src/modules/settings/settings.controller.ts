@@ -13,6 +13,35 @@ export class SettingsController {
     return `${req.protocol}://${req.get('host')}${value}`;
   }
 
+  private buildPwaProfile(req: Request, settings: any) {
+    const app = req.query.app === 'admin' ? 'admin' : 'customer';
+    const baseName = settings.pwaName?.trim() || settings.storeName || 'M2 Center Auto';
+    const baseShortName = settings.pwaShortName?.trim() || baseName.slice(0, 12);
+
+    if (app === 'admin') {
+      return {
+        id: '/pwa/admin',
+        name: `${baseName} Painel`,
+        shortName: `${baseShortName.slice(0, 8)} Painel`.trim(),
+        description:
+          'Acesse o painel do lojista, da oficina e da equipe com instalacao dedicada no celular.',
+        startUrl: '/pwa-entry?app=admin',
+        scope: '/',
+      };
+    }
+
+    return {
+      id: '/pwa/customer',
+      name: `${baseName} Cliente`,
+      shortName: `${baseShortName.slice(0, 8)} Cliente`.trim(),
+      description:
+        settings.pwaDescription?.trim() ||
+        'Acesse sua area do cliente, acompanhe pedidos, revisoes e veiculos pelo celular.',
+      startUrl: '/customer?source=pwa-customer',
+      scope: '/',
+    };
+  }
+
   async getSettings(_req: Request, res: Response): Promise<void> {
     try {
       const settings = await settingsService.getSettings();
@@ -42,11 +71,7 @@ export class SettingsController {
   async getPwaManifest(req: Request, res: Response): Promise<void> {
     try {
       const settings = await settingsService.getSettings();
-      const name = settings.pwaName?.trim() || settings.storeName || 'M2 Center Auto';
-      const shortName = settings.pwaShortName?.trim() || name.slice(0, 12);
-      const description =
-        settings.pwaDescription?.trim() ||
-        'Acesse a loja, acompanhe pedidos e use o app no celular.';
+      const profile = this.buildPwaProfile(req, settings);
 
       const icons = [
         settings.pwaIcon192Url
@@ -74,12 +99,12 @@ export class SettingsController {
       ].filter(Boolean);
 
       res.type('application/manifest+json').status(200).json({
-        id: '/',
-        name,
-        short_name: shortName,
-        description,
-        start_url: '/',
-        scope: '/',
+        id: profile.id,
+        name: profile.name,
+        short_name: profile.shortName,
+        description: profile.description,
+        start_url: profile.startUrl,
+        scope: profile.scope,
         display: settings.pwaDisplay || 'standalone',
         background_color: settings.pwaBackgroundColor || '#0f172a',
         theme_color: settings.pwaThemeColor || '#0f172a',

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Loader2, Shield, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 
 export default function PwaEntryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated: isCustomerAuthenticated, isLoading: isCustomerLoading } = useAuth();
   const { admin, isAuthenticated: isAdminAuthenticated, isLoading: isAdminLoading } = useAdminAuth();
 
@@ -25,6 +26,12 @@ export default function PwaEntryPage() {
 
     if (isCustomerAuthenticated) {
       navigate("/customer?source=pwa", { replace: true });
+      return;
+    }
+
+    const app = new URLSearchParams(location.search).get("app");
+    if (app === "admin") {
+      navigate("/admin-login/?source=pwa-admin", { replace: true });
     }
   }, [
     admin,
@@ -32,6 +39,7 @@ export default function PwaEntryPage() {
     isAdminLoading,
     isCustomerAuthenticated,
     isCustomerLoading,
+    location.search,
     navigate,
   ]);
 

@@ -18,6 +18,7 @@ import Index from "./pages/Index";
 import MechanicPanelPage from "./pages/MechanicPanelPage";
 import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
+import PwaEntryPage from "./pages/PwaEntryPage";
 import StorePanel from "./pages/StorePanel";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
                           <Route path="/app" element={<Navigate to="/" replace />} />
                           <Route path="/customer-login/*" element={<CustomerLoginPage />} />
                           <Route path="/admin-login/*" element={<AdminLoginPage />} />
+                          <Route path="/pwa-entry" element={<PwaEntryPage />} />
                           <Route path="/customer" element={<CustomerPanel />} />
                           <Route path="/my-account" element={<MyAccount />} />
                           <Route path="/store-panel" element={<StorePanel />} />

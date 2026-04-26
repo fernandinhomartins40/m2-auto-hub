@@ -3,9 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CreditCard, Loader2, Mail, Phone, User } from "lucide-react";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { InstallBanner } from "@moria/ui/pwa-install";
 import { isPasswordStrong } from "@/lib/passwordUtils";
 import { toast } from "sonner";
+import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
@@ -122,7 +122,7 @@ export function CustomerAuthCard({
 
   return (
     <div className="w-full max-w-md space-y-4">
-      {showInstallBanner && <InstallBanner appName="M2 Cliente" variant="customer" />}
+      {showInstallBanner && <PwaInstallBanner appType="customer" />}
 
       <Card className="border-none shadow-2xl">
         <CardHeader className="text-center pb-4">

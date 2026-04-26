@@ -6,10 +6,10 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { InstallBanner } from "@moria/ui/pwa-install";
 
 interface AdminLoginDialogProps {
   showInstallBanner?: boolean;
@@ -72,7 +72,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-stone-100 p-4">
       <div className="w-full max-w-md space-y-4">
-        {showInstallBanner && <InstallBanner appName="M2 Center Auto Admin" variant="admin" />}
+        {showInstallBanner && <PwaInstallBanner appType="admin" />}
 
         <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
           <div className="text-center mb-8">
