@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -32,16 +32,16 @@ interface ServiceModalProps {
 }
 
 const DEFAULT_SERVICE_CATEGORIES = [
-  'ManutenÃ§Ã£o Preventiva',
+  'Manutenção Preventiva',
   'Motor',
   'Freios',
-  'SuspensÃ£o',
-  'TransmissÃ£o',
-  'Sistema ElÃ©trico',
+  'Suspensão',
+  'Transmissão',
+  'Sistema Elétrico',
   'Ar Condicionado',
   'Pneus e Rodas',
   'Carroceria',
-  'DiagnÃ³stico',
+  'Diagnóstico',
   'Outros'
 ];
 
@@ -144,19 +144,19 @@ export function ServiceModal({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name?.trim()) {
-      newErrors.name = 'Nome Ã© obrigatÃ³rio';
+      newErrors.name = 'Nome é obrigatório';
     }
 
     if (!formData.category?.trim()) {
-      newErrors.category = 'Categoria Ã© obrigatÃ³ria';
+      newErrors.category = 'Categoria é obrigatória';
     }
 
     if (formData.basePrice === undefined || formData.basePrice < 0) {
-      newErrors.basePrice = 'PreÃ§o base deve ser maior ou igual a zero';
+      newErrors.basePrice = 'Preço base deve ser maior ou igual a zero';
     }
 
     if (!formData.estimatedTime?.trim()) {
-      newErrors.estimatedTime = 'Tempo estimado Ã© obrigatÃ³rio';
+      newErrors.estimatedTime = 'Tempo estimado é obrigatório';
     }
 
     setErrors(newErrors);
@@ -182,7 +182,7 @@ export function ServiceModal({
       await onSave(dataToSave);
       onClose();
     } catch (error) {
-      console.error('[ServiceModal] Erro ao salvar serviÃ§o:', error);
+      console.error('[ServiceModal] Erro ao salvar serviço:', error);
     }
   };
 
@@ -198,12 +198,12 @@ export function ServiceModal({
         <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-gray-50/50 shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Wrench className="h-5 w-5 text-moria-orange" />
-            {isEditing ? 'Editar ServiÃ§o' : 'Novo ServiÃ§o'}
+            {isEditing ? 'Editar Serviço' : 'Novo Serviço'}
           </DialogTitle>
           <DialogDescription className="text-sm">
             {isEditing
-              ? 'Edite as informaÃ§Ãµes do serviÃ§o abaixo'
-              : 'Preencha as informaÃ§Ãµes do novo serviÃ§o'}
+              ? 'Edite as informações do serviço abaixo'
+              : 'Preencha as informações do novo serviço'}
           </DialogDescription>
         </DialogHeader>
 
@@ -217,11 +217,11 @@ export function ServiceModal({
                 <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-3 gap-1">
                   <TabsTrigger value="basic" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
                     <Wrench className="h-4 w-4" />
-                    <span>BÃ¡sico</span>
+                    <span>Básico</span>
                   </TabsTrigger>
                   <TabsTrigger value="pricing" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
                     <DollarSign className="h-4 w-4" />
-                    <span>PreÃ§o & Tempo</span>
+                    <span>Preço & Tempo</span>
                   </TabsTrigger>
                   <TabsTrigger value="details" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
                     <Settings className="h-4 w-4" />
@@ -233,12 +233,12 @@ export function ServiceModal({
               <TabsContent value="basic" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome do ServiÃ§o *</Label>
+                    <Label htmlFor="name">Nome do Serviço *</Label>
                     <Input
                       id="name"
                       value={formData.name || ''}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="Ex: Troca de Ã³leo do motor"
+                      placeholder="Ex: Troca de óleo do motor"
                       className={errors.name ? 'border-red-500' : ''}
                     />
                     {errors.name && (
@@ -273,12 +273,12 @@ export function ServiceModal({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">DescriÃ§Ã£o</Label>
+                  <Label htmlFor="description">Descrição</Label>
                   <Textarea
                     id="description"
                     value={formData.description || ''}
                     onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="DescriÃ§Ã£o detalhada do serviÃ§o..."
+                    placeholder="Descrição detalhada do serviço..."
                     rows={3}
                   />
                 </div>
@@ -289,7 +289,7 @@ export function ServiceModal({
                     checked={Boolean(formData.isActive)}
                     onCheckedChange={(checked) => handleInputChange('isActive', checked)}
                   />
-                  <Label htmlFor="active">ServiÃ§o ativo</Label>
+                  <Label htmlFor="active">Serviço ativo</Label>
                   {formData.isActive ? (
                     <Badge variant="outline" className="text-green-600">Ativo</Badge>
                   ) : (
@@ -301,7 +301,7 @@ export function ServiceModal({
               <TabsContent value="pricing" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="basePrice">PreÃ§o Base *</Label>
+                    <Label htmlFor="basePrice">Preço Base *</Label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
                       <Input
@@ -322,7 +322,7 @@ export function ServiceModal({
                       </p>
                     )}
                     <p className="text-xs text-gray-500">
-                      Use 0 para serviÃ§os com preÃ§o sob orÃ§amento
+                      Use 0 para serviços com preço sob orçamento
                     </p>
                   </div>
 
@@ -352,19 +352,19 @@ export function ServiceModal({
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900 mb-2">InformaÃ§Ãµes de PreÃ§o</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">Informações de Preço</h4>
                   <div className="space-y-2 text-sm text-blue-800">
                     <div className="flex justify-between">
-                      <span>PreÃ§o base:</span>
+                      <span>Preço base:</span>
                       <span className="font-medium">
                         {typeof formData.basePrice === 'number' && formData.basePrice > 0
                           ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(formData.basePrice)
-                          : 'Sob orÃ§amento'}
+                          : 'Sob orçamento'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tempo estimado:</span>
-                      <span className="font-medium">{formData.estimatedTime?.trim() || 'NÃ£o informado'}</span>
+                      <span className="font-medium">{formData.estimatedTime?.trim() || 'Não informado'}</span>
                     </div>
                   </div>
                 </div>
@@ -372,22 +372,22 @@ export function ServiceModal({
 
               <TabsContent value="details" className="space-y-4">
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">EspecificaÃ§Ãµes TÃ©cnicas</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">Especificações Técnicas</h4>
                   <p className="text-sm text-gray-600 mb-4">
-                    As especificaÃ§Ãµes tÃ©cnicas podem ser adicionadas futuramente para detalhar
-                    requisitos especÃ­ficos, ferramentas necessÃ¡rias, peÃ§as incluÃ­das, etc.
+                    As especificações técnicas podem ser adicionadas futuramente para detalhar
+                    requisitos específicos, ferramentas necessárias, peças incluídas, etc.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm text-gray-600">Ferramentas necessÃ¡rias</Label>
+                      <Label className="text-sm text-gray-600">Ferramentas necessárias</Label>
                       <p className="text-xs text-gray-500">Em desenvolvimento</p>
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-600">PeÃ§as incluÃ­das</Label>
+                      <Label className="text-sm text-gray-600">Peças incluídas</Label>
                       <p className="text-xs text-gray-500">Em desenvolvimento</p>
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-600">PrÃ©-requisitos</Label>
+                      <Label className="text-sm text-gray-600">Pré-requisitos</Label>
                       <p className="text-xs text-gray-500">Em desenvolvimento</p>
                     </div>
                     <div>
@@ -408,7 +408,7 @@ export function ServiceModal({
             </Button>
             <Button type="button" onClick={handleSave} disabled={loading} size="sm" className="bg-moria-orange hover:bg-moria-orange/90">
               {loading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {isEditing ? 'Salvar AlteraÃ§Ãµes' : 'Criar ServiÃ§o'}
+              {isEditing ? 'Salvar Alterações' : 'Criar Serviço'}
             </Button>
           </div>
         </div>
@@ -416,3 +416,4 @@ export function ServiceModal({
     </Dialog>
   );
 }
+

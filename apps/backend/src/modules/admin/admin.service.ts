@@ -1,4 +1,4 @@
-import { prisma } from '../../config/database.js';
+﻿import { prisma } from '../../config/database.js';
 import { CustomerLevel, CustomerStatus, OrderStatus, Prisma, OrderItemType, QuoteStatus, OrderSource } from '@prisma/client';
 import { HashUtil } from '@shared/utils/hash.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
@@ -391,7 +391,7 @@ export class AdminService {
         }
       });
       if (existingByPhone) {
-        throw new Error('JÃ¡ existe um cliente com este telefone');
+        throw new Error('Já existe um cliente com este telefone');
       }
     }
 
@@ -656,7 +656,7 @@ export class AdminService {
       throw new Error('Orçamento precisa estar no status QUOTED para ser aprovado');
     }
 
-    // ✅ MUDANÇA CRÍTICA: Ao aprovar orçamento, muda status para IN_PRODUCTION
+    // ✅ MUDANÇA CRÃTICA: Ao aprovar orçamento, muda status para IN_PRODUCTION
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: {
@@ -1138,7 +1138,7 @@ export class AdminService {
     });
 
     if (!fallbackAddress) {
-      throw ApiError.badRequest('É necessário informar um endereço ou selecionar um endereço já cadastrado');
+      throw ApiError.badRequest('Ã‰ necessário informar um endereço ou selecionar um endereço já cadastrado');
     }
 
     return fallbackAddress.id;
@@ -1180,7 +1180,7 @@ export class AdminService {
     }
 
     if (!customerId) {
-      throw ApiError.badRequest('Cliente não encontrado ou não pôde ser criado');
+      throw ApiError.badRequest('Cliente não encontrado ou não pÃ´de ser criado');
     }
 
     const addressId = await this.resolveOrderAddressId(customerId, {
@@ -1323,7 +1323,7 @@ export class AdminService {
     }
 
     if (!customerId) {
-      throw new Error('Cliente não encontrado ou não pôde ser criado');
+      throw new Error('Cliente não encontrado ou não pÃ´de ser criado');
     }
 
     // Buscar dados dos serviços
@@ -1443,3 +1443,5 @@ export class AdminService {
     return this.mapOrderToQuote(order as any);
   }
 }
+
+

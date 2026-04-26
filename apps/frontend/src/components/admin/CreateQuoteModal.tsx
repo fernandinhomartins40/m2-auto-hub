@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -369,8 +369,8 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
     if (needsAddress && !validateStep(4)) return;
     if (!needsAddress && !selectedAddressId && !(selectedCustomer?.addresses && selectedCustomer.addresses.length > 0)) {
       toast({
-        title: "EndereÃ§o necessÃ¡rio",
-        description: "Selecione um endereÃ§o jÃ¡ cadastrado ou preencha um novo endereÃ§o para concluir o orÃ§amento.",
+        title: "Endereço necessário",
+        description: "Selecione um endereço já cadastrado ou preencha um novo endereço para concluir o orçamento.",
         variant: "destructive"
       });
       setNeedsAddress(true);
@@ -1074,7 +1074,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
                             />
                           </div>
                           <div>
-                            <Label htmlFor="number" className="text-xs">Nº *</Label>
+                            <Label htmlFor="number" className="text-xs">NÂº *</Label>
                             <Input
                               id="number"
                               value={address.number}
@@ -1237,3 +1237,5 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
     </Dialog>
   );
 }
+
+

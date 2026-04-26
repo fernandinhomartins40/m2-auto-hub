@@ -135,7 +135,7 @@ export const MarqueeEditor = ({ config, onChange }: MarqueeEditorProps) => {
         <CardContent>
           <div className="overflow-hidden rounded-lg border bg-background">
             <PreviewProviders config={{ marquee: config }}>
-              <Marquee />
+              <Marquee previewConfig={config} />
             </PreviewProviders>
           </div>
           <p className="mt-2 text-xs text-gray-500">
