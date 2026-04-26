@@ -229,6 +229,40 @@ export async function processLandingPageImage(
   return `/uploads/landing-page/${filename}`;
 }
 
+export async function processPwaIcon(
+  inputPath: string,
+  slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon'
+): Promise<string> {
+  const sizes = {
+    'icon-192': 192,
+    'icon-512': 512,
+    'apple-touch-icon': 180,
+    'maskable-icon': 512,
+  } as const;
+
+  const filename = `pwa-${slot}-${uuidv4()}.png`;
+  const outputPath = path.join(LANDING_PAGE_DIR, filename);
+
+  await sharp(inputPath)
+    .resize(sizes[slot], sizes[slot], {
+      fit: 'contain',
+      background: { r: 255, g: 255, b: 255, alpha: 0 },
+      withoutEnlargement: false,
+    })
+    .png({
+      compressionLevel: 3,
+      adaptiveFiltering: false,
+      palette: false,
+    })
+    .toFile(outputPath);
+
+  if (fs.existsSync(inputPath)) {
+    fs.unlinkSync(inputPath);
+  }
+
+  return `/uploads/landing-page/${filename}`;
+}
+
 /**
  * Deletar imagens da landing page
  */

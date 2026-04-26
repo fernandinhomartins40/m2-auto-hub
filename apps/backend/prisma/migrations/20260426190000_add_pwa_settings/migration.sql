@@ -1,0 +1,11 @@
+ALTER TABLE "settings"
+ADD COLUMN "pwaName" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "pwaShortName" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "pwaDescription" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "pwaThemeColor" TEXT NOT NULL DEFAULT '#0f172a',
+ADD COLUMN "pwaBackgroundColor" TEXT NOT NULL DEFAULT '#0f172a',
+ADD COLUMN "pwaDisplay" TEXT NOT NULL DEFAULT 'standalone',
+ADD COLUMN "pwaIcon192Url" TEXT,
+ADD COLUMN "pwaIcon512Url" TEXT,
+ADD COLUMN "pwaAppleTouchIconUrl" TEXT,
+ADD COLUMN "pwaMaskableIconUrl" TEXT;

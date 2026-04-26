@@ -1061,6 +1061,18 @@ model Settings {
   pdfFooterLogoUrl String?
   pdfFooterHtml    String @default("")
 
+  // Configuração do PWA
+  pwaName              String  @default("")
+  pwaShortName         String  @default("")
+  pwaDescription       String  @default("")
+  pwaThemeColor        String  @default("#0f172a")
+  pwaBackgroundColor   String  @default("#0f172a")
+  pwaDisplay           String  @default("standalone")
+  pwaIcon192Url        String?
+  pwaIcon512Url        String?
+  pwaAppleTouchIconUrl String?
+  pwaMaskableIconUrl   String?
+
   // Flags de Status de Conexão
   whatsappConnected  Boolean @default(false)
   correiosConnected  Boolean @default(false)

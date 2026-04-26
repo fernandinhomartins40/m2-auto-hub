@@ -2,19 +2,25 @@ import { Settings } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { UpdateSettingsDTO } from './dto/update-settings.dto.js';
 
-/**
- * Serviço de gerenciamento de configurações do sistema
- */
 export class SettingsService {
-  /**
-   * Busca as configurações do sistema
-   * Cria configurações padrão se não existirem
-   */
+  private getDefaultPwaConfig(storeName = 'M2 Center Auto') {
+    return {
+      pwaName: storeName,
+      pwaShortName: storeName.slice(0, 12),
+      pwaDescription: 'Acesse a loja, acompanhe pedidos e use o app no celular.',
+      pwaThemeColor: '#0f172a',
+      pwaBackgroundColor: '#0f172a',
+      pwaDisplay: 'standalone',
+      pwaIcon192Url: null,
+      pwaIcon512Url: null,
+      pwaAppleTouchIconUrl: null,
+      pwaMaskableIconUrl: null,
+    } as const;
+  }
+
   async getSettings(): Promise<Settings> {
-    // Buscar configuração existente
     let settings = await prisma.settings.findFirst();
 
-    // Se não existir, criar com valores padrão
     if (!settings) {
       settings = await this.createDefaultSettings();
     }
@@ -22,10 +28,6 @@ export class SettingsService {
     return settings;
   }
 
-  /**
-   * Busca configurações públicas (sem dados sensíveis)
-   * Usado pelo frontend para informações gerais
-   */
   async getPublicSettings(): Promise<Partial<Settings>> {
     const settings = await this.getSettings();
 
@@ -43,46 +45,43 @@ export class SettingsService {
       freeShippingMin: settings.freeShippingMin,
       deliveryFee: settings.deliveryFee,
       deliveryDays: settings.deliveryDays,
+      pwaName: settings.pwaName,
+      pwaShortName: settings.pwaShortName,
+      pwaDescription: settings.pwaDescription,
+      pwaThemeColor: settings.pwaThemeColor,
+      pwaBackgroundColor: settings.pwaBackgroundColor,
+      pwaDisplay: settings.pwaDisplay,
+      pwaIcon192Url: settings.pwaIcon192Url,
+      pwaIcon512Url: settings.pwaIcon512Url,
+      pwaAppleTouchIconUrl: settings.pwaAppleTouchIconUrl,
+      pwaMaskableIconUrl: settings.pwaMaskableIconUrl,
       whatsappConnected: settings.whatsappConnected,
       correiosConnected: settings.correiosConnected,
       paymentConnected: settings.paymentConnected,
     };
   }
 
-  /**
-   * Atualiza as configurações do sistema
-   */
   async updateSettings(data: UpdateSettingsDTO): Promise<Settings> {
-    // Buscar configuração existente
     let settings = await prisma.settings.findFirst();
 
-    // Se não existir, criar primeiro
     if (!settings) {
       settings = await this.createDefaultSettings();
     }
 
-    // Atualizar
-    const updated = await prisma.settings.update({
+    return prisma.settings.update({
       where: { id: settings.id },
       data,
     });
-
-    return updated;
   }
 
-  /**
-   * Reseta as configurações para os valores padrão
-   */
   async resetSettings(): Promise<Settings> {
-    // Buscar configuração existente
     const settings = await prisma.settings.findFirst();
 
     if (!settings) {
-      return await this.createDefaultSettings();
+      return this.createDefaultSettings();
     }
 
-    // Resetar para valores padrão
-    const reset = await prisma.settings.update({
+    return prisma.settings.update({
       where: { id: settings.id },
       data: {
         storeName: 'M2 Center Auto',
@@ -96,7 +95,7 @@ export class SettingsService {
         zipCode: '',
         defaultMargin: 35,
         freeShippingMin: 150,
-        deliveryFee: 15.90,
+        deliveryFee: 15.9,
         deliveryDays: 3,
         businessHours: {
           monday: '08:00-18:00',
@@ -115,24 +114,21 @@ export class SettingsService {
         paymentGatewayKey: null,
         googleAnalyticsId: null,
         pdfHeaderLogoUrl: null,
-        pdfHeaderHtml: '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
+        pdfHeaderHtml:
+          '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
         pdfFooterLogoUrl: null,
         pdfFooterHtml: '<p>Obrigado pela preferência.</p>',
+        ...this.getDefaultPwaConfig('M2 Center Auto'),
         whatsappConnected: false,
         correiosConnected: false,
         paymentConnected: false,
         analyticsConnected: false,
       } as any,
     });
-
-    return reset;
   }
 
-  /**
-   * Cria configurações padrão
-   */
   private async createDefaultSettings(): Promise<Settings> {
-    const settings = await prisma.settings.create({
+    return prisma.settings.create({
       data: {
         storeName: 'M2 Center Auto',
         cnpj: '',
@@ -145,7 +141,7 @@ export class SettingsService {
         zipCode: '',
         defaultMargin: 35,
         freeShippingMin: 150,
-        deliveryFee: 15.90,
+        deliveryFee: 15.9,
         deliveryDays: 3,
         businessHours: {
           monday: '08:00-18:00',
@@ -160,39 +156,24 @@ export class SettingsService {
         notifyLowStock: true,
         notifyWeeklyReports: false,
         pdfHeaderLogoUrl: null,
-        pdfHeaderHtml: '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
+        pdfHeaderHtml:
+          '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
         pdfFooterLogoUrl: null,
         pdfFooterHtml: '<p>Obrigado pela preferência.</p>',
+        ...this.getDefaultPwaConfig('M2 Center Auto'),
       } as any,
     });
-
-    return settings;
   }
 
-  /**
-   * Valida conexão do WhatsApp
-   */
   async testWhatsAppConnection(apiKey: string): Promise<boolean> {
-    // TODO: Implementar validação real com API do WhatsApp
-    // Por enquanto, apenas simula validação
     return apiKey.length > 10;
   }
 
-  /**
-   * Valida conexão dos Correios
-   */
   async testCorreiosConnection(apiKey: string): Promise<boolean> {
-    // TODO: Implementar validação real com API dos Correios
-    // Por enquanto, apenas simula validação
     return apiKey.length > 10;
   }
 
-  /**
-   * Valida conexão do gateway de pagamento
-   */
   async testPaymentConnection(apiKey: string): Promise<boolean> {
-    // TODO: Implementar validação real com gateway
-    // Por enquanto, apenas simula validação
     return apiKey.length > 10;
   }
 }

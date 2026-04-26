@@ -40,6 +40,16 @@ export interface StoreSettings {
   pdfHeaderHtml: string;
   pdfFooterLogoUrl?: string | null;
   pdfFooterHtml: string;
+  pwaName: string;
+  pwaShortName: string;
+  pwaDescription: string;
+  pwaThemeColor: string;
+  pwaBackgroundColor: string;
+  pwaDisplay: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  pwaIcon192Url?: string | null;
+  pwaIcon512Url?: string | null;
+  pwaAppleTouchIconUrl?: string | null;
+  pwaMaskableIconUrl?: string | null;
 
   createdAt: string;
   updatedAt: string;
@@ -75,6 +85,16 @@ export interface UpdateSettingsData {
   pdfHeaderHtml?: string;
   pdfFooterLogoUrl?: string | null;
   pdfFooterHtml?: string;
+  pwaName?: string;
+  pwaShortName?: string;
+  pwaDescription?: string;
+  pwaThemeColor?: string;
+  pwaBackgroundColor?: string;
+  pwaDisplay?: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  pwaIcon192Url?: string | null;
+  pwaIcon512Url?: string | null;
+  pwaAppleTouchIconUrl?: string | null;
+  pwaMaskableIconUrl?: string | null;
 }
 
 class SettingsService {
@@ -123,6 +143,29 @@ class SettingsService {
       success: boolean;
       data: { url: string; slot: 'header' | 'footer' };
     }>('/settings/assets/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data.data;
+  }
+
+  async uploadPwaAsset(
+    file: File,
+    slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon'
+  ): Promise<{ url: string; slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon' }> {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('slot', slot);
+
+    const response = await apiClient.post<{
+      success: boolean;
+      data: {
+        url: string;
+        slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon';
+      };
+    }>('/settings/pwa-assets/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

@@ -41,6 +41,18 @@ export const updateSettingsSchema = z.object({
   pdfFooterLogoUrl: z.string().max(1000).nullable().optional(),
   pdfFooterHtml: z.string().max(20000).optional(),
 
+  // PWA
+  pwaName: z.string().max(120).optional(),
+  pwaShortName: z.string().max(40).optional(),
+  pwaDescription: z.string().max(240).optional(),
+  pwaThemeColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Cor de tema inválida').optional(),
+  pwaBackgroundColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Cor de fundo inválida').optional(),
+  pwaDisplay: z.enum(['standalone', 'fullscreen', 'minimal-ui', 'browser']).optional(),
+  pwaIcon192Url: z.string().max(1000).nullable().optional(),
+  pwaIcon512Url: z.string().max(1000).nullable().optional(),
+  pwaAppleTouchIconUrl: z.string().max(1000).nullable().optional(),
+  pwaMaskableIconUrl: z.string().max(1000).nullable().optional(),
+
   // Flags de Conexão
   whatsappConnected: z.boolean().optional(),
   correiosConnected: z.boolean().optional(),
