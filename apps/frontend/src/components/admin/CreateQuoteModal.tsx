@@ -1074,7 +1074,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
                             />
                           </div>
                           <div>
-                            <Label htmlFor="number" className="text-xs">NÂº *</Label>
+                            <Label htmlFor="number" className="text-xs">Nº *</Label>
                             <Input
                               id="number"
                               value={address.number}

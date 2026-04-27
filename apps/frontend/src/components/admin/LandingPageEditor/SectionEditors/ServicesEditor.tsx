@@ -1,5 +1,5 @@
 /**
- * ServicesEditor - Editor da secao "Nossos Servicos"
+ * ServicesEditor - Editor da seção "Nossos Serviços"
  */
 
 import { Eye } from 'lucide-react';
@@ -39,7 +39,7 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
           <div>
             <Label>Secao Ativa</Label>
             <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar a secao de Servicos na landing page
+              Exibir ou ocultar a seção de Serviços na landing page
             </p>
           </div>
           <Switch checked={config.enabled} onCheckedChange={(enabled) => updateConfig({ enabled })} />
@@ -54,7 +54,7 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
           <Input
             value={config.title}
             onChange={(e) => updateConfig({ title: e.target.value })}
-            placeholder="Nossos Servicos"
+            placeholder="Nossos Serviços"
           />
         </div>
 
@@ -86,7 +86,7 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
               },
             },
             title: 'Novo Indicador',
-            description: 'Descricao do indicador',
+            description: 'Descrição do indicador',
           })}
           getItemLabel={(item) => item.title}
           renderItem={(item, _, update) => (
@@ -111,7 +111,7 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label>Descricao</Label>
+                <Label>Descrição</Label>
                 <Input
                   value={item.description}
                   onChange={(e) => update({ description: e.target.value })}
@@ -144,9 +144,9 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
             </svg>
           </div>
           <div className="flex-1">
-            <h4 className="mb-1 font-semibold text-green-900">Secao de Servicos</h4>
+            <h4 className="mb-1 font-semibold text-green-900">Seção de Serviços</h4>
             <p className="text-sm text-green-800">
-              Esta secao exibe os servicos cadastrados no sistema e, abaixo, os indicadores de confianca
+              Esta seção exibe os serviços cadastrados no sistema e, abaixo, os indicadores de confiança
               configurados aqui.
             </p>
           </div>
@@ -158,7 +158,7 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Eye className="h-5 w-5 text-moria-orange" />
-              <CardTitle>Preview dos Servicos</CardTitle>
+              <CardTitle>Preview dos Serviços</CardTitle>
             </div>
             <Badge className="bg-green-100 text-green-800">
               <div className="h-2 w-2 bg-green-600 rounded-full mr-2"></div>
@@ -166,7 +166,7 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
             </Badge>
           </div>
           <CardDescription>
-            Estrutura alinhada com a secao real da landing publica
+            Estrutura alinhada com a seção real da landing pública
           </CardDescription>
         </CardHeader>
         <CardContent>

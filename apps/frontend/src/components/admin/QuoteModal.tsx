@@ -287,7 +287,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
             {new Date(quote.createdAt).toLocaleTimeString('pt-BR')}
           </p>
           <p className="text-xs text-muted-foreground">
-            Fluxo correto: a loja envia o orÃ§amento ao cliente e, quando ele aprova, o orÃ§amento vira pedido.
+            Fluxo correto: a loja envia o orçamento ao cliente e, quando ele aprova, o orçamento vira pedido.
           </p>
         </DialogHeader>
 

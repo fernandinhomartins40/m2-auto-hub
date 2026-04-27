@@ -144,7 +144,7 @@ export function CouponModal({
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Descricao e obrigatoria';
+      newErrors.description = 'Descrição é obrigatória';
     }
 
     if (!formData.discountValue || formData.discountValue <= 0) {
@@ -339,12 +339,12 @@ export function CouponModal({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Descricao *</Label>
+                  <Label htmlFor="description">Descrição *</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="Descricao do cupom para os clientes..."
+                    placeholder="Descrição do cupom para os clientes..."
                     rows={3}
                     className={errors.description ? 'border-red-500' : ''}
                   />

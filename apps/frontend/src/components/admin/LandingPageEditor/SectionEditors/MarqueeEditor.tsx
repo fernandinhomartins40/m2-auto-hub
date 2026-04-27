@@ -1,5 +1,5 @@
 /**
- * MarqueeEditor - Editor da secao Marquee (Banner de mensagens)
+ * MarqueeEditor - Editor da seção Marquee (Banner de mensagens)
  */
 
 import { Eye } from 'lucide-react';

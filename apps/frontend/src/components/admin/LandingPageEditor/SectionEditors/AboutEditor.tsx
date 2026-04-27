@@ -1,5 +1,5 @@
 /**
- * AboutEditor - Editor da secao Sobre da Home
+ * AboutEditor - Editor da seção Sobre da Home
  */
 
 import { Eye, Info } from 'lucide-react';
@@ -51,7 +51,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
           <div>
             <Label>Secao Ativa</Label>
             <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar a secao "Mais de 14 anos cuidando do seu veiculo" na landing
+              Exibir ou ocultar a seção "Mais de 14 anos cuidando do seu veículo" na landing
             </p>
           </div>
           <Switch
@@ -86,7 +86,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label>Descricao</Label>
+          <Label>Descrição</Label>
           <Textarea
             value={config.heroSubtitle || ''}
             onChange={(e) => updateConfig({ heroSubtitle: e.target.value })}
@@ -127,7 +127,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
               </div>
             </div>
           )}
-          description="A secao publica exibe ate 4 cards."
+          description="A seção pública exibe até 4 cards."
           maxItems={4}
         />
       </Card>
@@ -138,7 +138,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
           label="Imagem lateral"
           value={config.sectionImage}
           onChange={(sectionImage) => updateConfig({ sectionImage })}
-          description="Imagem exibida ao lado direito da secao Sobre da Home"
+          description="Imagem exibida ao lado direito da seção Sobre da Home"
           recommendedWidth={900}
           recommendedHeight={640}
           aspectRatio={900 / 640}
@@ -253,7 +253,7 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
           <div className="flex-1">
             <h4 className="font-semibold text-blue-900 mb-1">Escopo desta aba</h4>
             <p className="text-sm text-blue-800">
-              Esta aba controla a secao Sobre da home: textos, cards, imagem lateral e o quadrado decorativo.
+              Esta aba controla a seção Sobre da home: textos, cards, imagem lateral e o quadrado decorativo.
             </p>
           </div>
         </div>

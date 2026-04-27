@@ -1,5 +1,5 @@
 /**
- * ProductsEditor - Editor da secao de produtos
+ * ProductsEditor - Editor da seção de produtos
  */
 
 import { Eye } from 'lucide-react';
@@ -31,7 +31,7 @@ export const ProductsEditor = ({ config, onChange }: ProductsEditorProps) => {
           <div>
             <Label>Secao Ativa</Label>
             <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar a secao de Produtos na landing page
+              Exibir ou ocultar a seção de Produtos na landing page
             </p>
           </div>
           <Switch checked={config.enabled} onCheckedChange={(enabled) => updateConfig({ enabled })} />
@@ -71,7 +71,7 @@ export const ProductsEditor = ({ config, onChange }: ProductsEditorProps) => {
           <div className="flex-1">
             <h4 className="mb-1 font-semibold text-blue-900">Produtos Dinamicos</h4>
             <p className="text-sm text-blue-800">
-              Os produtos desta secao sao carregados do catalogo. Aqui voce define apenas titulo e subtitulo.
+              Os produtos desta seção são carregados do catálogo. Aqui você define apenas título e subtítulo.
             </p>
           </div>
         </div>
@@ -90,7 +90,7 @@ export const ProductsEditor = ({ config, onChange }: ProductsEditorProps) => {
             </Badge>
           </div>
           <CardDescription>
-            Estrutura alinhada com a secao real da landing publica
+            Estrutura alinhada com a seção real da landing pública
           </CardDescription>
         </CardHeader>
         <CardContent>

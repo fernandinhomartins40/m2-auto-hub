@@ -54,7 +54,7 @@ export function RevisionAppointmentsContent() {
       console.error('Erro ao carregar agendamentos:', error);
       toast({
         title: 'Erro ao carregar agendamentos',
-        description: 'Nao foi possivel carregar a agenda de revisoes.',
+        description: 'Não foi possível carregar a agenda de revisões.',
         variant: 'destructive',
       });
     } finally {
@@ -102,7 +102,7 @@ export function RevisionAppointmentsContent() {
 
   const formatDateTime = (value?: string | null) => {
     if (!value) {
-      return 'Nao definido';
+      return 'Não definido';
     }
 
     return new Date(value).toLocaleString('pt-BR', {
@@ -139,7 +139,7 @@ export function RevisionAppointmentsContent() {
       toast({
         title: 'Erro ao salvar agendamento',
         description:
-          error.response?.data?.message || 'Nao foi possivel salvar a programacao.',
+          error.response?.data?.message || 'Não foi possível salvar a programação.',
         variant: 'destructive',
       });
       throw error;
@@ -160,7 +160,7 @@ export function RevisionAppointmentsContent() {
       toast({
         title: 'Erro ao iniciar revisao',
         description:
-          error.response?.data?.message || 'Nao foi possivel iniciar a revisao agendada.',
+          error.response?.data?.message || 'Não foi possível iniciar a revisão agendada.',
         variant: 'destructive',
       });
     }
@@ -180,7 +180,7 @@ export function RevisionAppointmentsContent() {
       toast({
         title: 'Erro ao cancelar',
         description:
-          error.response?.data?.message || 'Nao foi possivel cancelar o agendamento.',
+          error.response?.data?.message || 'Não foi possível cancelar o agendamento.',
         variant: 'destructive',
       });
     }
@@ -213,7 +213,7 @@ export function RevisionAppointmentsContent() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.inService}</div>
-            <p className="text-xs text-muted-foreground">Revisoes ja iniciadas</p>
+            <p className="text-xs text-muted-foreground">Revisões já iniciadas</p>
           </CardContent>
         </Card>
       </div>
@@ -317,10 +317,10 @@ export function RevisionAppointmentsContent() {
                     </div>
                     <div className="rounded-lg border bg-gray-50 p-3">
                       <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Mecanico
+                        Mecânico
                       </p>
                       <p className="text-sm font-semibold">
-                        {appointment.mechanicName || 'Nao atribuido'}
+                        {appointment.mechanicName || 'Não atribuído'}
                       </p>
                     </div>
                     <div className="rounded-lg border bg-gray-50 p-3">

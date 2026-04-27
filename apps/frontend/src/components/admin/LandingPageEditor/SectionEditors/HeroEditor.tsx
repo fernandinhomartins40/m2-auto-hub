@@ -36,7 +36,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
           <div>
             <Label>Secao Ativa</Label>
             <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar a secao hero na landing page
+              Exibir ou ocultar a seção hero na landing page
             </p>
           </div>
           <Switch checked={config.enabled} onCheckedChange={(enabled) => updateConfig({ enabled })} />
@@ -60,12 +60,12 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
           <Input
             value={config.subtitle}
             onChange={(event) => updateConfig({ subtitle: event.target.value })}
-            placeholder="Pecas & Servicos"
+            placeholder="Peças & Serviços"
           />
         </div>
 
         <div className="space-y-2">
-          <Label>Descricao</Label>
+          <Label>Descrição</Label>
           <Textarea
             value={config.description}
             onChange={(event) => updateConfig({ description: event.target.value })}
@@ -124,7 +124,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
                 <Input
                   value={item.text}
                   onChange={(event) => update({ text: event.target.value })}
-                  placeholder="Ver Promocoes"
+                  placeholder="Ver Promoções"
                 />
               </div>
 
@@ -225,7 +225,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
               Atualizacao em tempo real
             </Badge>
           </div>
-          <CardDescription>Veja como a secao hero aparecera na landing page</CardDescription>
+          <CardDescription>Veja como a seção hero aparecerá na landing page</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="relative min-h-[400px] flex items-center rounded-lg overflow-hidden">
@@ -256,7 +256,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
                 </h1>
 
                 <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
-                  {config.description || 'Descricao do seu negocio...'}
+                  {config.description || 'Descrição do seu negócio...'}
                 </p>
 
                 {config.features.length > 0 && (

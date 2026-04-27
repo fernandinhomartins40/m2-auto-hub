@@ -275,7 +275,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       console.error("Error exporting report PDF:", error);
       toast({
         title: "Erro ao exportar PDF",
-        description: "Nao foi possivel gerar o relatorio em PDF.",
+        description: "Não foi possível gerar o relatório em PDF.",
         variant: "destructive",
       });
     } finally {

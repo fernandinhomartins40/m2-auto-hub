@@ -193,7 +193,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar fidelidade',
-        description: error.response?.data?.error || 'Nao foi possivel carregar o programa de fidelidade.',
+        description: error.response?.data?.error || 'Não foi possível carregar o programa de fidelidade.',
         variant: 'destructive',
       });
     } finally {
@@ -209,7 +209,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar recompensas',
-        description: error.response?.data?.error || 'Nao foi possivel carregar as recompensas.',
+        description: error.response?.data?.error || 'Não foi possível carregar as recompensas.',
         variant: 'destructive',
       });
     }
@@ -223,7 +223,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar clientes',
-        description: error.response?.data?.error || 'Nao foi possivel carregar os clientes com pontos.',
+        description: error.response?.data?.error || 'Não foi possível carregar os clientes com pontos.',
         variant: 'destructive',
       });
     }
@@ -237,7 +237,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar resgates',
-        description: error.response?.data?.error || 'Nao foi possivel carregar os resgates.',
+        description: error.response?.data?.error || 'Não foi possível carregar os resgates.',
         variant: 'destructive',
       });
     }
@@ -257,7 +257,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao salvar configuracoes',
-        description: error.response?.data?.error || 'Nao foi possivel salvar as regras do programa.',
+        description: error.response?.data?.error || 'Não foi possível salvar as regras do programa.',
         variant: 'destructive',
       });
     } finally {
@@ -286,7 +286,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao salvar recompensa',
-        description: error.response?.data?.error || 'Nao foi possivel salvar a recompensa.',
+        description: error.response?.data?.error || 'Não foi possível salvar a recompensa.',
         variant: 'destructive',
       });
     } finally {
@@ -304,12 +304,12 @@ export default function LoyaltyManagement() {
       await Promise.all([loadRewards(rewardsPage), loadOverview()]);
       toast({
         title: 'Recompensa removida',
-        description: 'A recompensa foi excluida do catalogo.',
+        description: 'A recompensa foi excluída do catálogo.',
       });
     } catch (error: any) {
       toast({
         title: 'Erro ao excluir recompensa',
-        description: error.response?.data?.error || 'Nao foi possivel excluir a recompensa.',
+        description: error.response?.data?.error || 'Não foi possível excluir a recompensa.',
         variant: 'destructive',
       });
     }
@@ -340,7 +340,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao ajustar pontos',
-        description: error.response?.data?.error || 'Nao foi possivel ajustar os pontos do cliente.',
+        description: error.response?.data?.error || 'Não foi possível ajustar os pontos do cliente.',
         variant: 'destructive',
       });
     } finally {
@@ -360,7 +360,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao usar resgate',
-        description: error.response?.data?.error || 'Nao foi possivel marcar este resgate como utilizado.',
+        description: error.response?.data?.error || 'Não foi possível marcar este resgate como utilizado.',
         variant: 'destructive',
       });
     } finally {
@@ -409,12 +409,12 @@ export default function LoyaltyManagement() {
         <div className="space-y-2">
           <Badge variant="outline" className="gap-2">
             <Star className="h-3.5 w-3.5" />
-            Fidelizacao e pos-venda
+            Fidelização e pós-venda
           </Badge>
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Programa de Fidelidade</h2>
             <p className="text-muted-foreground">
-              Defina regras de pontuacao, recompensas, saldo dos clientes e acompanhamento dos resgates.
+              Defina regras de pontuação, recompensas, saldo dos clientes e acompanhamento dos resgates.
             </p>
           </div>
         </div>
@@ -598,7 +598,7 @@ export default function LoyaltyManagement() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="loyalty-program-description">Descricao curta</Label>
+                <Label htmlFor="loyalty-program-description">Descrição curta</Label>
                 <Textarea
                   id="loyalty-program-description"
                   value={settingsForm.programDescription}
@@ -767,7 +767,7 @@ export default function LoyaltyManagement() {
           {!rewards.length ? (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
-                Nenhuma recompensa cadastrada ainda. Crie a primeira opcao de troca para ativar o catalogo do cliente.
+                Nenhuma recompensa cadastrada ainda. Crie a primeira opção de troca para ativar o catálogo do cliente.
               </CardContent>
             </Card>
           ) : null}
@@ -778,7 +778,7 @@ export default function LoyaltyManagement() {
                 Anterior
               </Button>
               <span className="text-sm text-muted-foreground">
-                Pagina {rewardsPage} de {rewardsTotalPages}
+                Página {rewardsPage} de {rewardsTotalPages}
               </span>
               <Button
                 variant="outline"
@@ -848,7 +848,7 @@ export default function LoyaltyManagement() {
                     Anterior
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Pagina {customersPage} de {customersTotalPages}
+                    Página {customersPage} de {customersTotalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -951,7 +951,7 @@ export default function LoyaltyManagement() {
                     Anterior
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Pagina {redemptionsPage} de {redemptionsTotalPages}
+                    Página {redemptionsPage} de {redemptionsTotalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -988,7 +988,7 @@ export default function LoyaltyManagement() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="reward-description">Descricao</Label>
+              <Label htmlFor="reward-description">Descrição</Label>
               <Textarea
                 id="reward-description"
                 rows={3}

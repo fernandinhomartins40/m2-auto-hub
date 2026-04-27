@@ -1,5 +1,5 @@
 /**
- * PromotionsEditor - Editor da secao de promocoes
+ * PromotionsEditor - Editor da seção de promoções
  */
 
 import { Eye } from 'lucide-react';
@@ -31,7 +31,7 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
           <div>
             <Label>Secao Ativa</Label>
             <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar a secao de Promocoes na landing page
+              Exibir ou ocultar a seção de Promoções na landing page
             </p>
           </div>
           <Switch checked={config.enabled} onCheckedChange={(enabled) => updateConfig({ enabled })} />
@@ -46,7 +46,7 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
           <Input
             value={config.title}
             onChange={(e) => updateConfig({ title: e.target.value })}
-            placeholder="Promocoes Ativas"
+            placeholder="Promoções Ativas"
           />
         </div>
 
@@ -71,7 +71,7 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
           <div className="flex-1">
             <h4 className="mb-1 font-semibold text-purple-900">Ofertas Dinamicas</h4>
             <p className="text-sm text-purple-800">
-              As promocoes sao carregadas do sistema. Aqui voce define apenas titulo e subtitulo da secao.
+              As promoções são carregadas do sistema. Aqui você define apenas título e subtítulo da seção.
             </p>
           </div>
         </div>
@@ -82,7 +82,7 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Eye className="h-5 w-5 text-moria-orange" />
-              <CardTitle>Preview das Promocoes</CardTitle>
+              <CardTitle>Preview das Promoções</CardTitle>
             </div>
             <Badge className="bg-green-100 text-green-800">
               <div className="h-2 w-2 bg-green-600 rounded-full mr-2"></div>
@@ -90,7 +90,7 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
             </Badge>
           </div>
           <CardDescription>
-            Estrutura alinhada com a secao real da landing publica
+            Estrutura alinhada com a seção real da landing pública
           </CardDescription>
         </CardHeader>
         <CardContent>

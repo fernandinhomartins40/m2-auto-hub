@@ -31,19 +31,19 @@ interface SidebarProps {
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "orders", label: "Pedidos", icon: ShoppingCart },
-  { id: "quotes", label: "Orcamentos", icon: FileText },
-  { id: "revisions", label: "Revisoes", icon: ClipboardCheck },
+  { id: "quotes", label: "Orçamentos", icon: FileText },
+  { id: "revisions", label: "Revisões", icon: ClipboardCheck },
   { id: "customers", label: "Clientes", icon: Users },
   { id: "loyalty", label: "Fidelidade", icon: Gift },
   { id: "products", label: "Produtos", icon: Package },
-  { id: "services", label: "Servicos", icon: Wrench },
+  { id: "services", label: "Serviços", icon: Wrench },
   { id: "coupons", label: "Cupons", icon: Gift },
-  { id: "promotions", label: "Promocoes", icon: TrendingUp },
-  { id: "reports", label: "Relatorios", icon: BarChart3 },
-  { id: "users", label: "Usuarios", icon: UserCog, requiresPermission: "canManageAdmins" },
+  { id: "promotions", label: "Promoções", icon: TrendingUp },
+  { id: "reports", label: "Relatórios", icon: BarChart3 },
+  { id: "users", label: "Usuários", icon: UserCog, requiresPermission: "canManageAdmins" },
   { id: "landing-page", label: "Landing Page", icon: Palette },
   { id: "pwa-settings", label: "PWA", icon: Smartphone },
-  { id: "settings", label: "Configuracoes", icon: Settings },
+  { id: "settings", label: "Configurações", icon: Settings },
 ];
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {

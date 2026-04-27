@@ -41,26 +41,26 @@ export default function StorePanel() {
   }
 
   const bottomNavItems = [
-    { id: "dashboard", label: "Inicio", icon: LayoutDashboard },
+    { id: "dashboard", label: "Início", icon: LayoutDashboard },
     { id: "orders", label: "Pedidos", icon: ShoppingBag },
-    { id: "quotes", label: "Orcamentos", icon: FileText },
+    { id: "quotes", label: "Orçamentos", icon: FileText },
     { id: "products", label: "Produtos", icon: Package },
     { id: "menu", label: "Mais", icon: Menu },
   ];
 
   const drawerItems = [
-    { id: "services", label: "Servicos", icon: Wrench },
-    { id: "revisions", label: "Revisoes", icon: ClipboardCheck },
+    { id: "services", label: "Serviços", icon: Wrench },
+    { id: "revisions", label: "Revisões", icon: ClipboardCheck },
     { id: "customers", label: "Clientes", icon: Users },
     { id: "relationship", label: "Relacionamento", icon: HeartHandshake },
     { id: "loyalty", label: "Fidelidade", icon: Gift },
     { id: "coupons", label: "Cupons", icon: Tag },
-    { id: "promotions", label: "Promocoes", icon: Percent },
-    { id: "users", label: "Usuarios", icon: UserCog, requiresPermission: "canManageAdmins" },
-    { id: "reports", label: "Relatorios", icon: BarChart3 },
+    { id: "promotions", label: "Promoções", icon: Percent },
+    { id: "users", label: "Usuários", icon: UserCog, requiresPermission: "canManageAdmins" },
+    { id: "reports", label: "Relatórios", icon: BarChart3 },
     { id: "landing-page", label: "Landing Page", icon: Palette },
     { id: "pwa-settings", label: "PWA", icon: Smartphone },
-    { id: "settings", label: "Configuracoes", icon: Settings },
+    { id: "settings", label: "Configurações", icon: Settings },
   ];
 
   return (
@@ -94,20 +94,20 @@ function getPageTitle(tab: string): string {
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     orders: "Pedidos",
-    quotes: "Orcamentos",
-    revisions: "Revisoes Veiculares",
+    quotes: "Orçamentos",
+    revisions: "Revisões Veiculares",
     customers: "Clientes",
     relationship: "Relacionamento com Clientes",
     loyalty: "Programa de Fidelidade",
     products: "Produtos",
-    services: "Servicos",
+    services: "Serviços",
     coupons: "Cupons",
-    promotions: "Promocoes",
-    reports: "Relatorios",
-    users: "Gestao de Usuarios",
+    promotions: "Promoções",
+    reports: "Relatórios",
+    users: "Gestão de Usuários",
     "landing-page": "Editor da Landing Page",
-    "pwa-settings": "Configuracoes do PWA",
-    settings: "Configuracoes",
+    "pwa-settings": "Configurações do PWA",
+    settings: "Configurações",
   };
 
   return titles[tab] || "Dashboard";
@@ -115,22 +115,22 @@ function getPageTitle(tab: string): string {
 
 function getPageDescription(tab: string): string {
   const descriptions: Record<string, string> = {
-    dashboard: "Visao geral dos pedidos e metricas da loja",
+    dashboard: "Visão geral dos pedidos e métricas da loja",
     orders: "Gerencie todos os pedidos com produtos",
-    quotes: "Gerencie todas as solicitacoes de orcamento para servicos",
-    revisions: "Gerencie revisoes veiculares com checklist completo",
+    quotes: "Gerencie todas as solicitações de orçamento para serviços",
+    revisions: "Gerencie revisões veiculares com checklist completo",
     customers: "Visualize os clientes cadastrados automaticamente",
-    relationship: "Acompanhe aniversariantes, inatividade e oportunidades de pos-venda",
-    loyalty: "Configure pontuacao, recompensas, resgates e operacao do clube de fidelidade",
-    products: "Gerencie o catalogo e estoque de produtos",
-    services: "Cadastre e gerencie os servicos oferecidos",
+    relationship: "Acompanhe aniversariantes, inatividade e oportunidades de pós-venda",
+    loyalty: "Configure pontuação, recompensas, resgates e operação do clube de fidelidade",
+    products: "Gerencie o catálogo e estoque de produtos",
+    services: "Cadastre e gerencie os serviços oferecidos",
     coupons: "Crie e gerencie cupons de desconto para os clientes",
     promotions: "Configure ofertas especiais e campanhas",
-    reports: "Relatorios de vendas e analises detalhadas",
-    users: "Gerencie usuarios administrativos, mecanicos e permissoes do sistema",
-    "landing-page": "Configure todos os elementos visuais da pagina inicial",
-    "pwa-settings": "Gerencie manifesto, icones e instalacao do aplicativo",
-    settings: "Configuracoes do sistema e preferencias gerais",
+    reports: "Relatórios de vendas e análises detalhadas",
+    users: "Gerencie usuários administrativos, mecânicos e permissões do sistema",
+    "landing-page": "Configure todos os elementos visuais da página inicial",
+    "pwa-settings": "Gerencie manifesto, ícones e instalação do aplicativo",
+    settings: "Configurações do sistema e preferências gerais",
   };
 
   return descriptions[tab] || "Painel administrativo da M2 Center Auto";

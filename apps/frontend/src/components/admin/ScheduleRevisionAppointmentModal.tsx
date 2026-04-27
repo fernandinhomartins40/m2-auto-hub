@@ -153,7 +153,7 @@ export function ScheduleRevisionAppointmentModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="assignedMechanicId">Mecanico responsavel</Label>
+                <Label htmlFor="assignedMechanicId">Mecânico responsável</Label>
                 <div className="relative">
                   {loadingMechanics && (
                     <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
@@ -187,7 +187,7 @@ export function ScheduleRevisionAppointmentModal({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="adminNotes">Observacoes internas</Label>
+              <Label htmlFor="adminNotes">Observações internas</Label>
               <Textarea
                 id="adminNotes"
                 rows={4}
