@@ -48,6 +48,7 @@ export interface StoreSettings {
   pwaDisplay: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
   pwaIcon192Url?: string | null;
   pwaIcon512Url?: string | null;
+  pwaDesktopIconUrl?: string | null;
   pwaAppleTouchIconUrl?: string | null;
   pwaMaskableIconUrl?: string | null;
 
@@ -93,6 +94,7 @@ export interface UpdateSettingsData {
   pwaDisplay?: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
   pwaIcon192Url?: string | null;
   pwaIcon512Url?: string | null;
+  pwaDesktopIconUrl?: string | null;
   pwaAppleTouchIconUrl?: string | null;
   pwaMaskableIconUrl?: string | null;
 }
@@ -153,8 +155,8 @@ class SettingsService {
 
   async uploadPwaAsset(
     file: File,
-    slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon'
-  ): Promise<{ url: string; slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon' }> {
+    slot: 'icon-192' | 'icon-512' | 'desktop-icon' | 'apple-touch-icon' | 'maskable-icon'
+  ): Promise<{ url: string; slot: 'icon-192' | 'icon-512' | 'desktop-icon' | 'apple-touch-icon' | 'maskable-icon' }> {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('slot', slot);
@@ -163,7 +165,7 @@ class SettingsService {
       success: boolean;
       data: {
         url: string;
-        slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon';
+        slot: 'icon-192' | 'icon-512' | 'desktop-icon' | 'apple-touch-icon' | 'maskable-icon';
       };
     }>('/settings/pwa-assets/upload', formData, {
       headers: {

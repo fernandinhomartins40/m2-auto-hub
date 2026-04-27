@@ -23,6 +23,17 @@ export interface PublicSettings {
   freeShippingMin?: number;
   deliveryFee?: number;
   deliveryDays?: number;
+  pwaName?: string;
+  pwaShortName?: string;
+  pwaDescription?: string;
+  pwaThemeColor?: string;
+  pwaBackgroundColor?: string;
+  pwaDisplay?: string;
+  pwaIcon192Url?: string | null;
+  pwaIcon512Url?: string | null;
+  pwaDesktopIconUrl?: string | null;
+  pwaAppleTouchIconUrl?: string | null;
+  pwaMaskableIconUrl?: string | null;
   whatsappConnected?: boolean;
   correiosConnected?: boolean;
   paymentConnected?: boolean;

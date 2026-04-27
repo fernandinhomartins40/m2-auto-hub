@@ -231,11 +231,12 @@ export async function processLandingPageImage(
 
 export async function processPwaIcon(
   inputPath: string,
-  slot: 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon'
+  slot: 'icon-192' | 'icon-512' | 'desktop-icon' | 'apple-touch-icon' | 'maskable-icon'
 ): Promise<string> {
   const sizes = {
     'icon-192': 192,
     'icon-512': 512,
+    'desktop-icon': 512,
     'apple-touch-icon': 180,
     'maskable-icon': 512,
   } as const;

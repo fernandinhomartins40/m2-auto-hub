@@ -13,6 +13,7 @@ export class SettingsService {
       pwaDisplay: 'standalone',
       pwaIcon192Url: null,
       pwaIcon512Url: null,
+      pwaDesktopIconUrl: null,
       pwaAppleTouchIconUrl: null,
       pwaMaskableIconUrl: null,
     } as const;
@@ -53,6 +54,7 @@ export class SettingsService {
       pwaDisplay: settings.pwaDisplay,
       pwaIcon192Url: settings.pwaIcon192Url,
       pwaIcon512Url: settings.pwaIcon512Url,
+      pwaDesktopIconUrl: settings.pwaDesktopIconUrl,
       pwaAppleTouchIconUrl: settings.pwaAppleTouchIconUrl,
       pwaMaskableIconUrl: settings.pwaMaskableIconUrl,
       whatsappConnected: settings.whatsappConnected,

@@ -74,6 +74,14 @@ export class SettingsController {
       const profile = this.buildPwaProfile(req, settings);
 
       const icons = [
+        settings.pwaDesktopIconUrl
+          ? {
+              src: this.buildAbsoluteUrl(req, settings.pwaDesktopIconUrl),
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            }
+          : null,
         settings.pwaIcon192Url
           ? {
               src: this.buildAbsoluteUrl(req, settings.pwaIcon192Url),
@@ -126,6 +134,7 @@ export class SettingsController {
       const settings = await settingsService.getSettings();
       const iconUrl =
         settings.pwaAppleTouchIconUrl ||
+        settings.pwaDesktopIconUrl ||
         settings.pwaIcon192Url ||
         settings.pwaIcon512Url ||
         settings.pwaMaskableIconUrl;
@@ -204,7 +213,7 @@ export class SettingsController {
       }
 
       const slot = req.body?.slot;
-      const validSlots = ['icon-192', 'icon-512', 'apple-touch-icon', 'maskable-icon'] as const;
+      const validSlots = ['icon-192', 'icon-512', 'desktop-icon', 'apple-touch-icon', 'maskable-icon'] as const;
 
       if (!validSlots.includes(slot)) {
         res.status(400).json({ success: false, error: 'Slot de ícone inválido' });

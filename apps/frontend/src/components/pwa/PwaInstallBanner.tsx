@@ -44,14 +44,20 @@ export function PwaInstallBanner({ appType, className = "" }: PwaInstallBannerPr
   const brandName = settings.pwaName?.trim() || settings.storeName || "M2 Center Auto";
   const appName = appType === "admin" ? `${brandName} Painel` : `${brandName} Cliente`;
   const themeColor = settings.pwaThemeColor || "#0f172a";
+  const browserIconHref =
+    settings.pwaDesktopIconUrl ||
+    settings.pwaIcon512Url ||
+    settings.pwaIcon192Url ||
+    "/favicon.png";
   const manifestHref = `/api/settings/pwa-manifest.webmanifest?app=${appType}`;
   const appleTouchIconHref = `/api/settings/pwa-apple-touch-icon.png?app=${appType}`;
 
   useEffect(() => {
     upsertLink("manifest", manifestHref);
+    upsertLink("icon", browserIconHref);
     upsertLink("apple-touch-icon", appleTouchIconHref);
     upsertThemeColor(themeColor);
-  }, [appleTouchIconHref, manifestHref, themeColor]);
+  }, [appleTouchIconHref, browserIconHref, manifestHref, themeColor]);
 
   if (!shouldShow) {
     return null;

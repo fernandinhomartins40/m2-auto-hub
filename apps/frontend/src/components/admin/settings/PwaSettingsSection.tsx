@@ -31,10 +31,11 @@ type PwaField =
   | 'pwaDisplay'
   | 'pwaIcon192Url'
   | 'pwaIcon512Url'
+  | 'pwaDesktopIconUrl'
   | 'pwaAppleTouchIconUrl'
   | 'pwaMaskableIconUrl';
 
-type PwaIconSlot = 'icon-192' | 'icon-512' | 'apple-touch-icon' | 'maskable-icon';
+type PwaIconSlot = 'icon-192' | 'icon-512' | 'desktop-icon' | 'apple-touch-icon' | 'maskable-icon';
 type PwaPreviewShape = 'auto' | 'square' | 'rounded' | 'circle';
 
 interface PwaSettingsSectionProps {
@@ -47,6 +48,7 @@ interface PwaSettingsSectionProps {
   pwaDisplay: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
   pwaIcon192Url: string;
   pwaIcon512Url: string;
+  pwaDesktopIconUrl: string;
   pwaAppleTouchIconUrl: string;
   pwaMaskableIconUrl: string;
   onChange: (field: PwaField, value: string) => void;
@@ -54,7 +56,7 @@ interface PwaSettingsSectionProps {
 
 const ICON_SPECS: Array<{
   slot: PwaIconSlot;
-  field: 'pwaIcon192Url' | 'pwaIcon512Url' | 'pwaAppleTouchIconUrl' | 'pwaMaskableIconUrl';
+  field: 'pwaIcon192Url' | 'pwaIcon512Url' | 'pwaDesktopIconUrl' | 'pwaAppleTouchIconUrl' | 'pwaMaskableIconUrl';
   title: string;
   description: string;
   size: string;
@@ -77,6 +79,15 @@ const ICON_SPECS: Array<{
     description: 'Usado em splash screen, prompts de instalação e atalhos maiores.',
     size: 'PNG 512x512',
     notes: 'Envie em alta qualidade. O backend ajusta para o tamanho final sem recorte.',
+    autoShape: 'rounded',
+  },
+  {
+    slot: 'desktop-icon',
+    field: 'pwaDesktopIconUrl',
+    title: 'Icone Desktop',
+    description: 'Usado como icone preferencial quando o PWA e instalado em PC ou notebook.',
+    size: 'PNG 512x512',
+    notes: 'Recomendado para Chrome, Edge e outros navegadores desktop que criam o app instalado.',
     autoShape: 'rounded',
   },
   {
@@ -312,7 +323,7 @@ function PwaIconUploadCard({
   onChange,
 }: {
   slot: PwaIconSlot;
-  field: 'pwaIcon192Url' | 'pwaIcon512Url' | 'pwaAppleTouchIconUrl' | 'pwaMaskableIconUrl';
+  field: 'pwaIcon192Url' | 'pwaIcon512Url' | 'pwaDesktopIconUrl' | 'pwaAppleTouchIconUrl' | 'pwaMaskableIconUrl';
   title: string;
   description: string;
   size: string;
@@ -473,11 +484,12 @@ export function PwaSettingsSection({
   pwaDisplay,
   pwaIcon192Url,
   pwaIcon512Url,
+  pwaDesktopIconUrl,
   pwaAppleTouchIconUrl,
   pwaMaskableIconUrl,
   onChange,
 }: PwaSettingsSectionProps) {
-  const previewIcon = pwaIcon512Url || pwaIcon192Url || pwaAppleTouchIconUrl || pwaMaskableIconUrl;
+  const previewIcon = pwaDesktopIconUrl || pwaIcon512Url || pwaIcon192Url || pwaAppleTouchIconUrl || pwaMaskableIconUrl;
   const previewName = pwaName.trim() || storeName || 'Nome do app';
   const previewShortName = pwaShortName.trim() || previewName.slice(0, 12);
 
@@ -485,10 +497,11 @@ export function PwaSettingsSection({
     () => ({
       'icon-192': pwaIcon192Url,
       'icon-512': pwaIcon512Url,
+      'desktop-icon': pwaDesktopIconUrl,
       'apple-touch-icon': pwaAppleTouchIconUrl,
       'maskable-icon': pwaMaskableIconUrl,
     }),
-    [pwaAppleTouchIconUrl, pwaIcon192Url, pwaIcon512Url, pwaMaskableIconUrl]
+    [pwaAppleTouchIconUrl, pwaDesktopIconUrl, pwaIcon192Url, pwaIcon512Url, pwaMaskableIconUrl]
   );
 
   return (

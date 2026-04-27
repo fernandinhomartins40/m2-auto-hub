@@ -1070,6 +1070,7 @@ model Settings {
   pwaDisplay           String  @default("standalone")
   pwaIcon192Url        String?
   pwaIcon512Url        String?
+  pwaDesktopIconUrl    String?
   pwaAppleTouchIconUrl String?
   pwaMaskableIconUrl   String?
 

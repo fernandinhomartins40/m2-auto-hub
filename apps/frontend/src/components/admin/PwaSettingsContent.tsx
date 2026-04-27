@@ -22,6 +22,7 @@ export function PwaSettingsContent() {
     pwaDisplay: 'standalone' as const,
     pwaIcon192Url: '',
     pwaIcon512Url: '',
+    pwaDesktopIconUrl: '',
     pwaAppleTouchIconUrl: '',
     pwaMaskableIconUrl: '',
   });
@@ -39,6 +40,7 @@ export function PwaSettingsContent() {
       pwaDisplay: settings.pwaDisplay || 'standalone',
       pwaIcon192Url: settings.pwaIcon192Url || '',
       pwaIcon512Url: settings.pwaIcon512Url || '',
+      pwaDesktopIconUrl: settings.pwaDesktopIconUrl || '',
       pwaAppleTouchIconUrl: settings.pwaAppleTouchIconUrl || '',
       pwaMaskableIconUrl: settings.pwaMaskableIconUrl || '',
     });
@@ -60,6 +62,7 @@ export function PwaSettingsContent() {
         pwaDisplay: formData.pwaDisplay,
         pwaIcon192Url: formData.pwaIcon192Url.trim() || null,
         pwaIcon512Url: formData.pwaIcon512Url.trim() || null,
+        pwaDesktopIconUrl: formData.pwaDesktopIconUrl.trim() || null,
         pwaAppleTouchIconUrl: formData.pwaAppleTouchIconUrl.trim() || null,
         pwaMaskableIconUrl: formData.pwaMaskableIconUrl.trim() || null,
       });
@@ -124,6 +127,7 @@ export function PwaSettingsContent() {
             pwaDisplay={formData.pwaDisplay}
             pwaIcon192Url={formData.pwaIcon192Url}
             pwaIcon512Url={formData.pwaIcon512Url}
+            pwaDesktopIconUrl={formData.pwaDesktopIconUrl}
             pwaAppleTouchIconUrl={formData.pwaAppleTouchIconUrl}
             pwaMaskableIconUrl={formData.pwaMaskableIconUrl}
             onChange={handleInputChange}

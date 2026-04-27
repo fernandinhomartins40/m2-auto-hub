@@ -50,6 +50,7 @@ export const updateSettingsSchema = z.object({
   pwaDisplay: z.enum(['standalone', 'fullscreen', 'minimal-ui', 'browser']).optional(),
   pwaIcon192Url: z.string().max(1000).nullable().optional(),
   pwaIcon512Url: z.string().max(1000).nullable().optional(),
+  pwaDesktopIconUrl: z.string().max(1000).nullable().optional(),
   pwaAppleTouchIconUrl: z.string().max(1000).nullable().optional(),
   pwaMaskableIconUrl: z.string().max(1000).nullable().optional(),
 
