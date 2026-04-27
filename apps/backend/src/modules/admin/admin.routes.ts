@@ -38,6 +38,7 @@ router.use(AdminAuthMiddleware.requireMinRole(AdminRole.STAFF));
 
 // ==================== DASHBOARD ====================
 router.get('/dashboard/stats', adminController.getDashboardStats);
+router.get('/relationship/insights', adminController.getCustomerRelationshipInsights);
 
 // ==================== ORDERS ====================
 router.get('/orders', adminController.getOrders);

@@ -1,5 +1,5 @@
 ﻿import { prisma } from '../../config/database.js';
-import { CustomerLevel, CustomerStatus, OrderStatus, Prisma, OrderItemType, QuoteStatus, OrderSource } from '@prisma/client';
+import { CustomerLevel, CustomerStatus, OrderStatus, Prisma, OrderItemType, QuoteStatus, OrderSource, RevisionStatus } from '@prisma/client';
 import { HashUtil } from '@shared/utils/hash.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
@@ -49,6 +49,49 @@ interface OrderWithRelations {
     email?: string;
   };
   items: OrderItemWithRelations[];
+}
+
+interface RelationshipInsightCustomer {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  level: CustomerLevel;
+  status: CustomerStatus;
+  birthDate: string | null;
+  totalSpent: number;
+  deliveredOrders: number;
+  completedRevisions: number;
+  lastOrderAt: string | null;
+  lastRevisionAt: string | null;
+  lastInteractionAt: string | null;
+  daysSinceLastOrder: number | null;
+  daysSinceLastRevision: number | null;
+  daysSinceLastInteraction: number | null;
+  daysUntilBirthday: number | null;
+  interactionType: 'sale' | 'revision' | 'both';
+}
+
+interface CustomerRelationshipInsightsResponse {
+  generatedAt: string;
+  config: {
+    inactivityDays: number;
+    postSaleDays: number;
+    birthdayWindowDays: number;
+    vipThreshold: number;
+  };
+  summary: {
+    birthdays: number;
+    inactiveSales: number;
+    inactiveRevisions: number;
+    postSaleFollowUps: number;
+    vipAtRisk: number;
+  };
+  birthdays: RelationshipInsightCustomer[];
+  inactiveSales: RelationshipInsightCustomer[];
+  inactiveRevisions: RelationshipInsightCustomer[];
+  postSaleFollowUps: RelationshipInsightCustomer[];
+  vipAtRisk: RelationshipInsightCustomer[];
 }
 
 const DEFAULT_ORDER_STATUS_FLOW: OrderStatus[] = [
@@ -351,6 +394,180 @@ export class AdminService {
     });
 
     return this.mapCustomerToResponse(customer);
+  }
+
+  async getCustomerRelationshipInsights(params?: {
+    inactivityDays?: number;
+    postSaleDays?: number;
+    birthdayWindowDays?: number;
+  }): Promise<CustomerRelationshipInsightsResponse> {
+    const inactivityDays = Math.max(7, Math.min(365, params?.inactivityDays || 90));
+    const postSaleDays = Math.max(3, Math.min(60, params?.postSaleDays || 15));
+    const birthdayWindowDays = Math.max(1, Math.min(60, params?.birthdayWindowDays || 30));
+    const vipThreshold = 1000;
+    const now = new Date();
+
+    const [customers, orderAggregates, revisionAggregates] = await Promise.all([
+      prisma.customer.findMany({
+        where: {
+          status: {
+            in: [CustomerStatus.ACTIVE, CustomerStatus.INACTIVE],
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          birthDate: true,
+          level: true,
+          status: true,
+          totalSpent: true,
+        },
+      }),
+      prisma.order.groupBy({
+        by: ['customerId'],
+        where: {
+          status: OrderStatus.DELIVERED,
+        },
+        _count: {
+          _all: true,
+        },
+        _max: {
+          createdAt: true,
+        },
+      }),
+      prisma.revision.groupBy({
+        by: ['customerId'],
+        where: {
+          status: RevisionStatus.COMPLETED,
+        },
+        _count: {
+          _all: true,
+        },
+        _max: {
+          completedAt: true,
+          date: true,
+        },
+      }),
+    ]);
+
+    const orderMap = new Map(
+      orderAggregates.map((item) => [
+        item.customerId,
+        {
+          count: item._count._all,
+          lastAt: item._max.createdAt,
+        },
+      ])
+    );
+
+    const revisionMap = new Map(
+      revisionAggregates.map((item) => [
+        item.customerId,
+        {
+          count: item._count._all,
+          lastAt: item._max.completedAt || item._max.date,
+        },
+      ])
+    );
+
+    const insights = customers
+      .map((customer) => {
+        const orderData = orderMap.get(customer.id);
+        const revisionData = revisionMap.get(customer.id);
+        const lastOrderAt = orderData?.lastAt || null;
+        const lastRevisionAt = revisionData?.lastAt || null;
+        const lastInteractionAt = this.getLatestDate(lastOrderAt, lastRevisionAt);
+        const daysUntilBirthday = customer.birthDate
+          ? this.getDaysUntilBirthday(customer.birthDate, now)
+          : null;
+
+        return {
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          whatsapp: customer.phone,
+          level: customer.level,
+          status: customer.status,
+          birthDate: customer.birthDate?.toISOString() || null,
+          totalSpent: Number(customer.totalSpent || 0),
+          deliveredOrders: orderData?.count || 0,
+          completedRevisions: revisionData?.count || 0,
+          lastOrderAt: lastOrderAt?.toISOString() || null,
+          lastRevisionAt: lastRevisionAt?.toISOString() || null,
+          lastInteractionAt: lastInteractionAt?.toISOString() || null,
+          daysSinceLastOrder: this.getDaysSince(lastOrderAt, now),
+          daysSinceLastRevision: this.getDaysSince(lastRevisionAt, now),
+          daysSinceLastInteraction: this.getDaysSince(lastInteractionAt, now),
+          daysUntilBirthday,
+          interactionType: orderData && revisionData ? 'both' : orderData ? 'sale' : 'revision',
+        } satisfies RelationshipInsightCustomer;
+      })
+      .filter((customer) => customer.whatsapp);
+
+    const birthdays = insights
+      .filter((customer) => customer.daysUntilBirthday !== null && customer.daysUntilBirthday <= birthdayWindowDays)
+      .sort((a, b) => (a.daysUntilBirthday || 0) - (b.daysUntilBirthday || 0));
+
+    const inactiveSales = insights
+      .filter(
+        (customer) =>
+          customer.deliveredOrders > 0 &&
+          customer.daysSinceLastOrder !== null &&
+          customer.daysSinceLastOrder >= inactivityDays
+      )
+      .sort((a, b) => (b.daysSinceLastOrder || 0) - (a.daysSinceLastOrder || 0));
+
+    const inactiveRevisions = insights
+      .filter(
+        (customer) =>
+          customer.completedRevisions > 0 &&
+          customer.daysSinceLastRevision !== null &&
+          customer.daysSinceLastRevision >= inactivityDays
+      )
+      .sort((a, b) => (b.daysSinceLastRevision || 0) - (a.daysSinceLastRevision || 0));
+
+    const postSaleFollowUps = insights
+      .filter((customer) => {
+        if (customer.daysSinceLastInteraction === null) {
+          return false;
+        }
+
+        return customer.daysSinceLastInteraction <= postSaleDays;
+      })
+      .sort((a, b) => (a.daysSinceLastInteraction || 0) - (b.daysSinceLastInteraction || 0));
+
+    const vipAtRisk = insights
+      .filter(
+        (customer) =>
+          customer.totalSpent >= vipThreshold &&
+          customer.daysSinceLastInteraction !== null &&
+          customer.daysSinceLastInteraction >= inactivityDays
+      )
+      .sort((a, b) => b.totalSpent - a.totalSpent);
+
+    return {
+      generatedAt: now.toISOString(),
+      config: {
+        inactivityDays,
+        postSaleDays,
+        birthdayWindowDays,
+        vipThreshold,
+      },
+      summary: {
+        birthdays: birthdays.length,
+        inactiveSales: inactiveSales.length,
+        inactiveRevisions: inactiveRevisions.length,
+        postSaleFollowUps: postSaleFollowUps.length,
+        vipAtRisk: vipAtRisk.length,
+      },
+      birthdays,
+      inactiveSales,
+      inactiveRevisions,
+      postSaleFollowUps,
+      vipAtRisk,
+    };
   }
 
   async createCustomer(data: {
@@ -809,6 +1026,34 @@ export class AdminService {
         type: addr.type
       })) || []
     };
+  }
+
+  private getDaysSince(date: Date | null, now: Date): number | null {
+    if (!date) {
+      return null;
+    }
+
+    return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  private getLatestDate(first: Date | null, second: Date | null): Date | null {
+    if (!first) return second;
+    if (!second) return first;
+    return first > second ? first : second;
+  }
+
+  private getDaysUntilBirthday(birthDate: Date, now: Date): number {
+    const nextBirthday = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+    nextBirthday.setHours(0, 0, 0, 0);
+
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+
+    if (nextBirthday < today) {
+      nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+    }
+
+    return Math.floor((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   // ==================== CUSTOMER ADDRESSES ====================

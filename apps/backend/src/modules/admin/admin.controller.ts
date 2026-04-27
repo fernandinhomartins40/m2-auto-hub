@@ -28,6 +28,20 @@ export class AdminController {
     }
   };
 
+  getCustomerRelationshipInsights = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { inactivityDays, postSaleDays, birthdayWindowDays } = req.query;
+      const insights = await this.adminService.getCustomerRelationshipInsights({
+        inactivityDays: inactivityDays ? Number(inactivityDays) : undefined,
+        postSaleDays: postSaleDays ? Number(postSaleDays) : undefined,
+        birthdayWindowDays: birthdayWindowDays ? Number(birthdayWindowDays) : undefined,
+      });
+      res.json(insights);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   // ==================== ORDERS ====================
 
   getOrders = async (req: Request, res: Response, next: NextFunction) => {

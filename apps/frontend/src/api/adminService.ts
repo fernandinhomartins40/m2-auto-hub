@@ -132,6 +132,49 @@ export interface ProvisionalUser {
   updatedAt: string;
 }
 
+export interface CustomerRelationshipInsight {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  level: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
+  birthDate: string | null;
+  totalSpent: number;
+  deliveredOrders: number;
+  completedRevisions: number;
+  lastOrderAt: string | null;
+  lastRevisionAt: string | null;
+  lastInteractionAt: string | null;
+  daysSinceLastOrder: number | null;
+  daysSinceLastRevision: number | null;
+  daysSinceLastInteraction: number | null;
+  daysUntilBirthday: number | null;
+  interactionType: 'sale' | 'revision' | 'both';
+}
+
+export interface CustomerRelationshipInsightsResponse {
+  generatedAt: string;
+  config: {
+    inactivityDays: number;
+    postSaleDays: number;
+    birthdayWindowDays: number;
+    vipThreshold: number;
+  };
+  summary: {
+    birthdays: number;
+    inactiveSales: number;
+    inactiveRevisions: number;
+    postSaleFollowUps: number;
+    vipAtRisk: number;
+  };
+  birthdays: CustomerRelationshipInsight[];
+  inactiveSales: CustomerRelationshipInsight[];
+  inactiveRevisions: CustomerRelationshipInsight[];
+  postSaleFollowUps: CustomerRelationshipInsight[];
+  vipAtRisk: CustomerRelationshipInsight[];
+}
+
 export interface AdminCustomerVehicle {
   id: string;
   customerId: string;
@@ -665,6 +708,15 @@ class AdminService {
     chassisNumber?: string;
   }): Promise<any> {
     const response = await apiClient.post(`/admin/customers/${customerId}/vehicles`, data);
+    return response.data;
+  }
+
+  async getCustomerRelationshipInsights(params?: {
+    inactivityDays?: number;
+    postSaleDays?: number;
+    birthdayWindowDays?: number;
+  }): Promise<CustomerRelationshipInsightsResponse> {
+    const response = await apiClient.get('/admin/relationship/insights', { params });
     return response.data;
   }
 

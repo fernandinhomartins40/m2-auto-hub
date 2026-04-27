@@ -51,6 +51,7 @@ import AdminUsersSection from "./AdminUsersSection";
 import { PromotionsManagement } from "./PromotionsManagement";
 import { PwaSettingsContent } from "./PwaSettingsContent";
 import { SettingsContent } from "./SettingsContent";
+import { CustomerRelationshipContent } from "./CustomerRelationshipContent";
 import { AdminProductsSection } from "./AdminProductsSection";
 import { AdminServicesSection } from "./AdminServicesSection";
 import { AdminCouponsSection } from "./AdminCouponsSection";
@@ -2293,6 +2294,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         return renderQuotes();
       case 'customers':
         return renderCustomers();
+      case 'relationship':
+        return <CustomerRelationshipContent />;
       case 'products':
         return (
           <AdminProductsSection
