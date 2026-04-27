@@ -33,6 +33,7 @@ export interface CustomerQuote {
   items: CustomerQuoteItem[];
   total: number;
   status: 'PENDING' | 'ANALYZING' | 'QUOTED' | 'APPROVED' | 'REJECTED';
+  orderStatus?: string | null;
   observations?: string | null;
   quoteNotes?: string | null;
   createdAt: string;

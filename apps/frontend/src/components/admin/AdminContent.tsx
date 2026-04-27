@@ -64,6 +64,7 @@ import adminService, {
 import { reportsService, type CompleteReportData } from "@/api/reportsService";
 import type { Product as ApiProduct } from "@/api/productService";
 import { exportToCSV, exportToExcel, formatCurrencyForExport, formatDateForExport } from "@/utils/exportUtils";
+import { buildOrderListPdfHtml, buildOrderPdfHtml, getOrderListPdfFilename, getOrderPdfFilename } from "@/utils/orderPdf";
 import { buildQuotePdfHtml, getQuotePdfFilename } from "@/utils/quotePdf";
 import { buildReportPdfHtml, getReportPdfFilename } from "@/utils/reportPdf";
 import { useToast } from "@/hooks/use-toast";
@@ -170,6 +171,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerListItem | null>(null);
   const [isCustomerOrdersModalOpen, setIsCustomerOrdersModalOpen] = useState(false);
   const [isCreateCustomerModalOpen, setIsCreateCustomerModalOpen] = useState(false);
+  const [exportingOrderId, setExportingOrderId] = useState<string | null>(null);
+  const [isExportingOrdersPdf, setIsExportingOrdersPdf] = useState(false);
   const [exportingQuoteId, setExportingQuoteId] = useState<string | null>(null);
   const [isExportingReportPdf, setIsExportingReportPdf] = useState(false);
 
@@ -768,6 +771,18 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   );
 
   const getQuoteStatusBadge = (status: string) => {
+    if (status === 'QUOTED' || status === 'quoted' || status === 'responded') {
+      return { label: 'Enviado ao cliente', color: 'bg-blue-100 text-blue-800' };
+    }
+
+    if (status === 'APPROVED' || status === 'approved' || status === 'accepted') {
+      return { label: 'Aprovado pelo cliente', color: 'bg-green-100 text-green-800' };
+    }
+
+    if (status === 'REJECTED' || status === 'rejected') {
+      return { label: 'Rejeitado pelo cliente', color: 'bg-red-100 text-red-800' };
+    }
+
     const statusMap: Record<string, { label: string; color: string }> = {
       PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
       ANALYZING: { label: 'Em Análise', color: 'bg-purple-100 text-purple-800' },
@@ -784,6 +799,23 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       rejected: { label: 'Rejeitado', color: 'bg-red-100 text-red-800' },
     };
     return statusMap[status] || statusMap.PENDING;
+  };
+
+  const openOrderFromQuote = async (quote: Quote) => {
+    try {
+      const linkedOrder = orders.find((order) => order.id === quote.id)
+        || await adminService.getOrderById(quote.id);
+
+      setSelectedOrder(linkedOrder);
+      setIsOrderModalOpen(true);
+      onTabChange?.('orders');
+    } catch (error: any) {
+      toast({
+        title: "Pedido ainda não disponível",
+        description: error.response?.data?.error || "Não foi possível abrir o pedido convertido a partir deste orçamento.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExportQuotePdf = async (quote: Quote) => {
@@ -923,6 +955,12 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                     </div>
                   </div>
 
+                  {['APPROVED', 'approved'].includes(quote.status) && quote.orderStatus && (
+                    <div className="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+                      Este orçamento já foi convertido em pedido. Status atual: {getStatusInfo(quote.orderStatus).label}.
+                    </div>
+                  )}
+
                   {quote.hasLinkedOrder && (
                     <div className="mb-4 p-2 bg-blue-50 rounded text-sm text-blue-700">
                       🔗 Este cliente também possui um pedido vinculado: #{quote.sessionId?.replace('O', 'P')}
@@ -936,6 +974,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                       variant="default"
                       size="sm"
                       onClick={() => {
+                        if (['APPROVED', 'approved'].includes(quote.status)) {
+                          void openOrderFromQuote(quote);
+                          return;
+                        }
+
                         setSelectedQuote(quote);
                         setIsQuoteModalOpen(true);
                       }}
@@ -951,8 +994,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                     >
                       {['APPROVED', 'approved'].includes(quote.status) ? (
                         <>
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Visualizar
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          Abrir Pedido
                         </>
                       ) : ['QUOTED', 'quoted'].includes(quote.status) ? (
                         <>
@@ -980,6 +1023,19 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                       <FileText className="h-4 w-4 mr-1" />
                       {exportingQuoteId === quote.id ? 'Gerando PDF...' : 'PDF'}
                     </Button>
+                    {['APPROVED', 'approved'].includes(quote.status) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedQuote(quote);
+                          setIsQuoteModalOpen(true);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ver Orçamento
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -1192,6 +1248,64 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     }
   };
 
+  const handleExportOrdersPdf = async () => {
+    if (!filteredOrders.length) {
+      toast({
+        title: "Nenhum pedido para exportar",
+        description: "Aplique outro filtro ou aguarde pedidos na listagem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExportingOrdersPdf(true);
+    try {
+      await adminService.exportOrdersPdf({
+        html: buildOrderListPdfHtml(filteredOrders),
+        filename: getOrderListPdfFilename(),
+      });
+
+      toast({
+        title: "PDF gerado",
+        description: "A listagem de pedidos foi exportada com sucesso.",
+      });
+    } catch (error: any) {
+      console.error("Error exporting orders PDF:", error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: error.response?.data?.error || error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingOrdersPdf(false);
+    }
+  };
+
+  const handleExportOrderPdf = async (order: StoreOrder) => {
+    setExportingOrderId(order.id);
+
+    try {
+      await adminService.exportOrderPdf(order.id, {
+        html: buildOrderPdfHtml(order),
+        filename: getOrderPdfFilename(order),
+      });
+
+      toast({
+        title: "PDF gerado",
+        description: `O pedido #${order.id.slice(0, 8)} foi exportado com sucesso.`,
+      });
+    } catch (error: any) {
+      console.error("Error exporting order PDF:", error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: error.response?.data?.error || error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setExportingOrderId(null);
+    }
+  };
+
   const renderOrders = () => (
     <Card>
       <CardHeader>
@@ -1209,6 +1323,15 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             >
               <Plus className="h-4 w-4 mr-2" />
               Novo Pedido
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportOrdersPdf}
+              disabled={isExportingOrdersPdf}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {isExportingOrdersPdf ? 'Gerando PDF...' : 'PDF'}
             </Button>
             <Button
               variant="outline"
@@ -1321,6 +1444,15 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                     <Separator className="mb-4" />
 
                     <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExportOrderPdf(order)}
+                        disabled={exportingOrderId === order.id}
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        {exportingOrderId === order.id ? 'Gerando PDF...' : 'PDF'}
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -2400,6 +2532,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
           setSelectedOrder(null);
         }}
         onUpdate={loadData}
+        onExportPdf={handleExportOrderPdf}
+        isExportingPdf={selectedOrder ? exportingOrderId === selectedOrder.id : false}
       />
       <QuoteModal
         quote={selectedQuote}
@@ -2409,6 +2543,9 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
           setSelectedQuote(null);
         }}
         onUpdate={loadData}
+        onOpenOrder={(quote) => {
+          void openOrderFromQuote(quote);
+        }}
       />
       <CreateOrderModal
         isOpen={isCreateOrderModalOpen}

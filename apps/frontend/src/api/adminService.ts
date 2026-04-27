@@ -36,6 +36,7 @@ export interface Quote {
   status: 'PENDING' | 'ANALYZING' | 'QUOTED' | 'APPROVED' | 'REJECTED' | 'pending' | 'analyzing' | 'responded' | 'accepted' | 'rejected';
   sessionId?: string;
   hasLinkedOrder?: boolean;
+  orderStatus?: string | null;
   createdAt: string;
   updatedAt: string;
   quotedAt?: string | null;
@@ -53,6 +54,11 @@ export interface QuoteItem {
 }
 
 export interface ExportQuotePdfPayload {
+  html: string;
+  filename?: string;
+}
+
+export interface ExportOrderPdfPayload {
   html: string;
   filename?: string;
 }
@@ -385,6 +391,48 @@ class AdminService {
   }): Promise<StoreOrder> {
     const response = await apiClient.post('/admin/orders', data);
     return response.data;
+  }
+
+  async exportOrderPdf(id: string, payload: ExportOrderPdfPayload): Promise<void> {
+    const response = await apiClient.post(`/admin/orders/${id}/export-pdf`, payload, {
+      responseType: 'blob',
+      timeout: 30000,
+    });
+
+    const contentDisposition = response.headers['content-disposition'];
+    const fallbackFilename = payload.filename || `pedido-${id.slice(0, 8)}.pdf`;
+    const matchedFilename = contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1];
+    const filename = matchedFilename || fallbackFilename;
+
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  async exportOrdersPdf(payload: ExportOrderPdfPayload): Promise<void> {
+    const response = await apiClient.post('/admin/orders/export-pdf', payload, {
+      responseType: 'blob',
+      timeout: 30000,
+    });
+
+    const contentDisposition = response.headers['content-disposition'];
+    const fallbackFilename = payload.filename || 'pedidos.pdf';
+    const matchedFilename = contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1];
+    const filename = matchedFilename || fallbackFilename;
+
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   }
 
   // ==================== QUOTES ====================

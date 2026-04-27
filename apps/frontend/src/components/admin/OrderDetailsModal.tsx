@@ -3,6 +3,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Download,
   Edit,
   Factory,
   Loader2,
@@ -29,6 +30,8 @@ interface OrderDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
+  onExportPdf?: (order: StoreOrder) => void;
+  isExportingPdf?: boolean;
 }
 
 type OrderStatus =
@@ -158,7 +161,14 @@ const canCancelOrder = (status: string) => {
   return CANCELLABLE_STATUSES.has(status as OrderStatus);
 };
 
-export function OrderDetailsModal({ order, isOpen, onClose, onUpdate }: OrderDetailsModalProps) {
+export function OrderDetailsModal({
+  order,
+  isOpen,
+  onClose,
+  onUpdate,
+  onExportPdf,
+  isExportingPdf = false,
+}: OrderDetailsModalProps) {
   const { toast } = useToast();
   const [isEditingTracking, setIsEditingTracking] = useState(false);
   const [trackingCode, setTrackingCode] = useState("");
@@ -271,6 +281,23 @@ export function OrderDetailsModal({ order, isOpen, onClose, onUpdate }: OrderDet
           <p className="text-xs text-muted-foreground mt-1">
             Realizado em {formatDateTime(currentOrder.createdAt)}
           </p>
+          {onExportPdf ? (
+            <div className="mt-3 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onExportPdf(currentOrder)}
+                disabled={isExportingPdf}
+              >
+                {isExportingPdf ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {isExportingPdf ? "Gerando PDF..." : "Exportar PDF"}
+              </Button>
+            </div>
+          ) : null}
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 min-h-0">

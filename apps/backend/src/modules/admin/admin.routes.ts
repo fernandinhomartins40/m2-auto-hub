@@ -57,7 +57,9 @@ router.post('/loyalty/redemptions/:redemptionCode/use', AdminAuthMiddleware.requ
 // ==================== ORDERS ====================
 router.get('/orders', adminController.getOrders);
 router.post('/orders', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), adminController.createOrder);
+router.post('/orders/export-pdf', adminController.exportOrdersPdf);
 router.get('/orders/:id', adminController.getOrderById);
+router.post('/orders/:id/export-pdf', adminController.exportOrderPdf);
 router.patch('/orders/:id/status', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.updateOrderStatus);
 
 // ==================== CUSTOMERS ====================

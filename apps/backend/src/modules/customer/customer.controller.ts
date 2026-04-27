@@ -75,6 +75,7 @@ export class CustomerController {
         })),
       total: Number(order.total),
       status: order.quoteStatus || QuoteStatus.PENDING,
+      orderStatus: order.status,
       observations: order.quoteNotes || null,
       quoteNotes: order.quoteNotes || null,
       createdAt: order.createdAt.toISOString(),
@@ -424,7 +425,7 @@ export class CustomerController {
         id: updatedQuote.id,
         status: updatedQuote.quoteStatus,
         orderStatus: updatedQuote.status,
-        message: 'Orcamento aprovado com sucesso! Seu pedido ja esta em producao.',
+        message: `Orcamento aprovado com sucesso. Ele virou o pedido #${updatedQuote.id.slice(0, 8).toUpperCase()} e ja esta em producao.`,
       });
     } catch (error) {
       next(error);

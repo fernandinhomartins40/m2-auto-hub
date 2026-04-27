@@ -10,6 +10,8 @@ const exportQuotePdfSchema = z.object({
   filename: z.string().trim().min(1).max(120).optional(),
 });
 
+const exportOrderPdfSchema = exportQuotePdfSchema;
+
 export class AdminController {
   private adminService: AdminService;
 
@@ -123,6 +125,50 @@ export class AdminController {
       });
 
       res.status(201).json(order);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  exportOrdersPdf = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { html, filename } = exportOrderPdfSchema.parse(req.body);
+      const pdfBuffer = await pdfGeneratorService.generatePdfBuffer({
+        title: 'Listagem de pedidos',
+        bodyHtml: html,
+      });
+
+      const safeFilename = pdfGeneratorService.sanitizeFilename(
+        filename || `pedidos-${new Date().toISOString().slice(0, 10)}`
+      );
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  exportOrderPdf = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { html, filename } = exportOrderPdfSchema.parse(req.body);
+      const order = await this.adminService.getOrderById(id);
+      const pdfBuffer = await pdfGeneratorService.generatePdfBuffer({
+        title: `Pedido ${order.id}`,
+        bodyHtml: html,
+      });
+
+      const safeFilename = pdfGeneratorService.sanitizeFilename(
+        filename || `pedido-${order.id.slice(0, 8)}`
+      );
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
     } catch (error) {
       next(error);
     }

@@ -29,6 +29,33 @@ import "../styles/cliente.css";
 // ==================== QUOTE STATUS HELPERS ====================
 
 function getQuoteStatusBadge(status: string) {
+  if (status === "QUOTED") {
+    return (
+      <Badge variant="default" className="flex items-center gap-1">
+        <FileText className="w-3 h-3" />
+        Aguardando sua aprovação
+      </Badge>
+    );
+  }
+
+  if (status === "APPROVED") {
+    return (
+      <Badge variant="default" className="flex items-center gap-1">
+        <CheckCircle className="w-3 h-3" />
+        Aprovado por você
+      </Badge>
+    );
+  }
+
+  if (status === "REJECTED") {
+    return (
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <XCircle className="w-3 h-3" />
+        Recusado por você
+      </Badge>
+    );
+  }
+
   const statusConfig = {
     PENDING: { label: "Pendente", variant: "secondary" as const, icon: Clock },
     ANALYZING: { label: "Analisando", variant: "default" as const, icon: AlertCircle },

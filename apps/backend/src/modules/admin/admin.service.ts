@@ -995,6 +995,7 @@ export class AdminService {
       hasProducts: order.hasProducts,
       hasServices: order.hasServices,
       status: order.quoteStatus || 'PENDING',
+      orderStatus: order.status,
       createdAt: order.createdAt.toISOString(),
       quotedAt: order.quotedAt?.toISOString() || null,
       quoteApprovedAt: order.quoteApprovedAt?.toISOString() || null,

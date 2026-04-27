@@ -34,9 +34,9 @@ const STATUS_CONFIG: Record<
 > = {
   PENDING: { label: 'Pendente', className: 'bg-yellow-100 text-yellow-800' },
   ANALYZING: { label: 'Em analise', className: 'bg-purple-100 text-purple-800' },
-  QUOTED: { label: 'Orcado', className: 'bg-blue-100 text-blue-800' },
-  APPROVED: { label: 'Aprovado', className: 'bg-green-100 text-green-800' },
-  REJECTED: { label: 'Rejeitado', className: 'bg-red-100 text-red-800' },
+  QUOTED: { label: 'Aguardando sua aprovacao', className: 'bg-blue-100 text-blue-800' },
+  APPROVED: { label: 'Aprovado por voce', className: 'bg-green-100 text-green-800' },
+  REJECTED: { label: 'Recusado por voce', className: 'bg-red-100 text-red-800' },
 };
 
 const formatCurrency = (value: number) =>
@@ -155,7 +155,7 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
     try {
       const result = await customerService.approveQuote(quoteId);
       toast({
-        title: 'Orcamento aprovado',
+        title: 'Orcamento aprovado e convertido em pedido',
         description: result.message,
       });
       await loadQuotes();
@@ -395,6 +395,12 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
                     </div>
                   </div>
 
+                  {quote.status === 'APPROVED' && quote.orderStatus && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                      Este orcamento virou pedido. Status atual: {quote.orderStatus === 'IN_PRODUCTION' ? 'Em producao' : quote.orderStatus}.
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     {quote.items.map((item) => (
                       <div
@@ -471,7 +477,7 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
                           onClick={() => void handleApprove(quote.id)}
                         >
                           <ThumbsUp className="mr-2 h-4 w-4" />
-                          Aprovar
+                          Aprovar e Virar Pedido
                         </Button>
                         <Button
                           variant="outline"
@@ -487,7 +493,7 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
                     {quote.status === 'APPROVED' && (
                       <div className="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
                         <CheckCircle2 className="mr-2 h-4 w-4" />
-                        Orcamento aprovado e encaminhado para producao.
+                        Orcamento aprovado e convertido em pedido.
                       </div>
                     )}
 

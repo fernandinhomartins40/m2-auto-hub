@@ -31,6 +31,7 @@ interface QuoteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
+  onOpenOrder?: (quote: Quote) => void;
 }
 
 interface QuoteItemWithPrice {
@@ -41,7 +42,7 @@ interface QuoteItemWithPrice {
   quotedPrice: number;
 }
 
-export function QuoteModal({ quote, isOpen, onClose, onUpdate }: QuoteModalProps) {
+export function QuoteModal({ quote, isOpen, onClose, onUpdate, onOpenOrder }: QuoteModalProps) {
   const { toast } = useToast();
   const [items, setItems] = useState<QuoteItemWithPrice[]>([]);
   const [observations, setObservations] = useState("");
@@ -59,10 +60,15 @@ export function QuoteModal({ quote, isOpen, onClose, onUpdate }: QuoteModalProps
           quotedPrice: item.quotedPrice ?? item.price ?? 0,
         }))
       );
+      setObservations(quote.quoteNotes || "");
     }
   }, [quote]);
 
   if (!quote) return null;
+
+  const isQuoted = ['QUOTED', 'quoted', 'responded'].includes(quote.status);
+  const isApproved = ['APPROVED', 'approved', 'accepted'].includes(quote.status);
+  const isRejected = ['REJECTED', 'rejected'].includes(quote.status);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -234,6 +240,18 @@ Estou à disposição para esclarecer dúvidas! 😊`;
   };
 
   const getStatusBadge = (status: string) => {
+    if (status === 'QUOTED' || status === 'responded') {
+      return { label: 'Enviado ao cliente', color: 'bg-blue-100 text-blue-800' };
+    }
+
+    if (status === 'APPROVED' || status === 'accepted') {
+      return { label: 'Aprovado pelo cliente', color: 'bg-green-100 text-green-800' };
+    }
+
+    if (status === 'REJECTED' || status === 'rejected') {
+      return { label: 'Rejeitado pelo cliente', color: 'bg-red-100 text-red-800' };
+    }
+
     const statusMap: Record<string, { label: string; color: string }> = {
       PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
       QUOTED: { label: 'Orçado', color: 'bg-blue-100 text-blue-800' },
@@ -267,6 +285,9 @@ Estou à disposição para esclarecer dúvidas! 😊`;
           <p className="text-xs text-muted-foreground mt-1">
             Solicitado em {new Date(quote.createdAt).toLocaleDateString('pt-BR')} às{' '}
             {new Date(quote.createdAt).toLocaleTimeString('pt-BR')}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Fluxo correto: a loja envia o orÃ§amento ao cliente e, quando ele aprova, o orÃ§amento vira pedido.
           </p>
         </DialogHeader>
 
@@ -330,7 +351,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
                           value={item.quotedPrice || ''}
                           onChange={(e) => handlePriceChange(item.id, e.target.value)}
                           className="pl-7 h-9 text-sm"
-                          disabled={isUpdating}
+                          disabled={isUpdating || isApproved}
                         />
                       </div>
                     </div>
@@ -367,7 +388,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
                 onChange={(e) => setObservations(e.target.value)}
                 className="mt-1 text-sm"
                 rows={3}
-                disabled={isUpdating}
+                disabled={isUpdating || isApproved}
               />
             </div>
             <div>
@@ -380,7 +401,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
                 value={validityDays}
                 onChange={(e) => setValidityDays(parseInt(e.target.value) || 7)}
                 className="mt-1 h-9 text-sm"
-                disabled={isUpdating}
+                disabled={isUpdating || isApproved}
               />
               <p className="text-[10px] text-muted-foreground mt-1">
                 Válido até: {new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
@@ -396,7 +417,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
           <div className="flex gap-2">
             <Button
               onClick={handleSaveQuote}
-              disabled={isUpdating || total === 0}
+              disabled={isUpdating || total === 0 || isApproved}
               size="sm"
               className="flex-1 bg-moria-orange hover:bg-moria-orange/90"
             >
@@ -405,7 +426,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
               ) : (
                 <Save className="h-3.5 w-3.5 mr-1.5" />
               )}
-              {isUpdating ? "Salvando..." : "Salvar"}
+              {isUpdating ? "Salvando..." : (isQuoted ? "Atualizar e Reenviar" : "Salvar e Enviar ao Cliente")}
             </Button>
             <Button
               onClick={handleSendWhatsApp}
@@ -421,7 +442,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
           <div className="flex gap-2">
             <Button
               onClick={handleApprove}
-              disabled={isUpdating || quote.status === 'APPROVED' || quote.status === 'accepted'}
+              disabled={isUpdating || !isQuoted}
               variant="outline"
               size="sm"
               className="flex-1 border-green-600 text-green-700 hover:bg-green-50"
@@ -432,11 +453,11 @@ Estou à disposição para esclarecer dúvidas! 😊`;
               ) : (
                 <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
               )}
-              {isUpdating ? "Aprovando..." : (quote.status === 'PENDING' || quote.status === 'pending' ? "Salvar e Aprovar" : "Aprovar")}
+              {isUpdating ? "Convertendo..." : "Cliente Aprovou -> Virar Pedido"}
             </Button>
             <Button
               onClick={handleReject}
-              disabled={isUpdating || quote.status === 'REJECTED' || quote.status === 'rejected'}
+              disabled={isUpdating || isRejected || isApproved}
               variant="outline"
               size="sm"
               className="flex-1 border-red-600 text-red-700 hover:bg-red-50"
@@ -446,8 +467,14 @@ Estou à disposição para esclarecer dúvidas! 😊`;
               ) : (
                 <XCircle className="h-3.5 w-3.5 mr-1.5" />
               )}
-              {isUpdating ? "Rejeitando..." : "Rejeitar"}
+              {isUpdating ? "Rejeitando..." : "Cliente Recusou"}
             </Button>
+            {isApproved && onOpenOrder && (
+              <Button variant="outline" onClick={() => onOpenOrder(quote)} size="sm">
+                <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                Abrir Pedido
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose} size="sm">
               Fechar
             </Button>
