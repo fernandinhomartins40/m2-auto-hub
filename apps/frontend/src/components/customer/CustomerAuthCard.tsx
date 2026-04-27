@@ -130,11 +130,17 @@ export function CustomerAuthCard({
           <CardDescription>Entre para acompanhar pedidos, veiculos e revisoes</CardDescription>
         </CardHeader>
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mx-6 mb-4">
-            <TabsTrigger value="login">Entrar</TabsTrigger>
-            <TabsTrigger value="register">Cadastrar</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="login" className="w-full overflow-hidden">
+          <div className="px-4 sm:px-6">
+            <TabsList className="mb-4 grid w-full grid-cols-2">
+              <TabsTrigger value="login" className="min-w-0 px-3 text-xs sm:text-sm">
+                Entrar
+              </TabsTrigger>
+              <TabsTrigger value="register" className="min-w-0 px-3 text-xs sm:text-sm">
+                Cadastrar
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="login" className="mt-0">
             <Card className="border-none shadow-none">
