@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="manifest" href="/api/settings/pwa-manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/api/settings/pwa-apple-touch-icon.png" />
+    <link rel="manifest" href="/api/settings/pwa-manifest.webmanifest?app=customer" />
+    <link rel="apple-touch-icon" href="/api/settings/pwa-apple-touch-icon.png?app=customer" />
     <meta name="theme-color" content="#0f172a" />
     <title>M2 Auto Peças & Auto Center | Palmital/PR</title>
     <meta
@@ -29,6 +29,33 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var path = window.location.pathname || "/";
+        var app = "customer";
+
+        if (
+          path.indexOf("/admin-login") === 0 ||
+          path.indexOf("/store-panel") === 0 ||
+          path.indexOf("/mechanic-panel") === 0 ||
+          path.indexOf("/admin") === 0 ||
+          path.indexOf("/pwa-entry") === 0
+        ) {
+          app = "admin";
+        }
+
+        var manifest = document.querySelector('link[rel="manifest"]');
+        var appleTouch = document.querySelector('link[rel="apple-touch-icon"]');
+
+        if (manifest) {
+          manifest.setAttribute("href", "/api/settings/pwa-manifest.webmanifest?app=" + app);
+        }
+
+        if (appleTouch) {
+          appleTouch.setAttribute("href", "/api/settings/pwa-apple-touch-icon.png?app=" + app);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
