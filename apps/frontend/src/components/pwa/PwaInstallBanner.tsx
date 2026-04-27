@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Download, Share2, Shield, Smartphone, User, X } from "lucide-react";
+import { Download, MonitorSmartphone, Share2, Shield, Smartphone, User, X } from "lucide-react";
 
 import { useStorefront } from "@/context/StorefrontContext";
 import { usePwaInstallPrompt } from "@/hooks/usePwaInstallPrompt";
@@ -64,6 +64,12 @@ export function PwaInstallBanner({ appType, className = "" }: PwaInstallBannerPr
     appType === "admin"
       ? "Tenha um atalho dedicado para lojista e mecanico, com abertura direta do painel interno."
       : "Abra pedidos, veiculos, revisoes e suporte em um app proprio no celular do cliente.";
+  const showPromptCard = canPromptInstall && !isIos;
+  const promptLabel = isAndroid ? "Instalacao no Android" : "Instalacao no navegador";
+  const PromptIcon = isAndroid ? Smartphone : MonitorSmartphone;
+  const promptDescription = isAndroid
+    ? "Toque no botao para instalar agora com o atalho correto desta area."
+    : "Este navegador ja permite instalar este PWA. Use o botao abaixo para criar o app com o atalho correto desta area.";
 
   return (
     <div
@@ -110,31 +116,32 @@ export function PwaInstallBanner({ appType, className = "" }: PwaInstallBannerPr
             </div>
           ) : null}
 
-          {isAndroid ? (
+          {showPromptCard ? (
             <div className="flex flex-col gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-blue-950">
                 <div className="mb-1 flex items-center gap-2 font-medium">
-                  <Smartphone className="h-4 w-4" />
-                  Instalacao no Android
+                  <PromptIcon className="h-4 w-4" />
+                  {promptLabel}
                 </div>
-                <p>
-                  {canPromptInstall
-                    ? "Toque no botao para instalar agora com o atalho correto desta area."
-                    : "Se o navegador nao mostrar o prompt automatico, abra o menu do Chrome e toque em Instalar app ou Adicionar a tela inicial."}
-                </p>
+                <p>{promptDescription}</p>
               </div>
 
-              {canPromptInstall ? (
-                <Button
-                  type="button"
-                  onClick={() => void promptInstall()}
-                  disabled={isInstalling}
-                  className="min-w-[180px] bg-blue-600 hover:bg-blue-700"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {isInstalling ? "Instalando..." : "Instalar app"}
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                onClick={() => void promptInstall()}
+                disabled={isInstalling}
+                className="min-w-[180px] bg-blue-600 hover:bg-blue-700"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isInstalling ? "Instalando..." : "Instalar app"}
+              </Button>
+            </div>
+          ) : null}
+
+          {!isIos && !canPromptInstall ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              Em navegadores compatíveis, procure a opção <strong>Instalar app</strong> ou{" "}
+              <strong>Adicionar à área de trabalho</strong> no menu do navegador.
             </div>
           ) : null}
         </div>
