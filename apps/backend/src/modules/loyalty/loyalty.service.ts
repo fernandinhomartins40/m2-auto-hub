@@ -10,15 +10,99 @@ import {
 import { prisma } from '@config/database.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { settingsService } from '@modules/settings/settings.service.js';
-import type {
-  AdminLoyaltyStats,
-  LoyaltyReward,
-  LoyaltySettings,
-  LoyaltyStats,
-  PointTransaction,
-  RedeemedReward,
-  PaginatedResponse,
-} from '@moria/types';
+
+type LoyaltyTier = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+
+type PaginatedResponse<T> = {
+  data: T[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+type LoyaltySettings = {
+  programName: string;
+  programDescription: string;
+  pointsPerReal: number;
+  minPurchaseForPoints: number;
+  revisionBonusPoints: number;
+  signupBonusPoints: number;
+  birthdayBonusPoints: number;
+  pointsValidityDays?: number | null;
+  isActive: boolean;
+  tierMultipliers: Record<LoyaltyTier, number>;
+  termsAndConditions?: string;
+};
+
+type LoyaltyReward = {
+  id: string;
+  name: string;
+  description: string;
+  type: LoyaltyRewardType;
+  pointsCost: number;
+  discountValue?: number | null;
+  minLevel: LoyaltyTier;
+  status: LoyaltyRewardStatus;
+  usageInstructions?: string | null;
+  expiresAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type PointTransaction = {
+  id: string;
+  customerId: string;
+  rewardId?: string | null;
+  redemptionId?: string | null;
+  orderId?: string | null;
+  revisionId?: string | null;
+  type: LoyaltyTransactionType;
+  points: number;
+  description: string;
+  createdAt: string;
+};
+
+type RedeemedReward = {
+  id: string;
+  customerId: string;
+  rewardId: string;
+  code: string;
+  pointsSpent: number;
+  status: LoyaltyRedemptionStatus;
+  notes?: string | null;
+  expiresAt?: string | null;
+  usedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reward?: LoyaltyReward;
+  customer?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    level: LoyaltyTier;
+  };
+};
+
+type LoyaltyStats = {
+  currentPoints: number;
+  totalPointsEarned: number;
+  totalPointsRedeemed: number;
+  level: LoyaltyTier;
+  availableRewardsCount: number;
+  recentTransactionsCount: number;
+};
+
+type AdminLoyaltyStats = {
+  totalCustomersWithPoints: number;
+  totalPointsDistributed: number;
+  totalPointsRedeemed: number;
+  totalRedemptions: number;
+  activeRewards: number;
+  programStatus: 'ACTIVE' | 'INACTIVE';
+  averagePointsPerCustomer: number;
+};
 
 const DEFAULT_TIER_MULTIPLIERS: Record<CustomerLevel, number> = {
   BRONZE: 1,
