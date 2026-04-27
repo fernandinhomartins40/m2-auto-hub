@@ -38,12 +38,29 @@ export function usePwaInstallPrompt(appType: PwaAppType) {
   const [isInstalling, setIsInstalling] = useState(false);
 
   const storageKey = `pwa-install-banner-dismissed:${appType}`;
+  const installedKey = `pwa-installed:${appType}`;
   const isIos = isIosDevice();
   const isAndroid = isAndroidDevice();
 
   useEffect(() => {
-    setIsInstalled(isStandaloneMode());
-    setIsDismissed(window.localStorage.getItem(storageKey) === "1");
+    const syncInstallState = () => {
+      const installed = isStandaloneMode();
+      const hadInstalledBefore = window.localStorage.getItem(installedKey) === "1";
+
+      setIsInstalled(installed);
+      setIsDismissed(window.localStorage.getItem(storageKey) === "1");
+
+      // If the app had already been installed once and is no longer in standalone,
+      // assume it was uninstalled and bring the install banner back.
+      if (!installed && hadInstalledBefore) {
+        window.localStorage.removeItem(installedKey);
+        window.localStorage.removeItem(storageKey);
+        setIsDismissed(false);
+      }
+    };
+
+    syncInstallState();
+    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -53,18 +70,37 @@ export function usePwaInstallPrompt(appType: PwaAppType) {
     const handleInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
+      window.localStorage.setItem(installedKey, "1");
       window.localStorage.removeItem(storageKey);
       setIsDismissed(false);
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncInstallState();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      syncInstallState();
+    };
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleInstalled);
+    window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener("pageshow", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    standaloneQuery.addEventListener("change", handleWindowFocus);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
+      window.removeEventListener("focus", handleWindowFocus);
+      window.removeEventListener("pageshow", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      standaloneQuery.removeEventListener("change", handleWindowFocus);
     };
-  }, [storageKey]);
+  }, [installedKey, storageKey]);
 
   const dismiss = () => {
     window.localStorage.setItem(storageKey, "1");
@@ -83,6 +119,7 @@ export function usePwaInstallPrompt(appType: PwaAppType) {
       if (choice.outcome === "accepted") {
         setIsInstalled(true);
         setDeferredPrompt(null);
+        window.localStorage.setItem(installedKey, "1");
         window.localStorage.removeItem(storageKey);
         setIsDismissed(false);
         return true;
