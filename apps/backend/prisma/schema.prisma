@@ -28,6 +28,36 @@ enum CustomerLevel {
   PLATINUM
 }
 
+enum LoyaltyRewardType {
+  DISCOUNT
+  PRODUCT
+  SERVICE
+  GIFT
+}
+
+enum LoyaltyRewardStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum LoyaltyTransactionType {
+  EARN_ORDER
+  EARN_REVISION
+  EARN_SIGNUP
+  EARN_BIRTHDAY
+  EARN_MANUAL
+  ADJUST_MANUAL
+  REDEEM_REWARD
+  EXPIRE_POINTS
+}
+
+enum LoyaltyRedemptionStatus {
+  AVAILABLE
+  USED
+  EXPIRED
+  CANCELLED
+}
+
 enum AddressType {
   HOME
   WORK
@@ -212,6 +242,8 @@ model Customer {
   revisions Revision[]
   revisionAppointments RevisionAppointment[]
   supportTickets SupportTicket[]
+  loyaltyTransactions LoyaltyTransaction[]
+  loyaltyRedemptions  LoyaltyRedemption[]
 
   @@index([email])
   @@index([cpf])
@@ -1073,6 +1105,17 @@ model Settings {
   pwaDesktopIconUrl    String?
   pwaAppleTouchIconUrl String?
   pwaMaskableIconUrl   String?
+  loyaltyProgramName          String  @default("Clube Fidelidade M2")
+  loyaltyProgramDescription   String  @default("Acumule pontos em compras e revisoes para trocar por vantagens.")
+  loyaltyProgramActive        Boolean @default(true)
+  loyaltyPointsPerReal        Decimal @default(1) @db.Decimal(10, 2)
+  loyaltyMinPurchaseForPoints Decimal @default(50) @db.Decimal(10, 2)
+  loyaltyRevisionBonusPoints  Int     @default(25)
+  loyaltySignupBonusPoints    Int     @default(0)
+  loyaltyBirthdayBonusPoints  Int     @default(0)
+  loyaltyPointsValidityDays   Int?
+  loyaltyTierMultipliers      Json    @default("{\"BRONZE\":1,\"SILVER\":1.1,\"GOLD\":1.25,\"PLATINUM\":1.5}")
+  loyaltyTermsAndConditions   String  @default("")
 
   // Flags de Status de Conexão
   whatsappConnected  Boolean @default(false)
@@ -1085,4 +1128,77 @@ model Settings {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+model LoyaltyReward {
+  id                String              @id @default(uuid())
+  name              String
+  description       String              @db.Text
+  type              LoyaltyRewardType
+  pointsCost        Int
+  discountValue     Decimal?            @db.Decimal(10, 2)
+  minLevel          CustomerLevel       @default(BRONZE)
+  status            LoyaltyRewardStatus @default(ACTIVE)
+  usageInstructions String?             @db.Text
+  expiresAt         DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  redemptions  LoyaltyRedemption[]
+  transactions LoyaltyTransaction[]
+
+  @@index([status])
+  @@index([minLevel])
+  @@index([type])
+  @@map("loyalty_rewards")
+}
+
+model LoyaltyRedemption {
+  id          String                  @id @default(uuid())
+  customerId  String
+  rewardId    String
+  code        String                  @unique
+  pointsSpent Int
+  status      LoyaltyRedemptionStatus @default(AVAILABLE)
+  notes       String?                 @db.Text
+  expiresAt   DateTime?
+  usedAt      DateTime?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  customer     Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  reward       LoyaltyReward        @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  transactions LoyaltyTransaction[]
+
+  @@index([customerId, createdAt])
+  @@index([rewardId])
+  @@index([status])
+  @@map("loyalty_redemptions")
+}
+
+model LoyaltyTransaction {
+  id           String                 @id @default(uuid())
+  customerId   String
+  rewardId     String?
+  redemptionId String?
+  orderId      String?
+  revisionId   String?
+  type         LoyaltyTransactionType
+  points       Int
+  description  String
+  metadata     Json?
+  createdAt    DateTime               @default(now())
+
+  customer   Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  reward     LoyaltyReward?     @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  redemption LoyaltyRedemption? @relation(fields: [redemptionId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+  @@index([rewardId])
+  @@index([redemptionId])
+  @@index([orderId])
+  @@index([revisionId])
+  @@unique([orderId, type])
+  @@unique([revisionId, type])
+  @@map("loyalty_transactions")
 }

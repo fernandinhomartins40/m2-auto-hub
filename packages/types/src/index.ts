@@ -272,3 +272,99 @@ export interface CouponInfo {
   discountType: 'PERCENTAGE' | 'FIXED';
   description?: string;
 }
+
+// Loyalty Types
+export type LoyaltyTier = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+
+export type LoyaltyRewardType = 'DISCOUNT' | 'PRODUCT' | 'SERVICE' | 'GIFT';
+
+export type LoyaltyRewardStatus = 'ACTIVE' | 'INACTIVE';
+
+export type LoyaltyTransactionType =
+  | 'EARN_ORDER'
+  | 'EARN_REVISION'
+  | 'EARN_SIGNUP'
+  | 'EARN_BIRTHDAY'
+  | 'EARN_MANUAL'
+  | 'ADJUST_MANUAL'
+  | 'REDEEM_REWARD'
+  | 'EXPIRE_POINTS';
+
+export type LoyaltyRedemptionStatus = 'AVAILABLE' | 'USED' | 'EXPIRED' | 'CANCELLED';
+
+export interface LoyaltySettings {
+  programName: string;
+  programDescription: string;
+  pointsPerReal: number;
+  minPurchaseForPoints: number;
+  revisionBonusPoints: number;
+  signupBonusPoints: number;
+  birthdayBonusPoints: number;
+  pointsValidityDays?: number | null;
+  isActive: boolean;
+  tierMultipliers: Record<LoyaltyTier, number>;
+  termsAndConditions?: string;
+}
+
+export interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string;
+  type: LoyaltyRewardType;
+  pointsCost: number;
+  discountValue?: number | null;
+  minLevel: LoyaltyTier;
+  status: LoyaltyRewardStatus;
+  usageInstructions?: string | null;
+  expiresAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PointTransaction {
+  id: string;
+  customerId: string;
+  rewardId?: string | null;
+  redemptionId?: string | null;
+  orderId?: string | null;
+  revisionId?: string | null;
+  type: LoyaltyTransactionType;
+  points: number;
+  description: string;
+  createdAt: string;
+}
+
+export interface RedeemedReward {
+  id: string;
+  customerId: string;
+  rewardId: string;
+  code: string;
+  pointsSpent: number;
+  status: LoyaltyRedemptionStatus;
+  notes?: string | null;
+  expiresAt?: string | null;
+  usedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reward?: LoyaltyReward;
+  customer?: Pick<Customer, 'id' | 'name' | 'email' | 'phone' | 'level'>;
+}
+
+export interface LoyaltyStats {
+  currentPoints: number;
+  totalPointsEarned: number;
+  totalPointsRedeemed: number;
+  level: LoyaltyTier;
+  availableRewardsCount: number;
+  recentTransactionsCount: number;
+}
+
+export interface AdminLoyaltyStats {
+  totalCustomersWithPoints: number;
+  totalPointsDistributed: number;
+  totalPointsRedeemed: number;
+  totalRedemptions: number;
+  activeRewards: number;
+  programStatus: 'ACTIVE' | 'INACTIVE';
+  averagePointsPerCustomer: number;
+}

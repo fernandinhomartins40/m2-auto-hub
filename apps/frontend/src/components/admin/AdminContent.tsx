@@ -52,6 +52,7 @@ import { PromotionsManagement } from "./PromotionsManagement";
 import { PwaSettingsContent } from "./PwaSettingsContent";
 import { SettingsContent } from "./SettingsContent";
 import { CustomerRelationshipContent } from "./CustomerRelationshipContent";
+import LoyaltyManagement from "./LoyaltyManagement";
 import { AdminProductsSection } from "./AdminProductsSection";
 import { AdminServicesSection } from "./AdminServicesSection";
 import { AdminCouponsSection } from "./AdminCouponsSection";
@@ -2296,6 +2297,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         return renderCustomers();
       case 'relationship':
         return <CustomerRelationshipContent />;
+      case 'loyalty':
+        return <LoyaltyManagement />;
       case 'products':
         return (
           <AdminProductsSection

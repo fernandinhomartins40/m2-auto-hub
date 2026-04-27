@@ -7,6 +7,7 @@ import { ServicesController } from '@modules/services/services.controller.js';
 import { CouponsController } from '@modules/coupons/coupons.controller.js';
 import { PromotionsController } from '@modules/promotions/promotions.controller.js';
 import revisionAppointmentsController from '@modules/revision-appointments/revision-appointments.controller.js';
+import { loyaltyController } from '@modules/loyalty/loyalty.controller.js';
 import { AdminAuthMiddleware } from '@middlewares/admin-auth.middleware.js';
 import { AdminRole } from '@prisma/client';
 
@@ -39,6 +40,19 @@ router.use(AdminAuthMiddleware.requireMinRole(AdminRole.STAFF));
 // ==================== DASHBOARD ====================
 router.get('/dashboard/stats', adminController.getDashboardStats);
 router.get('/relationship/insights', adminController.getCustomerRelationshipInsights);
+router.get('/loyalty/stats', loyaltyController.getAdminStats);
+router.get('/loyalty/settings', loyaltyController.getAdminSettings);
+router.put('/loyalty/settings', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), loyaltyController.updateAdminSettings);
+router.get('/loyalty/rewards', loyaltyController.getAdminRewards);
+router.post('/loyalty/rewards', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), loyaltyController.createReward);
+router.put('/loyalty/rewards/:rewardId', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), loyaltyController.updateReward);
+router.delete('/loyalty/rewards/:rewardId', AdminAuthMiddleware.requireMinRole(AdminRole.ADMIN), loyaltyController.deleteReward);
+router.get('/loyalty/customers', loyaltyController.getCustomersWithPoints);
+router.get('/loyalty/customers/:customerId/stats', loyaltyController.getAdminCustomerStats);
+router.get('/loyalty/customers/:customerId/transactions', loyaltyController.getAdminCustomerTransactions);
+router.post('/loyalty/points/adjust', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), loyaltyController.adjustPoints);
+router.get('/loyalty/redemptions', loyaltyController.getAdminRedemptions);
+router.post('/loyalty/redemptions/:redemptionCode/use', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), loyaltyController.markRedemptionAsUsed);
 
 // ==================== ORDERS ====================
 router.get('/orders', adminController.getOrders);

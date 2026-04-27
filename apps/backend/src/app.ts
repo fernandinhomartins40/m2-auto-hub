@@ -27,6 +27,7 @@ import customerRoutes from '@modules/customer/customer.routes.js';
 import supportRoutes from '@modules/support/support.routes.js';
 import reportsRoutes from '@modules/reports/reports.routes.js';
 import landingPageRoutes from '@modules/landing-page/landing-page.routes.js';
+import loyaltyRoutes from '@modules/loyalty/loyalty.routes.js';
 import settingsRoutes from '@modules/settings/settings.routes.js';
 import notificationsRoutes from '@modules/notifications/notifications.routes.js';
 
@@ -108,6 +109,7 @@ export function createApp(): Express {
   app.use('/support', supportRoutes);
   app.use('/admin/reports', reportsRoutes);
   app.use('/landing-page', landingPageRoutes);
+  app.use('/loyalty', loyaltyRoutes);
   app.use('/settings', settingsRoutes);
   app.use('/', notificationsRoutes);
 

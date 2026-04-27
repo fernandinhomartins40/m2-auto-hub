@@ -291,3 +291,21 @@ export const markRewardAsUsed = async (
   );
   return response.data;
 };
+
+/**
+ * Get redeemed rewards list (admin)
+ */
+export const getAdminRedemptions = async (
+  page: number = 1,
+  limit: number = 20,
+  status?: string
+): Promise<PaginatedResponse<RedeemedReward>> => {
+  const response = await axios.get<ApiResponse<PaginatedResponse<RedeemedReward>>>(
+    `${API_URL}/admin/loyalty/redemptions`,
+    {
+      ...axiosConfig,
+      params: { page, limit, status },
+    }
+  );
+  return response.data;
+};
