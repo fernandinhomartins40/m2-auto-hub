@@ -33,15 +33,23 @@
       (function () {
         var path = window.location.pathname || "/";
         var app = "customer";
+        var search = window.location.search || "";
 
         if (
           path.indexOf("/admin-login") === 0 ||
           path.indexOf("/store-panel") === 0 ||
-          path.indexOf("/mechanic-panel") === 0 ||
           path.indexOf("/admin") === 0 ||
           path.indexOf("/pwa-entry") === 0
         ) {
           app = "admin";
+        }
+
+        if (path.indexOf("/pwa-entry") === 0 && search.indexOf("app=mechanic") !== -1) {
+          app = "mechanic";
+        }
+
+        if (path.indexOf("/mechanic-panel") === 0 || search.indexOf("source=pwa-mechanic") !== -1) {
+          app = "mechanic";
         }
 
         var manifest = document.querySelector('link[rel="manifest"]');

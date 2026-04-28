@@ -3,7 +3,7 @@ import { prisma } from '@config/database.js';
 import { UpdateSettingsDTO } from './dto/update-settings.dto.js';
 
 export class SettingsService {
-  private getDefaultPwaConfig(storeName = 'M2 Center Auto') {
+  private getDefaultCustomerPwaConfig(storeName = 'M2 Center Auto') {
     return {
       pwaName: storeName,
       pwaShortName: storeName.slice(0, 12),
@@ -16,6 +16,40 @@ export class SettingsService {
       pwaDesktopIconUrl: null,
       pwaAppleTouchIconUrl: null,
       pwaMaskableIconUrl: null,
+    } as const;
+  }
+
+  private getDefaultAdminPwaConfig(storeName = 'M2 Center Auto') {
+    const shortName = storeName.slice(0, 8).trim() || 'M2';
+    return {
+      pwaAdminName: `${storeName} Painel`,
+      pwaAdminShortName: `${shortName} Painel`,
+      pwaAdminDescription: 'Painel do lojista para vendas, operacao, revisoes e gestao da loja.',
+      pwaAdminThemeColor: '#0f172a',
+      pwaAdminBackgroundColor: '#0f172a',
+      pwaAdminDisplay: 'standalone',
+      pwaAdminIcon192Url: null,
+      pwaAdminIcon512Url: null,
+      pwaAdminDesktopIconUrl: null,
+      pwaAdminAppleTouchIconUrl: null,
+      pwaAdminMaskableIconUrl: null,
+    } as const;
+  }
+
+  private getDefaultMechanicPwaConfig(storeName = 'M2 Center Auto') {
+    const shortName = storeName.slice(0, 8).trim() || 'M2';
+    return {
+      pwaMechanicName: `${storeName} Mecanico`,
+      pwaMechanicShortName: `${shortName} Oficina`,
+      pwaMechanicDescription: 'App da oficina para mecanicos acompanharem revisoes, atendimentos e checklist.',
+      pwaMechanicThemeColor: '#0f172a',
+      pwaMechanicBackgroundColor: '#0f172a',
+      pwaMechanicDisplay: 'standalone',
+      pwaMechanicIcon192Url: null,
+      pwaMechanicIcon512Url: null,
+      pwaMechanicDesktopIconUrl: null,
+      pwaMechanicAppleTouchIconUrl: null,
+      pwaMechanicMaskableIconUrl: null,
     } as const;
   }
 
@@ -57,6 +91,28 @@ export class SettingsService {
       pwaDesktopIconUrl: settings.pwaDesktopIconUrl,
       pwaAppleTouchIconUrl: settings.pwaAppleTouchIconUrl,
       pwaMaskableIconUrl: settings.pwaMaskableIconUrl,
+      pwaAdminName: settings.pwaAdminName,
+      pwaAdminShortName: settings.pwaAdminShortName,
+      pwaAdminDescription: settings.pwaAdminDescription,
+      pwaAdminThemeColor: settings.pwaAdminThemeColor,
+      pwaAdminBackgroundColor: settings.pwaAdminBackgroundColor,
+      pwaAdminDisplay: settings.pwaAdminDisplay,
+      pwaAdminIcon192Url: settings.pwaAdminIcon192Url,
+      pwaAdminIcon512Url: settings.pwaAdminIcon512Url,
+      pwaAdminDesktopIconUrl: settings.pwaAdminDesktopIconUrl,
+      pwaAdminAppleTouchIconUrl: settings.pwaAdminAppleTouchIconUrl,
+      pwaAdminMaskableIconUrl: settings.pwaAdminMaskableIconUrl,
+      pwaMechanicName: settings.pwaMechanicName,
+      pwaMechanicShortName: settings.pwaMechanicShortName,
+      pwaMechanicDescription: settings.pwaMechanicDescription,
+      pwaMechanicThemeColor: settings.pwaMechanicThemeColor,
+      pwaMechanicBackgroundColor: settings.pwaMechanicBackgroundColor,
+      pwaMechanicDisplay: settings.pwaMechanicDisplay,
+      pwaMechanicIcon192Url: settings.pwaMechanicIcon192Url,
+      pwaMechanicIcon512Url: settings.pwaMechanicIcon512Url,
+      pwaMechanicDesktopIconUrl: settings.pwaMechanicDesktopIconUrl,
+      pwaMechanicAppleTouchIconUrl: settings.pwaMechanicAppleTouchIconUrl,
+      pwaMechanicMaskableIconUrl: settings.pwaMechanicMaskableIconUrl,
       whatsappConnected: settings.whatsappConnected,
       correiosConnected: settings.correiosConnected,
       paymentConnected: settings.paymentConnected,
@@ -120,7 +176,9 @@ export class SettingsService {
           '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
         pdfFooterLogoUrl: null,
         pdfFooterHtml: '<p>Obrigado pela preferência.</p>',
-        ...this.getDefaultPwaConfig('M2 Center Auto'),
+        ...this.getDefaultCustomerPwaConfig('M2 Center Auto'),
+        ...this.getDefaultAdminPwaConfig('M2 Center Auto'),
+        ...this.getDefaultMechanicPwaConfig('M2 Center Auto'),
         whatsappConnected: false,
         correiosConnected: false,
         paymentConnected: false,
@@ -162,7 +220,9 @@ export class SettingsService {
           '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',
         pdfFooterLogoUrl: null,
         pdfFooterHtml: '<p>Obrigado pela preferência.</p>',
-        ...this.getDefaultPwaConfig('M2 Center Auto'),
+        ...this.getDefaultCustomerPwaConfig('M2 Center Auto'),
+        ...this.getDefaultAdminPwaConfig('M2 Center Auto'),
+        ...this.getDefaultMechanicPwaConfig('M2 Center Auto'),
       } as any,
     });
   }

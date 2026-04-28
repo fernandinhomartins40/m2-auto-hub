@@ -5,6 +5,11 @@ import { AuthMiddleware } from '@middlewares/auth.middleware.js';
 const router = Router();
 const customerController = new CustomerController();
 
+// Public quote approval routes
+router.get('/public/quotes/:token', customerController.getPublicQuoteByToken);
+router.patch('/public/quotes/:token/approve', customerController.approvePublicQuote);
+router.patch('/public/quotes/:token/reject', customerController.rejectPublicQuote);
+
 // All routes require customer authentication
 router.use(AuthMiddleware.authenticate);
 

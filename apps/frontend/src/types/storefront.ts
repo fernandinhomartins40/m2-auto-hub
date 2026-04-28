@@ -34,6 +34,28 @@ export interface PublicSettings {
   pwaDesktopIconUrl?: string | null;
   pwaAppleTouchIconUrl?: string | null;
   pwaMaskableIconUrl?: string | null;
+  pwaAdminName?: string;
+  pwaAdminShortName?: string;
+  pwaAdminDescription?: string;
+  pwaAdminThemeColor?: string;
+  pwaAdminBackgroundColor?: string;
+  pwaAdminDisplay?: string;
+  pwaAdminIcon192Url?: string | null;
+  pwaAdminIcon512Url?: string | null;
+  pwaAdminDesktopIconUrl?: string | null;
+  pwaAdminAppleTouchIconUrl?: string | null;
+  pwaAdminMaskableIconUrl?: string | null;
+  pwaMechanicName?: string;
+  pwaMechanicShortName?: string;
+  pwaMechanicDescription?: string;
+  pwaMechanicThemeColor?: string;
+  pwaMechanicBackgroundColor?: string;
+  pwaMechanicDisplay?: string;
+  pwaMechanicIcon192Url?: string | null;
+  pwaMechanicIcon512Url?: string | null;
+  pwaMechanicDesktopIconUrl?: string | null;
+  pwaMechanicAppleTouchIconUrl?: string | null;
+  pwaMechanicMaskableIconUrl?: string | null;
   whatsappConnected?: boolean;
   correiosConnected?: boolean;
   paymentConnected?: boolean;
@@ -320,8 +342,31 @@ export interface StorefrontPromotion {
   bannerImage?: string | null;
   code?: string | null;
   type?: string;
+  target?: string;
+  isActive?: boolean;
+  isDraft?: boolean;
+  priority?: number;
+  usedCount?: number;
+  usageLimit?: number | null;
   startDate?: string;
   endDate?: string;
+  schedule?: {
+    startDate?: string;
+    endDate?: string;
+  } | null;
+  rewards?: {
+    primary?: {
+      type?: string;
+      value?: number;
+      maxAmount?: number;
+    };
+    secondary?: {
+      type?: string;
+      value?: number;
+      description?: string;
+    };
+    freeShipping?: boolean;
+  } | null;
 }
 
 export interface PaginationMeta {

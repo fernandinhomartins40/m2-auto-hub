@@ -12,7 +12,6 @@ import { Upload, X, Loader2, AlertCircle, RefreshCw, Info } from 'lucide-react';
 import { ImageConfig } from '@/types/landingPage';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ProductImageCropper } from '@/components/admin/ProductImageCropper';
-import imageCompression from 'browser-image-compression';
 import { toAssetUrl } from '@/lib/storefront-helpers';
 
 interface ImageUploaderWithCropProps {
@@ -54,6 +53,7 @@ export const ImageUploaderWithCrop = ({
   // Estado do crop
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  const [tempImageMimeType, setTempImageMimeType] = useState<string>('image/jpeg');
 
   useEffect(() => {
     if (localPreviewUrlRef.current && preview === localPreviewUrlRef.current) {
@@ -136,6 +136,7 @@ export const ImageUploaderWithCrop = ({
     // Criar URL temporária para o cropper
     const tempUrl = URL.createObjectURL(file);
     setTempImageUrl(tempUrl);
+    setTempImageMimeType(file.type || 'image/jpeg');
     setShowCropper(true);
   };
 
@@ -148,21 +149,22 @@ export const ImageUploaderWithCrop = ({
     setUploadProgress(0);
 
     try {
-      // Detectar tipo do blob e comprimir com WebP
-      const isWebP = croppedBlob.type === 'image/webp';
-      const mimeType = isWebP ? 'image/webp' : 'image/jpeg';
-
-      // Comprimir imagem cropada
-      const compressedFile = await imageCompression(croppedBlob as File, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: Math.max(recommendedWidth, recommendedHeight),
-        useWebWorker: true,
-        fileType: mimeType,
-        initialQuality: isWebP ? 0.90 : 0.85,
+      const extensionMap: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+      };
+      const outputMimeType =
+        croppedBlob.type && croppedBlob.type.startsWith('image/')
+          ? croppedBlob.type
+          : tempImageMimeType || 'image/jpeg';
+      const fileExtension = extensionMap[outputMimeType] || 'jpg';
+      const uploadFile = new File([croppedBlob], `landing-crop-${Date.now()}.${fileExtension}`, {
+        type: outputMimeType,
       });
 
       // Criar preview local imediatamente
-      const localPreview = URL.createObjectURL(compressedFile);
+      const localPreview = URL.createObjectURL(uploadFile);
       if (localPreviewUrlRef.current) {
         URL.revokeObjectURL(localPreviewUrlRef.current);
       }
@@ -170,7 +172,7 @@ export const ImageUploaderWithCrop = ({
       setPreview(localPreview);
 
       // Upload para servidor com categoria
-      const imageUrl = await uploadImage(compressedFile, category);
+      const imageUrl = await uploadImage(uploadFile, category);
 
       // Atualizar com URL real do servidor
       setPreview(toAssetUrl(imageUrl) || imageUrl);
@@ -186,6 +188,7 @@ export const ImageUploaderWithCrop = ({
         URL.revokeObjectURL(tempImageUrl);
         setTempImageUrl(null);
       }
+      setTempImageMimeType('image/jpeg');
       if (localPreviewUrlRef.current) {
         URL.revokeObjectURL(localPreviewUrlRef.current);
         localPreviewUrlRef.current = null;
@@ -217,6 +220,7 @@ export const ImageUploaderWithCrop = ({
       URL.revokeObjectURL(tempImageUrl);
       setTempImageUrl(null);
     }
+    setTempImageMimeType('image/jpeg');
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -457,6 +461,13 @@ export const ImageUploaderWithCrop = ({
               onComplete={handleCropComplete}
               onCancel={handleCropCancel}
               aspectRatio={aspectRatio || 1}
+              outputMimeType={
+                tempImageMimeType === 'image/png' || tempImageMimeType === 'image/webp'
+                  ? tempImageMimeType
+                  : 'image/jpeg'
+              }
+              outputQuality={0.985}
+              qualityLabel="Qualidade máxima"
             />
           )}
         </DialogContent>

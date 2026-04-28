@@ -72,7 +72,12 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-stone-100 p-4">
       <div className="w-full max-w-md space-y-4">
-        {showInstallBanner && <PwaInstallBanner appType="admin" />}
+        {showInstallBanner ? (
+          <div className="space-y-3">
+            <PwaInstallBanner appType="admin" />
+            <PwaInstallBanner appType="mechanic" />
+          </div>
+        ) : null}
 
         <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
           <div className="text-center mb-8">

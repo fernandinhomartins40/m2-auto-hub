@@ -18,7 +18,6 @@ import {
   MessageCircle,
   CheckCircle,
   XCircle,
-  Send,
   Calculator,
   Loader2
 } from "lucide-react";
@@ -81,6 +80,14 @@ export function QuoteModal({ quote, isOpen, onClose, onUpdate, onOpenOrder }: Qu
     return items.reduce((sum, item) => sum + (item.quotedPrice * item.quantity), 0);
   };
 
+  const buildPublicApprovalUrl = (approvalToken?: string | null) => {
+    if (!approvalToken) {
+      return null;
+    }
+
+    return `${window.location.origin}/quote-approval/${approvalToken}`;
+  };
+
   const handlePriceChange = (itemId: string, value: string) => {
     const price = parseFloat(value) || 0;
     setItems(items.map(item =>
@@ -107,7 +114,10 @@ export function QuoteModal({ quote, isOpen, onClose, onUpdate, onOpenOrder }: Qu
         quotedPrice: item.quotedPrice
       }));
 
-      await adminService.updateQuotePrices(quote.id, itemsWithPrices);
+      await adminService.updateQuotePrices(quote.id, itemsWithPrices, {
+        observations,
+        validityDays,
+      });
 
       toast({
         title: "✅ Orçamento salvo",
@@ -132,36 +142,82 @@ export function QuoteModal({ quote, isOpen, onClose, onUpdate, onOpenOrder }: Qu
     }
   };
 
-  const handleSendWhatsApp = () => {
-    const total = calculateTotal();
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + validityDays);
+  const handleSendWhatsApp = async () => {
+    const hasEmptyPrices = items.some(item => !item.quotedPrice || item.quotedPrice <= 0);
+    if (hasEmptyPrices) {
+      toast({
+        title: "Atenção",
+        description: "Defina preços válidos para todos os serviços antes de enviar o link.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const itemsList = items.map(item =>
-      `• ${item.name} (${item.quantity}x) - ${formatCurrency(item.quotedPrice * item.quantity)}`
-    ).join('\n');
+    setIsUpdating(true);
+    try {
+      const itemsWithPrices = items.map(item => ({
+        id: item.id,
+        quotedPrice: item.quotedPrice
+      }));
 
-    const message = `Olá ${quote.customerName}!
+      await adminService.updateQuotePrices(quote.id, itemsWithPrices, {
+        observations,
+        validityDays,
+      });
 
-🔧 *Orçamento #${quote.id}*
+      const refreshedQuote = await adminService.getQuoteById(quote.id);
+      const approvalUrl = buildPublicApprovalUrl(refreshedQuote.publicApprovalToken);
 
-Segue o orçamento solicitado:
+      if (!approvalUrl) {
+        throw new Error("Nao foi possivel gerar o link publico de aprovacao.");
+      }
+
+      const total = calculateTotal();
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + validityDays);
+
+      const itemsList = items
+        .map(item => `• ${item.name} (${item.quantity}x) - ${formatCurrency(item.quotedPrice * item.quantity)}`)
+        .join('\n');
+
+      const message = `Olá ${quote.customerName}!
+
+🔧 *Orçamento #${quote.id.slice(0, 8).toUpperCase()}*
 
 ${itemsList}
 
-━━━━━━━━━━━━━━━━
 *TOTAL: ${formatCurrency(total)}*
-━━━━━━━━━━━━━━━━
+${observations ? `\nObservações: ${observations}` : ""}
+Validade: até ${validUntil.toLocaleDateString('pt-BR')}
 
-${observations ? `\n📋 Observações:\n${observations}\n` : ''}
-⏰ Validade: até ${validUntil.toLocaleDateString('pt-BR')}
+Para aprovar sem login, acesse:
+${approvalUrl}
 
-Para aprovar este orçamento, responda esta mensagem ou entre em contato conosco!
+Se preferir, posso tirar suas dúvidas por aqui.`;
 
-Estou à disposição para esclarecer dúvidas! 😊`;
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${quote.customerWhatsApp.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
 
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${quote.customerWhatsApp.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+      toast({
+        title: "Link público pronto",
+        description: "O WhatsApp foi aberto com o link público de aprovação.",
+      });
+
+      onUpdate();
+    } catch (error: any) {
+      console.error('Erro ao enviar link publico do orçamento:', error);
+      toast({
+        title: "Erro ao enviar link",
+        description:
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Não foi possível gerar o link público de aprovação.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleApprove = async () => {
@@ -245,7 +301,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
     }
 
     if (status === 'APPROVED' || status === 'accepted') {
-      return { label: 'Aprovado pelo cliente', color: 'bg-green-100 text-green-800' };
+      return { label: 'Aprovado e convertido', color: 'bg-green-100 text-green-800' };
     }
 
     if (status === 'REJECTED' || status === 'rejected') {
@@ -255,12 +311,12 @@ Estou à disposição para esclarecer dúvidas! 😊`;
     const statusMap: Record<string, { label: string; color: string }> = {
       PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
       QUOTED: { label: 'Orçado', color: 'bg-blue-100 text-blue-800' },
-      APPROVED: { label: 'Aprovado', color: 'bg-green-100 text-green-800' },
+      APPROVED: { label: 'Aprovado e convertido', color: 'bg-green-100 text-green-800' },
       REJECTED: { label: 'Rejeitado', color: 'bg-red-100 text-red-800' },
       // Mapeamento antigo para compatibilidade
       pending: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
       responded: { label: 'Orçado', color: 'bg-blue-100 text-blue-800' },
-      accepted: { label: 'Aprovado', color: 'bg-green-100 text-green-800' },
+      accepted: { label: 'Aprovado e convertido', color: 'bg-green-100 text-green-800' },
       rejected: { label: 'Rejeitado', color: 'bg-red-100 text-red-800' },
     };
     return statusMap[status] || statusMap.PENDING;
@@ -287,7 +343,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
             {new Date(quote.createdAt).toLocaleTimeString('pt-BR')}
           </p>
           <p className="text-xs text-muted-foreground">
-            Fluxo correto: a loja envia o orçamento ao cliente e, quando ele aprova, o orçamento vira pedido.
+            Fluxo: a loja pode enviar o link público de aprovação ao cliente ou aprovar manualmente quando já tiver a confirmação fora do painel.
           </p>
         </DialogHeader>
 
@@ -435,14 +491,14 @@ Estou à disposição para esclarecer dúvidas! 😊`;
               className="flex-1 bg-green-600 hover:bg-green-700"
             >
               <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
-              WhatsApp
+              WhatsApp com link
             </Button>
           </div>
 
           <div className="flex gap-2">
             <Button
               onClick={handleApprove}
-              disabled={isUpdating || !isQuoted}
+              disabled={isUpdating || isRejected || isApproved || total === 0}
               variant="outline"
               size="sm"
               className="flex-1 border-green-600 text-green-700 hover:bg-green-50"
@@ -453,7 +509,7 @@ Estou à disposição para esclarecer dúvidas! 😊`;
               ) : (
                 <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
               )}
-              {isUpdating ? "Convertendo..." : "Cliente Aprovou -> Virar Pedido"}
+              {isUpdating ? "Convertendo..." : "Aprovar manualmente e virar pedido"}
             </Button>
             <Button
               onClick={handleReject}

@@ -19,6 +19,7 @@ import MechanicPanelPage from "./pages/MechanicPanelPage";
 import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
 import PwaEntryPage from "./pages/PwaEntryPage";
+import PublicQuoteApprovalPage from "./pages/PublicQuoteApprovalPage";
 import StorePanel from "./pages/StorePanel";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
                           <Route path="/pwa-entry" element={<PwaEntryPage />} />
                           <Route path="/customer" element={<CustomerPanel />} />
                           <Route path="/my-account" element={<MyAccount />} />
+                          <Route path="/quote-approval/:token" element={<PublicQuoteApprovalPage />} />
                           <Route path="/store-panel" element={<StorePanel />} />
                           <Route path="/mechanic-panel" element={<MechanicPanelPage />} />
                           <Route path="/admin" element={<Navigate to="/store-panel" replace />} />

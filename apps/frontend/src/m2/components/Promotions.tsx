@@ -8,6 +8,7 @@ import {
   toAssetUrl,
 } from "@/lib/storefront-helpers";
 import type { StorefrontOffer } from "@/types/storefront";
+import type { StorefrontPromotion } from "@/types/storefront";
 
 function getBadgeClass(text?: string | null) {
   const normalized = (text ?? "").toLowerCase();
@@ -222,6 +223,96 @@ function OfferGroup({
   );
 }
 
+function getPromotionRewardLabel(promotion: StorefrontPromotion) {
+  const rewardType = promotion.rewards?.primary?.type;
+  const rewardValue = promotion.rewards?.primary?.value ?? 0;
+
+  switch (rewardType) {
+    case "PERCENTAGE":
+      return `${rewardValue}% OFF`;
+    case "FIXED":
+      return formatCurrency(rewardValue);
+    case "FREE_SHIPPING":
+      return "Frete gratis";
+    case "LOYALTY_POINTS":
+      return `${rewardValue} pontos`;
+    case "CASHBACK":
+      return `${formatCurrency(rewardValue)} de cashback`;
+    default:
+      return promotion.badgeText || "Campanha ativa";
+  }
+}
+
+function PromotionCard({
+  promotion,
+  whatsappNumber,
+}: {
+  promotion: StorefrontPromotion;
+  whatsappNumber?: string;
+}) {
+  const imageUrl = toAssetUrl(promotion.bannerImage);
+  const startDate = promotion.schedule?.startDate || promotion.startDate;
+  const endDate = promotion.schedule?.endDate || promotion.endDate;
+  const whatsappLink = buildWhatsAppHref(
+    whatsappNumber,
+    `Ola! Quero saber mais sobre a promocao ${promotion.name}.`
+  );
+
+  return (
+    <div className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="relative aspect-[4/3] overflow-hidden border-b border-slate-200 bg-slate-50">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={promotion.name}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-primary/10">
+            <BadgePercent className="text-primary" size={40} />
+          </div>
+        )}
+
+        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+          <span className="rounded-full bg-primary px-3 py-1 text-xs font-heading font-bold text-primary-foreground">
+            {getPromotionRewardLabel(promotion)}
+          </span>
+          {promotion.badgeText ? (
+            <span className="rounded-full bg-badge-highlight px-3 py-1 text-xs font-heading font-bold text-primary-foreground">
+              {promotion.badgeText}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="p-5">
+        <h3 className="mb-2 font-heading text-xl font-bold text-slate-900">
+          {promotion.name}
+        </h3>
+        <p className="mb-3 text-sm text-slate-600">
+          {promotion.shortDescription || promotion.description}
+        </p>
+        {startDate || endDate ? (
+          <p className="mb-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+            {startDate ? `Inicio: ${new Date(startDate).toLocaleDateString("pt-BR")}` : ""}
+            {startDate && endDate ? " · " : ""}
+            {endDate ? `Fim: ${new Date(endDate).toLocaleDateString("pt-BR")}` : ""}
+          </p>
+        ) : null}
+
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-md bg-primary px-6 py-3 text-center font-heading font-bold text-primary-foreground transition-all hover:scale-105 hover:bg-primary/90"
+        >
+          Consultar Promocao
+        </a>
+      </div>
+    </div>
+  );
+}
+
 const Promotions = () => {
   const { dailyOffers, weeklyOffers, monthlyOffers, landingConfig, promotions, settings } =
     useStorefront();
@@ -294,6 +385,34 @@ const Promotions = () => {
           whatsappNumber={settings.whatsapp || settings.phone}
           accent="gold"
         />
+
+        {promotions.length > 0 ? (
+          <div className="mb-12 rounded-2xl border border-white/20 bg-white/95 p-6 md:p-8">
+            <div className="mb-8 flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
+                <BadgePercent className="text-primary" size={28} />
+              </div>
+              <div>
+                <h3 className="font-heading text-2xl font-bold text-slate-900">
+                  Campanhas e Promocoes
+                </h3>
+                <p className="text-sm text-slate-600">
+                  Promocoes configuradas no painel e disponiveis para consulta na loja.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {promotions.map((promotion) => (
+                <PromotionCard
+                  key={promotion.id}
+                  promotion={promotion}
+                  whatsappNumber={settings.whatsapp || settings.phone}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {!hasStructuredOffers && promotions.length === 0 ? (
           <div className="mb-12 rounded-xl border border-primary/20 bg-secondary/70 p-8 text-center">

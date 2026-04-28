@@ -9,6 +9,15 @@ const router = Router();
 // ==================== ADMIN ROUTES ====================
 
 /**
+ * @route   GET /admin/notifications/center
+ * @desc    Get unified notification center for admin
+ * @access  Admin only
+ */
+router.get('/admin/notifications/center', AdminAuthMiddleware.authenticate, (req, res) =>
+  notificationsController.getAdminNotificationCenter(req, res)
+);
+
+/**
  * @route   GET /admin/notifications
  * @desc    Get all notifications for admin
  * @access  Admin only

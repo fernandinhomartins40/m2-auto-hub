@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-type PwaAppType = "customer" | "admin";
+type PwaAppType = "customer" | "admin" | "mechanic";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;

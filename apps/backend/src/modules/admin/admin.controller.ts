@@ -11,6 +11,7 @@ const exportQuotePdfSchema = z.object({
 });
 
 const exportOrderPdfSchema = exportQuotePdfSchema;
+const exportCustomerPdfSchema = exportQuotePdfSchema;
 
 export class AdminController {
   private adminService: AdminService;
@@ -293,6 +294,50 @@ export class AdminController {
     }
   };
 
+  exportCustomersPdf = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { html, filename } = exportCustomerPdfSchema.parse(req.body);
+      const pdfBuffer = await pdfGeneratorService.generatePdfBuffer({
+        title: 'Listagem de clientes',
+        bodyHtml: html,
+      });
+
+      const safeFilename = pdfGeneratorService.sanitizeFilename(
+        filename || `clientes-${new Date().toISOString().slice(0, 10)}`
+      );
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  exportCustomerPdf = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { html, filename } = exportCustomerPdfSchema.parse(req.body);
+      const customer = await this.adminService.getCustomerById(id);
+      const pdfBuffer = await pdfGeneratorService.generatePdfBuffer({
+        title: `Ficha cadastral ${customer.name}`,
+        bodyHtml: html,
+      });
+
+      const safeFilename = pdfGeneratorService.sanitizeFilename(
+        filename || `cliente-${customer.name}`
+      );
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   recognizeVehiclePlate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.file) {
@@ -419,11 +464,14 @@ export class AdminController {
   updateQuotePrices = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { items } = req.body;
-      const order = await this.adminService.updateQuotePrices(id, items);
+      const { items, observations, validityDays } = req.body;
+      const order = await this.adminService.updateQuotePrices(id, items, {
+        observations,
+        validityDays,
+      });
 
       try {
-        await notificationsService.notifyQuoteResponded(order.customerId, order.id);
+        await notificationsService.notifyQuoteResponded(order.userId, order.id);
       } catch (notificationError) {
         console.error('Failed to notify customer about quote response:', notificationError);
       }

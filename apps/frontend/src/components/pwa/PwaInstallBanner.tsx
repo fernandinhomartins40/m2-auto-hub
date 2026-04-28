@@ -1,11 +1,11 @@
-import { useEffect } from "react";
-import { Download, MonitorSmartphone, Share2, Shield, Smartphone, User, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Download, MonitorSmartphone, Share2, Shield, Smartphone, User, Wrench, X } from "lucide-react";
 
 import { useStorefront } from "@/context/StorefrontContext";
 import { usePwaInstallPrompt } from "@/hooks/usePwaInstallPrompt";
 import { Button } from "@/components/ui/button";
 
-type PwaAppType = "customer" | "admin";
+type PwaAppType = "customer" | "admin" | "mechanic";
 
 interface PwaInstallBannerProps {
   appType: PwaAppType;
@@ -41,35 +41,92 @@ export function PwaInstallBanner({ appType, className = "" }: PwaInstallBannerPr
   const { isIos, isAndroid, canPromptInstall, shouldShow, isInstalling, dismiss, promptInstall } =
     usePwaInstallPrompt(appType);
 
-  const brandName = settings.pwaName?.trim() || settings.storeName || "M2 Center Auto";
-  const appName = appType === "admin" ? `${brandName} Painel` : `${brandName} Cliente`;
-  const themeColor = settings.pwaThemeColor || "#0f172a";
-  const browserIconHref =
-    settings.pwaDesktopIconUrl ||
-    settings.pwaIcon512Url ||
-    settings.pwaIcon192Url ||
-    "/favicon.png";
+  const profile = useMemo(() => {
+    if (appType === "admin") {
+      const fallbackName = settings.storeName || "M2 Center Auto";
+      return {
+        appName: settings.pwaAdminName?.trim() || `${fallbackName} Painel`,
+        themeColor: settings.pwaAdminThemeColor || "#0f172a",
+        browserIconHref:
+          settings.pwaAdminDesktopIconUrl ||
+          settings.pwaAdminIcon512Url ||
+          settings.pwaAdminIcon192Url ||
+          "/favicon.png",
+        bannerIconHref:
+          settings.pwaAdminDesktopIconUrl ||
+          settings.pwaAdminIcon512Url ||
+          settings.pwaAdminIcon192Url ||
+          settings.pwaAdminAppleTouchIconUrl ||
+          settings.pwaAdminMaskableIconUrl ||
+          "/favicon.png",
+      };
+    }
+
+    if (appType === "mechanic") {
+      const fallbackName = settings.storeName || "M2 Center Auto";
+      return {
+        appName: settings.pwaMechanicName?.trim() || `${fallbackName} Mecanico`,
+        themeColor: settings.pwaMechanicThemeColor || "#0f172a",
+        browserIconHref:
+          settings.pwaMechanicDesktopIconUrl ||
+          settings.pwaMechanicIcon512Url ||
+          settings.pwaMechanicIcon192Url ||
+          "/favicon.png",
+        bannerIconHref:
+          settings.pwaMechanicDesktopIconUrl ||
+          settings.pwaMechanicIcon512Url ||
+          settings.pwaMechanicIcon192Url ||
+          settings.pwaMechanicAppleTouchIconUrl ||
+          settings.pwaMechanicMaskableIconUrl ||
+          "/favicon.png",
+      };
+    }
+
+    const fallbackName = settings.storeName || "M2 Center Auto";
+    return {
+      appName: settings.pwaName?.trim() || `${fallbackName} Cliente`,
+      themeColor: settings.pwaThemeColor || "#0f172a",
+      browserIconHref:
+        settings.pwaDesktopIconUrl ||
+        settings.pwaIcon512Url ||
+        settings.pwaIcon192Url ||
+        "/favicon.png",
+      bannerIconHref:
+        settings.pwaDesktopIconUrl ||
+        settings.pwaIcon512Url ||
+        settings.pwaIcon192Url ||
+        settings.pwaAppleTouchIconUrl ||
+        settings.pwaMaskableIconUrl ||
+        "/favicon.png",
+    };
+  }, [appType, settings]);
   const manifestHref = `/api/settings/pwa-manifest.webmanifest?app=${appType}`;
   const appleTouchIconHref = `/api/settings/pwa-apple-touch-icon.png?app=${appType}`;
+  const [iconLoadFailed, setIconLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setIconLoadFailed(false);
+  }, [profile.bannerIconHref]);
 
   useEffect(() => {
     upsertLink("manifest", manifestHref);
-    upsertLink("icon", browserIconHref);
+    upsertLink("icon", profile.browserIconHref);
     upsertLink("apple-touch-icon", appleTouchIconHref);
-    upsertThemeColor(themeColor);
-  }, [appleTouchIconHref, browserIconHref, manifestHref, themeColor]);
+    upsertThemeColor(profile.themeColor);
+  }, [appleTouchIconHref, manifestHref, profile.browserIconHref, profile.themeColor]);
 
   if (!shouldShow) {
     return null;
   }
 
-  const Icon = appType === "admin" ? Shield : User;
-  const title =
-    appType === "admin" ? "Instale o app do painel" : "Instale o app do cliente";
+  const Icon = appType === "admin" ? Shield : appType === "mechanic" ? Wrench : User;
+  const title = appType === "admin" ? "Instale o app do lojista" : appType === "mechanic" ? "Instale o app do mecanico" : "Instale o app do cliente";
   const description =
     appType === "admin"
-      ? "Tenha um atalho dedicado para lojista e mecanico, com abertura direta do painel interno."
-      : "Abra pedidos, veiculos, revisoes e suporte em um app proprio no celular do cliente.";
+      ? "Tenha um atalho dedicado para vendas, operacao e gestao da loja."
+      : appType === "mechanic"
+        ? "Use um app proprio da oficina para revisar checklist, atendimentos e fluxo tecnico."
+        : "Abra pedidos, veiculos, revisoes e suporte em um app proprio no celular do cliente.";
   const showPromptCard = canPromptInstall && !isIos;
   const promptLabel = isAndroid ? "Instalacao no Android" : "Instalacao no navegador";
   const PromptIcon = isAndroid ? Smartphone : MonitorSmartphone;
@@ -93,15 +150,24 @@ export function PwaInstallBanner({ appType, className = "" }: PwaInstallBannerPr
 
       <div className="pr-8">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white">
-            <Icon className="h-5 w-5" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900 text-white">
+            {!iconLoadFailed && profile.bannerIconHref ? (
+              <img
+                src={profile.bannerIconHref}
+                alt={profile.appName}
+                className="h-full w-full object-contain"
+                onError={() => setIconLoadFailed(true)}
+              />
+            ) : (
+              <Icon className="h-5 w-5" />
+            )}
           </div>
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-semibold text-slate-900">{title}</h3>
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-slate-600">
-                {appName}
+                {profile.appName}
               </span>
             </div>
             <p className="mt-1 text-sm text-slate-600">{description}</p>

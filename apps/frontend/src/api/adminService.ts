@@ -42,6 +42,8 @@ export interface Quote {
   quotedAt?: string | null;
   quoteApprovedAt?: string | null;
   quoteNotes?: string | null;
+  publicApprovalToken?: string | null;
+  publicApprovalExpiresAt?: string | null;
   source?: 'website' | 'whatsapp' | 'phone';
 }
 
@@ -61,6 +63,56 @@ export interface ExportQuotePdfPayload {
 export interface ExportOrderPdfPayload {
   html: string;
   filename?: string;
+}
+
+export interface ExportCustomerPdfPayload {
+  html: string;
+  filename?: string;
+}
+
+export interface AdminNotificationCenterItem {
+  id: string;
+  source: 'persisted' | 'alert';
+  type:
+    | 'order'
+    | 'quote'
+    | 'stock'
+    | 'revision'
+    | 'loyalty'
+    | 'customer'
+    | 'promotion'
+    | 'coupon'
+    | 'system';
+  backendType?: string;
+  title: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high';
+  read: boolean;
+  readAt: string | null;
+  createdAt: string;
+  actionLabel: string;
+  actionUrl: string;
+  actionTab: string;
+  data?: any;
+}
+
+export interface AdminNotificationCenterSummary {
+  unread: number;
+  persisted: number;
+  pendingOrders: number;
+  pendingQuotes: number;
+  stockAlerts: number;
+  revisionAlerts: number;
+  loyaltyAlerts: number;
+  relationshipAlerts: number;
+  customerAlerts: number;
+  marketingAlerts: number;
+}
+
+export interface AdminNotificationCenterResponse {
+  generatedAt: string;
+  summary: AdminNotificationCenterSummary;
+  notifications: AdminNotificationCenterItem[];
 }
 
 export interface AdminService {
@@ -136,6 +188,17 @@ export interface ProvisionalUser {
   status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
   createdAt: string;
   updatedAt: string;
+  addresses?: Array<{
+    id: string;
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    type: string;
+  }>;
 }
 
 export interface CustomerRelationshipInsight {
@@ -473,8 +536,16 @@ class AdminService {
     window.URL.revokeObjectURL(url);
   }
 
-  async updateQuotePrices(id: string, items: Array<{ id: string; quotedPrice: number }>): Promise<Quote> {
-    const response = await apiClient.patch(`/admin/quotes/${id}/prices`, { items });
+  async updateQuotePrices(
+    id: string,
+    items: Array<{ id: string; quotedPrice: number }>,
+    options?: { observations?: string; validityDays?: number }
+  ): Promise<Quote> {
+    const response = await apiClient.patch(`/admin/quotes/${id}/prices`, {
+      items,
+      observations: options?.observations,
+      validityDays: options?.validityDays,
+    });
     return response.data;
   }
 
@@ -700,6 +771,48 @@ class AdminService {
   async getCustomerById(id: string): Promise<ProvisionalUser> {
     const response = await apiClient.get(`/admin/customers/${id}`);
     return response.data;
+  }
+
+  async exportCustomerPdf(id: string, payload: ExportCustomerPdfPayload): Promise<void> {
+    const response = await apiClient.post(`/admin/customers/${id}/export-pdf`, payload, {
+      responseType: 'blob',
+      timeout: 30000,
+    });
+
+    const contentDisposition = response.headers['content-disposition'];
+    const fallbackFilename = payload.filename || `cliente-${id.slice(0, 8)}.pdf`;
+    const matchedFilename = contentDisposition?.match(/filename=\"?([^\"]+)\"?/i)?.[1];
+    const filename = matchedFilename || fallbackFilename;
+
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  async exportCustomersPdf(payload: ExportCustomerPdfPayload): Promise<void> {
+    const response = await apiClient.post('/admin/customers/export-pdf', payload, {
+      responseType: 'blob',
+      timeout: 30000,
+    });
+
+    const contentDisposition = response.headers['content-disposition'];
+    const fallbackFilename = payload.filename || 'clientes.pdf';
+    const matchedFilename = contentDisposition?.match(/filename=\"?([^\"]+)\"?/i)?.[1];
+    const filename = matchedFilename || fallbackFilename;
+
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   }
 
   async updateCustomerLevel(id: string, level: string): Promise<ProvisionalUser> {
@@ -950,6 +1063,14 @@ class AdminService {
     updatedAt: string;
   }>> {
     const response = await apiClient.get('/admin/notifications', { params });
+    return response.data;
+  }
+
+  /**
+   * Get complete admin notification center
+   */
+  async getNotificationCenter(): Promise<AdminNotificationCenterResponse> {
+    const response = await apiClient.get('/admin/notifications/center');
     return response.data;
   }
 

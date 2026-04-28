@@ -13,32 +13,84 @@ export class SettingsController {
     return `${req.protocol}://${req.get('host')}${value}`;
   }
 
+  private getPwaApp(req: Request): 'customer' | 'admin' | 'mechanic' {
+    const app = String(req.query.app || 'customer');
+    if (app === 'admin' || app === 'mechanic') {
+      return app;
+    }
+
+    return 'customer';
+  }
+
   private buildPwaProfile(req: Request, settings: any) {
-    const app = req.query.app === 'admin' ? 'admin' : 'customer';
-    const baseName = settings.pwaName?.trim() || settings.storeName || 'M2 Center Auto';
-    const baseShortName = settings.pwaShortName?.trim() || baseName.slice(0, 12);
+    const app = this.getPwaApp(req);
+    const baseName = settings.storeName || 'M2 Center Auto';
 
     if (app === 'admin') {
       return {
         id: '/pwa/admin',
-        name: `${baseName} Painel`,
-        shortName: `${baseShortName.slice(0, 8)} Painel`.trim(),
+        name: settings.pwaAdminName?.trim() || `${baseName} Painel`,
+        shortName: settings.pwaAdminShortName?.trim() || `${baseName.slice(0, 8)} Painel`.trim(),
         description:
-          'Acesse o painel do lojista, da oficina e da equipe com instalacao dedicada no celular.',
+          settings.pwaAdminDescription?.trim() ||
+          'Acesse o painel do lojista para vendas, operacao e gestao da loja.',
         startUrl: '/pwa-entry?app=admin',
         scope: '/',
+        display: settings.pwaAdminDisplay || 'standalone',
+        backgroundColor: settings.pwaAdminBackgroundColor || '#0f172a',
+        themeColor: settings.pwaAdminThemeColor || '#0f172a',
+        icons: {
+          icon192: settings.pwaAdminIcon192Url,
+          icon512: settings.pwaAdminIcon512Url,
+          desktop: settings.pwaAdminDesktopIconUrl,
+          apple: settings.pwaAdminAppleTouchIconUrl,
+          maskable: settings.pwaAdminMaskableIconUrl,
+        },
+      };
+    }
+
+    if (app === 'mechanic') {
+      return {
+        id: '/pwa/mechanic',
+        name: settings.pwaMechanicName?.trim() || `${baseName} Mecanico`,
+        shortName: settings.pwaMechanicShortName?.trim() || `${baseName.slice(0, 8)} Oficina`.trim(),
+        description:
+          settings.pwaMechanicDescription?.trim() ||
+          'Acompanhe revisoes, checklist e atendimento da oficina em um app dedicado.',
+        startUrl: '/pwa-entry?app=mechanic',
+        scope: '/',
+        display: settings.pwaMechanicDisplay || 'standalone',
+        backgroundColor: settings.pwaMechanicBackgroundColor || '#0f172a',
+        themeColor: settings.pwaMechanicThemeColor || '#0f172a',
+        icons: {
+          icon192: settings.pwaMechanicIcon192Url,
+          icon512: settings.pwaMechanicIcon512Url,
+          desktop: settings.pwaMechanicDesktopIconUrl,
+          apple: settings.pwaMechanicAppleTouchIconUrl,
+          maskable: settings.pwaMechanicMaskableIconUrl,
+        },
       };
     }
 
     return {
       id: '/pwa/customer',
-      name: `${baseName} Cliente`,
-      shortName: `${baseShortName.slice(0, 8)} Cliente`.trim(),
+      name: settings.pwaName?.trim() || `${baseName} Cliente`,
+      shortName: settings.pwaShortName?.trim() || `${baseName.slice(0, 8)} Cliente`.trim(),
       description:
         settings.pwaDescription?.trim() ||
         'Acesse sua area do cliente, acompanhe pedidos, revisoes e veiculos pelo celular.',
       startUrl: '/customer?source=pwa-customer',
       scope: '/',
+      display: settings.pwaDisplay || 'standalone',
+      backgroundColor: settings.pwaBackgroundColor || '#0f172a',
+      themeColor: settings.pwaThemeColor || '#0f172a',
+      icons: {
+        icon192: settings.pwaIcon192Url,
+        icon512: settings.pwaIcon512Url,
+        desktop: settings.pwaDesktopIconUrl,
+        apple: settings.pwaAppleTouchIconUrl,
+        maskable: settings.pwaMaskableIconUrl,
+      },
     };
   }
 
@@ -74,31 +126,31 @@ export class SettingsController {
       const profile = this.buildPwaProfile(req, settings);
 
       const icons = [
-        settings.pwaDesktopIconUrl
+        profile.icons.desktop
           ? {
-              src: this.buildAbsoluteUrl(req, settings.pwaDesktopIconUrl),
+              src: this.buildAbsoluteUrl(req, profile.icons.desktop),
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             }
           : null,
-        settings.pwaIcon192Url
+        profile.icons.icon192
           ? {
-              src: this.buildAbsoluteUrl(req, settings.pwaIcon192Url),
+              src: this.buildAbsoluteUrl(req, profile.icons.icon192),
               sizes: '192x192',
               type: 'image/png',
             }
           : null,
-        settings.pwaIcon512Url
+        profile.icons.icon512
           ? {
-              src: this.buildAbsoluteUrl(req, settings.pwaIcon512Url),
+              src: this.buildAbsoluteUrl(req, profile.icons.icon512),
               sizes: '512x512',
               type: 'image/png',
             }
           : null,
-        settings.pwaMaskableIconUrl
+        profile.icons.maskable
           ? {
-              src: this.buildAbsoluteUrl(req, settings.pwaMaskableIconUrl),
+              src: this.buildAbsoluteUrl(req, profile.icons.maskable),
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable',
@@ -113,9 +165,9 @@ export class SettingsController {
         description: profile.description,
         start_url: profile.startUrl,
         scope: profile.scope,
-        display: settings.pwaDisplay || 'standalone',
-        background_color: settings.pwaBackgroundColor || '#0f172a',
-        theme_color: settings.pwaThemeColor || '#0f172a',
+        display: profile.display,
+        background_color: profile.backgroundColor,
+        theme_color: profile.themeColor,
         lang: 'pt-BR',
         orientation: 'portrait',
         icons,
@@ -129,15 +181,16 @@ export class SettingsController {
     }
   }
 
-  async getAppleTouchIcon(_req: Request, res: Response): Promise<void> {
+  async getAppleTouchIcon(req: Request, res: Response): Promise<void> {
     try {
       const settings = await settingsService.getSettings();
+      const profile = this.buildPwaProfile(req, settings);
       const iconUrl =
-        settings.pwaAppleTouchIconUrl ||
-        settings.pwaDesktopIconUrl ||
-        settings.pwaIcon192Url ||
-        settings.pwaIcon512Url ||
-        settings.pwaMaskableIconUrl;
+        profile.icons.apple ||
+        profile.icons.desktop ||
+        profile.icons.icon192 ||
+        profile.icons.icon512 ||
+        profile.icons.maskable;
 
       if (!iconUrl) {
         res.status(404).end();

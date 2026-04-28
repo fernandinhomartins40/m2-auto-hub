@@ -4,6 +4,7 @@ import { HashUtil } from '@shared/utils/hash.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
 import { PhoneUtil } from '@shared/utils/phone.util.js';
+import { randomUUID } from 'crypto';
 
 // ==================== TYPES ====================
 
@@ -41,6 +42,8 @@ interface OrderWithRelations {
   quotedAt: Date | null;
   quoteApprovedAt: Date | null;
   quoteNotes: string | null;
+  publicQuoteApprovalToken?: string | null;
+  publicQuoteApprovalExpiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   customer: {
@@ -49,6 +52,17 @@ interface OrderWithRelations {
     email?: string;
   };
   items: OrderItemWithRelations[];
+  address?: {
+    id: string;
+    street: string;
+    number: string;
+    complement?: string | null;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    type: string;
+  } | null;
 }
 
 interface RelationshipInsightCustomer {
@@ -368,7 +382,10 @@ export class AdminService {
 
   async getCustomerById(id: string) {
     const customer = await prisma.customer.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        addresses: true,
+      },
     });
 
     if (!customer) {
@@ -818,7 +835,11 @@ export class AdminService {
     return this.mapOrderToQuote(order);
   }
 
-  async updateQuotePrices(id: string, items: Array<{ id: string; quotedPrice: number }>) {
+  async updateQuotePrices(
+    id: string,
+    items: Array<{ id: string; quotedPrice: number }>,
+    options?: { observations?: string; validityDays?: number }
+  ) {
     // Atualizar preços dos itens
     await Promise.all(
       items.map(item =>
@@ -857,11 +878,18 @@ export class AdminService {
         total: newTotal,
         quoteStatus: 'QUOTED',
         quotedAt: new Date(),
+        quoteNotes: options?.observations ?? order.quoteNotes,
+        publicQuoteApprovalToken: this.generatePublicQuoteApprovalToken(),
+        publicQuoteApprovalExpiresAt: this.getPublicQuoteApprovalExpiry(options?.validityDays),
       },
-      include: { items: true, customer: true },
+      include: {
+        items: true,
+        customer: { select: { name: true, phone: true, email: true } },
+        address: true,
+      },
     });
 
-    return updatedOrder;
+    return this.mapOrderToQuote(updatedOrder as unknown as OrderWithRelations);
   }
 
   async approveQuote(id: string) {
@@ -897,6 +925,25 @@ export class AdminService {
         quoteStatus: 'REJECTED',
       },
     });
+  }
+
+  async getQuoteByPublicApprovalToken(token: string) {
+    const order = await prisma.order.findFirst({
+      where: { publicQuoteApprovalToken: token },
+      include: {
+        customer: { select: { name: true, phone: true, email: true } },
+        items: {
+          where: { type: 'SERVICE' },
+        },
+        address: true,
+      },
+    }) as unknown as OrderWithRelations | null;
+
+    if (!order) {
+      throw ApiError.notFound('Orçamento não encontrado');
+    }
+
+    return this.mapOrderToQuote(order);
   }
 
   async updateQuoteStatus(id: string, status: string) {
@@ -1004,8 +1051,21 @@ export class AdminService {
       quotedAt: order.quotedAt?.toISOString() || null,
       quoteApprovedAt: order.quoteApprovedAt?.toISOString() || null,
       quoteNotes: order.quoteNotes || null,
+      publicApprovalToken: order.publicQuoteApprovalToken || null,
+      publicApprovalExpiresAt: order.publicQuoteApprovalExpiresAt?.toISOString() || null,
       source: this.mapOrderSource(order.source),
     };
+  }
+
+  private generatePublicQuoteApprovalToken() {
+    return randomUUID();
+  }
+
+  private getPublicQuoteApprovalExpiry(validityDays = 7) {
+    const normalizedDays = Math.max(1, Math.min(30, validityDays || 7));
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + normalizedDays);
+    return expiresAt;
   }
 
   private mapCustomerToResponse(customer: any) {
@@ -1648,6 +1708,8 @@ export class AdminService {
       quoteStatus: data.sendToClient ? 'QUOTED' : 'ANALYZING',
       quotedAt: data.sendToClient ? new Date() : null,
       quoteNotes: data.observations || null,
+      publicQuoteApprovalToken: data.sendToClient ? this.generatePublicQuoteApprovalToken() : null,
+      publicQuoteApprovalExpiresAt: data.sendToClient ? this.getPublicQuoteApprovalExpiry(data.validityDays) : null,
       hasProducts: false,
       hasServices: true,
       subtotal: total,

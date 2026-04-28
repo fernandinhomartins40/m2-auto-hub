@@ -206,12 +206,12 @@ export async function processLandingPageImage(
   const dimensions = isLogoCategory
     ? {}
     : category === 'hero'
-      ? { width: 2880, height: 1800 }
+      ? { width: 3840, height: 2400 }
       : category === 'about-home'
-        ? { width: 2200, height: 1600 }
-        : { width: 2560, height: 1800 };
-  const quality = isLogoCategory ? 100 : 96;
-  const pngCompressionLevel = isLogoCategory ? 3 : 4;
+        ? { width: 3200, height: 2400 }
+        : { width: 3200, height: 2400 };
+  const quality = isLogoCategory ? 100 : 99;
+  const pngCompressionLevel = isLogoCategory ? 1 : 1;
 
   // Processar imagem com qualidade alta para landing page
   await processImage(inputPath, outputPath, {

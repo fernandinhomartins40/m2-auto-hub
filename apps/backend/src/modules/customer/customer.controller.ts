@@ -44,6 +44,13 @@ type QuoteOrderWithRelations = Order & {
 };
 
 export class CustomerController {
+  private isPublicApprovalExpired(order: Pick<Order, 'publicQuoteApprovalExpiresAt'>) {
+    return !!(
+      order.publicQuoteApprovalExpiresAt &&
+      order.publicQuoteApprovalExpiresAt.getTime() < Date.now()
+    );
+  }
+
   private getAuthenticatedCustomerId(req: Request, res: Response): string | null {
     const customerId = req.user?.customerId;
 
@@ -82,6 +89,7 @@ export class CustomerController {
       updatedAt: order.updatedAt.toISOString(),
       quotedAt: order.quotedAt?.toISOString() || null,
       quoteApprovedAt: order.quoteApprovedAt?.toISOString() || null,
+      publicApprovalExpiresAt: order.publicQuoteApprovalExpiresAt?.toISOString() || null,
       source: order.source,
       address: order.address
         ? {
@@ -96,6 +104,17 @@ export class CustomerController {
             type: order.address.type,
           }
         : null,
+    };
+  }
+
+  private buildPublicQuotePayload(order: QuoteOrderWithRelations) {
+    return {
+      quote: this.mapQuote(order),
+      customer: {
+        name: order.customer.name,
+      },
+      approvalExpired: this.isPublicApprovalExpired(order),
+      canApprove: order.quoteStatus === QuoteStatus.QUOTED && !this.isPublicApprovalExpired(order),
     };
   }
 
@@ -365,6 +384,154 @@ export class CustomerController {
       res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
       res.setHeader('Content-Length', pdfBuffer.length.toString());
       res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getPublicQuoteByToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.params;
+      const quote = (await prisma.order.findFirst({
+        where: {
+          publicQuoteApprovalToken: token,
+          hasServices: true,
+          quoteStatus: { not: null },
+        },
+        include: {
+          items: true,
+          address: true,
+          customer: {
+            select: {
+              name: true,
+              phone: true,
+              email: true,
+            },
+          },
+        },
+      })) as QuoteOrderWithRelations | null;
+
+      if (!quote) {
+        res.status(404).json({ error: 'Orcamento nao encontrado' });
+        return;
+      }
+
+      res.json(this.buildPublicQuotePayload(quote));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  approvePublicQuote = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.params;
+      const quote = await prisma.order.findFirst({
+        where: {
+          publicQuoteApprovalToken: token,
+          hasServices: true,
+          quoteStatus: { not: null },
+        },
+        include: {
+          customer: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!quote) {
+        res.status(404).json({ error: 'Orcamento nao encontrado' });
+        return;
+      }
+
+      if (this.isPublicApprovalExpired(quote)) {
+        res.status(400).json({ error: 'O link publico deste orcamento expirou' });
+        return;
+      }
+
+      if (quote.quoteStatus !== QuoteStatus.QUOTED) {
+        res.status(400).json({ error: 'Apenas orcamentos no status QUOTED podem ser aprovados' });
+        return;
+      }
+
+      const updatedQuote = await prisma.order.update({
+        where: { id: quote.id },
+        data: {
+          quoteStatus: QuoteStatus.APPROVED,
+          quoteApprovedAt: new Date(),
+          status: OrderStatus.IN_PRODUCTION,
+        },
+      });
+
+      try {
+        await notificationsService.notifyQuoteApproved(updatedQuote.id, quote.customer.name);
+      } catch (notificationError) {
+        console.error('Failed to notify admins about public quote approval:', notificationError);
+      }
+
+      res.json({
+        id: updatedQuote.id,
+        status: updatedQuote.quoteStatus,
+        orderStatus: updatedQuote.status,
+        message: `Orcamento aprovado com sucesso. Ele virou o pedido #${updatedQuote.id.slice(0, 8).toUpperCase()} e ja esta em producao.`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  rejectPublicQuote = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.params;
+      const quote = await prisma.order.findFirst({
+        where: {
+          publicQuoteApprovalToken: token,
+          hasServices: true,
+          quoteStatus: { not: null },
+        },
+        include: {
+          customer: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!quote) {
+        res.status(404).json({ error: 'Orcamento nao encontrado' });
+        return;
+      }
+
+      if (this.isPublicApprovalExpired(quote)) {
+        res.status(400).json({ error: 'O link publico deste orcamento expirou' });
+        return;
+      }
+
+      if (quote.quoteStatus !== QuoteStatus.QUOTED) {
+        res.status(400).json({ error: 'Apenas orcamentos no status QUOTED podem ser rejeitados' });
+        return;
+      }
+
+      const updatedQuote = await prisma.order.update({
+        where: { id: quote.id },
+        data: {
+          quoteStatus: QuoteStatus.REJECTED,
+        },
+      });
+
+      try {
+        await notificationsService.notifyQuoteRejected(updatedQuote.id, quote.customer.name);
+      } catch (notificationError) {
+        console.error('Failed to notify admins about public quote rejection:', notificationError);
+      }
+
+      res.json({
+        id: updatedQuote.id,
+        status: updatedQuote.quoteStatus,
+        message: 'Orcamento rejeitado com sucesso.',
+      });
     } catch (error) {
       next(error);
     }

@@ -40,8 +40,18 @@ export interface CustomerQuote {
   updatedAt: string;
   quotedAt?: string | null;
   quoteApprovedAt?: string | null;
+  publicApprovalExpiresAt?: string | null;
   source?: 'WEB' | 'APP' | 'PHONE';
   address?: CustomerQuoteAddress | null;
+}
+
+export interface PublicQuotePayload {
+  quote: CustomerQuote;
+  customer: {
+    name: string;
+  };
+  approvalExpired: boolean;
+  canApprove: boolean;
 }
 
 export interface CreateCustomerQuotePayload {
@@ -161,6 +171,25 @@ export async function rejectQuote(
   return response.data;
 }
 
+export async function getPublicQuoteByToken(token: string): Promise<PublicQuotePayload> {
+  const response = await apiClient.get(`/customers/public/quotes/${token}`);
+  return response.data;
+}
+
+export async function approvePublicQuote(
+  token: string
+): Promise<{ id: string; status: string; orderStatus?: string; message: string }> {
+  const response = await apiClient.patch(`/customers/public/quotes/${token}/approve`);
+  return response.data;
+}
+
+export async function rejectPublicQuote(
+  token: string
+): Promise<{ id: string; status: string; message: string }> {
+  const response = await apiClient.patch(`/customers/public/quotes/${token}/reject`);
+  return response.data;
+}
+
 // ==================== ORDERS ====================
 
 export async function getMyOrders(): Promise<CustomerOrder[]> {
@@ -204,6 +233,9 @@ const customerService = {
   exportQuotePdf,
   approveQuote,
   rejectQuote,
+  getPublicQuoteByToken,
+  approvePublicQuote,
+  rejectPublicQuote,
   getMyOrders,
   getMyOrderById,
   getMyNotifications,

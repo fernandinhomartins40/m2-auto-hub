@@ -71,7 +71,9 @@ router.post(
   adminController.recognizeVehiclePlate
 );
 router.get('/customers', adminController.getCustomers);
+router.post('/customers/export-pdf', adminController.exportCustomersPdf);
 router.get('/customers/:id', adminController.getCustomerById);
+router.post('/customers/:id/export-pdf', adminController.exportCustomerPdf);
 router.post('/customers', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), adminController.createCustomer);
 router.post('/customers/:customerId/addresses', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), adminController.createCustomerAddress);
 router.get('/customers/:customerId/vehicles', adminController.getCustomerVehicles);

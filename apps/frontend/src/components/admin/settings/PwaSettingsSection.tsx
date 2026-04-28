@@ -6,9 +6,12 @@ import {
   CheckCircle2,
   Crop as CropIcon,
   Loader2,
+  Shield,
   Smartphone,
   Trash2,
   Upload,
+  User,
+  Wrench,
   X,
 } from 'lucide-react';
 import settingsService from '@/api/settingsService';
@@ -22,7 +25,11 @@ import { ResponsiveDialogBody, ResponsiveDialogContent, ResponsiveDialogHeader }
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
-type PwaField =
+type PwaProfileKey = 'customer' | 'admin' | 'mechanic';
+type PwaPreviewShape = 'auto' | 'square' | 'rounded' | 'circle';
+type PwaIconSlot = 'icon-192' | 'icon-512' | 'desktop-icon' | 'apple-touch-icon' | 'maskable-icon';
+
+export type PwaField =
   | 'pwaName'
   | 'pwaShortName'
   | 'pwaDescription'
@@ -33,30 +40,141 @@ type PwaField =
   | 'pwaIcon512Url'
   | 'pwaDesktopIconUrl'
   | 'pwaAppleTouchIconUrl'
-  | 'pwaMaskableIconUrl';
+  | 'pwaMaskableIconUrl'
+  | 'pwaAdminName'
+  | 'pwaAdminShortName'
+  | 'pwaAdminDescription'
+  | 'pwaAdminThemeColor'
+  | 'pwaAdminBackgroundColor'
+  | 'pwaAdminDisplay'
+  | 'pwaAdminIcon192Url'
+  | 'pwaAdminIcon512Url'
+  | 'pwaAdminDesktopIconUrl'
+  | 'pwaAdminAppleTouchIconUrl'
+  | 'pwaAdminMaskableIconUrl'
+  | 'pwaMechanicName'
+  | 'pwaMechanicShortName'
+  | 'pwaMechanicDescription'
+  | 'pwaMechanicThemeColor'
+  | 'pwaMechanicBackgroundColor'
+  | 'pwaMechanicDisplay'
+  | 'pwaMechanicIcon192Url'
+  | 'pwaMechanicIcon512Url'
+  | 'pwaMechanicDesktopIconUrl'
+  | 'pwaMechanicAppleTouchIconUrl'
+  | 'pwaMechanicMaskableIconUrl';
 
-type PwaIconSlot = 'icon-192' | 'icon-512' | 'desktop-icon' | 'apple-touch-icon' | 'maskable-icon';
-type PwaPreviewShape = 'auto' | 'square' | 'rounded' | 'circle';
+interface PwaProfileConfig {
+  name: string;
+  shortName: string;
+  description: string;
+  themeColor: string;
+  backgroundColor: string;
+  display: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  icon192Url: string;
+  icon512Url: string;
+  desktopIconUrl: string;
+  appleTouchIconUrl: string;
+  maskableIconUrl: string;
+}
 
 interface PwaSettingsSectionProps {
   storeName: string;
-  pwaName: string;
-  pwaShortName: string;
-  pwaDescription: string;
-  pwaThemeColor: string;
-  pwaBackgroundColor: string;
-  pwaDisplay: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
-  pwaIcon192Url: string;
-  pwaIcon512Url: string;
-  pwaDesktopIconUrl: string;
-  pwaAppleTouchIconUrl: string;
-  pwaMaskableIconUrl: string;
+  profiles: Record<PwaProfileKey, PwaProfileConfig>;
   onChange: (field: PwaField, value: string) => void;
 }
 
+const PROFILE_META: Record<
+  PwaProfileKey,
+  {
+    label: string;
+    badge: string;
+    icon: typeof User;
+    summary: string;
+    installContext: string;
+    fields: {
+      name: PwaField;
+      shortName: PwaField;
+      description: PwaField;
+      themeColor: PwaField;
+      backgroundColor: PwaField;
+      display: PwaField;
+      icon192Url: PwaField;
+      icon512Url: PwaField;
+      desktopIconUrl: PwaField;
+      appleTouchIconUrl: PwaField;
+      maskableIconUrl: PwaField;
+    };
+  }
+> = {
+  customer: {
+    label: 'Cliente',
+    badge: 'Publico',
+    icon: User,
+    summary: 'App usado por clientes para pedidos, revisoes, veiculos e suporte.',
+    installContext: 'Instalado a partir do login/area do cliente.',
+    fields: {
+      name: 'pwaName',
+      shortName: 'pwaShortName',
+      description: 'pwaDescription',
+      themeColor: 'pwaThemeColor',
+      backgroundColor: 'pwaBackgroundColor',
+      display: 'pwaDisplay',
+      icon192Url: 'pwaIcon192Url',
+      icon512Url: 'pwaIcon512Url',
+      desktopIconUrl: 'pwaDesktopIconUrl',
+      appleTouchIconUrl: 'pwaAppleTouchIconUrl',
+      maskableIconUrl: 'pwaMaskableIconUrl',
+    },
+  },
+  admin: {
+    label: 'Painel do Lojista',
+    badge: 'Interno',
+    icon: Shield,
+    summary: 'App do lojista/gestao para pedidos, vendas, relatorios e operacao.',
+    installContext: 'Instalado a partir do login administrativo ou painel do lojista.',
+    fields: {
+      name: 'pwaAdminName',
+      shortName: 'pwaAdminShortName',
+      description: 'pwaAdminDescription',
+      themeColor: 'pwaAdminThemeColor',
+      backgroundColor: 'pwaAdminBackgroundColor',
+      display: 'pwaAdminDisplay',
+      icon192Url: 'pwaAdminIcon192Url',
+      icon512Url: 'pwaAdminIcon512Url',
+      desktopIconUrl: 'pwaAdminDesktopIconUrl',
+      appleTouchIconUrl: 'pwaAdminAppleTouchIconUrl',
+      maskableIconUrl: 'pwaAdminMaskableIconUrl',
+    },
+  },
+  mechanic: {
+    label: 'App do Mecanico',
+    badge: 'Oficina',
+    icon: Wrench,
+    summary: 'App da equipe tecnica para revisoes, checklist e fluxo da oficina.',
+    installContext: 'Instalado a partir do login interno e aberto no painel do mecanico.',
+    fields: {
+      name: 'pwaMechanicName',
+      shortName: 'pwaMechanicShortName',
+      description: 'pwaMechanicDescription',
+      themeColor: 'pwaMechanicThemeColor',
+      backgroundColor: 'pwaMechanicBackgroundColor',
+      display: 'pwaMechanicDisplay',
+      icon192Url: 'pwaMechanicIcon192Url',
+      icon512Url: 'pwaMechanicIcon512Url',
+      desktopIconUrl: 'pwaMechanicDesktopIconUrl',
+      appleTouchIconUrl: 'pwaMechanicAppleTouchIconUrl',
+      maskableIconUrl: 'pwaMechanicMaskableIconUrl',
+    },
+  },
+};
+
 const ICON_SPECS: Array<{
   slot: PwaIconSlot;
-  field: 'pwaIcon192Url' | 'pwaIcon512Url' | 'pwaDesktopIconUrl' | 'pwaAppleTouchIconUrl' | 'pwaMaskableIconUrl';
+  key: keyof Pick<
+    PwaProfileConfig,
+    'icon192Url' | 'icon512Url' | 'desktopIconUrl' | 'appleTouchIconUrl' | 'maskableIconUrl'
+  >;
   title: string;
   description: string;
   size: string;
@@ -65,56 +183,55 @@ const ICON_SPECS: Array<{
 }> = [
   {
     slot: 'icon-192',
-    field: 'pwaIcon192Url',
-    title: 'Ícone 192x192',
-    description: 'Usado na instalação Android e em atalhos compactos.',
+    key: 'icon192Url',
+    title: 'Icone 192x192',
+    description: 'Android e atalhos compactos.',
     size: 'PNG 192x192',
-    notes: 'Prefira imagem quadrada, com margem de segurança e logo centralizada.',
+    notes: 'Ideal para a instalacao basica do app em Android.',
     autoShape: 'rounded',
   },
   {
     slot: 'icon-512',
-    field: 'pwaIcon512Url',
-    title: 'Ícone 512x512',
-    description: 'Usado em splash screen, prompts de instalação e atalhos maiores.',
+    key: 'icon512Url',
+    title: 'Icone 512x512',
+    description: 'Splash screen e prompts de instalacao.',
     size: 'PNG 512x512',
-    notes: 'Envie em alta qualidade. O backend ajusta para o tamanho final sem recorte.',
+    notes: 'Use a versao principal em alta qualidade.',
     autoShape: 'rounded',
   },
   {
     slot: 'desktop-icon',
-    field: 'pwaDesktopIconUrl',
+    key: 'desktopIconUrl',
     title: 'Icone Desktop',
-    description: 'Usado como icone preferencial quando o PWA e instalado em PC ou notebook.',
+    description: 'Preferencial em instalacoes no PC.',
     size: 'PNG 512x512',
-    notes: 'Recomendado para Chrome, Edge e outros navegadores desktop que criam o app instalado.',
+    notes: 'Utilizado por Chrome e Edge quando o app e instalado no desktop.',
     autoShape: 'rounded',
   },
   {
     slot: 'apple-touch-icon',
-    field: 'pwaAppleTouchIconUrl',
+    key: 'appleTouchIconUrl',
     title: 'Apple Touch Icon',
-    description: 'Usado quando o app é salvo na tela inicial do iPhone e iPad.',
+    description: 'Tela inicial do iPhone e iPad.',
     size: 'PNG 180x180',
-    notes: 'No iOS o ícone costuma aparecer com cantos arredondados. Use o preview para validar.',
+    notes: 'Valide o comportamento com cantos arredondados.',
     autoShape: 'rounded',
   },
   {
     slot: 'maskable-icon',
-    field: 'pwaMaskableIconUrl',
-    title: 'Ícone Maskable',
-    description: 'Usado por launchers que aplicam máscara circular ou arredondada.',
+    key: 'maskableIconUrl',
+    title: 'Icone Maskable',
+    description: 'Launchers com mascara de recorte.',
     size: 'PNG 512x512',
-    notes: 'Deixe área de respiro em volta da marca para não perder partes no recorte.',
+    notes: 'Mantenha margem de seguranca ao redor da marca.',
     autoShape: 'circle',
   },
 ];
 
 const getPreviewRadiusClass = (shape: PwaPreviewShape, autoShape: Exclude<PwaPreviewShape, 'auto'>) => {
-  const resolved = shape === 'auto' ? autoShape : shape;
-
-  if (resolved === 'circle') return 'rounded-full';
-  if (resolved === 'rounded') return 'rounded-[24px]';
+  const resolvedShape = shape === 'auto' ? autoShape : shape;
+  if (resolvedShape === 'circle') return 'rounded-full';
+  if (resolvedShape === 'rounded') return 'rounded-[24px]';
   return 'rounded-none';
 };
 
@@ -138,16 +255,9 @@ function PwaIconCropper({
   onComplete: (blob: Blob) => void;
 }) {
   const imageRef = useRef<HTMLImageElement>(null);
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    width: 84,
-    height: 84,
-    x: 8,
-    y: 8,
-  });
+  const [crop, setCrop] = useState<Crop>({ unit: '%', width: 84, height: 84, x: 8, y: 8 });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const outputSize = slot === 'apple-touch-icon' ? 180 : slot === 'icon-192' ? 192 : 512;
 
   const onImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -172,17 +282,14 @@ function PwaIconCropper({
       const image = imageRef.current;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-
       if (!ctx) {
-        throw new Error('Não foi possível preparar o canvas do recorte.');
+        throw new Error('Nao foi possivel preparar o canvas do recorte.');
       }
 
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
-
       canvas.width = outputSize;
       canvas.height = outputSize;
-
       ctx.clearRect(0, 0, outputSize, outputSize);
       ctx.drawImage(
         image,
@@ -202,8 +309,7 @@ function PwaIconCropper({
             resolve(result);
             return;
           }
-
-          reject(new Error('Falha ao gerar o PNG do ícone.'));
+          reject(new Error('Falha ao gerar o PNG do icone.'));
         }, 'image/png');
       });
 
@@ -228,9 +334,7 @@ function PwaIconCropper({
               <Badge variant="outline">1:1</Badge>
               <Badge className="bg-emerald-600 text-white">PNG sem perda</Badge>
             </div>
-            <p className="text-sm text-gray-500">
-              Recorte quadrado com preview de máscara para Android/iOS.
-            </p>
+            <p className="text-sm text-gray-500">Recorte quadrado com preview de mascara para Android e iOS.</p>
           </div>
         </CardContent>
       </Card>
@@ -241,7 +345,7 @@ function PwaIconCropper({
             <img
               ref={imageRef}
               src={imageUrl}
-              alt="Crop do ícone"
+              alt="Crop do icone"
               onLoad={onImageLoad}
               className="max-w-full"
               style={{ maxHeight: 'min(480px, 52vh)' }}
@@ -251,8 +355,8 @@ function PwaIconCropper({
 
         <Card className="min-w-0 border-border/70">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Preview do Ícone</CardTitle>
-            <CardDescription>Escolha como deseja validar visualmente os cantos do app.</CardDescription>
+            <CardTitle className="text-base">Preview do Icone</CardTitle>
+            <CardDescription>Valide como o icone pode aparecer em diferentes plataformas.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
@@ -260,7 +364,7 @@ function PwaIconCropper({
                 { value: 'auto', label: 'Auto' },
                 { value: 'square', label: 'Quadrado' },
                 { value: 'rounded', label: 'Arred.' },
-                { value: 'circle', label: 'Círculo' },
+                { value: 'circle', label: 'Circulo' },
               ].map((option) => (
                 <Button
                   key={option.value}
@@ -276,9 +380,7 @@ function PwaIconCropper({
 
             <div className="rounded-2xl border bg-slate-950 p-5 text-white">
               <div className="mb-3 text-xs uppercase tracking-wide text-white/60">
-                {previewShape === 'auto'
-                  ? `Auto (${autoShape === 'circle' ? 'Maskable/launcher' : 'Android/iOS'})`
-                  : 'Prévia manual'}
+                {previewShape === 'auto' ? 'Preview automatico' : 'Preview manual'}
               </div>
               <div className="flex justify-center">
                 <div className={`flex h-28 w-28 items-center justify-center overflow-hidden bg-white/10 ${getPreviewRadiusClass(previewShape, autoShape)}`}>
@@ -290,7 +392,7 @@ function PwaIconCropper({
                 </div>
               </div>
               <p className="mt-4 text-xs text-white/70">
-                O arquivo salvo continua sendo PNG quadrado. Essa seleção serve para validar como ele se comporta nas exigências visuais da plataforma.
+                O arquivo salvo continua quadrado. Essa selecao serve para validar o encaixe visual nas plataformas.
               </p>
             </div>
           </CardContent>
@@ -313,27 +415,26 @@ function PwaIconCropper({
 
 function PwaIconUploadCard({
   slot,
-  field,
   title,
   description,
   size,
   notes,
   autoShape,
   value,
-  onChange,
+  onUploaded,
+  onRemove,
 }: {
   slot: PwaIconSlot;
-  field: 'pwaIcon192Url' | 'pwaIcon512Url' | 'pwaDesktopIconUrl' | 'pwaAppleTouchIconUrl' | 'pwaMaskableIconUrl';
   title: string;
   description: string;
   size: string;
   notes: string;
   autoShape: Exclude<PwaPreviewShape, 'auto'>;
   value: string;
-  onChange: (field: PwaField, value: string) => void;
+  onUploaded: (url: string) => void;
+  onRemove: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const localUrlRef = useRef<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
@@ -341,7 +442,6 @@ function PwaIconUploadCard({
 
   useEffect(() => {
     return () => {
-      if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
       if (tempImageUrl) URL.revokeObjectURL(tempImageUrl);
     };
   }, [tempImageUrl]);
@@ -368,14 +468,13 @@ function PwaIconUploadCard({
   const handleCropComplete = async (blob: Blob) => {
     setShowCropper(false);
     setIsUploading(true);
-
     try {
       const file = new File([blob], `${slot}.png`, { type: 'image/png' });
       const result = await settingsService.uploadPwaAsset(file, slot);
-      onChange(field, result.url);
+      onUploaded(result.url);
       toast.success(`${title} atualizado`);
     } catch (error: any) {
-      toast.error('Erro ao enviar ícone do PWA', {
+      toast.error('Erro ao enviar icone do PWA', {
         description: error?.message || 'Tente novamente.',
       });
     } finally {
@@ -401,19 +500,15 @@ function PwaIconUploadCard({
             <div className="mb-3 text-sm text-slate-600">{notes}</div>
             <div className="flex min-h-[120px] items-center justify-center rounded-lg border bg-white p-4">
               {value ? (
-                <img
-                  src={value}
-                  alt={title}
-                  className={`h-20 w-20 object-contain ${getPreviewRadiusClass('auto', autoShape)}`}
-                />
+                <img src={value} alt={title} className={`h-20 w-20 object-contain ${getPreviewRadiusClass('auto', autoShape)}`} />
               ) : (
-                <div className="text-center text-sm text-muted-foreground">Ícone ainda não configurado</div>
+                <div className="text-center text-sm text-muted-foreground">Icone ainda nao configurado</div>
               )}
             </div>
           </div>
 
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-            O upload abre um cropper quadrado e exporta em PNG sem compressão destrutiva.
+            O upload abre um cropper quadrado e exporta em PNG sem compressao destrutiva.
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -427,7 +522,7 @@ function PwaIconUploadCard({
                 variant="outline"
                 size="sm"
                 className="text-red-600 hover:text-red-700"
-                onClick={() => onChange(field, '')}
+                onClick={onRemove}
                 disabled={isUploading}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -450,9 +545,7 @@ function PwaIconUploadCard({
         <ResponsiveDialogContent size="xl" className="flex flex-col gap-0 p-0">
           <ResponsiveDialogHeader>
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>
-              Recorte o ícone em proporção 1:1 e valide visualmente os cantos para Android, iOS ou formato livre.
-            </DialogDescription>
+            <DialogDescription>Recorte o icone em proporcao 1:1 e valide os cantos para Android, iOS ou desktop.</DialogDescription>
           </ResponsiveDialogHeader>
           <ResponsiveDialogBody className="overflow-x-hidden">
             {tempImageUrl ? (
@@ -474,159 +567,198 @@ function PwaIconUploadCard({
   );
 }
 
-export function PwaSettingsSection({
-  storeName,
-  pwaName,
-  pwaShortName,
-  pwaDescription,
-  pwaThemeColor,
-  pwaBackgroundColor,
-  pwaDisplay,
-  pwaIcon192Url,
-  pwaIcon512Url,
-  pwaDesktopIconUrl,
-  pwaAppleTouchIconUrl,
-  pwaMaskableIconUrl,
-  onChange,
-}: PwaSettingsSectionProps) {
-  const previewIcon = pwaDesktopIconUrl || pwaIcon512Url || pwaIcon192Url || pwaAppleTouchIconUrl || pwaMaskableIconUrl;
-  const previewName = pwaName.trim() || storeName || 'Nome do app';
-  const previewShortName = pwaShortName.trim() || previewName.slice(0, 12);
+export function PwaSettingsSection({ storeName, profiles, onChange }: PwaSettingsSectionProps) {
+  const [activeProfile, setActiveProfile] = useState<PwaProfileKey>('customer');
+  const profileMeta = PROFILE_META[activeProfile];
+  const profile = profiles[activeProfile];
+  const previewIcon =
+    profile.desktopIconUrl || profile.icon512Url || profile.icon192Url || profile.appleTouchIconUrl || profile.maskableIconUrl;
+  const previewName = profile.name.trim() || storeName || 'Nome do app';
+  const previewShortName = profile.shortName.trim() || previewName.slice(0, 12);
+  const ProfileIcon = profileMeta.icon;
 
-  const iconValues = useMemo(
-    () => ({
-      'icon-192': pwaIcon192Url,
-      'icon-512': pwaIcon512Url,
-      'desktop-icon': pwaDesktopIconUrl,
-      'apple-touch-icon': pwaAppleTouchIconUrl,
-      'maskable-icon': pwaMaskableIconUrl,
-    }),
-    [pwaAppleTouchIconUrl, pwaDesktopIconUrl, pwaIcon192Url, pwaIcon512Url, pwaMaskableIconUrl]
-  );
+  const handleProfileChange = (
+    key: keyof PwaProfileConfig,
+    value: string
+  ) => {
+    onChange(profileMeta.fields[key], value);
+  };
+
+  const manifestUrl = `/api/settings/pwa-manifest.webmanifest?app=${activeProfile}`;
+
+  const installSummary = useMemo(() => {
+    if (activeProfile === 'customer') {
+      return 'Login do cliente, painel do cliente e instalacao publica.';
+    }
+    if (activeProfile === 'mechanic') {
+      return 'Login interno e painel do mecanico.';
+    }
+    return 'Login administrativo e painel do lojista.';
+  }, [activeProfile]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="space-y-1">
-        <h3 className="border-b pb-2 text-lg font-medium">PWA e Instalação do App</h3>
+        <h3 className="border-b pb-2 text-lg font-medium">PWAs separados por perfil</h3>
         <p className="text-sm text-muted-foreground">
-          Configure os textos do app instalado e os ícones usados em Android, iPhone e atalhos do PWA.
+          Configure textos, cores e icones individualmente para o app do cliente, o painel do lojista e o app do mecanico.
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <div className="space-y-5">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="pwaName">Nome completo do app</Label>
-              <Input id="pwaName" value={pwaName} onChange={(e) => onChange('pwaName', e.target.value)} placeholder="M2 Center Auto" maxLength={120} />
+      <div className="grid gap-3 lg:grid-cols-3">
+        {(Object.keys(PROFILE_META) as PwaProfileKey[]).map((key) => {
+          const meta = PROFILE_META[key];
+          const Icon = meta.icon;
+          const isActive = key === activeProfile;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveProfile(key)}
+              className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-moria-orange bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${isActive ? 'bg-moria-orange text-white' : 'bg-slate-100 text-slate-700'}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <Badge variant={isActive ? 'default' : 'outline'}>{meta.badge}</Badge>
+              </div>
+              <div className="font-semibold text-slate-900">{meta.label}</div>
+              <p className="mt-1 text-sm text-slate-600">{meta.summary}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      <Card className="border-border/70">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ProfileIcon className="h-4 w-4 text-moria-orange" />
+            {profileMeta.label}
+          </CardTitle>
+          <CardDescription>{profileMeta.installContext}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+            <div className="space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Nome completo do app</Label>
+                  <Input value={profile.name} onChange={(e) => handleProfileChange('name', e.target.value)} placeholder={`${storeName} App`} maxLength={120} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome curto</Label>
+                  <Input value={profile.shortName} onChange={(e) => handleProfileChange('shortName', e.target.value)} placeholder="M2 App" maxLength={40} />
+                  <p className="text-xs text-muted-foreground">Aparece abaixo do icone quando o espaco e menor.</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Descricao do PWA</Label>
+                <Textarea
+                  value={profile.description}
+                  onChange={(e) => handleProfileChange('description', e.target.value)}
+                  placeholder="Descreva claramente para quem este app foi criado e o que ele oferece."
+                  rows={4}
+                  maxLength={240}
+                />
+                <p className="text-xs text-muted-foreground">Texto usado no manifesto, banners e experiencias de instalacao.</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Cor do tema</Label>
+                  <div className="flex gap-2">
+                    <Input type="color" value={profile.themeColor} onChange={(e) => handleProfileChange('themeColor', e.target.value)} className="h-11 w-16 p-1" />
+                    <Input value={profile.themeColor} onChange={(e) => handleProfileChange('themeColor', e.target.value)} placeholder="#0f172a" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Cor de fundo</Label>
+                  <div className="flex gap-2">
+                    <Input type="color" value={profile.backgroundColor} onChange={(e) => handleProfileChange('backgroundColor', e.target.value)} className="h-11 w-16 p-1" />
+                    <Input value={profile.backgroundColor} onChange={(e) => handleProfileChange('backgroundColor', e.target.value)} placeholder="#0f172a" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Modo de exibicao</Label>
+                  <select
+                    value={profile.display}
+                    onChange={(e) => handleProfileChange('display', e.target.value)}
+                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="standalone">Standalone</option>
+                    <option value="fullscreen">Fullscreen</option>
+                    <option value="minimal-ui">Minimal UI</option>
+                    <option value="browser">Browser</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <div className="mb-2 font-medium text-slate-900">Onde esse app sera usado</div>
+                <p>{installSummary}</p>
+                <p className="mt-2 text-xs text-slate-500">Manifesto: {manifestUrl}</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="pwaShortName">Nome curto</Label>
-              <Input
-                id="pwaShortName"
-                value={pwaShortName}
-                onChange={(e) => onChange('pwaShortName', e.target.value)}
-                placeholder="M2 Auto"
-                maxLength={40}
+
+            <Card className="border-border/70">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Smartphone className="h-4 w-4 text-moria-orange" />
+                  Preview do App Instalado
+                </CardTitle>
+                <CardDescription>Simulacao aproximada do nome, descricao e icone do perfil selecionado.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-[28px] border bg-slate-950 p-5 text-white shadow-sm">
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-white/10" style={{ backgroundColor: profile.backgroundColor }}>
+                      {previewIcon ? (
+                        <img src={previewIcon} alt={previewName} className="h-full w-full rounded-[18px] object-contain" />
+                      ) : (
+                        <ProfileIcon className="h-8 w-8 text-white/70" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-base font-semibold">{previewName}</div>
+                      <div className="text-sm text-white/70">{previewShortName}</div>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      Manifesto do PWA
+                    </div>
+                    <div className="text-sm text-white/70">{profile.description || 'Descricao do aplicativo nao configurada.'}</div>
+                    <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                      <span className="rounded-full border border-white/10 px-3 py-1">Tema {profile.themeColor}</span>
+                      <span className="rounded-full border border-white/10 px-3 py-1">Display {profile.display}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {ICON_SPECS.map((spec) => (
+              <PwaIconUploadCard
+                key={`${activeProfile}-${spec.slot}`}
+                slot={spec.slot}
+                title={spec.title}
+                description={spec.description}
+                size={spec.size}
+                notes={spec.notes}
+                autoShape={spec.autoShape}
+                value={profile[spec.key]}
+                onUploaded={(url) => handleProfileChange(spec.key, url)}
+                onRemove={() => handleProfileChange(spec.key, '')}
               />
-              <p className="text-xs text-muted-foreground">Aparece abaixo do ícone quando o espaço é menor.</p>
-            </div>
+            ))}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="pwaDescription">Descrição do PWA</Label>
-            <Textarea
-              id="pwaDescription"
-              value={pwaDescription}
-              onChange={(e) => onChange('pwaDescription', e.target.value)}
-              placeholder="Aplicativo da loja para pedidos, atendimento e acompanhamento."
-              rows={4}
-              maxLength={240}
-            />
-            <p className="text-xs text-muted-foreground">Pode ser exibida em fluxos de instalação e gerenciamento do app.</p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="pwaThemeColor">Cor do tema</Label>
-              <div className="flex gap-2">
-                <Input id="pwaThemeColor" type="color" value={pwaThemeColor} onChange={(e) => onChange('pwaThemeColor', e.target.value)} className="h-11 w-16 p-1" />
-                <Input value={pwaThemeColor} onChange={(e) => onChange('pwaThemeColor', e.target.value)} placeholder="#0f172a" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pwaBackgroundColor">Cor de fundo</Label>
-              <div className="flex gap-2">
-                <Input id="pwaBackgroundColor" type="color" value={pwaBackgroundColor} onChange={(e) => onChange('pwaBackgroundColor', e.target.value)} className="h-11 w-16 p-1" />
-                <Input value={pwaBackgroundColor} onChange={(e) => onChange('pwaBackgroundColor', e.target.value)} placeholder="#0f172a" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pwaDisplay">Modo de exibição</Label>
-              <select
-                id="pwaDisplay"
-                value={pwaDisplay}
-                onChange={(e) => onChange('pwaDisplay', e.target.value)}
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="standalone">Standalone</option>
-                <option value="fullscreen">Fullscreen</option>
-                <option value="minimal-ui">Minimal UI</option>
-                <option value="browser">Browser</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <Card className="border-border/70">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Smartphone className="h-4 w-4 text-moria-orange" />
-              Prévia do App Instalado
-            </CardTitle>
-            <CardDescription>Simulação visual aproximada do manifesto e do ícone do app.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-[28px] border bg-slate-950 p-5 text-white shadow-sm">
-              <div className="mb-5 flex items-center gap-3">
-                <div
-                  className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-white/10"
-                  style={{ backgroundColor: pwaBackgroundColor }}
-                >
-                  {previewIcon ? (
-                    <img src={previewIcon} alt={previewName} className="h-full w-full rounded-[18px] object-contain" />
-                  ) : (
-                    <Smartphone className="h-8 w-8 text-white/70" />
-                  )}
-                </div>
-                <div>
-                  <div className="text-base font-semibold">{previewName}</div>
-                  <div className="text-sm text-white/70">{previewShortName}</div>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  Manifesto do PWA
-                </div>
-                <div className="text-sm text-white/70">
-                  {pwaDescription || 'Descrição do aplicativo não configurada.'}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full border border-white/10 px-3 py-1">Tema {pwaThemeColor}</span>
-                  <span className="rounded-full border border-white/10 px-3 py-1">Display {pwaDisplay}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {ICON_SPECS.map((spec) => (
-          <PwaIconUploadCard key={spec.slot} {...spec} value={iconValues[spec.slot]} onChange={onChange} />
-        ))}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

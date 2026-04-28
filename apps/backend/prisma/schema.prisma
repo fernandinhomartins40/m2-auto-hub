@@ -480,6 +480,8 @@ model Order {
   quotedAt        DateTime?    // Quando o orçamento foi enviado ao cliente
   quoteApprovedAt DateTime?    // Quando o cliente aprovou o orçamento
   quoteNotes      String?      @db.Text // Observações do orçamento
+  publicQuoteApprovalToken     String?   @unique
+  publicQuoteApprovalExpiresAt DateTime?
 
   // Valores
   subtotal       Decimal @db.Decimal(10, 2)
@@ -510,6 +512,7 @@ model Order {
   @@index([addressId])
   @@index([status])
   @@index([quoteStatus])
+  @@index([publicQuoteApprovalToken])
   @@index([createdAt])
   @@map("orders")
 }
@@ -1105,6 +1108,28 @@ model Settings {
   pwaDesktopIconUrl    String?
   pwaAppleTouchIconUrl String?
   pwaMaskableIconUrl   String?
+  pwaAdminName              String  @default("")
+  pwaAdminShortName         String  @default("")
+  pwaAdminDescription       String  @default("")
+  pwaAdminThemeColor        String  @default("#0f172a")
+  pwaAdminBackgroundColor   String  @default("#0f172a")
+  pwaAdminDisplay           String  @default("standalone")
+  pwaAdminIcon192Url        String?
+  pwaAdminIcon512Url        String?
+  pwaAdminDesktopIconUrl    String?
+  pwaAdminAppleTouchIconUrl String?
+  pwaAdminMaskableIconUrl   String?
+  pwaMechanicName              String  @default("")
+  pwaMechanicShortName         String  @default("")
+  pwaMechanicDescription       String  @default("")
+  pwaMechanicThemeColor        String  @default("#0f172a")
+  pwaMechanicBackgroundColor   String  @default("#0f172a")
+  pwaMechanicDisplay           String  @default("standalone")
+  pwaMechanicIcon192Url        String?
+  pwaMechanicIcon512Url        String?
+  pwaMechanicDesktopIconUrl    String?
+  pwaMechanicAppleTouchIconUrl String?
+  pwaMechanicMaskableIconUrl   String?
   loyaltyProgramName          String  @default("Clube Fidelidade M2")
   loyaltyProgramDescription   String  @default("Acumule pontos em compras e revisoes para trocar por vantagens.")
   loyaltyProgramActive        Boolean @default(true)

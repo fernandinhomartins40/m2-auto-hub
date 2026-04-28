@@ -35,6 +35,25 @@ export class NotificationsController {
   }
 
   /**
+   * Get unified notification center for admin
+   * GET /admin/notifications/center
+   */
+  async getAdminNotificationCenter(req: Request, res: Response) {
+    try {
+      const adminId = req.admin?.adminId;
+      if (!adminId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const result = await notificationsService.getAdminNotificationCenter(adminId);
+      return res.json(result);
+    } catch (error: any) {
+      console.error('Error fetching admin notification center:', error);
+      return res.status(500).json({ error: 'Failed to fetch notification center' });
+    }
+  }
+
+  /**
    * Get unread count for admin
    * GET /admin/notifications/unread-count
    */

@@ -32,6 +32,11 @@ export default function PwaEntryPage() {
     const app = new URLSearchParams(location.search).get("app");
     if (app === "admin") {
       navigate("/admin-login/?source=pwa-admin", { replace: true });
+      return;
+    }
+
+    if (app === "mechanic") {
+      navigate("/admin-login/?source=pwa-mechanic", { replace: true });
     }
   }, [
     admin,
@@ -63,11 +68,11 @@ export default function PwaEntryPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Escolha a area do app</h1>
           <p className="text-gray-600 mt-2">
-            A instalacao nova foi separada em dois PWAs independentes: cliente e administrativo.
+            A instalacao foi separada em apps independentes para cliente, lojista e mecanico.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <a href="/customer-login/" className="block">
             <Button variant="outline" className="w-full h-auto min-h-[120px] flex-col gap-3 rounded-2xl border-2">
               <User className="h-8 w-8 text-moria-orange" />
@@ -82,8 +87,18 @@ export default function PwaEntryPage() {
             <Button variant="outline" className="w-full h-auto min-h-[120px] flex-col gap-3 rounded-2xl border-2">
               <Shield className="h-8 w-8 text-blue-600" />
               <div className="text-center">
-                <div className="font-semibold">Admin e Equipe</div>
-                <div className="text-xs text-muted-foreground">Loja, mecanica e colaboradores</div>
+                <div className="font-semibold">Lojista</div>
+                <div className="text-xs text-muted-foreground">Vendas, operacao e gestao</div>
+              </div>
+            </Button>
+          </a>
+
+          <a href="/admin-login/?source=pwa-mechanic" className="block">
+            <Button variant="outline" className="w-full h-auto min-h-[120px] flex-col gap-3 rounded-2xl border-2">
+              <Shield className="h-8 w-8 text-emerald-600" />
+              <div className="text-center">
+                <div className="font-semibold">Mecanico</div>
+                <div className="text-xs text-muted-foreground">Checklist, revisoes e oficina</div>
               </div>
             </Button>
           </a>

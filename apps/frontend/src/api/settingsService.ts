@@ -51,6 +51,28 @@ export interface StoreSettings {
   pwaDesktopIconUrl?: string | null;
   pwaAppleTouchIconUrl?: string | null;
   pwaMaskableIconUrl?: string | null;
+  pwaAdminName: string;
+  pwaAdminShortName: string;
+  pwaAdminDescription: string;
+  pwaAdminThemeColor: string;
+  pwaAdminBackgroundColor: string;
+  pwaAdminDisplay: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  pwaAdminIcon192Url?: string | null;
+  pwaAdminIcon512Url?: string | null;
+  pwaAdminDesktopIconUrl?: string | null;
+  pwaAdminAppleTouchIconUrl?: string | null;
+  pwaAdminMaskableIconUrl?: string | null;
+  pwaMechanicName: string;
+  pwaMechanicShortName: string;
+  pwaMechanicDescription: string;
+  pwaMechanicThemeColor: string;
+  pwaMechanicBackgroundColor: string;
+  pwaMechanicDisplay: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  pwaMechanicIcon192Url?: string | null;
+  pwaMechanicIcon512Url?: string | null;
+  pwaMechanicDesktopIconUrl?: string | null;
+  pwaMechanicAppleTouchIconUrl?: string | null;
+  pwaMechanicMaskableIconUrl?: string | null;
 
   createdAt: string;
   updatedAt: string;
@@ -97,6 +119,28 @@ export interface UpdateSettingsData {
   pwaDesktopIconUrl?: string | null;
   pwaAppleTouchIconUrl?: string | null;
   pwaMaskableIconUrl?: string | null;
+  pwaAdminName?: string;
+  pwaAdminShortName?: string;
+  pwaAdminDescription?: string;
+  pwaAdminThemeColor?: string;
+  pwaAdminBackgroundColor?: string;
+  pwaAdminDisplay?: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  pwaAdminIcon192Url?: string | null;
+  pwaAdminIcon512Url?: string | null;
+  pwaAdminDesktopIconUrl?: string | null;
+  pwaAdminAppleTouchIconUrl?: string | null;
+  pwaAdminMaskableIconUrl?: string | null;
+  pwaMechanicName?: string;
+  pwaMechanicShortName?: string;
+  pwaMechanicDescription?: string;
+  pwaMechanicThemeColor?: string;
+  pwaMechanicBackgroundColor?: string;
+  pwaMechanicDisplay?: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  pwaMechanicIcon192Url?: string | null;
+  pwaMechanicIcon512Url?: string | null;
+  pwaMechanicDesktopIconUrl?: string | null;
+  pwaMechanicAppleTouchIconUrl?: string | null;
+  pwaMechanicMaskableIconUrl?: string | null;
 }
 
 class SettingsService {

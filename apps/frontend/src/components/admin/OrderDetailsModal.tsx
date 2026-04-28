@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import adminService, { StoreOrder } from "../../api/adminService";
 import { useToast } from "../../hooks/use-toast";
+import { buildOrderStatusWhatsAppUrl, getOrderStatusLabel } from "../../utils/orderWhatsApp";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
@@ -235,22 +236,15 @@ export function OrderDetailsModal({
   };
 
   const handleSendWhatsApp = () => {
-    const statusInfo = getStatusInfo(currentOrder.status);
-    const message =
-      `Olá ${currentOrder.customerName}!\n\n` +
-      `Atualização do Pedido #${currentOrder.id}\n\n` +
-      `Status: ${statusInfo.label}\n` +
-      `Total: ${formatCurrency(currentOrder.total)}` +
-      `${trackingCode ? `\nCódigo de Rastreamento: ${trackingCode}` : ""}` +
-      `${estimatedDelivery ? `\nEntrega Prevista: ${new Date(estimatedDelivery).toLocaleDateString("pt-BR")}` : ""}` +
-      `\n\nQualquer dúvida estou à disposição!`;
-
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${currentOrder.customerWhatsApp.replace(/\D/g, "")}&text=${encodeURIComponent(message)}`;
+    const whatsappUrl = buildOrderStatusWhatsAppUrl(currentOrder, {
+      trackingCode,
+      estimatedDelivery,
+    });
     window.open(whatsappUrl, "_blank");
 
     toast({
       title: "WhatsApp aberto",
-      description: "Mensagem pronta para envio.",
+      description: `Mensagem de status "${getOrderStatusLabel(currentOrder.status)}" pronta para envio.`,
     });
   };
 
@@ -607,7 +601,7 @@ export function OrderDetailsModal({
             className="bg-green-600 hover:bg-green-700 min-h-[44px] h-11 text-xs sm:text-sm"
           >
             <MessageCircle className="h-4 w-4 mr-1.5" />
-            WhatsApp
+            Notificar: {statusInfo.label}
           </Button>
           <Button variant="outline" onClick={onClose} size="sm" className="min-h-[44px] h-11 text-xs sm:text-sm">
             Fechar

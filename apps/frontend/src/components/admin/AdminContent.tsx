@@ -65,8 +65,23 @@ import { reportsService, type CompleteReportData } from "@/api/reportsService";
 import type { Product as ApiProduct } from "@/api/productService";
 import { exportToCSV, exportToExcel, formatCurrencyForExport, formatDateForExport } from "@/utils/exportUtils";
 import { buildOrderListPdfHtml, buildOrderPdfHtml, getOrderListPdfFilename, getOrderPdfFilename } from "@/utils/orderPdf";
+import { buildOrderStatusWhatsAppUrl, getOrderStatusLabel } from "@/utils/orderWhatsApp";
 import { buildQuotePdfHtml, getQuotePdfFilename } from "@/utils/quotePdf";
-import { buildReportPdfHtml, getReportPdfFilename } from "@/utils/reportPdf";
+import {
+  buildCustomerListPdfHtml,
+  buildCustomerPdfHtml,
+  getCustomerListPdfFilename,
+  getCustomerPdfFilename,
+} from "@/utils/customerPdf";
+import {
+  buildReportExportData,
+  buildReportPdfHtml,
+  buildReportSectionPdfHtml,
+  getReportPdfFilename,
+  getReportSectionFilename,
+  getReportSectionTitle,
+  type ReportExportSection,
+} from "@/utils/reportPdf";
 import { useToast } from "@/hooks/use-toast";
 
 interface StoreOrder {
@@ -173,8 +188,10 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const [isCreateCustomerModalOpen, setIsCreateCustomerModalOpen] = useState(false);
   const [exportingOrderId, setExportingOrderId] = useState<string | null>(null);
   const [isExportingOrdersPdf, setIsExportingOrdersPdf] = useState(false);
+  const [exportingCustomerId, setExportingCustomerId] = useState<string | null>(null);
+  const [isExportingCustomersPdf, setIsExportingCustomersPdf] = useState(false);
   const [exportingQuoteId, setExportingQuoteId] = useState<string | null>(null);
-  const [isExportingReportPdf, setIsExportingReportPdf] = useState(false);
+  const [exportingReportPdfKey, setExportingReportPdfKey] = useState<string | null>(null);
 
   // Reports states
   const [reportData, setReportData] = useState<CompleteReportData | null>(null);
@@ -240,19 +257,40 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     }
   };
 
-  const handleExportReport = async () => {
-    try {
-      await reportsService.exportToCSV();
-    } catch (error) {
-      console.error('Error exporting report:', error);
-    }
-  };
-
-  const handleExportReportPdf = async () => {
+  const handleExportReportSpreadsheet = (
+    format: "csv" | "excel",
+    section: ReportExportSection = "complete"
+  ) => {
     if (!reportData) {
       toast({
-        title: "Relatorio indisponivel",
-        description: "Carregue os dados do relatorio antes de exportar o PDF.",
+        title: "Relatório indisponível",
+        description: "Carregue os dados do relatório antes de exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reportYear =
+      reportData.salesByMonth.find((month) => month.year)?.year || new Date().getFullYear();
+    const exportData = buildReportExportData(section, reportData, stats, reportYear);
+
+    if (format === "csv") {
+      exportToCSV(exportData);
+    } else {
+      exportToExcel(exportData);
+    }
+
+    toast({
+      title: `${getReportSectionTitle(section)} exportado`,
+      description: `O arquivo ${format === "csv" ? "CSV" : "Excel"} foi gerado com sucesso.`,
+    });
+  };
+
+  const handleExportReportPdf = async (section: ReportExportSection = "complete") => {
+    if (!reportData) {
+      toast({
+        title: "Relatório indisponível",
+        description: "Carregue os dados do relatório antes de exportar o PDF.",
         variant: "destructive",
       });
       return;
@@ -261,14 +299,20 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     const reportYear =
       reportData.salesByMonth.find((month) => month.year)?.year || new Date().getFullYear();
 
-    setIsExportingReportPdf(true);
+    setExportingReportPdfKey(section);
     try {
-      const html = buildReportPdfHtml(reportData, stats, reportYear);
-      const filename = getReportPdfFilename(reportYear);
+      const html =
+        section === "complete"
+          ? buildReportPdfHtml(reportData, stats, reportYear)
+          : buildReportSectionPdfHtml(section, reportData, stats, reportYear);
+      const filename =
+        section === "complete"
+          ? getReportPdfFilename(reportYear)
+          : `${getReportSectionFilename(section, reportYear)}.pdf`;
       await reportsService.exportToPDF({ html, filename, year: reportYear });
 
       toast({
-        title: "Relatorio exportado",
+        title: `${getReportSectionTitle(section)} exportado`,
         description: "O PDF foi gerado com sucesso.",
       });
     } catch (error) {
@@ -279,7 +323,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         variant: "destructive",
       });
     } finally {
-      setIsExportingReportPdf(false);
+      setExportingReportPdfKey(null);
     }
   };
 
@@ -453,6 +497,16 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleOrderStatusWhatsApp = (order: StoreOrder) => {
+    const whatsappUrl = buildOrderStatusWhatsAppUrl(order);
+    window.open(whatsappUrl, "_blank");
+
+    toast({
+      title: "WhatsApp aberto",
+      description: `Mensagem de status "${getOrderStatusLabel(order.status)}" pronta para envio.`,
+    });
+  };
+
   const handleCustomerCreated = (customer: CustomerListItem) => {
     setUsers(prev => [customer, ...prev.filter(existing => existing.id !== customer.id)]);
     setIsCreateCustomerModalOpen(false);
@@ -492,9 +546,20 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     if (actionUrl?.includes('/orders')) return 'orders';
     if (actionUrl?.includes('/quotes')) return 'quotes';
     if (actionUrl?.includes('/products')) return 'products';
+    if (actionUrl?.includes('/revisions')) return 'revisions';
+    if (actionUrl?.includes('/loyalty')) return 'loyalty';
+    if (actionUrl?.includes('/relationship')) return 'relationship';
+    if (actionUrl?.includes('/customers')) return 'customers';
+    if (actionUrl?.includes('/promotions')) return 'promotions';
+    if (actionUrl?.includes('/coupons')) return 'coupons';
     if (notificationType === 'order') return 'orders';
     if (notificationType === 'quote') return 'quotes';
     if (notificationType === 'stock') return 'products';
+    if (notificationType === 'revision') return 'revisions';
+    if (notificationType === 'loyalty') return 'loyalty';
+    if (notificationType === 'customer') return 'relationship';
+    if (notificationType === 'promotion') return 'promotions';
+    if (notificationType === 'coupon') return 'coupons';
     return null;
   };
 
@@ -761,7 +826,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         lowStockProducts={stats.lowStockProducts}
         useRealNotifications={true}
         onActionClick={(notification) => {
-          const nextTab = mapNotificationToTab(notification.actionUrl, notification.type);
+          const nextTab =
+            notification.actionTab || mapNotificationToTab(notification.actionUrl, notification.type);
           if (nextTab) {
             onTabChange?.(nextTab);
           }
@@ -841,6 +907,22 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     } finally {
       setExportingQuoteId(null);
     }
+  };
+
+  const handleShareQuoteApprovalLink = (quote: Quote) => {
+    if (!quote.publicApprovalToken) {
+      toast({
+        title: "Link indisponível",
+        description: "Abra o orçamento, salve os valores e envie o link pelo modal.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const approvalUrl = `${window.location.origin}/quote-approval/${quote.publicApprovalToken}`;
+    const message = `Olá ${quote.customerName}! Seu orçamento #${quote.id.slice(0, 8).toUpperCase()} já está disponível. Para aprovar sem login, acesse: ${approvalUrl}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${quote.customerWhatsApp.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const renderQuotes = () => (
@@ -1023,6 +1105,16 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                       <FileText className="h-4 w-4 mr-1" />
                       {exportingQuoteId === quote.id ? 'Gerando PDF...' : 'PDF'}
                     </Button>
+                    {['QUOTED', 'quoted'].includes(quote.status) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleShareQuoteApprovalLink(quote)}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        Enviar link
+                      </Button>
+                    )}
                     {['APPROVED', 'approved'].includes(quote.status) && (
                       <Button
                         variant="outline"
@@ -1281,6 +1373,86 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     }
   };
 
+  const handleExportCustomers = (format: 'csv' | 'excel') => {
+    const data = {
+      headers: ['ID', 'Cliente', 'E-mail', 'WhatsApp', 'CPF', 'Nível', 'Status', 'Cadastro'],
+      rows: users.map((user) => [
+        user.id,
+        user.name,
+        user.email,
+        user.whatsapp,
+        user.cpf || 'Não informado',
+        getCustomerLevelBadge(user.level).label,
+        getCustomerStatusBadge(user.status).label,
+        formatDateForExport(user.createdAt),
+      ]),
+      filename: `clientes_${new Date().toISOString().split('T')[0]}`,
+    };
+
+    if (format === 'csv') {
+      exportToCSV(data);
+    } else {
+      exportToExcel(data);
+    }
+  };
+
+  const handleExportCustomersPdf = async () => {
+    if (!users.length) {
+      toast({
+        title: "Nenhum cliente para exportar",
+        description: "Cadastre clientes ou ajuste os filtros antes de gerar o PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExportingCustomersPdf(true);
+    try {
+      await adminService.exportCustomersPdf({
+        html: buildCustomerListPdfHtml(users),
+        filename: getCustomerListPdfFilename(),
+      });
+
+      toast({
+        title: "PDF gerado",
+        description: "A listagem de clientes foi exportada com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error exporting customers PDF:", error);
+      toast({
+        title: "Erro ao exportar PDF",
+        description: "Não foi possível gerar a listagem de clientes em PDF.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingCustomersPdf(false);
+    }
+  };
+
+  const handleExportCustomerPdf = async (customer: CustomerListItem) => {
+    setExportingCustomerId(customer.id);
+    try {
+      await adminService.exportCustomerPdf(customer.id, {
+        html: buildCustomerPdfHtml(customer),
+        filename: getCustomerPdfFilename(customer),
+      });
+
+      toast({
+        title: "Ficha exportada",
+        description: `A ficha cadastral de ${customer.name} foi gerada com sucesso.`,
+      });
+    } catch (error) {
+      console.error("Error exporting customer PDF:", error);
+      toast({
+        title: "Erro ao exportar PDF",
+        description: "Não foi possível gerar a ficha cadastral do cliente.",
+        variant: "destructive",
+      });
+    } finally {
+      setExportingCustomerId(null);
+    }
+  };
+
   const handleExportOrderPdf = async (order: StoreOrder) => {
     setExportingOrderId(order.id);
 
@@ -1443,7 +1615,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
                     <Separator className="mb-4" />
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
@@ -1463,6 +1635,14 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Ver Detalhes
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOrderStatusWhatsApp(order)}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        Notificar: {statusInfo.label}
                       </Button>
                       <Button
                         variant="outline"
@@ -1491,6 +1671,30 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             <CardDescription>Cadastre clientes manualmente e acompanhe os clientes ativos da aplicação</CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCustomersPdf}
+              disabled={isExportingCustomersPdf || users.length === 0}
+              className="gap-2"
+            >
+              {isExportingCustomersPdf ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+              PDF
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExportCustomers('excel')}
+              disabled={users.length === 0}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Excel
+            </Button>
             <Button
               size="sm"
               onClick={() => setIsCreateCustomerModalOpen(true)}
@@ -1580,6 +1784,16 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                     variant="outline"
                     size="sm"
                     className="w-full sm:w-auto"
+                    onClick={() => handleExportCustomerPdf(user)}
+                    disabled={exportingCustomerId === user.id}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    {exportingCustomerId === user.id ? 'Gerando PDF...' : 'Ficha PDF'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => handleCustomerContact(user)}
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
@@ -1611,6 +1825,36 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const renderReports = () => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
+    const reportYear =
+      reportData?.salesByMonth.find((month) => month.year)?.year || currentYear;
+    const isReportReady = !!reportData && !isLoadingReport;
+
+    const renderReportActions = (section: ReportExportSection) => (
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleExportReportPdf(section)}
+          disabled={!isReportReady || exportingReportPdfKey !== null}
+        >
+          {exportingReportPdfKey === section ? (
+            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <FileText className="h-4 w-4 mr-2" />
+          )}
+          PDF
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleExportReportSpreadsheet("excel", section)}
+          disabled={!isReportReady}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Excel
+        </Button>
+      </div>
+    );
 
     // If report data is not loaded yet, show loading or use basic stats
     if (isLoadingReport) {
@@ -1629,6 +1873,52 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
     return (
       <div className="space-y-6">
+        <Card>
+          <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle>Relatório Completo</CardTitle>
+              <CardDescription>Exporte a consolidação geral da aba de relatórios em PDF, Excel ou CSV.</CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleExportReportPdf("complete")}
+                disabled={!isReportReady || exportingReportPdfKey !== null}
+              >
+                {exportingReportPdfKey === "complete" ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4 mr-2" />
+                )}
+                Exportar PDF
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleExportReportSpreadsheet("excel", "complete")}
+                disabled={!isReportReady}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar Excel
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleExportReportSpreadsheet("csv", "complete")}
+                disabled={!isReportReady}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar CSV
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Resumo Executivo</p>
+              <p className="text-sm text-gray-500">Exportação dedicada dos principais indicadores do período.</p>
+            </div>
+            {renderReportActions("overview")}
+          </CardContent>
+        </Card>
+
         {/* Cards de Métricas Principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
@@ -1704,9 +1994,12 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de Vendas por Mês */}
           <Card>
-            <CardHeader>
-              <CardTitle>Vendas por Mês - {currentYear}</CardTitle>
-              <CardDescription>Receita e número de pedidos mensais</CardDescription>
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Vendas por Mês - {reportYear}</CardTitle>
+                <CardDescription>Receita e número de pedidos mensais</CardDescription>
+              </div>
+              {renderReportActions("sales")}
             </CardHeader>
             <CardContent>
               {salesByMonth.length === 0 ? (
@@ -1735,9 +2028,12 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
           {/* Top Categorias */}
           <Card>
-            <CardHeader>
-              <CardTitle>Top Categorias</CardTitle>
-              <CardDescription>Categorias mais vendidas por receita</CardDescription>
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Top Categorias</CardTitle>
+                <CardDescription>Categorias mais vendidas por receita</CardDescription>
+              </div>
+              {renderReportActions("categories")}
             </CardHeader>
             <CardContent>
               {topCategories.length === 0 ? (
@@ -1776,9 +2072,12 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         {/* Relatórios Detalhados */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Estoque</CardTitle>
-              <CardDescription>Status do inventário</CardDescription>
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Estoque</CardTitle>
+                <CardDescription>Status do inventário</CardDescription>
+              </div>
+              {renderReportActions("inventory")}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1808,9 +2107,12 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Serviços</CardTitle>
-              <CardDescription>Performance dos serviços</CardDescription>
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Serviços</CardTitle>
+                <CardDescription>Performance dos serviços</CardDescription>
+              </div>
+              {renderReportActions("services")}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1836,9 +2138,12 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Marketing</CardTitle>
-              <CardDescription>Campanhas e cupons</CardDescription>
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Marketing</CardTitle>
+                <CardDescription>Campanhas e cupons</CardDescription>
+              </div>
+              {renderReportActions("marketing")}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1855,29 +2160,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                   <Badge className="bg-blue-100 text-blue-800">{stats.totalCustomers}</Badge>
                 </div>
                 <Separator />
-                <div className="text-center py-4">
-                  <Button
-                    variant="outline"
-                    className="w-full mb-2"
-                    onClick={handleExportReportPdf}
-                    disabled={isLoadingReport || !reportData || isExportingReportPdf}
-                  >
-                    {isExportingReportPdf ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <FileText className="h-4 w-4 mr-2" />
-                    )}
-                    Exportar Relatorio PDF
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleExportReport}
-                    disabled={isLoadingReport}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Exportar Relatório CSV
-                  </Button>
+                <div className="rounded-lg border border-dashed border-gray-200 px-4 py-3 text-xs text-gray-500">
+                  Use os botões do cabeçalho para exportar este bloco individualmente.
                 </div>
               </div>
             </CardContent>
