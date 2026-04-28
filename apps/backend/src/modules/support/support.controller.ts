@@ -23,6 +23,20 @@ export class SupportController {
     return customerId;
   }
 
+  private getAuthenticatedAdminId(req: Request, res: Response): string | null {
+    const adminId = req.admin?.adminId;
+
+    if (!adminId) {
+      res.status(401).json({
+        success: false,
+        error: 'Administrador não autenticado',
+      });
+      return null;
+    }
+
+    return adminId;
+  }
+
   /**
    * POST /support/tickets - Criar ticket
    */
@@ -186,6 +200,98 @@ export class SupportController {
     }
 
     const stats = await supportService.getCustomerStats(customerId);
+
+    res.json({
+      success: true,
+      data: stats,
+    });
+  }
+
+  /**
+   * GET /support/admin/tickets
+   */
+  async getAdminTickets(req: Request, res: Response) {
+    if (!this.getAuthenticatedAdminId(req, res)) {
+      return;
+    }
+
+    const { status, priority, category, assignedToId, limit, offset } = req.query;
+
+    const result = await supportService.getAllTickets({
+      status: status as any,
+      priority: priority as string,
+      category: category as string,
+      assignedToId: assignedToId as string,
+      limit: limit ? parseInt(limit as string, 10) : undefined,
+      offset: offset ? parseInt(offset as string, 10) : undefined,
+    });
+
+    res.json({
+      success: true,
+      ...result,
+    });
+  }
+
+  /**
+   * GET /support/admin/tickets/:id
+   */
+  async getAdminTicketById(req: Request, res: Response) {
+    if (!this.getAuthenticatedAdminId(req, res)) {
+      return;
+    }
+
+    const ticket = await supportService.getAdminTicketById(req.params.id);
+
+    res.json({
+      success: true,
+      data: ticket,
+    });
+  }
+
+  /**
+   * PATCH /support/admin/tickets/:id
+   */
+  async updateAdminTicket(req: Request, res: Response) {
+    if (!this.getAuthenticatedAdminId(req, res)) {
+      return;
+    }
+
+    const dto = await validateDto(UpdateTicketDto, req.body);
+    const ticket = await supportService.adminUpdateTicket(req.params.id, dto);
+
+    res.json({
+      success: true,
+      data: ticket,
+    });
+  }
+
+  /**
+   * POST /support/admin/tickets/:id/messages
+   */
+  async addAdminMessage(req: Request, res: Response) {
+    const adminId = this.getAuthenticatedAdminId(req, res);
+    if (!adminId) {
+      return;
+    }
+
+    const dto = await validateDto(CreateMessageDto, req.body);
+    const message = await supportService.adminAddMessage(req.params.id, adminId, dto);
+
+    res.status(201).json({
+      success: true,
+      data: message,
+    });
+  }
+
+  /**
+   * GET /support/admin/stats
+   */
+  async getAdminStats(req: Request, res: Response) {
+    if (!this.getAuthenticatedAdminId(req, res)) {
+      return;
+    }
+
+    const stats = await supportService.getAdminStats();
 
     res.json({
       success: true,

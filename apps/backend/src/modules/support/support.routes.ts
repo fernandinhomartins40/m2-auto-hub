@@ -3,6 +3,7 @@ import { SupportController } from './support.controller.js';
 import { FAQController } from './faq.controller.js';
 import { SupportConfigController } from './support-config.controller.js';
 import { authenticateCustomer } from '@middlewares/auth.middleware.js';
+import { AdminAuthMiddleware } from '@middlewares/admin-auth.middleware.js';
 import { asyncHandler } from '@shared/utils/async-handler.util.js';
 
 const router = Router();
@@ -46,5 +47,35 @@ router.get('/stats', authenticateCustomer, asyncHandler(supportController.getCus
 
 // FAQ (autenticado - para marcar como útil)
 router.post('/faq/:id/helpful', authenticateCustomer, asyncHandler(faqController.markFAQHelpful));
+
+// ============================================================================
+// Rotas Protegidas (Admin)
+// ============================================================================
+
+router.get(
+  '/admin/tickets',
+  AdminAuthMiddleware.authenticate,
+  asyncHandler(supportController.getAdminTickets.bind(supportController))
+);
+router.get(
+  '/admin/tickets/:id',
+  AdminAuthMiddleware.authenticate,
+  asyncHandler(supportController.getAdminTicketById.bind(supportController))
+);
+router.patch(
+  '/admin/tickets/:id',
+  AdminAuthMiddleware.authenticate,
+  asyncHandler(supportController.updateAdminTicket.bind(supportController))
+);
+router.post(
+  '/admin/tickets/:id/messages',
+  AdminAuthMiddleware.authenticate,
+  asyncHandler(supportController.addAdminMessage.bind(supportController))
+);
+router.get(
+  '/admin/stats',
+  AdminAuthMiddleware.authenticate,
+  asyncHandler(supportController.getAdminStats.bind(supportController))
+);
 
 export default router;

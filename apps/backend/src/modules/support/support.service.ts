@@ -25,6 +25,7 @@ export class SupportService {
             id: true,
             name: true,
             email: true,
+            phone: true,
           },
         },
       },
@@ -77,7 +78,11 @@ export class SupportService {
           },
           _count: {
             select: {
-              messages: true,
+              messages: {
+                where: {
+                  isInternal: false,
+                },
+              },
             },
           },
         },
@@ -118,6 +123,7 @@ export class SupportService {
             id: true,
             name: true,
             email: true,
+            phone: true,
           },
         },
         assignedTo: {
@@ -128,6 +134,9 @@ export class SupportService {
           },
         },
         messages: {
+          where: {
+            isInternal: false,
+          },
           orderBy: {
             createdAt: 'asc',
           },
@@ -226,6 +235,7 @@ export class SupportService {
             id: true,
             name: true,
             email: true,
+            phone: true,
           },
         },
         assignedTo: {
@@ -356,7 +366,11 @@ export class SupportService {
     if (status) where.status = status;
     if (priority) where.priority = priority;
     if (category) where.category = category;
-    if (assignedToId) where.assignedToId = assignedToId;
+    if (assignedToId === '__unassigned__') {
+      where.assignedToId = null;
+    } else if (assignedToId) {
+      where.assignedToId = assignedToId;
+    }
 
     const [tickets, total] = await Promise.all([
       prisma.supportTicket.findMany({
@@ -367,6 +381,7 @@ export class SupportService {
               id: true,
               name: true,
               email: true,
+              phone: true,
             },
           },
           assignedTo: {
@@ -405,6 +420,48 @@ export class SupportService {
   }
 
   /**
+   * Admin: Buscar ticket por ID com histórico completo
+   */
+  async getAdminTicketById(ticketId: string) {
+    const ticket = await prisma.supportTicket.findUnique({
+      where: { id: ticketId },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        messages: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+        _count: {
+          select: {
+            messages: true,
+          },
+        },
+      },
+    });
+
+    if (!ticket) {
+      throw ApiError.notFound('Ticket não encontrado');
+    }
+
+    return ticket;
+  }
+
+  /**
    * Admin: Atualizar ticket (atribuir, mudar status, etc)
    */
   async adminUpdateTicket(ticketId: string, data: UpdateTicketDto) {
@@ -435,9 +492,11 @@ export class SupportService {
     }
 
     if (data.assignedToId !== undefined) {
-      updateData.assignedToId = data.assignedToId;
+      updateData.assignedToId = data.assignedToId || null;
       if (data.assignedToId) {
         updateData.assignedAt = new Date();
+      } else {
+        updateData.assignedAt = null;
       }
     }
 
@@ -450,6 +509,7 @@ export class SupportService {
             id: true,
             name: true,
             email: true,
+            phone: true,
           },
         },
         assignedTo: {

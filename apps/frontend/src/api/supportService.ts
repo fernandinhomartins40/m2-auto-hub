@@ -22,6 +22,7 @@ export interface SupportTicket {
     id: string;
     name: string;
     email: string;
+    phone?: string;
   };
   assignedTo?: {
     id: string;
@@ -101,6 +102,15 @@ export interface SupportStats {
   avgRating: number;
 }
 
+export interface AdminSupportStats {
+  total: number;
+  open: number;
+  unassigned: number;
+  avgResponseTime: number;
+  byCategory: Array<{ category: TicketCategory; _count: number }>;
+  byPriority: Array<{ priority: TicketPriority; _count: number }>;
+}
+
 export const supportService = {
   // Criar ticket
   async createTicket(data: CreateTicketDto): Promise<SupportTicket> {
@@ -160,6 +170,44 @@ export const supportService = {
   // Estatísticas
   async getStats(): Promise<SupportStats> {
     const response = await apiClient.get('/support/stats');
+    return response.data.data;
+  },
+
+  // ==================== ADMIN ====================
+
+  async getAdminTickets(filters?: {
+    status?: TicketStatus;
+    priority?: TicketPriority;
+    category?: TicketCategory;
+    assignedToId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ data: SupportTicket[]; pagination: any }> {
+    const response = await apiClient.get('/support/admin/tickets', { params: filters });
+    return response.data;
+  },
+
+  async getAdminTicketById(ticketId: string): Promise<SupportTicket> {
+    const response = await apiClient.get(`/support/admin/tickets/${ticketId}`);
+    return response.data.data;
+  },
+
+  async updateAdminTicket(ticketId: string, data: {
+    status?: TicketStatus;
+    priority?: TicketPriority;
+    assignedToId?: string;
+  }): Promise<SupportTicket> {
+    const response = await apiClient.patch(`/support/admin/tickets/${ticketId}`, data);
+    return response.data.data;
+  },
+
+  async addAdminMessage(ticketId: string, data: CreateMessageDto & { isInternal?: boolean }): Promise<TicketMessage> {
+    const response = await apiClient.post(`/support/admin/tickets/${ticketId}/messages`, data);
+    return response.data.data;
+  },
+
+  async getAdminStats(): Promise<AdminSupportStats> {
+    const response = await apiClient.get('/support/admin/stats');
     return response.data.data;
   },
 };
