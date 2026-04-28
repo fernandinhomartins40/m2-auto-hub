@@ -631,43 +631,47 @@ export class AdminService {
   // ==================== CUSTOMER VEHICLES ====================
 
   async lookupVehicleByPlate(plate: string) {
-    const normalizedPlate = LicensePlateUtil.normalize(plate);
+    const possiblePlates = LicensePlateUtil.toPossibleValidPlates(plate);
 
-    if (!LicensePlateUtil.isValid(normalizedPlate)) {
+    if (possiblePlates.length === 0) {
       throw ApiError.badRequest('Placa invalida');
     }
 
-    const vehicle = await prisma.customerVehicle.findUnique({
-      where: { plate: normalizedPlate },
-      include: {
-        customer: true,
-      },
-    });
+    for (const normalizedPlate of possiblePlates) {
+      const vehicle = await prisma.customerVehicle.findUnique({
+        where: { plate: normalizedPlate },
+        include: {
+          customer: true,
+        },
+      });
 
-    if (!vehicle) {
+      if (!vehicle) {
+        continue;
+      }
+
       return {
-        found: false,
-        plate: normalizedPlate,
+        found: true,
+        plate: vehicle.plate,
+        vehicle: {
+          id: vehicle.id,
+          customerId: vehicle.customerId,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          year: vehicle.year,
+          plate: vehicle.plate,
+          color: vehicle.color,
+          mileage: vehicle.mileage,
+          chassisNumber: vehicle.chassisNumber,
+          createdAt: vehicle.createdAt,
+          updatedAt: vehicle.updatedAt,
+        },
+        customer: this.mapCustomerToResponse(vehicle.customer),
       };
     }
 
     return {
-      found: true,
-      plate: normalizedPlate,
-      vehicle: {
-        id: vehicle.id,
-        customerId: vehicle.customerId,
-        brand: vehicle.brand,
-        model: vehicle.model,
-        year: vehicle.year,
-        plate: vehicle.plate,
-        color: vehicle.color,
-        mileage: vehicle.mileage,
-        chassisNumber: vehicle.chassisNumber,
-        createdAt: vehicle.createdAt,
-        updatedAt: vehicle.updatedAt,
-      },
-      customer: this.mapCustomerToResponse(vehicle.customer),
+      found: false,
+      plate: possiblePlates[0],
     };
   }
 

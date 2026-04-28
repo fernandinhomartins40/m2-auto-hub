@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   extractPlateFromNfcPayload,
   formatPlate,
+  getPossibleBrazilianPlates,
   isValidBrazilianPlate,
   normalizePlate,
 } from '@/utils/licensePlate';
@@ -123,10 +124,12 @@ const readNdefRecordText = (record: any): string => {
 
 const normalizeCandidates = (candidates: RecognizedPlateCandidate[]) =>
   candidates
-    .map((candidate) => ({
-      ...candidate,
-      plate: normalizePlate(candidate.plate),
-    }))
+    .flatMap((candidate) =>
+      getPossibleBrazilianPlates(candidate.plate).map((plate) => ({
+        ...candidate,
+        plate,
+      }))
+    )
     .filter((candidate) => isValidBrazilianPlate(candidate.plate))
     .sort((left, right) => {
       if (right.confidence !== left.confidence) {

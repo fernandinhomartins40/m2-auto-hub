@@ -86,23 +86,25 @@ class AlprService {
     const dedupedCandidates = new Map<string, RecognizedPlateCandidate>();
 
     for (const candidate of payload.candidates) {
-      const normalizedPlate = LicensePlateUtil.normalize(candidate.plate);
-      if (!LicensePlateUtil.isValid(normalizedPlate)) {
+      const normalizedPlates = LicensePlateUtil.toPossibleValidPlates(candidate.plate);
+      if (normalizedPlates.length === 0) {
         continue;
       }
 
-      const mappedCandidate: RecognizedPlateCandidate = {
-        plate: normalizedPlate,
-        confidence: Number(candidate.confidence || 0),
-        detectionConfidence: Number(candidate.detection_confidence || 0),
-        region: candidate.region || null,
-        regionConfidence: candidate.region_confidence ?? null,
-        boundingBox: candidate.bounding_box,
-      };
+      for (const normalizedPlate of normalizedPlates) {
+        const mappedCandidate: RecognizedPlateCandidate = {
+          plate: normalizedPlate,
+          confidence: Number(candidate.confidence || 0),
+          detectionConfidence: Number(candidate.detection_confidence || 0),
+          region: candidate.region || null,
+          regionConfidence: candidate.region_confidence ?? null,
+          boundingBox: candidate.bounding_box,
+        };
 
-      const existingCandidate = dedupedCandidates.get(normalizedPlate);
-      if (!existingCandidate || mappedCandidate.confidence > existingCandidate.confidence) {
-        dedupedCandidates.set(normalizedPlate, mappedCandidate);
+        const existingCandidate = dedupedCandidates.get(normalizedPlate);
+        if (!existingCandidate || mappedCandidate.confidence > existingCandidate.confidence) {
+          dedupedCandidates.set(normalizedPlate, mappedCandidate);
+        }
       }
     }
 
