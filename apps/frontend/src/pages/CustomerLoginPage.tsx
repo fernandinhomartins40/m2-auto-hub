@@ -3,9 +3,11 @@ import { Navigate } from "react-router-dom";
 
 import { CustomerAuthCard } from "@/components/customer/CustomerAuthCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePwaLoginBackGuard } from "@/hooks/usePwaLoginBackGuard";
 
 export default function CustomerLoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
+  usePwaLoginBackGuard(!isAuthenticated);
 
   if (isLoading) {
     return (

@@ -3,9 +3,11 @@ import { Navigate } from "react-router-dom";
 
 import { AdminLoginDialog } from "@/components/admin/AdminLoginDialog";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePwaLoginBackGuard } from "@/hooks/usePwaLoginBackGuard";
 
 export default function AdminLoginPage() {
   const { admin, isAuthenticated, isLoading } = useAdminAuth();
+  usePwaLoginBackGuard(!isAuthenticated);
 
   if (isLoading) {
     return (
