@@ -44,6 +44,7 @@ import { OrderDetailsModal } from "./OrderDetailsModal";
 import { QuoteModal } from "./QuoteModal";
 import { CustomerOrdersModal } from "./CustomerOrdersModal";
 import { NotificationCenter } from "./NotificationCenter";
+import { AdminPageHeader } from "./AdminPageHeader";
 import { CreateOrderModal } from "./CreateOrderModal";
 import { CreateQuoteModal } from "./CreateQuoteModal";
 import { CreateCustomerModal } from "./CreateCustomerModal";
@@ -605,6 +606,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
   const renderDashboard = () => (
     <div className="space-y-6">
+      <AdminPageHeader
+        icon={BarChart3}
+        title="Dashboard"
+        description="Acompanhe os principais indicadores, alertas e atividades recentes da loja."
+      />
       {/* Primeira linha - Métricas principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -929,12 +935,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const renderQuotes = () => (
     <Card>
       <CardHeader>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Todos os Orçamentos</CardTitle>
-            <CardDescription>Solicitações de orçamento para serviços</CardDescription>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        <AdminPageHeader
+          icon={FileText}
+          title="Todos os Orçamentos"
+          description="Gerencie solicitações, aprovação e conversão de orçamentos."
+          actions={
             <Button
               size="sm"
               onClick={() => setIsCreateQuoteModalOpen(true)}
@@ -943,8 +948,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               <Plus className="h-4 w-4 mr-2" />
               Criar Orçamento
             </Button>
-          </div>
-        </div>
+          }
+        />
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -1482,48 +1487,49 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const renderOrders = () => (
     <Card>
       <CardHeader>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Todos os Pedidos</CardTitle>
-            <CardDescription>Gerencie pedidos e orçamentos</CardDescription>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setIsCreateOrderModalOpen(true)}
-              className="bg-moria-orange hover:bg-moria-orange/90"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Pedido
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportOrdersPdf}
-              disabled={isExportingOrdersPdf}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              {isExportingOrdersPdf ? 'Gerando PDF...' : 'PDF'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExportOrders('csv')}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExportOrders('excel')}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Excel
-            </Button>
-          </div>
-        </div>
+        <AdminPageHeader
+          icon={ShoppingBag}
+          title="Todos os Pedidos"
+          description="Gerencie pedidos, exportações e comunicação operacional com os clientes."
+          actions={
+            <>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsCreateOrderModalOpen(true)}
+                className="bg-moria-orange hover:bg-moria-orange/90"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Pedido
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportOrdersPdf}
+                disabled={isExportingOrdersPdf}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {isExportingOrdersPdf ? 'Gerando PDF...' : 'PDF'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportOrders('csv')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportOrders('excel')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Excel
+              </Button>
+            </>
+          }
+        />
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -1666,56 +1672,57 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const renderCustomers = () => (
     <Card>
       <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle>Clientes Cadastrados</CardTitle>
-            <CardDescription>Cadastre clientes manualmente e acompanhe os clientes ativos da aplicação</CardDescription>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportCustomersPdf}
-              disabled={isExportingCustomersPdf || users.length === 0}
-              className="gap-2"
-            >
-              {isExportingCustomersPdf ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileText className="h-4 w-4" />
-              )}
-              PDF
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExportCustomers('excel')}
-              disabled={users.length === 0}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Excel
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setIsCreateCustomerModalOpen(true)}
-              className="gap-2 bg-moria-orange hover:bg-moria-orange/90"
-            >
-              <Plus className="h-4 w-4" />
-              Novo Cliente
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadData}
-              disabled={isLoading}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
-          </div>
-        </div>
+        <AdminPageHeader
+          icon={Users}
+          title="Clientes Cadastrados"
+          description="Cadastre clientes manualmente e acompanhe a base ativa da aplicação."
+          actions={
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCustomersPdf}
+                disabled={isExportingCustomersPdf || users.length === 0}
+                className="gap-2"
+              >
+                {isExportingCustomersPdf ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportCustomers('excel')}
+                disabled={users.length === 0}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Excel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setIsCreateCustomerModalOpen(true)}
+                className="gap-2 bg-moria-orange hover:bg-moria-orange/90"
+              >
+                <Plus className="h-4 w-4" />
+                Novo Cliente
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadData}
+                disabled={isLoading}
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </>
+          }
+        />
       </CardHeader>
       <CardContent>
         {users.length === 0 ? (
@@ -1876,40 +1883,43 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       <div className="space-y-6">
         <Card>
           <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle>Relatório Completo</CardTitle>
-              <CardDescription>Exporte a consolidação geral da aba de relatórios em PDF, Excel ou CSV.</CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => handleExportReportPdf("complete")}
-                disabled={!isReportReady || exportingReportPdfKey !== null}
-              >
-                {exportingReportPdfKey === "complete" ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <FileText className="h-4 w-4 mr-2" />
-                )}
-                Exportar PDF
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleExportReportSpreadsheet("excel", "complete")}
-                disabled={!isReportReady}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Exportar Excel
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleExportReportSpreadsheet("csv", "complete")}
-                disabled={!isReportReady}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Exportar CSV
-              </Button>
-            </div>
+            <AdminPageHeader
+              icon={BarChart3}
+              title="Relatório Completo"
+              description="Exporte a consolidação geral da aba de relatórios em PDF, Excel ou CSV."
+              actions={
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReportPdf("complete")}
+                    disabled={!isReportReady || exportingReportPdfKey !== null}
+                  >
+                    {exportingReportPdfKey === "complete" ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4 mr-2" />
+                    )}
+                    Exportar PDF
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReportSpreadsheet("excel", "complete")}
+                    disabled={!isReportReady}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar Excel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportReportSpreadsheet("csv", "complete")}
+                    disabled={!isReportReady}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar CSV
+                  </Button>
+                </>
+              }
+            />
           </CardHeader>
           <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -2739,40 +2749,44 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       case 'revisions':
         return (
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-              <h2 className="text-xl sm:text-2xl font-bold">
-                {revisionView === 'appointments'
+            <AdminPageHeader
+              icon={Wrench}
+              title={
+                revisionView === 'appointments'
                   ? 'Agendamentos de Revisão'
                   : revisionView === 'list'
                     ? 'Revisões'
-                    : 'Nova Revisão'}
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={revisionView === 'appointments' ? 'default' : 'outline'}
-                  onClick={() => setRevisionView('appointments')}
-                  className="flex-1 sm:flex-none h-9 text-sm"
-                >
-                  Agendamentos
-                </Button>
-                <Button
-                  variant={revisionView === 'list' ? 'default' : 'outline'}
-                  onClick={() => setRevisionView('list')}
-                  className="flex-1 sm:flex-none h-9 text-sm"
-                >
-                  Listar Revisões
-                </Button>
-                <Button
-                  variant={revisionView === 'create' ? 'default' : 'outline'}
-                  onClick={() => setRevisionView('create')}
-                  className="flex-1 sm:flex-none h-9 text-sm"
-                >
-                  <Plus className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Nova Revisão</span>
-                  <span className="sm:hidden">Nova</span>
-                </Button>
-              </div>
-            </div>
+                    : 'Nova Revisão'
+              }
+              description="Gerencie agenda, execução e abertura de revisões veiculares."
+              actions={
+                <>
+                  <Button
+                    variant={revisionView === 'appointments' ? 'default' : 'outline'}
+                    onClick={() => setRevisionView('appointments')}
+                    className="flex-1 sm:flex-none h-9 text-sm"
+                  >
+                    Agendamentos
+                  </Button>
+                  <Button
+                    variant={revisionView === 'list' ? 'default' : 'outline'}
+                    onClick={() => setRevisionView('list')}
+                    className="flex-1 sm:flex-none h-9 text-sm"
+                  >
+                    Listar Revisões
+                  </Button>
+                  <Button
+                    variant={revisionView === 'create' ? 'default' : 'outline'}
+                    onClick={() => setRevisionView('create')}
+                    className="flex-1 sm:flex-none h-9 text-sm"
+                  >
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Nova Revisão</span>
+                    <span className="sm:hidden">Nova</span>
+                  </Button>
+                </>
+              }
+            />
             {revisionView === 'appointments' ? (
               <RevisionAppointmentsContent />
             ) : revisionView === 'list' ? (

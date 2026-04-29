@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Plus, Loader2, Power, PowerOff } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { Edit, Trash2, Plus, Loader2, Power, PowerOff, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import adminService from '@/api/adminService';
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
+import { AdminPageHeader } from './AdminPageHeader';
 import CreateUserModal from './CreateUserModal';
 import EditUserModal from './EditUserModal';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ interface AdminUser {
 }
 
 const ROLE_LABELS = {
-  STAFF: 'Mecânico',
+  STAFF: 'MecÃ¢nico',
   MANAGER: 'Gerente',
   ADMIN: 'Administrador',
   SUPER_ADMIN: 'Super Admin',
@@ -66,7 +67,7 @@ export default function AdminUsersSection() {
       setUsers(response.data || []);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error('Erro ao carregar usuários', {
+      toast.error('Erro ao carregar usuÃ¡rios', {
         description: err.response?.data?.message || 'Erro desconhecido',
       });
       setUsers([]); // Set empty array on error
@@ -93,17 +94,17 @@ export default function AdminUsersSection() {
   };
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o usuário ${userName}?`)) {
+    if (!window.confirm(`Tem certeza que deseja excluir o usuÃ¡rio ${userName}?`)) {
       return;
     }
 
     try {
       await adminService.deleteAdminUser(userId);
-      toast.success('Usuário excluído com sucesso');
+      toast.success('UsuÃ¡rio excluÃ­do com sucesso');
       fetchUsers();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error('Erro ao excluir usuário', {
+      toast.error('Erro ao excluir usuÃ¡rio', {
         description: err.response?.data?.message || 'Erro desconhecido',
       });
     }
@@ -124,17 +125,17 @@ export default function AdminUsersSection() {
     const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     const action = newStatus === 'ACTIVE' ? 'ativar' : 'desativar';
 
-    if (!window.confirm(`Tem certeza que deseja ${action} o usuário ${userName}?`)) {
+    if (!window.confirm(`Tem certeza que deseja ${action} o usuÃ¡rio ${userName}?`)) {
       return;
     }
 
     try {
       await adminService.updateAdminUser(userId, { status: newStatus });
-      toast.success(`Usuário ${action === 'ativar' ? 'ativado' : 'desativado'} com sucesso`);
+      toast.success(`UsuÃ¡rio ${action === 'ativar' ? 'ativado' : 'desativado'} com sucesso`);
       fetchUsers();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(`Erro ao ${action} usuário`, {
+      toast.error(`Erro ao ${action} usuÃ¡rio`, {
         description: err.response?.data?.message || 'Erro desconhecido',
       });
     }
@@ -143,7 +144,7 @@ export default function AdminUsersSection() {
   if (!permissions.canManageAdmins) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500">Você não tem permissão para acessar esta seção.</p>
+        <p className="text-red-500">VocÃª nÃ£o tem permissÃ£o para acessar esta seÃ§Ã£o.</p>
       </div>
     );
   }
@@ -151,17 +152,20 @@ export default function AdminUsersSection() {
   return (
     <div>
       {/* Header with filters */}
-      <div className="space-y-4 mb-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Gestão de Usuários</h2>
-          {permissions.canCreateAdmins && (
-            <Button onClick={() => setIsCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Usuário
-            </Button>
-          )}
-        </div>
-
+      <div className="mb-6 space-y-4">
+        <AdminPageHeader
+          icon={UserCog}
+          title="Gestão de Usuários"
+          description="Gerencie acessos administrativos, mecânicos e permissões do sistema."
+          actions={
+            permissions.canCreateAdmins ? (
+              <Button onClick={() => setIsCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Usuário
+              </Button>
+            ) : null
+          }
+        />
         <div className="flex flex-col md:flex-row gap-4">
           <Input
             placeholder="Buscar por email..."
@@ -203,7 +207,6 @@ export default function AdminUsersSection() {
           )}
         </div>
       </div>
-
       {/* Users Table */}
       {loading ? (
         <div className="text-center py-10">
@@ -211,7 +214,7 @@ export default function AdminUsersSection() {
         </div>
       ) : users.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-gray-500">Nenhum usuário encontrado.</p>
+          <p className="text-gray-500">Nenhum usuÃ¡rio encontrado.</p>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
@@ -224,7 +227,7 @@ export default function AdminUsersSection() {
                 <TableHead>Cargo</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Criado em</TableHead>
-                <TableHead className="text-center">Ações</TableHead>
+                <TableHead className="text-center">AÃ§Ãµes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -251,7 +254,7 @@ export default function AdminUsersSection() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleStatus(user.id, user.status, user.name)}
-                            title={user.status === 'ACTIVE' ? 'Desativar usuário' : 'Ativar usuário'}
+                            title={user.status === 'ACTIVE' ? 'Desativar usuÃ¡rio' : 'Ativar usuÃ¡rio'}
                           >
                             {user.status === 'ACTIVE' ? (
                               <PowerOff className="h-4 w-4 text-orange-500" />
@@ -308,3 +311,5 @@ export default function AdminUsersSection() {
     </div>
   );
 }
+
+

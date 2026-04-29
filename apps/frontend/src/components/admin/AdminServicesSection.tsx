@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
+import { AdminPageHeader } from './AdminPageHeader';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -83,7 +84,7 @@ export function AdminServicesSection({
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
 
-  // Estados do dialog de confirmação
+  // Estados do dialog de confirmaÃ§Ã£o
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; serviceId: string | null; serviceName: string }>({
     open: false,
     serviceId: null,
@@ -102,7 +103,7 @@ export function AdminServicesSection({
       const response = await serviceService.getAdminCategories();
       setCategories(response || []);
     } catch (error) {
-      console.error('[AdminServicesSection] Erro ao carregar categorias de serviços:', error);
+      console.error('[AdminServicesSection] Erro ao carregar categorias de serviÃ§os:', error);
     } finally {
       setCategoriesLoading(false);
     }
@@ -116,7 +117,7 @@ export function AdminServicesSection({
     void loadCategories();
   }, []);
 
-  // Filtrar serviços
+  // Filtrar serviÃ§os
   const filteredServices = useMemo(() => {
     let filtered = services.map(service => ({
       ...service,
@@ -179,7 +180,7 @@ export function AdminServicesSection({
 
       await refreshServicesView();
     } catch (error) {
-      console.error('[AdminServicesSection] Erro ao salvar serviço:', error);
+      console.error('[AdminServicesSection] Erro ao salvar serviÃ§o:', error);
       throw error;
     }
   };
@@ -188,7 +189,7 @@ export function AdminServicesSection({
     try {
       await toggleServiceStatus(serviceId, currentStatus);
     } catch (error) {
-      console.error('[AdminServicesSection] Erro ao alterar status do serviço:', error);
+      console.error('[AdminServicesSection] Erro ao alterar status do serviÃ§o:', error);
     }
   };
 
@@ -206,7 +207,7 @@ export function AdminServicesSection({
         await deleteService(deleteDialog.serviceId);
         setDeleteDialog({ open: false, serviceId: null, serviceName: '' });
       } catch (error) {
-        console.error('[AdminServicesSection] Erro ao excluir serviço:', error);
+        console.error('[AdminServicesSection] Erro ao excluir serviÃ§o:', error);
       }
     }
   };
@@ -228,55 +229,54 @@ export function AdminServicesSection({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Gerenciar Serviços</CardTitle>
-              <CardDescription>
-                Controle os serviços oferecidos pela sua oficina
-              </CardDescription>
-            </div>
-            <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  void refreshServicesView();
-                }}
-                disabled={loading || categoriesLoading}
-                className="gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${(loading || categoriesLoading) ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCategoriesModalOpen(true)}
-                disabled={categoriesLoading}
-                className="gap-2"
-              >
-                {categoriesLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Wrench className="h-4 w-4" />
-                )}
-                Categorias
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={handleOpenCreateModal}
-                disabled={createLoading || categoriesLoading}
-                className="bg-moria-orange hover:bg-moria-orange/90 gap-2"
-              >
-                {createLoading || categoriesLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                Novo Serviço
-              </Button>
-            </div>
-          </div>
+          <AdminPageHeader
+            icon={Wrench}
+            title="Gerenciar Serviços"
+            description="Controle os servicos oferecidos pela sua oficina."
+            actions={
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    void refreshServicesView();
+                  }}
+                  disabled={loading || categoriesLoading}
+                  className="w-full gap-2 sm:w-auto"
+                >
+                  <RefreshCw className={`h-4 w-4 ${(loading || categoriesLoading) ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCategoriesModalOpen(true)}
+                  disabled={categoriesLoading}
+                  className="w-full gap-2 sm:w-auto"
+                >
+                  {categoriesLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Wrench className="h-4 w-4" />
+                  )}
+                  Categorias
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleOpenCreateModal}
+                  disabled={createLoading || categoriesLoading}
+                  className="w-full gap-2 bg-moria-orange hover:bg-moria-orange/90 sm:w-auto"
+                >
+                  {createLoading || categoriesLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Novo Servico
+                </Button>
+              </>
+            }
+          />
         </CardHeader>
 
         <CardContent>
@@ -308,7 +308,7 @@ export function AdminServicesSection({
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <div className="flex items-center gap-2 text-red-800">
                 <AlertTriangle className="h-5 w-5" />
-                <span className="font-medium">Erro ao carregar serviços</span>
+                <span className="font-medium">Erro ao carregar serviÃ§os</span>
               </div>
               <p className="text-red-600 text-sm mt-1">{error}</p>
             </div>
@@ -318,7 +318,7 @@ export function AdminServicesSection({
           {loading && services.length === 0 && (
             <div className="text-center py-12">
               <Loader2 className="mx-auto h-8 w-8 animate-spin text-moria-orange mb-4" />
-              <p className="text-gray-600">Carregando serviços...</p>
+              <p className="text-gray-600">Carregando serviÃ§os...</p>
             </div>
           )}
 
@@ -328,20 +328,20 @@ export function AdminServicesSection({
               <Wrench className="mx-auto h-16 w-16 text-gray-300 mb-4" />
               <p className="text-lg font-medium mb-2">
                 {searchTerm || statusFilter !== 'all' 
-                  ? 'Nenhum serviço encontrado'
-                  : 'Nenhum serviço cadastrado'
+                  ? 'Nenhum serviÃ§o encontrado'
+                  : 'Nenhum serviÃ§o cadastrado'
                 }
               </p>
               <p>
                 {searchTerm || statusFilter !== 'all'
                   ? 'Tente ajustar os filtros de busca'
-                  : 'Adicione serviços ao seu catálogo'
+                  : 'Adicione serviÃ§os ao seu catÃ¡logo'
                 }
               </p>
             </div>
           )}
 
-          {/* Lista de serviços */}
+          {/* Lista de serviÃ§os */}
           {filteredServices.length > 0 && (
             <div className="space-y-4">
               {filteredServices.map((service) => (
@@ -350,7 +350,7 @@ export function AdminServicesSection({
                   className="border rounded-lg p-6 hover:border-moria-orange/50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    {/* Informações básicas */}
+                    {/* InformaÃ§Ãµes bÃ¡sicas */}
                     <div className="flex items-center space-x-4">
                       <div className="bg-moria-orange text-white rounded-lg p-3">
                         <Wrench className="h-6 w-6" />
@@ -384,12 +384,12 @@ export function AdminServicesSection({
                     </div>
                   </div>
 
-                  {/* Informações detalhadas */}
+                  {/* InformaÃ§Ãµes detalhadas */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-gray-500" />
                       <div>
-                        <span className="text-sm text-gray-600">Preço base: </span>
+                        <span className="text-sm text-gray-600">PreÃ§o base: </span>
                         <span className="font-medium">
                           {formatPrice(service.basePrice)}
                         </span>
@@ -405,7 +405,7 @@ export function AdminServicesSection({
                     </div>
                   </div>
 
-                  {/* Ações */}
+                  {/* AÃ§Ãµes */}
                   <div className="flex items-center justify-end gap-2">
                     <Button
                       variant="outline"
@@ -450,14 +450,14 @@ export function AdminServicesSection({
         </CardContent>
       </Card>
 
-      {/* Dialog de confirmação de exclusão */}
+      {/* Dialog de confirmaÃ§Ã£o de exclusÃ£o */}
       <AlertDialog open={deleteDialog.open} onOpenChange={handleCancelDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusÃ£o</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o serviço "{deleteDialog.serviceName}"? 
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o serviÃ§o "{deleteDialog.serviceName}"? 
+              Esta aÃ§Ã£o nÃ£o pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -474,14 +474,14 @@ export function AdminServicesSection({
                   Excluindo...
                 </>
               ) : (
-                'Excluir Serviço'
+                'Excluir ServiÃ§o'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Modal de serviço */}
+      {/* Modal de serviÃ§o */}
       <ServiceModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -500,3 +500,5 @@ export function AdminServicesSection({
     </div>
   );
 }
+
+

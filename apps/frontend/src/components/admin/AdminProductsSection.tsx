@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
+import { AdminPageHeader } from './AdminPageHeader';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -67,7 +68,7 @@ export function AdminProductsSection({
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
 
-  // Estados do dialog de confirmação
+  // Estados do dialog de confirmaÃ§Ã£o
   const [deleteDialog, setDeleteDialog] = useState({ open: false, productId: null, productName: '' });
 
   const categoryNames = useMemo(
@@ -155,7 +156,7 @@ export function AdminProductsSection({
     try {
       await refreshProductsView();
     } catch (refreshError) {
-      console.error('Erro ao atualizar lista de produtos após salvar:', refreshError);
+      console.error('Erro ao atualizar lista de produtos apÃ³s salvar:', refreshError);
     }
   };
 
@@ -220,56 +221,55 @@ export function AdminProductsSection({
     <div className="space-y-6 w-full max-w-full overflow-hidden">
       <Card className="w-full max-w-full">
         <CardHeader className="p-4 md:p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex-1">
-              <CardTitle className="text-xl md:text-2xl">Gerenciar Produtos</CardTitle>
-              <CardDescription className="mt-1">
-                Controle seu estoque e catálogo de peças automotivas
-              </CardDescription>
-            </div>
-            <div className="flex flex-row gap-2 w-full md:w-auto flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void refreshProductsView();
-                }}
-                disabled={loading || categoriesLoading}
-                className="flex-1 sm:flex-none"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${(loading || categoriesLoading) ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Atualizar</span>
-                <span className="sm:hidden">Atualizar</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCategoriesModalOpen(true)}
-                disabled={categoriesLoading}
-                className="flex-1 sm:flex-none"
-              >
-                {categoriesLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Tag className="h-4 w-4 mr-2" />
-                )}
-                Categorias
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleOpenCreateModal}
-                className="bg-moria-orange hover:bg-moria-orange/90 flex-1 sm:flex-none"
-                disabled={loading || categoriesLoading}
-              >
-                {(loading || categoriesLoading) ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                Novo Produto
-              </Button>
-            </div>
-          </div>
+          <AdminPageHeader
+            icon={Package}
+            title="Gerenciar Produtos"
+            description="Controle seu estoque e catalogo de pecas automotivas."
+            actions={
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void refreshProductsView();
+                  }}
+                  disabled={loading || categoriesLoading}
+                  className="w-full sm:w-auto"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${(loading || categoriesLoading) ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Atualizar</span>
+                  <span className="sm:hidden">Atualizar</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCategoriesModalOpen(true)}
+                  disabled={categoriesLoading}
+                  className="w-full sm:w-auto"
+                >
+                  {categoriesLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Tag className="h-4 w-4 mr-2" />
+                  )}
+                  Categorias
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleOpenCreateModal}
+                  className="w-full bg-moria-orange hover:bg-moria-orange/90 sm:w-auto"
+                  disabled={loading || categoriesLoading}
+                >
+                  {(loading || categoriesLoading) ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  Novo Produto
+                </Button>
+              </>
+            }
+          />
         </CardHeader>
 
         <CardContent className="w-full max-w-full overflow-x-hidden">
@@ -330,7 +330,7 @@ export function AdminProductsSection({
               <p>
                 {searchTerm || statusFilter !== 'all'
                   ? 'Tente ajustar os filtros de busca'
-                  : 'Adicione produtos ao seu catálogo'
+                  : 'Adicione produtos ao seu catÃ¡logo'
                 }
               </p>
             </div>
@@ -344,20 +344,20 @@ export function AdminProductsSection({
                 const discount = getDiscountPercentage(product);
                 
                 return (
-                  <div key={product.id} className="border rounded-lg p-3 md:p-6 hover:border-moria-orange/50 transition-colors w-full max-w-full overflow-hidden">
-                    <div className="flex flex-col gap-3 mb-4">
-                      {/* Informações básicas */}
-                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 w-full">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div key={product.id} className="border rounded-lg p-3 sm:p-4 md:p-6 hover:border-moria-orange/50 transition-colors w-full max-w-full overflow-hidden">
+                    <div className="flex flex-col gap-2.5 mb-3 sm:gap-3 sm:mb-4">
+                      {/* InformaÃ§Ãµes bÃ¡sicas */}
+                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2.5 sm:gap-3 w-full">
+                        <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
                           {/* Miniatura do produto */}
-                          <div className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                          <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                             {product.images && product.images.length > 0 ? (
                               <img
                                 src={product.images[0]}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  // Fallback para ícone se a imagem falhar
+                                  // Fallback para Ã­cone se a imagem falhar
                                   e.currentTarget.style.display = 'none';
                                   e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-moria-orange text-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>';
                                 }}
@@ -369,9 +369,9 @@ export function AdminProductsSection({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-base md:text-lg font-semibold break-words">{product.name}</h3>
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2 break-words">{product.description}</p>
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-sm sm:text-base md:text-lg font-semibold break-words leading-snug">{product.name}</h3>
+                            <p className="text-xs sm:text-sm text-gray-600 mb-1.5 line-clamp-1 sm:line-clamp-2 break-words">{product.description}</p>
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                               <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
                                 {product.category}
                               </Badge>
@@ -390,7 +390,7 @@ export function AdminProductsSection({
                         </div>
 
                         {/* Status e SKU */}
-                        <div className="flex flex-row md:flex-col items-start gap-2 md:gap-1 flex-shrink-0">
+                        <div className="flex flex-row md:flex-col items-start gap-1.5 md:gap-1 flex-shrink-0">
                           <Badge className={stockStatus.variant}>
                             {stockStatus.label}
                           </Badge>
@@ -401,12 +401,12 @@ export function AdminProductsSection({
                       </div>
                     </div>
 
-                    {/* Informações detalhadas */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                    {/* InformaÃ§Ãµes detalhadas */}
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-3 sm:mb-4">
                       <div className="flex items-start space-x-2 min-w-0">
                         <DollarSign className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0 flex-1">
-                          <span className="text-xs md:text-sm text-gray-600">Preço: </span>
+                          <span className="text-xs md:text-sm text-gray-600">PreÃ§o: </span>
                           <span className="font-medium text-xs md:text-sm break-words">
                             {product.promoPrice
                               ? formatPrice(product.promoPrice)
@@ -434,7 +434,7 @@ export function AdminProductsSection({
                           <Tag className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                           <div className="min-w-0 flex-1">
                             <span className="text-xs md:text-sm text-gray-600">Fornecedor: </span>
-                            <span className="font-medium text-xs md:text-sm truncate block">{product.supplier}</span>
+                            <span className="font-medium text-xs md:text-sm line-clamp-1 break-words block">{product.supplier}</span>
                           </div>
                         </div>
                       )}
@@ -449,14 +449,14 @@ export function AdminProductsSection({
                       </div>
                     </div>
 
-                    {/* Ações */}
-                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    {/* AÃ§Ãµes */}
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleStatus(product.id, product.status === 'ACTIVE')}
                         disabled={updateLoading}
-                        className="w-full sm:w-auto text-xs md:text-sm"
+                        className="w-full text-xs md:text-sm"
                       >
                         {product.status === 'ACTIVE' ? 'Desativar' : 'Ativar'}
                       </Button>
@@ -466,7 +466,7 @@ export function AdminProductsSection({
                         size="sm"
                         onClick={() => handleOpenEditModal(product)}
                         disabled={updateLoading}
-                        className="w-full sm:w-auto text-xs md:text-sm"
+                        className="w-full text-xs md:text-sm"
                       >
                         <Edit className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                         Editar
@@ -477,7 +477,7 @@ export function AdminProductsSection({
                         size="sm"
                         onClick={() => handleDeleteClick(product)}
                         disabled={deleteLoading}
-                        className="text-red-600 hover:text-red-700 hover:border-red-300 w-full sm:w-auto text-xs md:text-sm"
+                        className="col-span-2 text-red-600 hover:text-red-700 hover:border-red-300 w-full text-xs md:text-sm sm:col-span-1"
                       >
                         <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                         Excluir
@@ -508,14 +508,14 @@ export function AdminProductsSection({
         onSaved={refreshProductsView}
       />
 
-      {/* Dialog de confirmação de exclusão */}
+      {/* Dialog de confirmaÃ§Ã£o de exclusÃ£o */}
       <AlertDialog open={deleteDialog.open} onOpenChange={handleCancelDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusÃ£o</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o produto "{deleteDialog.productName}"? 
-              Esta ação não pode ser desfeita.
+              Esta aÃ§Ã£o nÃ£o pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -541,3 +541,5 @@ export function AdminProductsSection({
     </div>
   );
 }
+
+

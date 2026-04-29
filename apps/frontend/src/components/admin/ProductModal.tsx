@@ -233,13 +233,25 @@ export function ProductModal({
       if (value && value !== 'NONE') {
         const { startDate, endDate } = getDefaultOfferDates(value as 'DIA' | 'SEMANA' | 'MES');
 
-        // Aplicar datas padrão apenas se não houver datas já preenchidas
-        setFormData(prev => ({
-          ...prev,
-          [field]: value,
-          offer_start_date: prev.offer_start_date || startDate,
-          offer_end_date: prev.offer_end_date || endDate
-        }));
+        setFormData(prev => {
+          const currentEndDate = prev.offer_end_date ? new Date(prev.offer_end_date) : null;
+          const hasExpiredWindow =
+            currentEndDate instanceof Date &&
+            !Number.isNaN(currentEndDate.getTime()) &&
+            currentEndDate.getTime() <= Date.now();
+          const shouldResetWindow =
+            prev.offer_type !== value ||
+            !prev.offer_start_date ||
+            !prev.offer_end_date ||
+            hasExpiredWindow;
+
+          return {
+            ...prev,
+            [field]: value,
+            offer_start_date: shouldResetWindow ? startDate : prev.offer_start_date,
+            offer_end_date: shouldResetWindow ? endDate : prev.offer_end_date
+          };
+        });
 
         // Limpar erros de data ao selecionar tipo de oferta
         setErrors(prev => {
@@ -316,9 +328,12 @@ export function ProductModal({
       if (formData.offer_start_date && formData.offer_end_date) {
         const startDate = new Date(formData.offer_start_date);
         const endDate = new Date(formData.offer_end_date);
+        const now = new Date();
 
         if (endDate <= startDate) {
           newErrors.offer_end_date = 'Data de fim deve ser posterior à data de início';
+        } else if (endDate <= now) {
+          newErrors.offer_end_date = 'Data de fim deve estar no futuro para a oferta aparecer na landing';
         }
       }
 

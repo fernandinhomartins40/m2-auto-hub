@@ -5,6 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
+import { AdminPageHeader } from './AdminPageHeader';
 import { useSettings } from '@/hooks/useSettings';
 import { clearSettingsCache } from '@/hooks/useStoreSettings';
 import settingsService from '@/api/settingsService';
@@ -19,7 +20,8 @@ import {
   Clock,
   Save,
   RotateCcw,
-  MapPin
+  MapPin,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -489,8 +491,11 @@ export function SettingsContent() {
     <div className="min-w-0 max-w-full space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Configurações do Sistema</CardTitle>
-          <CardDescription>Configure e gerencie as definições da loja</CardDescription>
+          <AdminPageHeader
+            icon={Settings}
+            title="Configurações do Sistema"
+            description="Configure e gerencie as definições da loja."
+          />
         </CardHeader>
         <CardContent className="space-y-6">
 

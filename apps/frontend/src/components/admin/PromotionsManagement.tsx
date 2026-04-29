@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -62,16 +62,16 @@ function getPromotionTypeLabel(type: string) {
     BUY_X_GET_Y: "Compre e ganhe",
     TIERED_DISCOUNT: "Desconto escalonado",
     CASHBACK: "Cashback",
-    FREE_SHIPPING: "Frete grátis",
+    FREE_SHIPPING: "Frete grÃ¡tis",
     BUNDLE_DISCOUNT: "Combo promocional",
     LOYALTY_POINTS: "Pontos de fidelidade",
     PROGRESSIVE_DISCOUNT: "Desconto progressivo",
-    TIME_LIMITED_FLASH: "Oferta relâmpago",
+    TIME_LIMITED_FLASH: "Oferta relÃ¢mpago",
     QUANTITY_BASED: "Por quantidade",
     CATEGORY_COMBO: "Combo por categoria",
   };
 
-  return labels[type] || "Promoção";
+  return labels[type] || "PromoÃ§Ã£o";
 }
 
 function getPromotionDates(promotion: AdvancedPromotion) {
@@ -92,7 +92,7 @@ function getRewardLabel(promotion: AdvancedPromotion) {
     case "FIXED":
       return formatPrice(rewardValue);
     case "FREE_SHIPPING":
-      return "Frete grátis";
+      return "Frete grÃ¡tis";
     case "LOYALTY_POINTS":
       return `${rewardValue} pontos`;
     case "CASHBACK":
@@ -118,15 +118,15 @@ function getTargetLabel(promotion: AdvancedPromotion) {
     case "SPECIFIC_PRODUCTS":
       return promotion.targetProductIds?.length
         ? `${promotion.targetProductIds.length} produto(s) selecionado(s)`
-        : "Produtos específicos";
+        : "Produtos especÃ­ficos";
     case "CATEGORY":
       return promotion.targetCategories?.length
         ? promotion.targetCategories.join(", ")
-        : "Categorias específicas";
+        : "Categorias especÃ­ficas";
     case "BRAND":
-      return promotion.targetBrands?.length ? promotion.targetBrands.join(", ") : "Marcas específicas";
+      return promotion.targetBrands?.length ? promotion.targetBrands.join(", ") : "Marcas especÃ­ficas";
     case "PRICE_RANGE":
-      return "Faixa de preço";
+      return "Faixa de preÃ§o";
     case "NEW_ARRIVALS":
       return "Novidades";
     case "CLEARANCE":
@@ -181,7 +181,7 @@ export function PromotionsManagement() {
   };
 
   const handleDeletePromotion = async (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir esta promoção?")) {
+    if (window.confirm("Tem certeza que deseja excluir esta promoÃ§Ã£o?")) {
       try {
         await deletePromotion(id);
       } catch (error) {
@@ -250,37 +250,38 @@ export function PromotionsManagement() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Gerenciar Promoções</CardTitle>
-                <CardDescription>Configure campanhas de marketing e ofertas especiais</CardDescription>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refreshAnalytics()}
-                  disabled={isLoading}
-                  className="gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-                  Atualizar
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-moria-orange hover:bg-moria-orange/90"
-                  onClick={() => handleOpenModal()}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Promoção
-                </Button>
-              </div>
-            </div>
+            <AdminPageHeader
+              icon={TrendingUp}
+              title="Gerenciar Promoções"
+              description="Configure campanhas de marketing e ofertas especiais."
+              actions={
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refreshAnalytics()}
+                    disabled={isLoading}
+                    className="gap-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                    Atualizar
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-moria-orange hover:bg-moria-orange/90"
+                    onClick={() => handleOpenModal()}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Promoção
+                  </Button>
+                </>
+              }
+            />
           </CardHeader>
           <CardContent>
             <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
               <div className="rounded-lg border bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Promoções</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">PromoÃ§Ãµes</p>
                 <p className="mt-2 text-2xl font-bold text-slate-900">{summary.total}</p>
               </div>
               <div className="rounded-lg border bg-green-50 p-4">
@@ -301,7 +302,7 @@ export function PromotionsManagement() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
-                  placeholder="Buscar promoções..."
+                  placeholder="Buscar promoÃ§Ãµes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -324,15 +325,15 @@ export function PromotionsManagement() {
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-moria-orange" />
-                <span className="ml-3 text-muted-foreground">Carregando promoções...</span>
+                <span className="ml-3 text-muted-foreground">Carregando promoÃ§Ãµes...</span>
               </div>
             ) : filteredPromotions.length === 0 ? (
               <div className="rounded-lg bg-muted/30 py-12 text-center">
                 <Gift className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">Nenhuma promoção encontrada</p>
+                <p className="text-muted-foreground">Nenhuma promoÃ§Ã£o encontrada</p>
                 <Button variant="outline" className="mt-4" onClick={() => handleOpenModal()}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Criar primeira promoção
+                  Criar primeira promoÃ§Ã£o
                 </Button>
               </div>
             ) : (
@@ -349,15 +350,15 @@ export function PromotionsManagement() {
                     : 0;
 
                   return (
-                    <div key={promotion.id} className="rounded-lg border p-6">
-                      <div className="mb-4 flex items-start justify-between gap-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="rounded-lg bg-moria-orange p-3 text-white">
+                    <div key={promotion.id} className="rounded-lg border p-4 sm:p-5 lg:p-6">
+                      <div className="mb-4 flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                          <div className="rounded-lg bg-moria-orange p-2.5 text-white sm:p-3">
                             {getPromotionTypeIcon(promotion.type)}
                           </div>
-                          <div>
-                            <h3 className="text-lg font-semibold">{promotion.name}</h3>
-                            <p className="mb-2 text-sm text-gray-600">{promotion.description}</p>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="break-words text-base font-semibold sm:text-lg">{promotion.name}</h3>
+                            <p className="mb-2 break-words text-sm text-gray-600">{promotion.description}</p>
                             <div className="flex flex-wrap items-center gap-2">
                               <Badge variant="secondary" className="bg-purple-100 text-purple-800">
                                 {getPromotionTypeLabel(promotion.type)}
@@ -388,25 +389,25 @@ export function PromotionsManagement() {
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-green-600">{getRewardLabel(promotion)}</p>
+                        <div className="min-w-0 xl:text-right">
+                          <p className="break-words text-lg font-bold text-green-600 sm:text-xl">{getRewardLabel(promotion)}</p>
                           {promotion.code ? (
-                            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                              Código: {promotion.code}
+                            <p className="mt-1 break-all text-xs font-medium uppercase tracking-wide text-slate-500">
+                              CÃ³digo: {promotion.code}
                             </p>
                           ) : null}
                         </div>
                       </div>
 
-                      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+                      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm font-medium">Período</span>
+                            <span className="text-sm font-medium">PerÃ­odo</span>
                           </div>
                           <div className="text-sm">
-                            <p>Início: {start ? start.toLocaleDateString("pt-BR") : "Não definido"}</p>
-                            <p>Fim: {end ? end.toLocaleDateString("pt-BR") : "Não definido"}</p>
+                            <p>InÃ­cio: {start ? start.toLocaleDateString("pt-BR") : "NÃ£o definido"}</p>
+                            <p>Fim: {end ? end.toLocaleDateString("pt-BR") : "NÃ£o definido"}</p>
                           </div>
                         </div>
 
@@ -437,7 +438,7 @@ export function PromotionsManagement() {
                             <span className="text-sm font-medium">Alvo</span>
                           </div>
                           <div className="text-sm">
-                            <p className="text-gray-600">{getTargetLabel(promotion)}</p>
+                            <p className="break-words text-gray-600">{getTargetLabel(promotion)}</p>
                           </div>
                         </div>
 
@@ -447,7 +448,7 @@ export function PromotionsManagement() {
                             <span className="text-sm font-medium">Prioridade</span>
                           </div>
                           <div className="text-sm">
-                            <p className="font-medium text-moria-orange">Nível {promotion.priority ?? 0}</p>
+                            <p className="font-medium text-moria-orange">NÃ­vel {promotion.priority ?? 0}</p>
                             {promotion.canCombineWithOthers ? (
                               <p className="text-xs text-green-600">Combina com outras</p>
                             ) : (
@@ -459,17 +460,18 @@ export function PromotionsManagement() {
 
                       <Separator className="mb-4" />
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div className="text-sm text-gray-600">
                           <p>Criado: {new Date(promotion.createdAt).toLocaleDateString("pt-BR")}</p>
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                           <Button
                             variant={promotion.isActive ? "secondary" : "outline"}
                             size="sm"
                             disabled={isExpired}
                             onClick={() => handleTogglePromotion(promotion)}
+                            className="w-full sm:w-auto"
                           >
                             {promotion.isActive ? (
                               <>
@@ -483,14 +485,14 @@ export function PromotionsManagement() {
                               </>
                             )}
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(promotion)}>
+                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(promotion)} className="w-full sm:w-auto">
                             <Edit className="h-4 w-4 mr-1" />
                             Editar
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-red-600 hover:border-red-300 hover:text-red-700"
+                            className="w-full text-red-600 hover:border-red-300 hover:text-red-700 sm:w-auto"
                             onClick={() => handleDeletePromotion(promotion.id)}
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
@@ -499,9 +501,10 @@ export function PromotionsManagement() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="col-span-2 w-full sm:col-span-1 sm:w-auto"
                             onClick={() => {
                               const link = `${window.location.origin}/#promocoes`;
-                              const message = `Promoção especial: ${promotion.name}. ${promotion.description}. Confira: ${link}`;
+                              const message = `PromoÃ§Ã£o especial: ${promotion.name}. ${promotion.description}. Confira: ${link}`;
                               navigator.clipboard.writeText(message);
                             }}
                           >
@@ -528,3 +531,5 @@ export function PromotionsManagement() {
     </>
   );
 }
+
+

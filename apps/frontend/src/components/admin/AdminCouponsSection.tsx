@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Calendar,
@@ -34,6 +34,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { CouponModal } from './CouponModal';
+import { AdminPageHeader } from './AdminPageHeader';
 import { useAdminCoupons } from '../../hooks/useAdminCoupons';
 
 interface AdminCouponsSectionProps {
@@ -221,37 +222,38 @@ export function AdminCouponsSection({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Gerenciar Cupons</CardTitle>
-              <CardDescription>Controle cupons de desconto e promocoes</CardDescription>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchCoupons()}
-                disabled={loading}
-                className="gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleOpenCreateModal}
-                disabled={createLoading}
-                className="bg-moria-orange hover:bg-moria-orange/90 gap-2"
-              >
-                {createLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                Novo Cupom
-              </Button>
-            </div>
-          </div>
+          <AdminPageHeader
+            icon={Gift}
+            title="Gerenciar Cupons"
+            description="Controle cupons de desconto e promocoes."
+            actions={
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchCoupons()}
+                  disabled={loading}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleOpenCreateModal}
+                  disabled={createLoading}
+                  className="bg-moria-orange hover:bg-moria-orange/90 gap-2"
+                >
+                  {createLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Novo Cupom
+                </Button>
+              </>
+            }
+          />
         </CardHeader>
 
         <CardContent>
@@ -321,24 +323,24 @@ export function AdminCouponsSection({
                     key={coupon.id}
                     className="border rounded-lg p-6 hover:border-moria-orange/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-moria-orange text-white rounded-lg p-3">
+                    <div className="mb-4 flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                        <div className="bg-moria-orange text-white rounded-lg p-2.5 sm:p-3 flex-shrink-0">
                           <Gift className="h-6 w-6" />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-semibold font-mono">{coupon.code}</h3>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-2 flex items-center gap-2">
+                            <h3 className="min-w-0 break-all text-base font-semibold font-mono sm:text-lg">{coupon.code}</h3>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => copyToClipboard(coupon.code)}
-                              className="h-6 w-6 p-0"
+                              className="h-6 w-6 flex-shrink-0 p-0"
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">{coupon.description}</p>
+                          <p className="mb-2 break-words text-sm text-gray-600">{coupon.description}</p>
                           <div className="flex items-center gap-2 flex-wrap">
                             <Badge className={status.variant}>{status.label}</Badge>
                             <Badge variant="outline">
@@ -348,9 +350,9 @@ export function AdminCouponsSection({
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600">Ativo: </span>
+                      <div className="flex justify-start lg:justify-end">
+                        <div className="inline-flex items-center gap-2 rounded-lg border bg-slate-50 px-3 py-2">
+                          <span className="text-sm text-gray-600">Ativo:</span>
                           {coupon.isActive ? (
                             <ToggleRight className="h-5 w-5 text-green-600" />
                           ) : (
@@ -374,7 +376,7 @@ export function AdminCouponsSection({
                         <div>
                           <span className="text-sm text-gray-600">Uso: </span>
                           <span className="font-medium">
-                            {coupon.usedCount || 0}/{coupon.usageLimit || '∞'}
+                            {coupon.usedCount || 0}/{coupon.usageLimit || 'âˆž'}
                           </span>
                         </div>
                       </div>
@@ -471,3 +473,5 @@ export function AdminCouponsSection({
     </div>
   );
 }
+
+

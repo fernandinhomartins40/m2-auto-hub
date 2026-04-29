@@ -605,29 +605,31 @@ export function PwaSettingsSection({ storeName, profiles, onChange }: PwaSetting
         </p>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        {(Object.keys(PROFILE_META) as PwaProfileKey[]).map((key) => {
-          const meta = PROFILE_META[key];
-          const Icon = meta.icon;
-          const isActive = key === activeProfile;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveProfile(key)}
-              className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-moria-orange bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
-            >
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${isActive ? 'bg-moria-orange text-white' : 'bg-slate-100 text-slate-700'}`}>
-                  <Icon className="h-5 w-5" />
+      <div className="-mx-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:px-0">
+        <div className="flex min-w-max gap-3 lg:grid lg:min-w-0 lg:grid-cols-3">
+          {(Object.keys(PROFILE_META) as PwaProfileKey[]).map((key) => {
+            const meta = PROFILE_META[key];
+            const Icon = meta.icon;
+            const isActive = key === activeProfile;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveProfile(key)}
+                className={`h-full w-[280px] rounded-2xl border p-4 text-left transition sm:w-[320px] lg:w-auto ${isActive ? 'border-moria-orange bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+              >
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${isActive ? 'bg-moria-orange text-white' : 'bg-slate-100 text-slate-700'}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <Badge variant={isActive ? 'default' : 'outline'} className="flex-shrink-0">{meta.badge}</Badge>
                 </div>
-                <Badge variant={isActive ? 'default' : 'outline'}>{meta.badge}</Badge>
-              </div>
-              <div className="font-semibold text-slate-900">{meta.label}</div>
-              <p className="mt-1 text-sm text-slate-600">{meta.summary}</p>
-            </button>
-          );
-        })}
+                <div className="break-words font-semibold text-slate-900">{meta.label}</div>
+                <p className="mt-1 text-sm text-slate-600">{meta.summary}</p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <Card className="border-border/70">
@@ -638,8 +640,8 @@ export function PwaSettingsSection({ storeName, profiles, onChange }: PwaSetting
           </CardTitle>
           <CardDescription>{profileMeta.installContext}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <CardContent className="space-y-6 px-4 pb-4 sm:px-6 sm:pb-6">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.9fr)] xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
             <div className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
@@ -711,8 +713,8 @@ export function PwaSettingsSection({ storeName, profiles, onChange }: PwaSetting
                 <CardDescription>Simulacao aproximada do nome, descricao e icone do perfil selecionado.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-[28px] border bg-slate-950 p-5 text-white shadow-sm">
-                  <div className="mb-5 flex items-center gap-3">
+                <div className="rounded-[28px] border bg-slate-950 p-4 text-white shadow-sm sm:p-5">
+                  <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-white/10" style={{ backgroundColor: profile.backgroundColor }}>
                       {previewIcon ? (
                         <img src={previewIcon} alt={previewName} className="h-full w-full rounded-[18px] object-contain" />
@@ -720,7 +722,7 @@ export function PwaSettingsSection({ storeName, profiles, onChange }: PwaSetting
                         <ProfileIcon className="h-8 w-8 text-white/70" />
                       )}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-base font-semibold">{previewName}</div>
                       <div className="text-sm text-white/70">{previewShortName}</div>
                     </div>

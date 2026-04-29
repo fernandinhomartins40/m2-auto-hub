@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+﻿import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { MessageCircle, Phone, RefreshCw, Send, UserCheck, Users, Clock3, AlertCircle, Shield, ExternalLink } from "lucide-react";
+import { AdminPageHeader } from "./AdminPageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -26,7 +27,7 @@ const statusOptions = [
 const priorityOptions = [
   { value: "ALL", label: "Todas as prioridades" },
   { value: TicketPriority.LOW, label: "Baixa" },
-  { value: TicketPriority.MEDIUM, label: "Média" },
+  { value: TicketPriority.MEDIUM, label: "MÃ©dia" },
   { value: TicketPriority.HIGH, label: "Alta" },
   { value: TicketPriority.URGENT, label: "Urgente" },
 ];
@@ -36,16 +37,16 @@ const categoryLabels: Record<string, string> = {
   PRODUCT_QUESTION: "Produto",
   PAYMENT_ISSUE: "Pagamento",
   DELIVERY_ISSUE: "Entrega",
-  REVISION_QUESTION: "Revisão",
-  TECHNICAL_SUPPORT: "Suporte técnico",
-  SUGGESTION: "Sugestão",
-  COMPLAINT: "Reclamação",
+  REVISION_QUESTION: "RevisÃ£o",
+  TECHNICAL_SUPPORT: "Suporte tÃ©cnico",
+  SUGGESTION: "SugestÃ£o",
+  COMPLAINT: "ReclamaÃ§Ã£o",
   OTHER: "Outro",
 };
 
 const priorityLabels: Record<string, string> = {
   LOW: "Baixa",
-  MEDIUM: "Média",
+  MEDIUM: "MÃ©dia",
   HIGH: "Alta",
   URGENT: "Urgente",
 };
@@ -136,7 +137,7 @@ export function AdminSupportContent() {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar suporte",
-        description: error.response?.data?.error || "Não foi possível carregar a central de suporte.",
+        description: error.response?.data?.error || "NÃ£o foi possÃ­vel carregar a central de suporte.",
         variant: "destructive",
       });
     } finally {
@@ -174,7 +175,7 @@ export function AdminSupportContent() {
     } catch (error: any) {
       toast({
         title: "Erro ao abrir ticket",
-        description: error.response?.data?.error || "Não foi possível carregar a conversa.",
+        description: error.response?.data?.error || "NÃ£o foi possÃ­vel carregar a conversa.",
         variant: "destructive",
       });
     } finally {
@@ -221,8 +222,8 @@ export function AdminSupportContent() {
 
       if (Object.keys(payload).length === 0) {
         toast({
-          title: "Nenhuma alteração",
-          description: "Não há mudanças pendentes para salvar.",
+          title: "Nenhuma alteraÃ§Ã£o",
+          description: "NÃ£o hÃ¡ mudanÃ§as pendentes para salvar.",
         });
         return;
       }
@@ -241,12 +242,12 @@ export function AdminSupportContent() {
 
       toast({
         title: "Ticket atualizado",
-        description: "As informações do ticket foram salvas com sucesso.",
+        description: "As informaÃ§Ãµes do ticket foram salvas com sucesso.",
       });
     } catch (error: any) {
       toast({
         title: "Erro ao salvar ticket",
-        description: error.response?.data?.error || "Não foi possível atualizar o ticket.",
+        description: error.response?.data?.error || "NÃ£o foi possÃ­vel atualizar o ticket.",
         variant: "destructive",
       });
     } finally {
@@ -273,13 +274,13 @@ export function AdminSupportContent() {
       toast({
         title: internalOnly ? "Nota interna adicionada" : "Mensagem enviada",
         description: internalOnly
-          ? "A observação ficou registrada apenas para a equipe."
-          : "O cliente já pode visualizar a resposta no painel dele.",
+          ? "A observaÃ§Ã£o ficou registrada apenas para a equipe."
+          : "O cliente jÃ¡ pode visualizar a resposta no painel dele.",
       });
     } catch (error: any) {
       toast({
         title: "Erro ao enviar mensagem",
-        description: error.response?.data?.error || "Não foi possível enviar a mensagem.",
+        description: error.response?.data?.error || "NÃ£o foi possÃ­vel enviar a mensagem.",
         variant: "destructive",
       });
     } finally {
@@ -297,15 +298,15 @@ export function AdminSupportContent() {
   const openCustomerWhatsApp = () => {
     if (!selectedTicket?.customer?.phone) {
       toast({
-        title: "WhatsApp indisponível",
-        description: "Esse cliente não possui telefone cadastrado.",
+        title: "WhatsApp indisponÃ­vel",
+        description: "Esse cliente nÃ£o possui telefone cadastrado.",
         variant: "destructive",
       });
       return;
     }
 
     const phone = selectedTicket.customer.phone.replace(/\D/g, "");
-    const message = `Olá ${selectedTicket.customer.name}! Aqui é da equipe M2 Auto Center sobre o ticket "${selectedTicket.subject}". Vamos continuar por aqui se preferir.`;
+    const message = `OlÃ¡ ${selectedTicket.customer.name}! Aqui Ã© da equipe M2 Auto Center sobre o ticket "${selectedTicket.subject}". Vamos continuar por aqui se preferir.`;
     window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`, "_blank");
   };
 
@@ -315,7 +316,7 @@ export function AdminSupportContent() {
     }
 
     const baseMessage = selectedTicket
-      ? `Olá! Quero transferir o atendimento do ticket ${selectedTicket.id.slice(0, 8)} para o WhatsApp.`
+      ? `OlÃ¡! Quero transferir o atendimento do ticket ${selectedTicket.id.slice(0, 8)} para o WhatsApp.`
       : config.contacts.whatsapp.message;
 
     window.open(
@@ -351,32 +352,30 @@ export function AdminSupportContent() {
 
   return (
     <div className="min-w-0 max-w-full space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Central de Suporte</h2>
-          <p className="text-muted-foreground">
-            Atenda tickets do painel do cliente, responda dentro da plataforma e migre para WhatsApp quando necessário.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button className="w-full sm:w-auto" variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            WhatsApp do suporte
-          </Button>
-          <Button className="w-full sm:w-auto" variant="outline" onClick={() => void handleRefresh()} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Atualizar
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        icon={MessageCircle}
+        title="Central de Suporte"
+        description="Atenda tickets do painel do cliente, responda dentro da plataforma e migre conversas para WhatsApp quando necessario."
+        actions={
+          <>
+            <Button className="w-full sm:w-auto" variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              WhatsApp do suporte
+            </Button>
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => void handleRefresh()} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+          </>
+        }
+      />
 
       {stats ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
           <MetricCard title="Total de tickets" value={stats.total} icon={MessageCircle} />
           <MetricCard title="Em aberto" value={stats.open} icon={AlertCircle} />
-          <MetricCard title="Sem responsável" value={stats.unassigned} icon={Users} />
-          <MetricCard title="SLA médio" value={stats.avgResponseTime || 0} suffix="h" icon={Clock3} />
+          <MetricCard title="Sem responsÃ¡vel" value={stats.unassigned} icon={Users} />
+          <MetricCard title="SLA mÃ©dio" value={stats.avgResponseTime || 0} suffix="h" icon={Clock3} />
         </div>
       ) : null}
 
@@ -424,19 +423,19 @@ export function AdminSupportContent() {
 
                 <Select value={assignedFilter} onValueChange={(value) => setAssignedFilter(value as "ALL" | "ME" | "UNASSIGNED")}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Responsável" />
+                    <SelectValue placeholder="ResponsÃ¡vel" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">Todos os tickets</SelectItem>
-                    <SelectItem value="ME">Atribuídos a mim</SelectItem>
-                    <SelectItem value="UNASSIGNED">Sem responsável</SelectItem>
+                    <SelectItem value="ME">AtribuÃ­dos a mim</SelectItem>
+                    <SelectItem value="UNASSIGNED">Sem responsÃ¡vel</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
             <ScrollArea className="h-[360px] min-h-[280px] pr-4 sm:h-[420px] lg:h-[calc(100vh-24rem)]">
               <div className="space-y-3">
                 {filteredTickets.map((ticket) => (
@@ -444,29 +443,42 @@ export function AdminSupportContent() {
                     key={ticket.id}
                     type="button"
                     onClick={() => void openTicket(ticket.id)}
-                    className={`w-full rounded-xl border p-4 text-left transition ${
+                    className={`w-full rounded-xl border p-3 text-left transition sm:p-4 ${
                       selectedTicket?.id === ticket.id ? "border-moria-orange bg-orange-50/60" : "hover:border-slate-300"
                     }`}
                   >
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <p className="min-w-0 break-words font-semibold text-slate-900">{ticket.subject}</p>
-                      <Badge className={statusBadgeClass[ticket.status] || "bg-slate-100 text-slate-800"}>
-                        {statusLabels[ticket.status] || ticket.status}
-                      </Badge>
-                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <p className="min-w-0 break-words text-sm font-semibold leading-snug text-slate-900 sm:text-base">
+                          {ticket.subject}
+                        </p>
+                        <Badge className={`w-fit max-w-full shrink-0 ${statusBadgeClass[ticket.status] || "bg-slate-100 text-slate-800"}`}>
+                          <span className="truncate">{statusLabels[ticket.status] || ticket.status}</span>
+                        </Badge>
+                      </div>
 
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge variant="secondary">{categoryLabels[ticket.category] || ticket.category}</Badge>
-                      <Badge className={priorityBadgeClass[ticket.priority] || "bg-slate-100 text-slate-800"}>
-                        {priorityLabels[ticket.priority] || ticket.priority}
-                      </Badge>
-                    </div>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                        <div className="min-w-0">
+                          <p className="break-words text-sm font-medium text-slate-700">{ticket.customer?.name}</p>
+                          <p className="break-all text-xs text-slate-500">{ticket.customer?.email}</p>
+                        </div>
 
-                    <p className="mt-3 break-words text-sm text-slate-700">{ticket.customer?.name}</p>
-                    <p className="break-all text-xs text-slate-500">{ticket.customer?.email}</p>
-                    <p className="mt-2 text-xs text-slate-400">
-                      {ticket._count?.messages || 0} mensagens • {new Date(ticket.updatedAt).toLocaleString("pt-BR")}
-                    </p>
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                          <Badge variant="secondary" className="justify-center sm:justify-start">
+                            {categoryLabels[ticket.category] || ticket.category}
+                          </Badge>
+                          <Badge className={`justify-center sm:justify-start ${priorityBadgeClass[ticket.priority] || "bg-slate-100 text-slate-800"}`}>
+                            {priorityLabels[ticket.priority] || ticket.priority}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                        <span>{ticket._count?.messages || 0} mensagens</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span>{new Date(ticket.updatedAt).toLocaleString("pt-BR")}</span>
+                      </div>
+                    </div>
                   </button>
                 ))}
 
@@ -492,8 +504,8 @@ export function AdminSupportContent() {
                   </CardTitle>
                   <CardDescription>
                     {selectedTicket
-                      ? `Ticket #${selectedTicket.id.slice(0, 8)} • ${selectedTicket.customer?.name || "Cliente"}`
-                      : "Abra um ticket à esquerda para conversar e gerenciar o atendimento."}
+                      ? `Ticket #${selectedTicket.id.slice(0, 8)} â€¢ ${selectedTicket.customer?.name || "Cliente"}`
+                      : "Abra um ticket Ã  esquerda para conversar e gerenciar o atendimento."}
                   </CardDescription>
                 </div>
 
@@ -516,12 +528,12 @@ export function AdminSupportContent() {
               {selectedTicket ? (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
-                    <InfoBlock label="Cliente" value={selectedTicket.customer?.name || "Não informado"} />
-                    <InfoBlock label="Telefone" value={selectedTicket.customer?.phone || "Não informado"} />
-                    <InfoBlock label="E-mail" value={selectedTicket.customer?.email || "Não informado"} />
+                    <InfoBlock label="Cliente" value={selectedTicket.customer?.name || "NÃ£o informado"} />
+                    <InfoBlock label="Telefone" value={selectedTicket.customer?.phone || "NÃ£o informado"} />
+                    <InfoBlock label="E-mail" value={selectedTicket.customer?.email || "NÃ£o informado"} />
                     <InfoBlock
-                      label="Responsável"
-                      value={selectedTicket.assignedTo?.name || "Ainda não atribuído"}
+                      label="ResponsÃ¡vel"
+                      value={selectedTicket.assignedTo?.name || "Ainda nÃ£o atribuÃ­do"}
                     />
                   </div>
 
@@ -558,10 +570,10 @@ export function AdminSupportContent() {
 
                     <Select value={draftAssignedToId || "__unassigned__"} onValueChange={(value) => setDraftAssignedToId(value === "__unassigned__" ? "" : value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Responsável" />
+                        <SelectValue placeholder="ResponsÃ¡vel" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__unassigned__">Sem responsável</SelectItem>
+                        <SelectItem value="__unassigned__">Sem responsÃ¡vel</SelectItem>
                         {admin ? <SelectItem value={admin.id}>{admin.name} (eu)</SelectItem> : null}
                       </SelectContent>
                     </Select>
@@ -569,7 +581,7 @@ export function AdminSupportContent() {
 
                   <div className="flex justify-end">
                     <Button className="w-full sm:w-auto" onClick={() => void handleSaveTicket()} disabled={savingTicket}>
-                      {savingTicket ? "Salvando..." : "Salvar status e atribuição"}
+                      {savingTicket ? "Salvando..." : "Salvar status e atribuiÃ§Ã£o"}
                     </Button>
                   </div>
                 </>
@@ -586,7 +598,7 @@ export function AdminSupportContent() {
               <CardHeader>
                 <CardTitle>Conversa</CardTitle>
                 <CardDescription>
-                  Responda no painel para manter o histórico entre lojista e cliente. Se precisar, registre observações internas só para a equipe.
+                  Responda no painel para manter o histÃ³rico entre lojista e cliente. Se precisar, registre observaÃ§Ãµes internas sÃ³ para a equipe.
                 </CardDescription>
               </CardHeader>
 
@@ -609,7 +621,7 @@ export function AdminSupportContent() {
                           <div className="mb-1 flex items-center gap-2 text-xs font-medium">
                             <span>
                               {message.isInternal
-                                ? "Observação interna"
+                                ? "ObservaÃ§Ã£o interna"
                                 : isAdminMessage
                                 ? selectedTicket.assignedTo?.name || "Equipe"
                                 : selectedTicket.customer?.name || "Cliente"}
@@ -630,14 +642,14 @@ export function AdminSupportContent() {
                   <Textarea
                     value={replyMessage}
                     onChange={(event) => setReplyMessage(event.target.value)}
-                    placeholder="Escreva a resposta para o cliente ou uma observação interna..."
+                    placeholder="Escreva a resposta para o cliente ou uma observaÃ§Ã£o interna..."
                     rows={5}
                   />
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <label className="flex items-center gap-2 text-sm text-slate-700">
                         <Checkbox checked={internalOnly} onCheckedChange={(checked) => setInternalOnly(Boolean(checked))} />
-                        Registrar como observação interna
+                        Registrar como observaÃ§Ã£o interna
                       </label>
 
                       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
@@ -647,7 +659,7 @@ export function AdminSupportContent() {
                         </Button>
                         <Button className="w-full sm:w-auto" onClick={() => void handleSendMessage()} disabled={sendingMessage || !replyMessage.trim()}>
                           <Send className="mr-2 h-4 w-4" />
-                          {sendingMessage ? "Enviando..." : internalOnly ? "Salvar observação" : "Enviar resposta"}
+                          {sendingMessage ? "Enviando..." : internalOnly ? "Salvar observaÃ§Ã£o" : "Enviar resposta"}
                         </Button>
                       </div>
                   </div>
@@ -698,3 +710,5 @@ function InfoBlock({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+

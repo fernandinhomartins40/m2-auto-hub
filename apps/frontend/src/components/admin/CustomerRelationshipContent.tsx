@@ -202,8 +202,13 @@ export function CustomerRelationshipContent() {
     <div className="min-w-0 max-w-full space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
+          <AdminPageHeader
+            icon={HeartHandshake}
+            title="Relacionamento com o Cliente"
+            description="Acompanhe oportunidades de pos-venda, retencao e contato ativo com clientes."
+            actions={
+              <>
+            <div className="hidden">
               <CardTitle className="flex items-center gap-2">
                 <HeartHandshake className="h-5 w-5 text-moria-orange" />
                 Relacionamento com o Cliente
@@ -265,7 +270,9 @@ export function CustomerRelationshipContent() {
                 Atualizar
               </Button>
             </div>
-          </div>
+              </>
+            }
+          />
         </CardHeader>
       </Card>
 

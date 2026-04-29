@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Loader2, RotateCcw, Save, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings } from '@/hooks/useSettings';
 import { clearSettingsCache } from '@/hooks/useStoreSettings';
+import { AdminPageHeader } from './AdminPageHeader';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Separator } from '../ui/separator';
@@ -233,9 +234,9 @@ export function PwaSettingsContent() {
         pwaMechanicMaskableIconUrl: profiles.mechanic.maskableIconUrl.trim() || null,
       });
       clearSettingsCache();
-      toast.success('Configurações do PWA salvas com sucesso.');
+      toast.success('ConfiguraÃ§Ãµes do PWA salvas com sucesso.');
     } catch (error: any) {
-      toast.error('Erro ao salvar configurações do PWA', {
+      toast.error('Erro ao salvar configuraÃ§Ãµes do PWA', {
         description: error?.message || 'Tente novamente.',
       });
     } finally {
@@ -244,7 +245,7 @@ export function PwaSettingsContent() {
   };
 
   const handleReset = async () => {
-    if (!confirm('Tem certeza que deseja restaurar as configurações do PWA para o padrão?')) {
+    if (!confirm('Tem certeza que deseja restaurar as configuraÃ§Ãµes do PWA para o padrÃ£o?')) {
       return;
     }
 
@@ -252,9 +253,9 @@ export function PwaSettingsContent() {
     try {
       await resetSettings();
       clearSettingsCache();
-      toast.success('Configurações do PWA restauradas para o padrão.');
+      toast.success('ConfiguraÃ§Ãµes do PWA restauradas para o padrÃ£o.');
     } catch (error: any) {
-      toast.error('Erro ao restaurar configurações do PWA', {
+      toast.error('Erro ao restaurar configuraÃ§Ãµes do PWA', {
         description: error?.message || 'Tente novamente.',
       });
     } finally {
@@ -273,16 +274,15 @@ export function PwaSettingsContent() {
   return (
     <div className="min-w-0 max-w-full space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5 text-moria-orange" />
-            Configurações do PWA
-          </CardTitle>
-          <CardDescription>
-            Gerencie textos, ícones, manifesto e identidade visual dos PWAs do cliente, do lojista e do mecânico.
-          </CardDescription>
+        <CardHeader className="pb-4">
+          <AdminPageHeader
+            icon={Smartphone}
+            title="Configuracoes do PWA"
+            description="Gerencie textos, icones, manifesto e identidade visual dos PWAs do cliente, do lojista e do mecanico."
+          />
+            
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 px-4 pb-4 sm:px-6 sm:pb-6">
           <PwaSettingsSection storeName={storeName} profiles={profiles} onChange={handleInputChange} />
 
           <Separator />
@@ -302,7 +302,7 @@ export function PwaSettingsContent() {
               ) : (
                 <>
                   <RotateCcw className="mr-2 h-4 w-4" />
-                  Restaurar Padrão
+                  Restaurar PadrÃ£o
                 </>
               )}
             </Button>
@@ -315,7 +315,7 @@ export function PwaSettingsContent() {
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Salvar Configurações do PWA
+                  Salvar ConfiguraÃ§Ãµes do PWA
                 </>
               )}
             </Button>
@@ -325,3 +325,4 @@ export function PwaSettingsContent() {
     </div>
   );
 }
+

@@ -344,6 +344,10 @@ export class ProductsService {
       dto.salePrice
     );
 
+    if (dto.offerType && dto.offerEndDate && dto.offerEndDate <= new Date()) {
+      throw ApiError.badRequest('Offer end date must be in the future');
+    }
+
     // Generate and ensure unique slug
     const baseSlug = dto.slug || this.generateSlug(dto.name);
     const slug = await this.ensureUniqueSlug(baseSlug);
@@ -431,6 +435,10 @@ export class ProductsService {
       promoPrice,
       salePrice
     );
+
+    if (offerType && offerEndDate && offerEndDate <= new Date()) {
+      throw ApiError.badRequest('Offer end date must be in the future');
+    }
 
     // Handle slug update
     let slug = dto.slug;

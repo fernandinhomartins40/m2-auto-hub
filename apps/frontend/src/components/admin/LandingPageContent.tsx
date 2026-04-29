@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LandingPageContent - Conteudo do editor da Landing Page
  * Integrado ao StorePanel - Responsivo mobile/desktop
  */
@@ -25,6 +25,7 @@ import {
   AlertCircle,
   Eye,
   MoreVertical,
+  Palette,
 } from 'lucide-react';
 import {
   HeroEditor,
@@ -39,15 +40,16 @@ import {
 } from '@/components/admin/LandingPageEditor/SectionEditors';
 import { AboutEditor } from '@/components/admin/LandingPageEditor/SectionEditors/AboutEditor';
 import { toast } from 'sonner';
+import { AdminPageHeader } from './AdminPageHeader';
 
 const orderedTabs = [
   { value: 'header', label: 'Header' },
   { value: 'hero', label: 'Hero' },
   { value: 'contact', label: 'Destaques' },
   { value: 'aboutPage', label: 'Sobre da Home' },
-  { value: 'about', label: 'Serviços' },
-  { value: 'products', label: 'Peças' },
-  { value: 'services', label: 'Promoções' },
+  { value: 'about', label: 'ServiÃ§os' },
+  { value: 'products', label: 'PeÃ§as' },
+  { value: 'services', label: 'PromoÃ§Ãµes' },
   { value: 'contactPage', label: 'Contato' },
   { value: 'footer', label: 'Footer' },
   { value: 'marquee', label: 'Marquee' },
@@ -120,6 +122,11 @@ export function LandingPageContent() {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      <AdminPageHeader
+        icon={Palette}
+        title="Editor da Landing Page"
+        description="Configure os elementos visuais e o conteúdo da página pública da loja."
+      />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex-1">
           {isDirty && (
@@ -331,3 +338,5 @@ export function LandingPageContent() {
     </div>
   );
 }
+
+
