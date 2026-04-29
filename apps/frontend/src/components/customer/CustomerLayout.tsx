@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { useStandaloneMode } from "../../hooks/useStandaloneMode";
@@ -39,6 +40,8 @@ export function CustomerLayout({
   onTabChange,
 }: CustomerLayoutProps) {
   const { customer, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { totalItems, openCart } = useCart();
   const { isStandalone } = useStandaloneMode();
   const isMobile = useIsMobile();
@@ -135,9 +138,15 @@ export function CustomerLayout({
 
   const membership = getMembershipLevel(customer.totalSpent);
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = "/";
+  const handleLogout = async () => {
+    const source = new URLSearchParams(location.search).get("source");
+    const isPwaSession = isStandalone || source?.startsWith("pwa");
+
+    await logout();
+
+    navigate(isPwaSession ? "/customer-login/?source=pwa-customer&redirect=%2Fcustomer" : "/", {
+      replace: true,
+    });
   };
 
   // MOBILE LAYOUT
