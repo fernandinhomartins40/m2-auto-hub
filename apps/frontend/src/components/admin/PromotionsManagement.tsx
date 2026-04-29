@@ -25,6 +25,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { usePromotions } from "../../hooks/usePromotions";
+import { AdminPageHeader } from "./AdminPageHeader";
 import { PromotionModal } from "./PromotionModal";
 import type { AdvancedPromotion } from "../../types/promotions";
 
