@@ -359,12 +359,12 @@ export function AdminSupportContent() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button className="w-full sm:w-auto" variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
             <ExternalLink className="mr-2 h-4 w-4" />
             WhatsApp do suporte
           </Button>
-          <Button variant="outline" onClick={() => void handleRefresh()} disabled={loading}>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => void handleRefresh()} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Atualizar
           </Button>
@@ -372,7 +372,7 @@ export function AdminSupportContent() {
       </div>
 
       {stats ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
           <MetricCard title="Total de tickets" value={stats.total} icon={MessageCircle} />
           <MetricCard title="Em aberto" value={stats.open} icon={AlertCircle} />
           <MetricCard title="Sem responsável" value={stats.unassigned} icon={Users} />
@@ -380,8 +380,8 @@ export function AdminSupportContent() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <Card className="min-h-[720px] min-w-0">
+      <div className="grid gap-6 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
+        <Card className="min-h-0 min-w-0">
           <CardHeader className="space-y-4">
             <div>
               <CardTitle>Fila de atendimento</CardTitle>
@@ -437,7 +437,7 @@ export function AdminSupportContent() {
           </CardHeader>
 
           <CardContent>
-            <ScrollArea className="h-[520px] pr-4">
+            <ScrollArea className="h-[360px] min-h-[280px] pr-4 sm:h-[420px] lg:h-[calc(100vh-24rem)]">
               <div className="space-y-3">
                 {filteredTickets.map((ticket) => (
                   <button
@@ -448,8 +448,8 @@ export function AdminSupportContent() {
                       selectedTicket?.id === ticket.id ? "border-moria-orange bg-orange-50/60" : "hover:border-slate-300"
                     }`}
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="font-semibold">{ticket.subject}</p>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <p className="min-w-0 break-words font-semibold text-slate-900">{ticket.subject}</p>
                       <Badge className={statusBadgeClass[ticket.status] || "bg-slate-100 text-slate-800"}>
                         {statusLabels[ticket.status] || ticket.status}
                       </Badge>
@@ -462,8 +462,8 @@ export function AdminSupportContent() {
                       </Badge>
                     </div>
 
-                    <p className="mt-3 text-sm text-slate-700">{ticket.customer?.name}</p>
-                    <p className="text-xs text-slate-500">{ticket.customer?.email}</p>
+                    <p className="mt-3 break-words text-sm text-slate-700">{ticket.customer?.name}</p>
+                    <p className="break-all text-xs text-slate-500">{ticket.customer?.email}</p>
                     <p className="mt-2 text-xs text-slate-400">
                       {ticket._count?.messages || 0} mensagens • {new Date(ticket.updatedAt).toLocaleString("pt-BR")}
                     </p>
@@ -483,10 +483,12 @@ export function AdminSupportContent() {
         <div className="min-w-0 space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0">
                   <CardTitle>
-                    {selectedTicket ? selectedTicket.subject : "Selecione um ticket"}
+                    <span className="block break-words">
+                      {selectedTicket ? selectedTicket.subject : "Selecione um ticket"}
+                    </span>
                   </CardTitle>
                   <CardDescription>
                     {selectedTicket
@@ -496,12 +498,12 @@ export function AdminSupportContent() {
                 </div>
 
                 {selectedTicket ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={handleAssignToMe}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap xl:justify-end">
+                    <Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={handleAssignToMe}>
                       <UserCheck className="mr-2 h-4 w-4" />
                       Assumir ticket
                     </Button>
-                    <Button variant="outline" size="sm" onClick={openCustomerWhatsApp}>
+                    <Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={openCustomerWhatsApp}>
                       <Phone className="mr-2 h-4 w-4" />
                       WhatsApp do cliente
                     </Button>
@@ -513,7 +515,7 @@ export function AdminSupportContent() {
             <CardContent className="space-y-4">
               {selectedTicket ? (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
                     <InfoBlock label="Cliente" value={selectedTicket.customer?.name || "Não informado"} />
                     <InfoBlock label="Telefone" value={selectedTicket.customer?.phone || "Não informado"} />
                     <InfoBlock label="E-mail" value={selectedTicket.customer?.email || "Não informado"} />
@@ -523,7 +525,7 @@ export function AdminSupportContent() {
                     />
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <Select value={draftStatus} onValueChange={(value) => setDraftStatus(value as TicketStatus)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Status" />
@@ -566,7 +568,7 @@ export function AdminSupportContent() {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button onClick={() => void handleSaveTicket()} disabled={savingTicket}>
+                    <Button className="w-full sm:w-auto" onClick={() => void handleSaveTicket()} disabled={savingTicket}>
                       {savingTicket ? "Salvando..." : "Salvar status e atribuição"}
                     </Button>
                   </div>
@@ -589,7 +591,7 @@ export function AdminSupportContent() {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <ScrollArea className="h-[360px] rounded-xl border p-4">
+                <ScrollArea className="h-[320px] min-h-[260px] rounded-xl border p-4 sm:h-[360px] lg:h-[calc(100vh-31rem)]">
                   <div className="space-y-4">
                     {(selectedTicket.messages || []).map((message) => {
                       const isAdminMessage = message.senderType === "admin";
@@ -632,22 +634,22 @@ export function AdminSupportContent() {
                     rows={5}
                   />
 
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <label className="flex items-center gap-2 text-sm text-slate-700">
-                      <Checkbox checked={internalOnly} onCheckedChange={(checked) => setInternalOnly(Boolean(checked))} />
-                      Registrar como observação interna
-                    </label>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <Checkbox checked={internalOnly} onCheckedChange={(checked) => setInternalOnly(Boolean(checked))} />
+                        Registrar como observação interna
+                      </label>
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Mudar para WhatsApp
-                      </Button>
-                      <Button onClick={() => void handleSendMessage()} disabled={sendingMessage || !replyMessage.trim()}>
-                        <Send className="mr-2 h-4 w-4" />
-                        {sendingMessage ? "Enviando..." : internalOnly ? "Salvar observação" : "Enviar resposta"}
-                      </Button>
-                    </div>
+                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+                        <Button className="w-full sm:w-auto" variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Mudar para WhatsApp
+                        </Button>
+                        <Button className="w-full sm:w-auto" onClick={() => void handleSendMessage()} disabled={sendingMessage || !replyMessage.trim()}>
+                          <Send className="mr-2 h-4 w-4" />
+                          {sendingMessage ? "Enviando..." : internalOnly ? "Salvar observação" : "Enviar resposta"}
+                        </Button>
+                      </div>
                   </div>
                 </div>
               </CardContent>
@@ -671,10 +673,10 @@ function MetricCard({
   suffix?: string;
 }) {
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold">
               {value}
@@ -690,9 +692,9 @@ function MetricCard({
 
 function InfoBlock({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border bg-slate-50 p-3">
+    <div className="min-w-0 rounded-xl border bg-slate-50 p-3">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-medium text-slate-900">{value}</p>
+      <p className="mt-1 break-words text-sm font-medium text-slate-900">{value}</p>
     </div>
   );
 }
