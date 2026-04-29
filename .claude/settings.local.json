@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python3 -)",
+      "WebSearch",
+      "WebFetch(domain:docs.docker.com)",
+      "WebFetch(domain:developer.harness.io)",
+      "WebFetch(domain:playwright.dev)",
+      "Read(//c/c/Projetos Cursor/m2-auto-hub/**)",
+      "Bash(xxd deploy-vps.sh)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(python3 -c \"import paramiko; print\\('paramiko ok'\\)\")",
+      "Bash(python3)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

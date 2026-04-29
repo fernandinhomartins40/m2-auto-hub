@@ -1,25 +1,10 @@
 import { useState } from "react";
-import {
-  BarChart3,
-  ClipboardCheck,
-  FileText,
-  Gift,
-  HeartHandshake,
-  LayoutDashboard,
-  MessageCircle,
-  Menu,
-  Package,
-  Palette,
-  Percent,
-  Settings,
-  ShoppingBag,
-  Smartphone,
-  Tag,
-  UserCog,
-  Users,
-  Wrench,
-} from "lucide-react";
+
 import { AdminContent } from "../components/admin/AdminContent";
+import {
+  adminBottomNavItems,
+  adminSidebarItems,
+} from "../components/admin/adminNavigation";
 import { ProtectedAdminRoute } from "../components/admin/ProtectedAdminRoute";
 import MechanicPanel from "../components/mechanic/MechanicPanel";
 import StoreLayout from "../components/store/StoreLayout";
@@ -41,37 +26,13 @@ export default function StorePanel() {
     );
   }
 
-  const bottomNavItems = [
-    { id: "dashboard", label: "Início", icon: LayoutDashboard },
-    { id: "orders", label: "Pedidos", icon: ShoppingBag },
-    { id: "quotes", label: "Orçamentos", icon: FileText },
-    { id: "products", label: "Produtos", icon: Package },
-    { id: "menu", label: "Mais", icon: Menu },
-  ];
-
-  const drawerItems = [
-    { id: "services", label: "Serviços", icon: Wrench },
-    { id: "revisions", label: "Revisões", icon: ClipboardCheck },
-    { id: "customers", label: "Clientes", icon: Users },
-    { id: "relationship", label: "Relacionamento", icon: HeartHandshake },
-    { id: "support", label: "Suporte", icon: MessageCircle },
-    { id: "loyalty", label: "Fidelidade", icon: Gift },
-    { id: "coupons", label: "Cupons", icon: Tag },
-    { id: "promotions", label: "Promoções", icon: Percent },
-    { id: "users", label: "Usuários", icon: UserCog, requiresPermission: "canManageAdmins" },
-    { id: "reports", label: "Relatórios", icon: BarChart3 },
-    { id: "landing-page", label: "Landing Page", icon: Palette },
-    { id: "pwa-settings", label: "PWA", icon: Smartphone },
-    { id: "settings", label: "Configurações", icon: Settings },
-  ];
-
   return (
     <ProtectedAdminRoute>
       <StoreLayout
         currentTab={activeTab}
         onTabChange={setActiveTab}
-        bottomNavItems={bottomNavItems}
-        drawerItems={drawerItems}
+        bottomNavItems={adminBottomNavItems}
+        drawerItems={adminSidebarItems}
         adminName={admin?.name}
         adminEmail={admin?.email}
         variant="admin"

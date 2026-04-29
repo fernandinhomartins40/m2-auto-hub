@@ -1,8 +1,10 @@
 import React from 'react';
 import { X, LogOut } from 'lucide-react';
+
+import { useAdminPermissions } from '@/hooks/useAdminPermissions';
+
 import { cn } from '../../lib/utils';
 import type { NavItem } from './StoreLayout';
-import { useAdminPermissions } from '@/hooks/useAdminPermissions';
 
 interface StoreMobileDrawerProps {
   open: boolean;
@@ -40,35 +42,42 @@ export default function StoreMobileDrawer({
     }
   };
 
-  // Iniciais do nome
-  const getInitials = (name: string) => {
-    return name
+  const visibleItems = items.filter(
+    (item) => !item.requiresPermission || (permissions as any)[item.requiresPermission]
+  );
+
+  const groupedItems = visibleItems.reduce<Record<string, NavItem[]>>((acc, item) => {
+    const section = item.section || 'Navegação';
+    if (!acc[section]) {
+      acc[section] = [];
+    }
+    acc[section].push(item);
+    return acc;
+  }, {});
+
+  const getInitials = (name: string) =>
+    name
       .split(' ')
       .map((n) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  };
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={cn(
-          'absolute inset-0 bg-black/50 z-40 transition-opacity duration-300',
-          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          'absolute inset-0 z-40 bg-black/50 transition-opacity duration-300',
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer */}
       <div
         className={cn(
-          'absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50',
+          'drawer-content absolute right-0 top-0 z-50 flex h-full w-80 max-w-[85vw] flex-col bg-white shadow-2xl',
           'transition-transform duration-300 ease-out',
-          'flex flex-col',
-          'drawer-content',
           open ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
         )}
         role="dialog"
@@ -77,95 +86,86 @@ export default function StoreMobileDrawer({
         onPointerDown={(event) => event.stopPropagation()}
         aria-label="Menu de navegação"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+        <div className="flex items-center justify-between border-b border-gray-200 p-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Navegação</h2>
+            <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Painel do Lojista</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors touch-manipulation"
+            className="touch-manipulation rounded-lg p-2 transition-colors hover:bg-gray-100"
             aria-label="Fechar menu"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
 
-        {/* Admin/Mechanic Info */}
-        <div className="p-4 bg-gradient-to-r from-primary/10 via-blue-50 to-stone-100 border-b border-gray-200">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-primary/10 via-blue-50 to-stone-100 p-4">
           <div className="flex items-center gap-3">
-            {/* Avatar */}
-            <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold bg-gradient-to-br from-primary to-primary-hover shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-hover text-white shadow-sm">
               {getInitials(adminName)}
             </div>
 
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 truncate">
-                {adminName}
-              </p>
-              {adminEmail && (
-                <p className="text-sm text-gray-600 truncate">
-                  {adminEmail}
-                </p>
-              )}
-              <span
-                className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded bg-moria-orange/15 text-moria-orange"
-              >
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold text-gray-900">{adminName}</p>
+              {adminEmail ? <p className="truncate text-sm text-gray-600">{adminEmail}</p> : null}
+              <span className="mt-1 inline-block rounded bg-moria-orange/15 px-2 py-0.5 text-xs font-medium text-moria-orange">
                 {variant === 'admin' ? 'Lojista M2' : 'Oficina M2'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Menu Items */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-2 touch-pan-y">
-          <nav className="space-y-1">
-            {items.map((item) => {
-              if (item.requiresPermission && !(permissions as any)[item.requiresPermission]) {
-                return null;
-              }
+        <div className="flex-1 overflow-y-auto overscroll-contain p-3 touch-pan-y">
+          <nav className="space-y-4">
+            {Object.entries(groupedItems).map(([section, sectionItems]) => (
+              <div key={section} className="rounded-2xl border border-gray-200 bg-gray-50/80 p-2">
+                <div className="px-2 pb-2 pt-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                    {section}
+                  </p>
+                </div>
 
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
+                <div className="space-y-1">
+                  {sectionItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentTab === item.id;
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleItemClick(item.id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3 rounded-lg',
-                    'transition-all touch-manipulation',
-                    'min-h-[44px]',
-                    isActive
-                      ? 'bg-moria-orange text-white font-medium shadow-sm'
-                      : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
-                  )}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm">{item.label}</span>
-                </button>
-              );
-            })}
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleItemClick(item.id)}
+                        className={cn(
+                          'flex min-h-[44px] w-full touch-manipulation items-center gap-3 rounded-xl px-4 py-3 transition-all',
+                          isActive
+                            ? 'bg-moria-orange font-medium text-white shadow-sm'
+                            : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
+                        )}
+                      >
+                        <Icon className="h-5 w-5 flex-shrink-0" />
+                        <span className="text-sm">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
         </div>
 
-        {/* Logout Button */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="border-t border-gray-200 p-4">
           <button
             onClick={handleLogout}
             className={cn(
-              'w-full flex items-center justify-center gap-2 px-4 py-3',
-              'bg-primary/10 text-primary rounded-lg font-medium',
-              'hover:bg-primary/15 active:bg-primary/20',
-              'transition-colors touch-manipulation',
-              'min-h-[44px]'
+              'flex min-h-[44px] w-full touch-manipulation items-center justify-center gap-2 rounded-lg bg-primary/10 px-4 py-3 font-medium text-primary transition-colors',
+              'hover:bg-primary/15 active:bg-primary/20'
             )}
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="h-5 w-5" />
             <span>Sair</span>
           </button>
         </div>
 
-        {/* Safe area for iOS */}
         <div className="h-safe-area-inset-bottom bg-white" />
       </div>
     </>

@@ -53,9 +53,15 @@ export const adminSidebarItems: AdminNavItem[] = [
   { id: "landing-page", label: "Landing Page", icon: Palette, section: "Marketing" },
 
   { id: "reports", label: "Relatórios", icon: BarChart3, section: "Gestão" },
-  { id: "users", label: "Usuários", icon: UserCog, section: "Gestão", requiresPermission: "canManageAdmins" },
   { id: "pwa-settings", label: "PWA", icon: Smartphone, section: "Gestão" },
   { id: "settings", label: "Configurações", icon: Settings, section: "Gestão" },
+  {
+    id: "users",
+    label: "Usuários",
+    icon: UserCog,
+    section: "Gestão",
+    requiresPermission: "canManageAdmins",
+  },
 ];
 
 export const adminBottomNavItems: AdminNavItem[] = [

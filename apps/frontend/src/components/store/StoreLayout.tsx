@@ -13,6 +13,7 @@ export interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   requiresPermission?: string;
+  section?: string;
 }
 
 interface StoreLayoutProps {
