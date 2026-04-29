@@ -7,6 +7,9 @@
 .lojista-layout {
   display: flex;
   height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -19,9 +22,17 @@
 
 .lojista-content {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
   background: #f8fafc;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 2rem;
+}
+
+.lojista-content > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Sidebar do Lojista */
@@ -263,6 +274,8 @@
 /* Animações do Lojista */
 .lojista-fade-in {
   animation: fadeIn 0.3s ease-in;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @keyframes fadeIn {

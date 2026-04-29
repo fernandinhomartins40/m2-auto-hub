@@ -486,7 +486,7 @@ export function SettingsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Configurações do Sistema</CardTitle>
@@ -575,7 +575,7 @@ export function SettingsContent() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="zipCode">CEP</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     id="zipCode"
                     value={formData.zipCode}
@@ -587,6 +587,7 @@ export function SettingsContent() {
                   <Button
                     type="button"
                     variant="outline"
+                    className="w-full sm:w-auto"
                     onClick={() => void searchCep(formData.zipCode)}
                     disabled={isFetchingCep || unformatValue(formData.zipCode).length !== 8}
                   >
@@ -748,7 +749,7 @@ export function SettingsContent() {
           <div className="space-y-4">
             <h3 className="text-lg font-medium border-b pb-2">Notificações</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-medium">Novos Pedidos</p>
                   <p className="text-sm text-gray-600">Receber notificação quando houver novos pedidos</p>
@@ -766,7 +767,7 @@ export function SettingsContent() {
                   )}
                 </Button>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-medium">Estoque Baixo</p>
                   <p className="text-sm text-gray-600">Alerta quando produtos estão com estoque baixo</p>
@@ -784,7 +785,7 @@ export function SettingsContent() {
                   )}
                 </Button>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-medium">Relatórios Semanais</p>
                   <p className="text-sm text-gray-600">Receber relatório semanal de vendas por e-mail</p>
@@ -813,7 +814,7 @@ export function SettingsContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-3">
                       <MessageCircle className="h-8 w-8 text-green-600" />
                       <div>
@@ -853,7 +854,7 @@ export function SettingsContent() {
 
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-3">
                       <Truck className="h-8 w-8 text-blue-600" />
                       <div>
@@ -893,7 +894,7 @@ export function SettingsContent() {
 
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-3">
                       <DollarSign className="h-8 w-8 text-purple-600" />
                       <div>
@@ -933,7 +934,7 @@ export function SettingsContent() {
 
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-3">
                       <BarChart3 className="h-8 w-8 text-orange-600" />
                       <div>
@@ -971,10 +972,10 @@ export function SettingsContent() {
 
           <Separator />
 
-          <div className="flex justify-between gap-4">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
               variant="outline"
-              className="text-red-600 hover:text-red-700"
+              className="w-full text-red-600 hover:text-red-700 sm:w-auto"
               onClick={handleReset}
               disabled={isResetting || isSaving}
             >
@@ -985,7 +986,7 @@ export function SettingsContent() {
               )}
             </Button>
             <Button
-              className="bg-moria-orange hover:bg-moria-orange/90"
+              className="w-full bg-moria-orange hover:bg-moria-orange/90 sm:w-auto"
               onClick={handleSave}
               disabled={isSaving || isResetting}
             >

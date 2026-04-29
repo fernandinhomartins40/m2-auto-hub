@@ -2803,7 +2803,9 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
   return (
     <>
-      {renderContent()}
+      <div className="min-w-0 w-full max-w-full overflow-x-hidden">
+        {renderContent()}
+      </div>
       <ProductModal
         isOpen={isProductModalOpen}
         onClose={handleCloseProductModal}

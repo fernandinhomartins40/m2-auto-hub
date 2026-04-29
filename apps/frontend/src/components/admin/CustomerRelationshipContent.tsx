@@ -199,7 +199,7 @@ export function CustomerRelationshipContent() {
   const summary = data?.summary;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6">
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -213,11 +213,11 @@ export function CustomerRelationshipContent() {
               </CardDescription>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <div className="space-y-1">
                 <div className="text-xs font-medium text-muted-foreground">Sem retorno em</div>
                 <Select value={inactivityDays} onValueChange={setInactivityDays}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -233,7 +233,7 @@ export function CustomerRelationshipContent() {
               <div className="space-y-1">
                 <div className="text-xs font-medium text-muted-foreground">Pós-venda recente</div>
                 <Select value={postSaleDays} onValueChange={setPostSaleDays}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -248,7 +248,7 @@ export function CustomerRelationshipContent() {
               <div className="space-y-1">
                 <div className="text-xs font-medium text-muted-foreground">Aniversários em</div>
                 <Select value={birthdayWindowDays} onValueChange={setBirthdayWindowDays}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[150px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -260,7 +260,7 @@ export function CustomerRelationshipContent() {
                 </Select>
               </div>
 
-              <Button type="button" variant="outline" onClick={() => void loadInsights()} disabled={loading}>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => void loadInsights()} disabled={loading}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 Atualizar
               </Button>

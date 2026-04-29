@@ -350,7 +350,7 @@ export function AdminSupportContent() {
   }, [tickets, searchTerm, assignedFilter, admin?.id]);
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold">Central de Suporte</h2>
@@ -381,7 +381,7 @@ export function AdminSupportContent() {
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <Card className="min-h-[720px]">
+        <Card className="min-h-[720px] min-w-0">
           <CardHeader className="space-y-4">
             <div>
               <CardTitle>Fila de atendimento</CardTitle>
@@ -480,7 +480,7 @@ export function AdminSupportContent() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -596,7 +596,7 @@ export function AdminSupportContent() {
                       return (
                         <div
                           key={message.id}
-                          className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                          className={`max-w-full sm:max-w-[85%] rounded-2xl px-4 py-3 ${
                             message.isInternal
                               ? "border border-dashed border-amber-300 bg-amber-50 text-amber-900"
                               : isAdminMessage

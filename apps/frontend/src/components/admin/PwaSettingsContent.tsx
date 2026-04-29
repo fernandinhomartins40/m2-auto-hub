@@ -271,7 +271,7 @@ export function PwaSettingsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -287,10 +287,10 @@ export function PwaSettingsContent() {
 
           <Separator />
 
-          <div className="flex justify-between gap-4">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
               variant="outline"
-              className="text-red-600 hover:text-red-700"
+              className="w-full text-red-600 hover:text-red-700 sm:w-auto"
               onClick={handleReset}
               disabled={isResetting || isSaving}
             >
@@ -306,7 +306,7 @@ export function PwaSettingsContent() {
                 </>
               )}
             </Button>
-            <Button className="bg-moria-orange hover:bg-moria-orange/90" onClick={handleSave} disabled={isSaving || isResetting}>
+            <Button className="w-full bg-moria-orange hover:bg-moria-orange/90 sm:w-auto" onClick={handleSave} disabled={isSaving || isResetting}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -77,14 +77,14 @@ export default function StorePanel() {
         variant="admin"
         onLogout={logout}
       >
-        <div className="lojista-header desktop-only">
+        <div className="lojista-header desktop-only min-w-0 max-w-full">
           <div>
             <h1 className="lojista-title">{getPageTitle(activeTab)}</h1>
             <p className="lojista-subtitle">{getPageDescription(activeTab)}</p>
           </div>
         </div>
 
-        <div className="lojista-fade-in">
+        <div className="lojista-fade-in min-w-0 max-w-full overflow-x-hidden">
           <AdminContent activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
       </StoreLayout>

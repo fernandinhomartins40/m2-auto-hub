@@ -73,7 +73,7 @@ export default function StoreLayout({
     return (
       <div
         className={cn(
-          'store-layout store-mobile-layout mobile relative isolate bg-gray-50',
+          'store-layout store-mobile-layout mobile relative isolate max-w-full overflow-x-hidden bg-gray-50',
           isDrawerOpen && 'drawer-open'
         )}
       >
@@ -84,7 +84,7 @@ export default function StoreLayout({
           />
 
           <div className="store-mobile-scroll">
-            <div className="px-4 py-4 pb-24">
+            <div className="min-w-0 w-full max-w-full overflow-x-hidden px-4 py-4 pb-24">
               {children}
             </div>
           </div>
@@ -115,7 +115,7 @@ export default function StoreLayout({
 
   // Layout Desktop (mantem o layout original)
   return (
-    <div className="store-layout lojista-layout">
+    <div className="store-layout lojista-layout min-w-0 max-w-full">
       {variant === 'mechanic' ? (
         <MechanicSidebar
           activeTab={currentTab}
@@ -127,8 +127,10 @@ export default function StoreLayout({
           onTabChange={onTabChange}
         />
       )}
-      <main className="lojista-content">
-        {children}
+      <main className="lojista-content min-w-0 max-w-full overflow-x-hidden">
+        <div className="min-w-0 w-full max-w-full">
+          {children}
+        </div>
       </main>
     </div>
   );
