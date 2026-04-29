@@ -37,6 +37,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   alpr:
+    image: m2centerauto-alpr:${RELEASE_VERSION:-local}
     build:
       context: ./services/alpr-service
     restart: unless-stopped
@@ -52,7 +53,7 @@ services:
       retries: 6
 
   migrator:
-    build: *backend-build
+    image: m2centerauto-backend:${RELEASE_VERSION:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,7 +62,7 @@ services:
     restart: "no"
 
   bootstrap:
-    build: *backend-build
+    image: m2centerauto-backend:${RELEASE_VERSION:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,6 +71,7 @@ services:
     restart: "no"
 
   backend:
+    image: m2centerauto-backend:${RELEASE_VERSION:-local}
     build: *backend-build
     restart: unless-stopped
     depends_on:
@@ -91,6 +93,7 @@ services:
       - uploads_data:/app/uploads
 
   frontend:
+    image: m2centerauto-frontend:${RELEASE_VERSION:-local}
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
