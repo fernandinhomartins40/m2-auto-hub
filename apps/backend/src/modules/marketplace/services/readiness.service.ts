@@ -29,7 +29,8 @@ const ML_GUIDE = (redirectUri: string, webhookUrl: string): ProviderGuide => ({
   displayName: 'Mercado Livre',
   redirectUri,
   webhookUrl,
-  recommendedScopes: ['offline_access', 'read', 'write'],
+  // Topicos de notificacao recomendados (campo "Tópicos" do formulario do ML)
+  recommendedScopes: ['orders_v2', 'items', 'questions', 'shipments', 'messages'],
   consoleUrl: 'https://developers.mercadolivre.com.br/devcenter',
   hasApprovalGate: false,
   prerequisites: [
@@ -40,29 +41,44 @@ const ML_GUIDE = (redirectUri: string, webhookUrl: string): ProviderGuide => ({
   steps: [
     {
       title: 'Abrir o DevCenter e criar uma aplicação',
-      description: 'Acesse o DevCenter do Mercado Livre e clique em "Criar nova aplicação".',
+      description:
+        'Acesse o DevCenter, clique em "Criar aplicação" e escolha o propósito "Negócios".',
       link: { label: 'Abrir DevCenter', url: 'https://developers.mercadolivre.com.br/devcenter' },
     },
     {
-      title: 'Preencher os dados da aplicação',
-      description: 'Informe Nome (único), Descrição (até 150 caracteres) e Logo da sua empresa.',
-    },
-    {
-      title: 'Configurar a Redirect URI',
-      description: 'No campo "URIs de redirect", cole exatamente a URL fornecida abaixo (botão copiar).',
-    },
-    {
-      title: 'Marcar os escopos',
-      description: 'Marque todos os escopos disponíveis (read, write, offline_access).',
-    },
-    {
-      title: 'Configurar as notificações (vendas)',
+      title: 'Informações básicas',
       description:
-        'Em "Tópicos", marque orders_v2, items, questions e shipments. No campo "Callback URL Notifications", cole a URL de webhook fornecida abaixo.',
+        'Preencha Nome (até 50 caracteres), Nome curto (gera a URL — letras/números/sublinhado), Descrição (até 150 caracteres) e envie o Logotipo (.png de até 1MB).',
     },
     {
-      title: 'Copiar App ID e Secret de volta para o M2',
-      description: 'Cole o App ID e a Secret Key nos campos do passo seguinte e salve as credenciais.',
+      title: 'URIs de redirect',
+      description:
+        'Em "URIs de redirect", clique em "Adicionar URI de redirect" e cole exatamente a Redirect URI fornecida abaixo. O endereço precisa ser HTTPS.',
+    },
+    {
+      title: 'Fluxos OAuth',
+      description:
+        'Marque "Authorization Code" e "Refresh Token". NÃO marque "PKCE necessário" — esta integração não usa PKCE e marcá-lo impede a conexão.',
+    },
+    {
+      title: 'Unidade de negócio e permissões',
+      description:
+        'Em Negócios, selecione "Mercado Livre". Nas permissões, defina LEITURA E ESCRITA para: "Usuários", "Publicação e sincronização" e "Venda e envios de um produto". Opcionalmente, dê acesso a "Comunicações pré e pós-vendas".',
+    },
+    {
+      title: 'Tópicos (notificações de vendas)',
+      description:
+        'Marque os tópicos: orders_v2, items, questions e shipments. Esses eventos é que trazem as vendas para o M2.',
+    },
+    {
+      title: 'URL de notificação (callback)',
+      description:
+        'No campo "URL de retornos de chamada de notificação", cole a URL de webhook fornecida abaixo (somente letras minúsculas).',
+    },
+    {
+      title: 'Aceitar termos e criar',
+      description:
+        'Aceite os Termos e Condições e clique em "Criar". Depois copie o App ID e a Secret Key e cole no passo seguinte aqui no M2.',
     },
   ],
 });

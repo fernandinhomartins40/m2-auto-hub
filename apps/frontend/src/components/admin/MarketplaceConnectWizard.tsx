@@ -291,7 +291,11 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
                 {copyField("Redirect URI", guide.redirectUri)}
                 {copyField("Callback de notificações (webhook)", guide.webhookUrl)}
                 <div className="space-y-1">
-                  <Label className="text-xs text-gray-500">Escopos/tópicos recomendados</Label>
+                  <Label className="text-xs text-gray-500">
+                    {provider === "mercadolivre"
+                      ? 'Tópicos de notificação a marcar (campo "Tópicos")'
+                      : "Escopos recomendados"}
+                  </Label>
                   <div className="flex flex-wrap gap-1">
                     {guide.recommendedScopes.map((sc) => (
                       <Badge key={sc} variant="outline">
