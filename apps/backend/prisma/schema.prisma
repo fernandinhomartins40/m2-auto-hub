@@ -96,6 +96,30 @@ enum OrderSource {
   WEB
   APP
   PHONE
+  MERCADO_LIVRE
+  SHOPEE
+}
+
+enum MarketplaceProvider {
+  MERCADO_LIVRE
+  SHOPEE
+}
+
+enum MarketplaceConnectionStatus {
+  DISCONNECTED // nunca conectado
+  PENDING // app criado, aguardando autorizacao/aprovacao
+  CONNECTED // tokens validos, operando
+  TOKEN_EXPIRED // refresh falhou, precisa reconectar
+  ERROR
+}
+
+enum ListingSyncStatus {
+  DRAFT // ainda nao publicado
+  QUEUED // na fila de publicacao
+  PUBLISHED // anuncio ativo
+  OUT_OF_SYNC // M2 mudou e ainda nao propagou
+  PAUSED // anuncio pausado no marketplace
+  ERROR
 }
 
 enum OrderItemType {
@@ -318,6 +342,7 @@ model Product {
 
   // Relations
   vehicleCompatibility ProductVehicleCompatibility[]
+  marketplaceListings  MarketplaceListing[]
 
   @@index([category])
   @@index([status])
@@ -494,6 +519,10 @@ model Order {
   estimatedDelivery DateTime?
   deliveredAt       DateTime?
 
+  // Origem externa (marketplaces)
+  externalOrderId  String?              @unique // id do pedido no marketplace
+  externalProvider MarketplaceProvider?
+
   // Cupom/Promoção
   couponCode        String?
   appliedPromotions Json? // Array de IDs de promoções aplicadas
@@ -514,7 +543,95 @@ model Order {
   @@index([quoteStatus])
   @@index([publicQuoteApprovalToken])
   @@index([createdAt])
+  @@index([externalProvider])
   @@map("orders")
+}
+
+// ============================================================================
+// MODELS - INTEGRACAO COM MARKETPLACES (Mercado Livre & Shopee)
+// ============================================================================
+
+// Conexao (1 por provider, single-tenant)
+model MarketplaceConnection {
+  id       String                      @id @default(uuid())
+  provider MarketplaceProvider         @unique
+  status   MarketplaceConnectionStatus @default(DISCONNECTED)
+
+  // Credenciais do app (criptografadas em repouso)
+  appId     String? // ML: app_id / Shopee: partner_id
+  appSecret String? // ML: secret_key / Shopee: partner_key  (ENCRYPTED)
+
+  // Conta autorizada
+  sellerId       String? // ML: user_id / Shopee: shop_id
+  sellerNickname String?
+
+  // Tokens OAuth (ENCRYPTED)
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+
+  // Diagnostico
+  lastSyncAt DateTime?
+  lastError  String?   @db.Text
+  scopes     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings MarketplaceListing[]
+
+  @@map("marketplace_connections")
+}
+
+// Vinculo Produto M2 <-> anuncio externo (N produtos x M providers)
+model MarketplaceListing {
+  id           String              @id @default(uuid())
+  productId    String
+  connectionId String
+  provider     MarketplaceProvider
+
+  externalId  String? // ML: MLB123 / Shopee: item_id
+  externalUrl String?
+  status      ListingSyncStatus @default(DRAFT)
+
+  // Espelho do que foi publicado (para detectar drift)
+  lastSyncedPrice Decimal? @db.Decimal(10, 2)
+  lastSyncedStock Int?
+  lastSyncedHash  String? // hash do payload publicado
+  lastError       String?  @db.Text
+
+  // Mapeamento especifico do marketplace
+  categoryMapping Json? // categoria/atributos resolvidos
+  publishedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product    Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  connection MarketplaceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, provider])
+  @@index([connectionId])
+  @@index([externalId])
+  @@index([status])
+  @@map("marketplace_listings")
+}
+
+// Log de eventos (auditoria/idempotencia de webhooks)
+model MarketplaceEvent {
+  id          String              @id @default(uuid())
+  provider    MarketplaceProvider
+  topic       String // "orders", "items", "shop_order", ...
+  externalId  String // id do recurso (order_id etc.)
+  rawPayload  Json
+  processed   Boolean             @default(false)
+  processedAt DateTime?
+  error       String?             @db.Text
+  createdAt   DateTime            @default(now())
+
+  @@unique([provider, topic, externalId]) // idempotencia
+  @@index([processed])
+  @@map("marketplace_events")
 }
 
 // Itens do Pedido

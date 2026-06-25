@@ -30,6 +30,7 @@ import landingPageRoutes from '@modules/landing-page/landing-page.routes.js';
 import loyaltyRoutes from '@modules/loyalty/loyalty.routes.js';
 import settingsRoutes from '@modules/settings/settings.routes.js';
 import notificationsRoutes from '@modules/notifications/notifications.routes.js';
+import marketplaceRoutes, { webhookRouter } from '@modules/marketplace/marketplace.routes.js';
 
 import { ensureLandingPageConfig } from './bootstrap/essential-data.js';
 
@@ -46,7 +47,15 @@ export function createApp(): Express {
 
   app.use(cors(corsOptions));
   app.use(cookieParser());
-  app.use(express.json({ limit: '10mb' }));
+  app.use(
+    express.json({
+      limit: '10mb',
+      // Preserva o corpo cru para validar a assinatura HMAC dos webhooks (Shopee)
+      verify: (req, _res, buf) => {
+        (req as Request & { rawBody?: string }).rawBody = buf.toString('utf8');
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(compression());
 
@@ -111,6 +120,8 @@ export function createApp(): Express {
   app.use('/landing-page', landingPageRoutes);
   app.use('/loyalty', loyaltyRoutes);
   app.use('/settings', settingsRoutes);
+  app.use('/marketplace', marketplaceRoutes);
+  app.use('/webhooks', webhookRouter);
   app.use('/', notificationsRoutes);
 
   app.use((_req: Request, res: Response) => {

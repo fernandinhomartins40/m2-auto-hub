@@ -32,6 +32,19 @@ const envSchema = z.object({
     }),
 
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  // URL publica base da aplicacao (usada para montar redirect/callback de OAuth e webhooks)
+  APP_BASE_URL: z.string().url().default('http://localhost:8080'),
+
+  // Chave de criptografia para segredos de marketplace (AES-256-GCM).
+  // Deve ter 64 chars hex (32 bytes) ou ser uma string >= 32 chars (sera derivada via SHA-256).
+  MARKETPLACE_ENC_KEY: z.string().min(16).optional(),
+
+  // Habilita os jobs de background do marketplace (refresh de token, reconciliacao, processamento de eventos)
+  MARKETPLACE_JOBS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform(value => value === 'true'),
 });
 
 const env = envSchema.parse(process.env);
@@ -68,6 +81,15 @@ export const environment = {
 
   logging: {
     level: env.LOG_LEVEL,
+  },
+
+  app: {
+    baseUrl: env.APP_BASE_URL.replace(/\/$/, ''),
+  },
+
+  marketplace: {
+    encryptionKey: env.MARKETPLACE_ENC_KEY ?? env.JWT_SECRET,
+    jobsEnabled: env.MARKETPLACE_JOBS_ENABLED,
   },
 } as const;
 

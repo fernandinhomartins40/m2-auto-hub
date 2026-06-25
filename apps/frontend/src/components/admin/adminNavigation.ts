@@ -13,6 +13,7 @@ import {
   Settings,
   ShoppingBag,
   Smartphone,
+  Store,
   Tag,
   UserCog,
   Users,
@@ -42,6 +43,7 @@ export const adminSidebarItems: AdminNavItem[] = [
 
   { id: "products", label: "Produtos", icon: Package, section: "Catálogo" },
   { id: "services", label: "Serviços", icon: Wrench, section: "Catálogo" },
+  { id: "marketplaces", label: "Marketplaces", icon: Store, section: "Catálogo" },
 
   { id: "customers", label: "Clientes", icon: Users, section: "Clientes" },
   { id: "relationship", label: "Relacionamento", icon: HeartHandshake, section: "Clientes" },

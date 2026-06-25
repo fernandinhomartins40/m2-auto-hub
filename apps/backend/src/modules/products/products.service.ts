@@ -493,7 +493,20 @@ export class ProductsService {
 
     logger.info(`Product updated: ${product.name} (ID: ${product.id})`);
 
+    // Propaga preco/estoque para anuncios em marketplaces (fire-and-forget)
+    this.syncToMarketplaces(product.id);
+
     return product;
+  }
+
+  /**
+   * Dispara a sincronizacao de preco/estoque deste produto com os marketplaces
+   * conectados (Mercado Livre / Shopee), sem bloquear a resposta nem propagar erros.
+   */
+  private syncToMarketplaces(productId: string): void {
+    import('../marketplace/services/sync.service.js')
+      .then(({ syncService }) => syncService.syncProduct(productId))
+      .catch(err => logger.warn(`[Products] sync marketplace falhou: ${String(err)}`));
   }
 
   /**
@@ -545,6 +558,9 @@ export class ProductsService {
     });
 
     logger.info(`Product stock updated: ${updatedProduct.name} (New stock: ${newStock})`);
+
+    // Propaga o novo estoque para anuncios em marketplaces (anti-overselling)
+    this.syncToMarketplaces(updatedProduct.id);
 
     return updatedProduct;
   }

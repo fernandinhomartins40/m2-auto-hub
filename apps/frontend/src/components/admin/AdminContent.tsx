@@ -58,6 +58,7 @@ import LoyaltyManagement from "./LoyaltyManagement";
 import { AdminProductsSection } from "./AdminProductsSection";
 import { AdminServicesSection } from "./AdminServicesSection";
 import { AdminCouponsSection } from "./AdminCouponsSection";
+import { MarketplacesContent } from "./MarketplacesContent";
 import { LandingPageContent } from "./LandingPageContent";
 import adminService, {
   type ProvisionalUser as AdminCustomer,
@@ -174,6 +175,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
   const [revisionView, setRevisionView] = useState<'appointments' | 'list' | 'create'>('appointments');
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -215,7 +217,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     filterServices();
     filterCoupons();
     filterProducts();
-  }, [orders, quotes, services, coupons, products, searchTerm, statusFilter]);
+  }, [orders, quotes, services, coupons, products, searchTerm, statusFilter, sourceFilter]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -344,6 +346,10 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       filtered = filtered.filter(order => order.status === statusFilter);
     }
 
+    if (sourceFilter !== "all") {
+      filtered = filtered.filter(order => (order.source || "WEB") === sourceFilter);
+    }
+
     filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     setFilteredOrders(filtered);
   };
@@ -461,6 +467,18 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       confirmed: { label: 'Confirmado', color: 'bg-green-100 text-green-800', icon: CheckCircle },
     };
     return statusMap[status as keyof typeof statusMap] || statusMap.PENDING;
+  };
+
+  const getOrderSourceInfo = (source?: string) => {
+    const sourceMap: Record<string, { label: string; color: string }> = {
+      WEB: { label: 'Loja', color: 'bg-slate-100 text-slate-700' },
+      APP: { label: 'App', color: 'bg-slate-100 text-slate-700' },
+      PHONE: { label: 'Telefone', color: 'bg-slate-100 text-slate-700' },
+      ADMIN: { label: 'Manual', color: 'bg-gray-100 text-gray-700' },
+      MERCADO_LIVRE: { label: 'Mercado Livre', color: 'bg-yellow-100 text-yellow-800' },
+      SHOPEE: { label: 'Shopee', color: 'bg-orange-100 text-orange-800' },
+    };
+    return sourceMap[(source || 'WEB').toUpperCase()] || sourceMap.WEB;
   };
 
   const handleCreateProduct = () => {
@@ -1557,6 +1575,18 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               <SelectItem value="CANCELLED">Cancelado</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Origem" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as Origens</SelectItem>
+              <SelectItem value="WEB">Loja (Web)</SelectItem>
+              <SelectItem value="MERCADO_LIVRE">Mercado Livre</SelectItem>
+              <SelectItem value="SHOPEE">Shopee</SelectItem>
+              <SelectItem value="ADMIN">Manual (Admin)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {filteredOrders.length === 0 ? (
@@ -1583,9 +1613,19 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                           </p>
                         </div>
                       </div>
-                      <Badge className={statusInfo.color} variant="secondary">
-                        {statusInfo.label}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const src = getOrderSourceInfo(order.source);
+                          return (
+                            <Badge className={src.color} variant="secondary">
+                              {src.label}
+                            </Badge>
+                          );
+                        })()}
+                        <Badge className={statusInfo.color} variant="secondary">
+                          {statusInfo.label}
+                        </Badge>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -2746,6 +2786,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             setStatusFilter={setStatusFilter}
           />
         );
+      case 'marketplaces':
+        return <MarketplacesContent />;
       case 'revisions':
         return (
           <div className="space-y-4 sm:space-y-6">

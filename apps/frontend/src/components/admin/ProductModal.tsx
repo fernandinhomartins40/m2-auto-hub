@@ -9,8 +9,9 @@ import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { AlertCircle, Loader2, Package, DollarSign, Warehouse, Settings, Images, CheckCircle } from 'lucide-react';
+import { AlertCircle, Loader2, Package, DollarSign, Warehouse, Settings, Images, CheckCircle, Store } from 'lucide-react';
 import { ProductImageUpload, ProductImage } from './ProductImageUpload';
+import { ProductMarketplacePanel } from './ProductMarketplacePanel';
 import { useToast } from '../ui/use-toast';
 import { Product as ApiProduct } from '@/api/productService';
 import { getImageUrl } from '@/utils/imageUrl';
@@ -602,7 +603,7 @@ export function ProductModal({
           <div className="py-3 sm:py-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
-              <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-6 gap-1">
+              <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-7 gap-1">
             <TabsTrigger value="basic" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
               <Package className="h-4 w-4" />
               <span>Básico</span>
@@ -644,6 +645,10 @@ export function ProductModal({
               {hasTabErrors('details') && (
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
               )}
+            </TabsTrigger>
+            <TabsTrigger value="marketplaces" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+              <Store className="h-4 w-4" />
+              <span>Marketplaces</span>
             </TabsTrigger>
           </TabsList>
           </div>
@@ -1014,6 +1019,11 @@ export function ProductModal({
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          {/* Aba Marketplaces */}
+          <TabsContent value="marketplaces" className="space-y-4">
+            <ProductMarketplacePanel productId={formData.id} productName={formData.name} />
           </TabsContent>
             </Tabs>
           </div>

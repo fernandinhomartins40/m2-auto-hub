@@ -6,6 +6,7 @@ import { validateEnvironment } from '@config/validate-env.js';
 import { setupPrismaRLS } from '@middlewares/prisma-rls.middleware.js';
 
 import { ensureEssentialData } from './bootstrap/essential-data.js';
+import { startMarketplaceJobs } from '@modules/marketplace/marketplace.jobs.js';
 
 async function bootstrap(): Promise<void> {
   try {
@@ -36,6 +37,10 @@ async function bootstrap(): Promise<void> {
       logger.info(`Environment: ${environment.nodeEnv}`);
       logger.info(`Health check: http://localhost:${environment.port}/health`);
     });
+
+    logger.info('Starting marketplace background jobs...');
+    await startMarketplaceJobs();
+    logger.info('Marketplace background jobs ready');
 
     const gracefulShutdown = async (signal: string) => {
       logger.info(`\n${signal} received, starting graceful shutdown...`);
