@@ -33,18 +33,30 @@ const envSchema = z.object({
 
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
 
-  // URL publica base da aplicacao (usada para montar redirect/callback de OAuth e webhooks)
-  APP_BASE_URL: z.string().url().default('http://localhost:8080'),
+  // URL publica base da aplicacao (usada para montar redirect/callback de OAuth e webhooks).
+  // Trata string vazia como ausente (o compose pode passar "" quando a var nao esta definida).
+  APP_BASE_URL: z
+    .preprocess(
+      value => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().url().optional()
+    )
+    .transform(value => value ?? 'http://localhost:8080'),
 
   // Chave de criptografia para segredos de marketplace (AES-256-GCM).
-  // Deve ter 64 chars hex (32 bytes) ou ser uma string >= 32 chars (sera derivada via SHA-256).
-  MARKETPLACE_ENC_KEY: z.string().min(16).optional(),
+  // Deve ter 64 chars hex (32 bytes) ou ser uma string >= 16 chars (sera derivada via SHA-256).
+  // Trata string vazia como ausente -> cai no fallback (JWT_SECRET).
+  MARKETPLACE_ENC_KEY: z.preprocess(
+    value => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().min(16).optional()
+  ),
 
   // Habilita os jobs de background do marketplace (refresh de token, reconciliacao, processamento de eventos)
   MARKETPLACE_JOBS_ENABLED: z
-    .enum(['true', 'false'])
-    .default('true')
-    .transform(value => value === 'true'),
+    .preprocess(
+      value => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.enum(['true', 'false']).optional()
+    )
+    .transform(value => value !== 'false'),
 });
 
 const env = envSchema.parse(process.env);
