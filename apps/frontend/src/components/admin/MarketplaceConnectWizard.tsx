@@ -275,6 +275,19 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
 
                 <Separator />
                 <h4 className="text-sm font-medium">Cole estes valores no painel da {guide.displayName}:</h4>
+                {!guide.redirectUri.startsWith("https://") && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>URL sem HTTPS</AlertTitle>
+                    <AlertDescription>
+                      A {guide.displayName} exige HTTPS na Redirect URI e no webhook. Os valores abaixo
+                      estão como <code>http://localhost</code> porque a variável <code>APP_BASE_URL</code>{" "}
+                      não está configurada com o domínio público. Em produção, defina{" "}
+                      <code>APP_BASE_URL=https://m2centerauto.com.br</code> para que estes valores fiquem
+                      corretos.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 {copyField("Redirect URI", guide.redirectUri)}
                 {copyField("Callback de notificações (webhook)", guide.webhookUrl)}
                 <div className="space-y-1">

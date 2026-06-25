@@ -18,6 +18,11 @@ x-backend-env: &backend-env
   COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
   ALPR_SERVICE_URL: http://alpr:8000
   LOG_LEVEL: ${LOG_LEVEL:-info}
+  # URL publica HTTPS usada para montar redirect/callback de OAuth e webhooks dos marketplaces
+  APP_BASE_URL: ${APP_BASE_URL:-https://m2centerauto.com.br}
+  # Chave de criptografia (AES-256-GCM) dos segredos de marketplace. Definir um valor forte em producao.
+  MARKETPLACE_ENC_KEY: ${MARKETPLACE_ENC_KEY:-}
+  MARKETPLACE_JOBS_ENABLED: ${MARKETPLACE_JOBS_ENABLED:-true}
 
 services:
   postgres:
