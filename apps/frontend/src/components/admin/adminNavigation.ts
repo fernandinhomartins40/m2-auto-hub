@@ -1,6 +1,7 @@
 import {
   BarChart3,
   ClipboardCheck,
+  ClipboardList,
   FileText,
   Gift,
   HeartHandshake,
@@ -39,6 +40,7 @@ export const adminSidebarItems: AdminNavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, section: "Operação" },
   { id: "orders", label: "Pedidos", icon: ShoppingBag, section: "Operação" },
   { id: "quotes", label: "Orçamentos", icon: FileText, section: "Operação" },
+  { id: "service-orders", label: "Ordens de Serviço", icon: ClipboardList, section: "Operação" },
   { id: "revisions", label: "Revisões", icon: ClipboardCheck, section: "Operação" },
 
   { id: "products", label: "Produtos", icon: Package, section: "Catálogo" },

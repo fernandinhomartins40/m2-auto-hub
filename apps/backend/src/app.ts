@@ -31,6 +31,7 @@ import loyaltyRoutes from '@modules/loyalty/loyalty.routes.js';
 import settingsRoutes from '@modules/settings/settings.routes.js';
 import notificationsRoutes from '@modules/notifications/notifications.routes.js';
 import marketplaceRoutes, { webhookRouter } from '@modules/marketplace/marketplace.routes.js';
+import serviceOrdersRoutes from '@modules/service-orders/service-orders.routes.js';
 
 import { ensureLandingPageConfig } from './bootstrap/essential-data.js';
 
@@ -122,6 +123,7 @@ export function createApp(): Express {
   app.use('/settings', settingsRoutes);
   app.use('/marketplace', marketplaceRoutes);
   app.use('/webhooks', webhookRouter);
+  app.use('/service-orders', serviceOrdersRoutes);
   app.use('/', notificationsRoutes);
 
   app.use((_req: Request, res: Response) => {

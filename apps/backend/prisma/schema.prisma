@@ -212,6 +212,7 @@ model Admin {
   // Relations
   assignedRevisions Revision[]
   assignedAppointments RevisionAppointment[]
+  assignedServiceOrders ServiceOrder[]
   auditLogs        AuditLog[]
   assignedTickets  SupportTicket[]
   landingPageConfigHistory LandingPageConfigHistory[]
@@ -261,6 +262,7 @@ model Customer {
   // Relations
   addresses Address[]
   orders    Order[]
+  serviceOrders ServiceOrder[]
   favorites Favorite[]
   vehicles  CustomerVehicle[]
   revisions Revision[]
@@ -343,6 +345,7 @@ model Product {
   // Relations
   vehicleCompatibility ProductVehicleCompatibility[]
   marketplaceListings  MarketplaceListing[]
+  serviceOrderItems    ServiceOrderItem[]
 
   @@index([category])
   @@index([status])
@@ -380,6 +383,9 @@ model Service {
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  serviceOrderItems ServiceOrderItem[]
 
   @@index([category])
   @@index([status])
@@ -835,6 +841,18 @@ enum ChecklistItemStatus {
   NOT_APPLICABLE
 }
 
+enum ServiceOrderStatus {
+  OPEN // aberta, aguardando execucao
+  IN_PROGRESS // mecanico executando
+  COMPLETED // concluida (baixa de estoque aplicada)
+  CANCELLED // cancelada
+}
+
+enum ServiceOrderItemType {
+  SERVICE // mao de obra / servico
+  PRODUCT // peca/produto usado
+}
+
 // Veículos dos Clientes (para Revisões)
 model CustomerVehicle {
   id            String  @id @default(uuid())
@@ -854,6 +872,7 @@ model CustomerVehicle {
   customer  Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revisions Revision[]
   revisionAppointments RevisionAppointment[]
+  serviceOrders ServiceOrder[]
 
   @@index([customerId])
   @@index([plate])
@@ -971,6 +990,86 @@ model RevisionAppointment {
   @@index([scheduledAt])
   @@index([assignedMechanicId])
   @@map("revision_appointments")
+}
+
+// ============================================================================
+// MODELS - ORDENS DE SERVICO (OS)
+// ============================================================================
+
+// Ordem de Servico
+model ServiceOrder {
+  id     String             @id @default(uuid())
+  number Int                @unique @default(autoincrement()) // OS #1001, #1002...
+  status ServiceOrderStatus @default(OPEN)
+
+  // Cliente/veiculo - cadastrado (FK opcional) OU avulso (texto)
+  customerId    String?
+  vehicleId     String?
+  customerName  String // sempre preenchido (cache do cadastro ou avulso)
+  customerPhone String?
+  vehicleLabel  String? // ex.: "Gol 2018 - ABC1D23" (cache ou avulso)
+  vehiclePlate  String?
+  mileage       Int?
+
+  // Descricao do problema/servico
+  description   String? @db.Text
+  internalNotes String? @db.Text // observacoes internas da oficina
+
+  // Mecanico responsavel (mesmo padrao de Revision)
+  assignedMechanicId String?
+  mechanicName       String?
+  assignedAt         DateTime?
+
+  // Valores (denormalizados para performance/historico)
+  laborTotal Decimal @default(0) @db.Decimal(10, 2) // soma dos servicos
+  partsTotal Decimal @default(0) @db.Decimal(10, 2) // soma dos produtos
+  discount   Decimal @default(0) @db.Decimal(10, 2)
+  total      Decimal @default(0) @db.Decimal(10, 2)
+
+  stockApplied Boolean @default(false) // trava idempotente da baixa de estoque
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  // Relations
+  customer         Customer?          @relation(fields: [customerId], references: [id])
+  vehicle          CustomerVehicle?   @relation(fields: [vehicleId], references: [id])
+  assignedMechanic Admin?             @relation(fields: [assignedMechanicId], references: [id])
+  items            ServiceOrderItem[]
+
+  @@index([status])
+  @@index([assignedMechanicId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("service_orders")
+}
+
+// Item da OS (servico ou produto)
+model ServiceOrderItem {
+  id             String               @id @default(uuid())
+  serviceOrderId String
+  type           ServiceOrderItemType
+
+  // Referencia opcional ao catalogo (mantem historico mesmo se o catalogo mudar)
+  productId String?
+  serviceId String?
+
+  name      String // nome no momento (cache)
+  unitPrice Decimal @db.Decimal(10, 2)
+  quantity  Int     @default(1)
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id])
+  service      Service?     @relation(fields: [serviceId], references: [id])
+
+  @@index([serviceOrderId])
+  @@index([productId])
+  @@map("service_order_items")
 }
 
 model Notification {

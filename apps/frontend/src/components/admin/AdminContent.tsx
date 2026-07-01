@@ -59,6 +59,7 @@ import { AdminProductsSection } from "./AdminProductsSection";
 import { AdminServicesSection } from "./AdminServicesSection";
 import { AdminCouponsSection } from "./AdminCouponsSection";
 import { MarketplacesContent } from "./MarketplacesContent";
+import { ServiceOrdersContent } from "./ServiceOrdersContent";
 import { LandingPageContent } from "./LandingPageContent";
 import adminService, {
   type ProvisionalUser as AdminCustomer,
@@ -2788,6 +2789,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         );
       case 'marketplaces':
         return <MarketplacesContent />;
+      case 'service-orders':
+        return <ServiceOrdersContent />;
       case 'revisions':
         return (
           <div className="space-y-4 sm:space-y-6">

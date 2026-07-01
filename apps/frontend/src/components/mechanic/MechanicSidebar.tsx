@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ClipboardCheck,
+  ClipboardList,
   Home,
   LogOut,
   Menu,
@@ -20,6 +21,7 @@ interface MechanicSidebarProps {
 
 const menuItems = [
   { id: "revisions", label: "Minhas Revisoes", icon: ClipboardCheck },
+  { id: "service-orders", label: "Minhas OS", icon: ClipboardList },
   { id: "settings", label: "Perfil", icon: Settings },
 ];
 
