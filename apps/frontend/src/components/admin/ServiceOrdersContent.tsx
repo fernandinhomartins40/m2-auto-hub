@@ -5,8 +5,9 @@ import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AdminPageHeader } from './AdminPageHeader';
-import { ServiceOrderModal } from './ServiceOrderModal';
+import { ServiceOrderModal, type ServiceOrderInitialData } from './ServiceOrderModal';
 import { ServiceOrderDetailsModal } from './ServiceOrderDetailsModal';
+import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
 import {
   ClipboardList,
   Plus,
@@ -19,6 +20,7 @@ import {
   Pencil,
   User,
   Car,
+  Camera,
 } from 'lucide-react';
 import serviceOrderService, {
   ServiceOrder,
@@ -56,6 +58,8 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ServiceOrder | null>(null);
   const [detailsOrder, setDetailsOrder] = useState<ServiceOrder | null>(null);
+  const [plateLookupOpen, setPlateLookupOpen] = useState(false);
+  const [initialData, setInitialData] = useState<ServiceOrderInitialData | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -110,10 +114,31 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
 
   const openNew = () => {
     setEditing(null);
+    setInitialData(null);
     setModalOpen(true);
   };
   const openEdit = (o: ServiceOrder) => {
     setEditing(o);
+    setInitialData(null);
+    setModalOpen(true);
+  };
+
+  // Criacao rapida: le a placa (camera/ALPR) e abre a OS ja preenchida
+  const handlePlateResolved = (payload: {
+    customer: { id: string; name: string; phone: string };
+    vehicle: { id: string; brand: string; model: string; year: number; plate: string; mileage?: number };
+  }) => {
+    setPlateLookupOpen(false);
+    setEditing(null);
+    setInitialData({
+      customerId: payload.customer.id,
+      customerName: payload.customer.name,
+      customerPhone: payload.customer.phone,
+      vehicleId: payload.vehicle.id,
+      vehicleLabel: `${payload.vehicle.brand} ${payload.vehicle.model} ${payload.vehicle.year}`.trim(),
+      vehiclePlate: payload.vehicle.plate,
+      mileage: payload.vehicle.mileage ?? null,
+    });
     setModalOpen(true);
   };
 
@@ -128,6 +153,10 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
             <Button variant="outline" size="sm" onClick={load} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Atualizar
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPlateLookupOpen(true)}>
+              <Camera className="h-4 w-4 mr-2" />
+              Criação rápida (ler placa)
             </Button>
             <Button size="sm" onClick={openNew} className="bg-moria-orange hover:bg-moria-orange/90">
               <Plus className="h-4 w-4 mr-2" />
@@ -263,6 +292,7 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
         onClose={() => setModalOpen(false)}
         onSaved={load}
         order={editing}
+        initialData={initialData}
       />
       <ServiceOrderDetailsModal
         order={detailsOrder}
@@ -270,6 +300,11 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
         onClose={() => setDetailsOrder(null)}
         onChanged={load}
         restricted={restricted}
+      />
+      <RevisionVehicleLookupDialog
+        isOpen={plateLookupOpen}
+        onClose={() => setPlateLookupOpen(false)}
+        onResolved={handlePlateResolved}
       />
     </div>
   );

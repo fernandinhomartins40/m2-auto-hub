@@ -14,7 +14,7 @@ import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Loader2, Plus, Trash2, Wrench, Package, User, Car, AlertTriangle, Search, X, UserPlus } from 'lucide-react';
+import { Loader2, Plus, Trash2, Wrench, Package, User, Car, AlertTriangle, Search, X, UserPlus, Camera } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
 import serviceOrderService, {
   ServiceOrder,
@@ -24,12 +24,25 @@ import serviceOrderService, {
 import adminService, { type ProvisionalUser } from '@/api/adminService';
 import revisionService from '@/api/revisionService';
 import { CreateCustomerModal } from './CreateCustomerModal';
+import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
+
+/** Dados iniciais para pré-preencher a OS (ex.: vindos da leitura de placa). */
+export interface ServiceOrderInitialData {
+  customerId?: string | null;
+  customerName?: string;
+  customerPhone?: string | null;
+  vehicleId?: string | null;
+  vehicleLabel?: string | null;
+  vehiclePlate?: string | null;
+  mileage?: number | null;
+}
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
   order?: ServiceOrder | null;
+  initialData?: ServiceOrderInitialData | null;
 }
 
 interface CatalogProduct {
@@ -51,13 +64,15 @@ interface Mechanic {
 const money = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
-export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
+export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData }: Props) {
   const { toast } = useToast();
   const isEditing = !!order;
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [vehicleId, setVehicleId] = useState<string | null>(null);
+  const [plateLookupOpen, setPlateLookupOpen] = useState(false);
 
   // Busca de clientes cadastrados
   const [customerSearch, setCustomerSearch] = useState('');
@@ -85,6 +100,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
       setCustomerName(order.customerName);
       setCustomerPhone(order.customerPhone ?? '');
       setCustomerId(order.customerId);
+      setVehicleId(order.vehicleId);
       setVehicleLabel(order.vehicleLabel ?? '');
       setVehiclePlate(order.vehiclePlate ?? '');
       setMileage(order.mileage != null ? String(order.mileage) : '');
@@ -102,12 +118,14 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
         }))
       );
     } else {
-      setCustomerName('');
-      setCustomerPhone('');
-      setCustomerId(null);
-      setVehicleLabel('');
-      setVehiclePlate('');
-      setMileage('');
+      // Criação: aplica initialData (ex.: leitura de placa) quando houver
+      setCustomerName(initialData?.customerName ?? '');
+      setCustomerPhone(initialData?.customerPhone ?? '');
+      setCustomerId(initialData?.customerId ?? null);
+      setVehicleId(initialData?.vehicleId ?? null);
+      setVehicleLabel(initialData?.vehicleLabel ?? '');
+      setVehiclePlate(initialData?.vehiclePlate ?? '');
+      setMileage(initialData?.mileage != null ? String(initialData.mileage) : '');
       setDescription('');
       setMechanicId('');
       setDiscount('0');
@@ -117,7 +135,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
     setCustomerResults([]);
     setShowResults(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, order]);
+  }, [isOpen, order, initialData]);
 
   // Busca de clientes com debounce
   useEffect(() => {
@@ -160,6 +178,23 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
     setCreateCustomerOpen(false);
     selectCustomer(c);
     toast({ title: 'Cliente cadastrado e vinculado à OS' });
+  };
+
+  // Leitura de placa (camera/ALPR): preenche cliente + veiculo de uma vez
+  const handlePlateResolved = (payload: {
+    customer: { id: string; name: string; phone: string };
+    vehicle: { id: string; brand: string; model: string; year: number; plate: string; mileage?: number };
+  }) => {
+    setPlateLookupOpen(false);
+    setCustomerId(payload.customer.id);
+    setCustomerName(payload.customer.name);
+    setCustomerPhone(payload.customer.phone ?? '');
+    setVehicleId(payload.vehicle.id);
+    setVehicleLabel(`${payload.vehicle.brand} ${payload.vehicle.model} ${payload.vehicle.year}`.trim());
+    setVehiclePlate(payload.vehicle.plate);
+    if (payload.vehicle.mileage != null) setMileage(String(payload.vehicle.mileage));
+    setShowResults(false);
+    toast({ title: 'Veículo identificado pela placa', description: payload.vehicle.plate });
   };
 
   const loadCatalog = async () => {
@@ -223,6 +258,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
 
     const payload: ServiceOrderInput = {
       customerId: customerId ?? undefined,
+      vehicleId: vehicleId ?? undefined,
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim() || undefined,
       vehicleLabel: vehicleLabel.trim() || undefined,
@@ -350,9 +386,14 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
 
           {/* Veículo */}
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <Car className="h-4 w-4" /> Veículo
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Car className="h-4 w-4" /> Veículo
+              </h4>
+              <Button type="button" size="sm" variant="outline" onClick={() => setPlateLookupOpen(true)}>
+                <Camera className="h-3.5 w-3.5 mr-1" /> Ler placa
+              </Button>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1 sm:col-span-1">
                 <Label className="text-xs">Modelo / descrição</Label>
@@ -360,7 +401,19 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Placa</Label>
-                <Input value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} placeholder="ABC1D23" />
+                <div className="flex gap-1">
+                  <Input value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} placeholder="ABC1D23" />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="shrink-0"
+                    title="Ler placa com a câmera"
+                    onClick={() => setPlateLookupOpen(true)}
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">KM</Label>
@@ -527,6 +580,12 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
         isOpen={createCustomerOpen}
         onClose={() => setCreateCustomerOpen(false)}
         onSuccess={handleCustomerCreated}
+      />
+
+      <RevisionVehicleLookupDialog
+        isOpen={plateLookupOpen}
+        onClose={() => setPlateLookupOpen(false)}
+        onResolved={handlePlateResolved}
       />
     </Dialog>
   );
