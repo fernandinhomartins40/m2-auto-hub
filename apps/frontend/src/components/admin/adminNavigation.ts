@@ -68,10 +68,11 @@ export const adminSidebarItems: AdminNavItem[] = [
   },
 ];
 
+// "Produtos" fica no menu "Mais" (drawer) para liberar o centro da barra,
+// onde fica o botão de Consulta por Placa.
 export const adminBottomNavItems: AdminNavItem[] = [
   { id: "dashboard", label: "Início", icon: LayoutDashboard },
   { id: "orders", label: "Pedidos", icon: ShoppingBag },
-  { id: "products", label: "Produtos", icon: Package },
   { id: "customers", label: "Clientes", icon: Users },
   { id: "menu", label: "Mais", icon: Menu },
 ];
