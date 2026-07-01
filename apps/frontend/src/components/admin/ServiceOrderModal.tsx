@@ -14,15 +14,16 @@ import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Loader2, Plus, Trash2, Wrench, Package, User, Car, AlertTriangle } from 'lucide-react';
+import { Loader2, Plus, Trash2, Wrench, Package, User, Car, AlertTriangle, Search, X, UserPlus } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
 import serviceOrderService, {
   ServiceOrder,
   ServiceOrderInput,
   ServiceOrderItemInput,
 } from '@/api/serviceOrderService';
-import adminService from '@/api/adminService';
+import adminService, { type ProvisionalUser } from '@/api/adminService';
 import revisionService from '@/api/revisionService';
+import { CreateCustomerModal } from './CreateCustomerModal';
 
 interface Props {
   isOpen: boolean;
@@ -57,6 +58,13 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerId, setCustomerId] = useState<string | null>(null);
+
+  // Busca de clientes cadastrados
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerResults, setCustomerResults] = useState<ProvisionalUser[]>([]);
+  const [searchingCustomers, setSearchingCustomers] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [createCustomerOpen, setCreateCustomerOpen] = useState(false);
   const [vehicleLabel, setVehicleLabel] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [mileage, setMileage] = useState<string>('');
@@ -105,8 +113,54 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
       setDiscount('0');
       setItems([]);
     }
+    setCustomerSearch('');
+    setCustomerResults([]);
+    setShowResults(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, order]);
+
+  // Busca de clientes com debounce
+  useEffect(() => {
+    if (!showResults) return;
+    const term = customerSearch.trim();
+    if (term.length < 2) {
+      setCustomerResults([]);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      setSearchingCustomers(true);
+      try {
+        const res = await adminService.getCustomers({ page: 1, limit: 8, search: term });
+        setCustomerResults(res.customers || []);
+      } catch {
+        setCustomerResults([]);
+      } finally {
+        setSearchingCustomers(false);
+      }
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [customerSearch, showResults]);
+
+  const selectCustomer = (c: ProvisionalUser) => {
+    setCustomerId(c.id);
+    setCustomerName(c.name);
+    setCustomerPhone(c.whatsapp ?? '');
+    setShowResults(false);
+    setCustomerSearch('');
+    setCustomerResults([]);
+  };
+
+  const clearCustomer = () => {
+    setCustomerId(null);
+    setCustomerName('');
+    setCustomerPhone('');
+  };
+
+  const handleCustomerCreated = (c: ProvisionalUser) => {
+    setCreateCustomerOpen(false);
+    selectCustomer(c);
+    toast({ title: 'Cliente cadastrado e vinculado à OS' });
+  };
 
   const loadCatalog = async () => {
     try {
@@ -215,19 +269,83 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
         <div className="space-y-5 py-2">
           {/* Cliente */}
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <User className="h-4 w-4" /> Cliente
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Nome *</Label>
-                <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nome do cliente" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Telefone</Label>
-                <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="(00) 00000-0000" />
-              </div>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <User className="h-4 w-4" /> Cliente
+              </h4>
+              <Button type="button" size="sm" variant="outline" onClick={() => setCreateCustomerOpen(true)}>
+                <UserPlus className="h-3.5 w-3.5 mr-1" /> Cadastrar cliente
+              </Button>
             </div>
+
+            {customerId ? (
+              // Cliente selecionado
+              <div className="flex items-center justify-between rounded-lg border bg-gray-50 p-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{customerName}</p>
+                  {customerPhone && <p className="text-sm text-gray-500">{customerPhone}</p>}
+                </div>
+                <Button type="button" size="sm" variant="ghost" onClick={clearCustomer}>
+                  <X className="h-4 w-4 mr-1" /> Trocar
+                </Button>
+              </div>
+            ) : (
+              // Busca de cliente cadastrado
+              <div className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    className="pl-10"
+                    placeholder="Buscar cliente por nome, e-mail ou telefone..."
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setShowResults(true);
+                    }}
+                    onFocus={() => setShowResults(true)}
+                  />
+                </div>
+
+                {showResults && customerSearch.trim().length >= 2 && (
+                  <div className="absolute z-20 mt-1 w-full rounded-lg border bg-white shadow-lg max-h-56 overflow-y-auto">
+                    {searchingCustomers ? (
+                      <div className="flex items-center gap-2 p-3 text-sm text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Buscando...
+                      </div>
+                    ) : customerResults.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        Nenhum cliente encontrado.
+                        <button
+                          type="button"
+                          className="ml-1 text-moria-orange hover:underline"
+                          onClick={() => setCreateCustomerOpen(true)}
+                        >
+                          Cadastrar novo cliente
+                        </button>
+                      </div>
+                    ) : (
+                      customerResults.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b last:border-b-0"
+                          onClick={() => selectCustomer(c)}
+                        >
+                          <p className="text-sm font-medium">{c.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {c.whatsapp || c.email}
+                            {c.cpf ? ` · ${c.cpf}` : ''}
+                          </p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 mt-1">
+                  Selecione um cliente cadastrado ou clique em "Cadastrar cliente".
+                </p>
+              </div>
+            )}
           </section>
 
           {/* Veículo */}
@@ -404,6 +522,12 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order }: Props) {
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <CreateCustomerModal
+        isOpen={createCustomerOpen}
+        onClose={() => setCreateCustomerOpen(false)}
+        onSuccess={handleCustomerCreated}
+      />
     </Dialog>
   );
 }
