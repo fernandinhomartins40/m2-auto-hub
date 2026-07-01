@@ -26,6 +26,8 @@ interface StoreLayoutProps {
   adminEmail?: string;
   variant?: 'admin' | 'mechanic';
   onLogout?: () => void;
+  /** Abre a Consulta por Placa (botão central mobile + item na sidebar desktop). */
+  onPlateLookup?: () => void;
 }
 
 export default function StoreLayout({
@@ -38,6 +40,7 @@ export default function StoreLayout({
   adminEmail,
   variant = 'admin',
   onLogout,
+  onPlateLookup,
 }: StoreLayoutProps) {
   const isMobile = useIsMobile();
   const { isStandalone } = useStandaloneMode();
@@ -97,6 +100,7 @@ export default function StoreLayout({
           onTabChange={onTabChange}
           onMenuClick={handleMenuClick}
           onLogout={onLogout}
+          onPlateLookup={variant === 'admin' ? onPlateLookup : undefined}
         />
 
         <StoreMobileDrawer
@@ -126,6 +130,7 @@ export default function StoreLayout({
         <Sidebar
           activeTab={currentTab}
           onTabChange={onTabChange}
+          onPlateLookup={onPlateLookup}
         />
       )}
       <main className="lojista-content min-w-0 max-w-full overflow-x-hidden">

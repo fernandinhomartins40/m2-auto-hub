@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Home, LogOut, User } from "lucide-react";
+import { Camera, Home, LogOut, User } from "lucide-react";
 
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
@@ -11,9 +11,10 @@ import { adminSidebarItems } from "./adminNavigation";
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onPlateLookup?: () => void;
 }
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps) {
   const { admin, logout } = useAdminAuth();
   const permissions = useAdminPermissions();
 
@@ -41,6 +42,16 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       <nav className="sidebar-scrollbar flex overflow-x-auto p-2 md:flex-1 md:overflow-x-visible md:overflow-y-auto md:px-3 md:py-4">
         <div className="flex w-full gap-1 md:flex-col md:gap-3">
+          {onPlateLookup && (
+            <button
+              onClick={onPlateLookup}
+              className="flex min-w-[64px] flex-col items-center justify-center space-y-1 rounded-xl border border-moria-orange/40 bg-moria-orange/10 px-2 py-2 text-center text-moria-orange transition-all duration-200 hover:bg-moria-orange hover:text-white md:flex-row md:justify-start md:space-x-3 md:space-y-0 md:px-3 md:py-3 md:text-left"
+            >
+              <Camera className="h-5 w-5 flex-shrink-0" />
+              <span className="text-[10px] font-semibold md:text-sm">Consulta por Placa</span>
+            </button>
+          )}
+
           {Object.entries(groupedItems).map(([section, items]) => (
             <div
               key={section}

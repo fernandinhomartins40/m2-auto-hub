@@ -125,6 +125,7 @@ export class ServiceOrdersService {
     const where: Prisma.ServiceOrderWhereInput = {};
     if (query.status) where.status = query.status;
     if (query.mechanicId) where.assignedMechanicId = query.mechanicId;
+    if (query.vehicleId) where.vehicleId = query.vehicleId;
     if (query.search) {
       const search = query.search;
       const asNumber = Number(search.replace(/\D/g, ''));

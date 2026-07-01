@@ -6,6 +6,7 @@ import {
   adminSidebarItems,
 } from "../components/admin/adminNavigation";
 import { ProtectedAdminRoute } from "../components/admin/ProtectedAdminRoute";
+import { PlateLookupOverlay } from "../components/admin/PlateLookupOverlay";
 import MechanicPanel from "../components/mechanic/MechanicPanel";
 import StoreLayout from "../components/store/StoreLayout";
 import { useAdminAuth } from "../contexts/AdminAuthContext";
@@ -16,6 +17,7 @@ import "../styles/store-animations.css";
 
 export default function StorePanel() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [plateLookupOpen, setPlateLookupOpen] = useState(false);
   const { admin, logout } = useAdminAuth();
 
   if (admin?.role === "STAFF") {
@@ -37,6 +39,7 @@ export default function StorePanel() {
         adminEmail={admin?.email}
         variant="admin"
         onLogout={logout}
+        onPlateLookup={() => setPlateLookupOpen(true)}
       >
         <div className="lojista-header desktop-only min-w-0 max-w-full">
           <div>
@@ -49,6 +52,8 @@ export default function StorePanel() {
           <AdminContent activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
       </StoreLayout>
+
+      <PlateLookupOverlay isOpen={plateLookupOpen} onClose={() => setPlateLookupOpen(false)} />
     </ProtectedAdminRoute>
   );
 }

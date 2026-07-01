@@ -45,6 +45,7 @@ export const queryServiceOrdersSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
   status: z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
   mechanicId: z.string().uuid().optional(),
+  vehicleId: z.string().uuid().optional(),
   search: z.string().trim().optional(),
 });
 export type QueryServiceOrdersDto = z.infer<typeof queryServiceOrdersSchema>;

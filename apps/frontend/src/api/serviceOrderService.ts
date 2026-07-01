@@ -82,6 +82,7 @@ export interface ServiceOrderListParams {
   limit?: number;
   status?: ServiceOrderStatus;
   mechanicId?: string;
+  vehicleId?: string;
   search?: string;
 }
 
