@@ -16,6 +16,16 @@ import { useToast } from '../ui/use-toast';
 import { Product as ApiProduct } from '@/api/productService';
 import { getImageUrl } from '@/utils/imageUrl';
 
+// Converte um Date (instante UTC interno) para o valor esperado por um input
+// datetime-local, que trabalha em hora LOCAL. Sem isso, a data da oferta é
+// deslocada pelo offset do fuso e o filtro público (offerStartDate <= agora)
+// deixa a oferta escondida até o offset passar.
+const toLocalDateTimeInputValue = (date: Date): string => {
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60_000);
+  return local.toISOString().slice(0, 16);
+};
+
 // Interface local para o form (snake_case para compatibilidade com código existente)
 interface ProductFormData {
   id?: string;
@@ -148,8 +158,8 @@ export function ProductModal({
         vehicle_compatibility: product.vehicleCompatibility || [],
         // Ofertas
         offer_type: (product as any).offerType || null,
-        offer_start_date: (product as any).offerStartDate ? new Date((product as any).offerStartDate).toISOString().slice(0, 16) : '',
-        offer_end_date: (product as any).offerEndDate ? new Date((product as any).offerEndDate).toISOString().slice(0, 16) : '',
+        offer_start_date: (product as any).offerStartDate ? toLocalDateTimeInputValue(new Date((product as any).offerStartDate)) : '',
+        offer_end_date: (product as any).offerEndDate ? toLocalDateTimeInputValue(new Date((product as any).offerEndDate)) : '',
         offer_badge: (product as any).offerBadge || ''
       });
 
@@ -223,8 +233,8 @@ export function ProductModal({
     }
 
     return {
-      startDate: startDate.toISOString().slice(0, 16),
-      endDate: endDate.toISOString().slice(0, 16)
+      startDate: toLocalDateTimeInputValue(startDate),
+      endDate: toLocalDateTimeInputValue(endDate)
     };
   };
 

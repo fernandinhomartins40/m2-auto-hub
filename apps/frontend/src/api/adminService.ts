@@ -859,6 +859,11 @@ class AdminService {
     return response.data;
   }
 
+  async getCustomerVehicles(customerId: string): Promise<AdminCustomerVehicle[]> {
+    const response = await apiClient.get(`/admin/customers/${customerId}/vehicles`);
+    return response.data?.data ?? [];
+  }
+
   async createVehicleForCustomer(customerId: string, data: {
     brand: string;
     model: string;
