@@ -195,8 +195,8 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
     // Usa os mesmos serviços públicos do modal de Pedidos (productService/serviceService),
     // que comprovadamente retornam os itens ativos. Mecânicos vêm do fluxo de revisões.
     const [prodRes, servRes, mechRes] = await Promise.all([
-      productService.getProducts({ page: 1, limit: 200 }).catch(() => ({ products: [] as any[] })),
-      serviceService.getServices({ page: 1, limit: 200 }).catch(() => ({ services: [] as any[] })),
+      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] as any[] })),
+      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] as any[] })),
       revisionService.getMechanicsWorkload().catch(() => []),
     ]);
 
