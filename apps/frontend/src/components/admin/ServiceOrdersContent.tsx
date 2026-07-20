@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AdminPageHeader } from './AdminPageHeader';
 import { ServiceOrderModal, type ServiceOrderInitialData } from './ServiceOrderModal';
 import { ServiceOrderDetailsModal } from './ServiceOrderDetailsModal';
+import { QuickAddItemsModal } from './QuickAddItemsModal';
 import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
 import {
   ClipboardList,
@@ -21,6 +22,7 @@ import {
   User,
   Car,
   Camera,
+  Zap,
 } from 'lucide-react';
 import serviceOrderService, {
   ServiceOrder,
@@ -58,6 +60,7 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ServiceOrder | null>(null);
   const [detailsOrder, setDetailsOrder] = useState<ServiceOrder | null>(null);
+  const [quickAddOrder, setQuickAddOrder] = useState<ServiceOrder | null>(null);
   const [plateLookupOpen, setPlateLookupOpen] = useState(false);
   const [initialData, setInitialData] = useState<ServiceOrderInitialData | null>(null);
 
@@ -259,9 +262,19 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
                     <Eye className="h-4 w-4 mr-1" /> Ver
                   </Button>
                   {o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
-                    <Button size="sm" variant="outline" onClick={() => openEdit(o)}>
-                      <Pencil className="h-4 w-4 mr-1" /> Editar
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-moria-orange/40 text-moria-orange hover:bg-moria-orange/10 hover:text-moria-orange"
+                        onClick={() => setQuickAddOrder(o)}
+                      >
+                        <Zap className="h-4 w-4 mr-1" /> Adicionar itens
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => openEdit(o)}>
+                        <Pencil className="h-4 w-4 mr-1" /> Editar
+                      </Button>
+                    </>
                   )}
                   {o.status === 'OPEN' && (
                     <Button size="sm" variant="outline" disabled={busyId === o.id} onClick={() => doAction(o.id, 'start')}>
@@ -300,6 +313,12 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
         onClose={() => setDetailsOrder(null)}
         onChanged={load}
         restricted={restricted}
+      />
+      <QuickAddItemsModal
+        order={quickAddOrder}
+        isOpen={!!quickAddOrder}
+        onClose={() => setQuickAddOrder(null)}
+        onSaved={load}
       />
       <RevisionVehicleLookupDialog
         isOpen={plateLookupOpen}
