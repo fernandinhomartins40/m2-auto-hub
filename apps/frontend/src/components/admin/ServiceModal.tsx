@@ -214,16 +214,16 @@ export function ServiceModal({
                 className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
               >
-                <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-3 gap-1">
-                  <TabsTrigger value="basic" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
+                <TabsList className="grid grid-flow-col auto-cols-max sm:auto-cols-fr w-max sm:w-full h-10 items-stretch gap-1">
+                  <TabsTrigger value="basic" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                     <Wrench className="h-4 w-4" />
                     <span>Básico</span>
                   </TabsTrigger>
-                  <TabsTrigger value="pricing" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
+                  <TabsTrigger value="pricing" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                     <DollarSign className="h-4 w-4" />
                     <span>Preço & Tempo</span>
                   </TabsTrigger>
-                  <TabsTrigger value="details" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
+                  <TabsTrigger value="details" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                     <Settings className="h-4 w-4" />
                     <span>Detalhes</span>
                   </TabsTrigger>

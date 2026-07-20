@@ -32,6 +32,8 @@ import serviceOrderService, {
   ServiceOrderItemInput,
 } from '@/api/serviceOrderService';
 import adminService, { type ProvisionalUser, type AdminCustomerVehicle } from '@/api/adminService';
+import productService from '@/api/productService';
+import serviceService from '@/api/serviceService';
 import revisionService from '@/api/revisionService';
 import { CreateCustomerModal } from './CreateCustomerModal';
 import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
@@ -190,18 +192,37 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
   }, [customerSearch, showResults]);
 
   const loadCatalog = async () => {
-    try {
-      const [prodRes, servRes, mechRes] = await Promise.all([
-        adminService.getProducts({ page: 1, limit: 200 }).catch(() => ({ products: [] })),
-        adminService.getServices({ page: 1, limit: 200 }).catch(() => ({ services: [] })),
-        revisionService.getMechanicsWorkload().catch(() => []),
-      ]);
-      setProducts((prodRes.products || []) as CatalogProduct[]);
-      setServices((servRes.services || []) as CatalogService[]);
-      setMechanics((mechRes || []) as Mechanic[]);
-    } catch {
-      /* silencioso */
-    }
+    // Usa os mesmos serviços públicos do modal de Pedidos (productService/serviceService),
+    // que comprovadamente retornam os itens ativos. Mecânicos vêm do fluxo de revisões.
+    const [prodRes, servRes, mechRes] = await Promise.all([
+      productService.getProducts({ page: 1, limit: 200 }).catch(() => ({ products: [] as any[] })),
+      serviceService.getServices({ page: 1, limit: 200 }).catch(() => ({ services: [] as any[] })),
+      revisionService.getMechanicsWorkload().catch(() => []),
+    ]);
+
+    const activeProducts = (prodRes.products || [])
+      .filter((p: any) => p.status === 'ACTIVE' || p.isActive)
+      .map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        salePrice: Number(p.salePrice) || 0,
+        promoPrice: p.promoPrice != null ? Number(p.promoPrice) : null,
+        stock: Number(p.stock) || 0,
+      })) as CatalogProduct[];
+
+    const activeServices = (servRes.services || [])
+      .filter((s: any) => s.status === 'ACTIVE' || s.isActive)
+      .map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        category: s.category,
+        basePrice: s.basePrice != null ? Number(s.basePrice) : undefined,
+      })) as CatalogService[];
+
+    setProducts(activeProducts);
+    setServices(activeServices);
+    setMechanics((mechRes || []) as Mechanic[]);
   };
 
   // Melhoria: ao selecionar um cliente, buscar seus veículos cadastrados
@@ -748,12 +769,12 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
                     className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
                   >
-                    <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-2 h-8 gap-1">
-                      <TabsTrigger value="services" className="text-xs whitespace-nowrap flex-shrink-0">
+                    <TabsList className="grid grid-flow-col auto-cols-max sm:auto-cols-fr w-max sm:w-full h-9 items-stretch gap-1">
+                      <TabsTrigger value="services" className="h-full w-full justify-center text-xs whitespace-nowrap">
                         <Wrench className="h-3 w-3 mr-1" />
                         <span>Serviços</span>
                       </TabsTrigger>
-                      <TabsTrigger value="products" className="text-xs whitespace-nowrap flex-shrink-0">
+                      <TabsTrigger value="products" className="h-full w-full justify-center text-xs whitespace-nowrap">
                         <Package className="h-3 w-3 mr-1" />
                         <span>Produtos</span>
                       </TabsTrigger>

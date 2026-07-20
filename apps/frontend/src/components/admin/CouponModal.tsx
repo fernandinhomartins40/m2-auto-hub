@@ -260,24 +260,24 @@ export function CouponModal({
                   WebkitOverflowScrolling: 'touch',
                 }}
               >
-                <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-3 gap-1">
+                <TabsList className="grid grid-flow-col auto-cols-max sm:auto-cols-fr w-max sm:w-full h-10 items-stretch gap-1">
                   <TabsTrigger
                     value="basic"
-                    className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0"
+                    className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap"
                   >
                     <Gift className="h-4 w-4" />
                     <span>Basico</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="discount"
-                    className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0"
+                    className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap"
                   >
                     <Percent className="h-4 w-4" />
                     <span>Desconto</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="rules"
-                    className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0"
+                    className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap"
                   >
                     <Settings className="h-4 w-4" />
                     <span>Regras</span>

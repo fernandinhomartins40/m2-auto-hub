@@ -542,20 +542,20 @@ export function PromotionModal({ isOpen, onClose, onSave, promotion, loading = f
           <div className="py-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0 mb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
-                <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-4 gap-1">
-                  <TabsTrigger value="basic" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
+                <TabsList className="grid grid-flow-col auto-cols-max sm:auto-cols-fr w-max sm:w-full h-10 items-stretch gap-1">
+                  <TabsTrigger value="basic" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                     <TrendingUp className="h-4 w-4" />
                     <span>Básico</span>
                   </TabsTrigger>
-                  <TabsTrigger value="discount" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
+                  <TabsTrigger value="discount" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                     <Percent className="h-4 w-4" />
                     <span>Desconto</span>
                   </TabsTrigger>
-                  <TabsTrigger value="schedule" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
+                  <TabsTrigger value="schedule" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                     <Calendar className="h-4 w-4" />
                     <span>Período</span>
                   </TabsTrigger>
-                  <TabsTrigger value="conditions" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0">
+                  <TabsTrigger value="conditions" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                     <Settings className="h-4 w-4" />
                     <span>Condições</span>
                   </TabsTrigger>

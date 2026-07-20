@@ -613,50 +613,50 @@ export function ProductModal({
           <div className="py-3 sm:py-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
-              <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-7 gap-1">
-            <TabsTrigger value="basic" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+              <TabsList className="grid grid-flow-col auto-cols-max sm:auto-cols-fr w-max sm:w-full h-10 items-stretch gap-1">
+            <TabsTrigger value="basic" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap relative">
               <Package className="h-4 w-4" />
               <span>Básico</span>
               {hasTabErrors('basic') && (
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
               )}
             </TabsTrigger>
-            <TabsTrigger value="images" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+            <TabsTrigger value="images" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap relative">
               <Images className="h-4 w-4" />
               <span>Imagens</span>
               {hasTabErrors('images') && (
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
               )}
             </TabsTrigger>
-            <TabsTrigger value="pricing" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+            <TabsTrigger value="pricing" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap relative">
               <DollarSign className="h-4 w-4" />
               <span>Preços</span>
               {hasTabErrors('pricing') && (
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
               )}
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+            <TabsTrigger value="inventory" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap relative">
               <Warehouse className="h-4 w-4" />
               <span>Estoque</span>
               {hasTabErrors('inventory') && (
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
               )}
             </TabsTrigger>
-            <TabsTrigger value="offers" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+            <TabsTrigger value="offers" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap relative">
               <AlertCircle className="h-4 w-4" />
               <span>Ofertas</span>
               {hasTabErrors('offers') && (
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
               )}
             </TabsTrigger>
-            <TabsTrigger value="details" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+            <TabsTrigger value="details" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap relative">
               <Settings className="h-4 w-4" />
               <span>Detalhes</span>
               {hasTabErrors('details') && (
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
               )}
             </TabsTrigger>
-            <TabsTrigger value="marketplaces" className="flex items-center gap-2 text-sm whitespace-nowrap flex-shrink-0 relative">
+            <TabsTrigger value="marketplaces" className="h-full w-full flex items-center justify-center gap-2 text-sm whitespace-nowrap relative">
               <Store className="h-4 w-4" />
               <span>Marketplaces</span>
             </TabsTrigger>

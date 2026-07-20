@@ -771,12 +771,12 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
 
                 <Tabs defaultValue="products" className="w-full">
                   <div className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
-                    <TabsList className="inline-flex w-auto sm:grid sm:w-full sm:grid-cols-2 h-8 gap-1">
-                      <TabsTrigger value="products" className="text-xs whitespace-nowrap flex-shrink-0">
+                    <TabsList className="grid grid-flow-col auto-cols-max sm:auto-cols-fr w-max sm:w-full h-9 items-stretch gap-1">
+                      <TabsTrigger value="products" className="h-full w-full justify-center text-xs whitespace-nowrap">
                         <Package className="h-3 w-3 mr-1" />
                         <span>Produtos</span>
                       </TabsTrigger>
-                      <TabsTrigger value="services" className="text-xs whitespace-nowrap flex-shrink-0">
+                      <TabsTrigger value="services" className="h-full w-full justify-center text-xs whitespace-nowrap">
                         <Wrench className="h-3 w-3 mr-1" />
                         <span>Serviços</span>
                       </TabsTrigger>
