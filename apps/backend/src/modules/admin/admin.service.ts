@@ -1,5 +1,5 @@
 ﻿import { prisma } from '../../config/database.js';
-import { CustomerLevel, CustomerStatus, OrderStatus, Prisma, OrderItemType, QuoteStatus, OrderSource, RevisionStatus } from '@prisma/client';
+import { CustomerLevel, CustomerStatus, OrderStatus, Prisma, OrderItemType, QuoteStatus, OrderSource, RevisionStatus, RelationshipMessageStatus, RelationshipMessageOutcome } from '@prisma/client';
 import { HashUtil } from '@shared/utils/hash.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
@@ -2017,6 +2017,309 @@ export class AdminService {
     }
     await prisma.relationshipTemplate.delete({ where: { id } });
     return { success: true };
+  }
+
+  // ==================== RELATIONSHIP MESSAGES (HISTÓRICO/ENVIOS) ====================
+
+  /**
+   * Registra um envio de mensagem de relacionamento. Cria o registro em estado
+   * PENDING (WhatsApp aberto, aguardando confirmação do admin). Guarda snapshots
+   * do cliente/categoria/mensagem para o histórico sobreviver a alterações.
+   */
+  async createRelationshipMessage(
+    adminId: string | undefined,
+    data: {
+      customerId: string;
+      categoryId?: string | null;
+      templateId?: string | null;
+      messageBody: string;
+    }
+  ) {
+    if (!data.customerId) {
+      throw new ApiError(400, 'Cliente é obrigatório');
+    }
+    if (!data.messageBody?.trim()) {
+      throw new ApiError(400, 'Mensagem é obrigatória');
+    }
+
+    const customer = await prisma.customer.findUnique({
+      where: { id: data.customerId },
+      select: { id: true, name: true, phone: true },
+    });
+    if (!customer) {
+      throw new ApiError(404, 'Cliente não encontrado');
+    }
+
+    let categoryKey = 'custom';
+    let categoryName = 'Contato avulso';
+    if (data.categoryId) {
+      const category = await prisma.relationshipCategory.findUnique({
+        where: { id: data.categoryId },
+        select: { key: true, name: true },
+      });
+      if (category) {
+        categoryKey = category.key;
+        categoryName = category.name;
+      }
+    }
+
+    let templateName: string | null = null;
+    if (data.templateId) {
+      const template = await prisma.relationshipTemplate.findUnique({
+        where: { id: data.templateId },
+        select: { name: true },
+      });
+      templateName = template?.name ?? null;
+    }
+
+    return prisma.relationshipMessage.create({
+      data: {
+        customerId: customer.id,
+        categoryId: data.categoryId ?? null,
+        templateId: data.templateId ?? null,
+        adminId: adminId ?? null,
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        categoryKey,
+        categoryName,
+        templateName,
+        messageBody: data.messageBody,
+        status: RelationshipMessageStatus.PENDING,
+        outcome: RelationshipMessageOutcome.PENDING,
+      },
+    });
+  }
+
+  /** Confirma que a mensagem foi realmente enviada e, opcionalmente, o resultado. */
+  async confirmRelationshipMessage(
+    id: string,
+    data?: { outcome?: RelationshipMessageOutcome; notes?: string }
+  ) {
+    const message = await prisma.relationshipMessage.findUnique({ where: { id } });
+    if (!message) {
+      throw new ApiError(404, 'Registro de mensagem não encontrado');
+    }
+
+    return prisma.relationshipMessage.update({
+      where: { id },
+      data: {
+        status: RelationshipMessageStatus.SENT,
+        confirmedAt: message.confirmedAt ?? new Date(),
+        ...(data?.outcome ? { outcome: data.outcome } : {}),
+        ...(data?.notes !== undefined ? { notes: data.notes } : {}),
+      },
+    });
+  }
+
+  /** Atualiza o resultado/anotações de um contato já registrado. */
+  async updateRelationshipMessageOutcome(
+    id: string,
+    data: { outcome?: RelationshipMessageOutcome; notes?: string }
+  ) {
+    const message = await prisma.relationshipMessage.findUnique({ where: { id } });
+    if (!message) {
+      throw new ApiError(404, 'Registro de mensagem não encontrado');
+    }
+
+    return prisma.relationshipMessage.update({
+      where: { id },
+      data: {
+        ...(data.outcome ? { outcome: data.outcome } : {}),
+        ...(data.notes !== undefined ? { notes: data.notes } : {}),
+      },
+    });
+  }
+
+  async deleteRelationshipMessage(id: string) {
+    const message = await prisma.relationshipMessage.findUnique({ where: { id } });
+    if (!message) {
+      throw new ApiError(404, 'Registro de mensagem não encontrado');
+    }
+    await prisma.relationshipMessage.delete({ where: { id } });
+    return { success: true };
+  }
+
+  /** Histórico paginado de mensagens, com filtros. */
+  async listRelationshipMessages(params?: {
+    page?: number;
+    limit?: number;
+    categoryKey?: string;
+    status?: string;
+    outcome?: string;
+    customerId?: string;
+    from?: string;
+    to?: string;
+  }) {
+    const page = Math.max(1, params?.page || 1);
+    const limit = Math.min(100, Math.max(1, params?.limit || 20));
+
+    const where: Prisma.RelationshipMessageWhereInput = {};
+    if (params?.categoryKey) where.categoryKey = params.categoryKey;
+    if (params?.customerId) where.customerId = params.customerId;
+    if (
+      params?.status &&
+      Object.values(RelationshipMessageStatus).includes(params.status as RelationshipMessageStatus)
+    ) {
+      where.status = params.status as RelationshipMessageStatus;
+    }
+    if (
+      params?.outcome &&
+      Object.values(RelationshipMessageOutcome).includes(params.outcome as RelationshipMessageOutcome)
+    ) {
+      where.outcome = params.outcome as RelationshipMessageOutcome;
+    }
+    if (params?.from || params?.to) {
+      where.createdAt = {};
+      if (params.from) where.createdAt.gte = new Date(params.from);
+      if (params.to) where.createdAt.lte = new Date(params.to);
+    }
+
+    const [total, items] = await Promise.all([
+      prisma.relationshipMessage.count({ where }),
+      prisma.relationshipMessage.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          admin: { select: { id: true, name: true } },
+        },
+      }),
+    ]);
+
+    return {
+      items: items.map((item) => ({
+        id: item.id,
+        customerId: item.customerId,
+        customerName: item.customerName,
+        customerPhone: item.customerPhone,
+        categoryKey: item.categoryKey,
+        categoryName: item.categoryName,
+        templateName: item.templateName,
+        messageBody: item.messageBody,
+        status: item.status,
+        outcome: item.outcome,
+        notes: item.notes,
+        adminName: item.admin?.name ?? null,
+        createdAt: item.createdAt.toISOString(),
+        confirmedAt: item.confirmedAt?.toISOString() ?? null,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
+  }
+
+  /**
+   * Dashboard de relacionamento: métricas agregadas, série temporal, distribuição
+   * por categoria/resultado e cobertura das oportunidades atuais.
+   */
+  async getRelationshipDashboard(params?: { days?: number }) {
+    const days = Math.min(365, Math.max(7, params?.days || 30));
+    const now = new Date();
+    const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    const messages = await prisma.relationshipMessage.findMany({
+      where: { createdAt: { gte: since } },
+      select: {
+        customerId: true,
+        categoryKey: true,
+        categoryName: true,
+        status: true,
+        outcome: true,
+        createdAt: true,
+      },
+    });
+
+    const sentMessages = messages.filter((m) => m.status === RelationshipMessageStatus.SENT);
+    const uniqueCustomers = new Set(
+      sentMessages.map((m) => m.customerId).filter((id): id is string => Boolean(id))
+    );
+
+    // Distribuição por categoria.
+    const byCategoryMap = new Map<string, { name: string; total: number }>();
+    for (const m of sentMessages) {
+      const entry = byCategoryMap.get(m.categoryKey) ?? { name: m.categoryName, total: 0 };
+      entry.total += 1;
+      byCategoryMap.set(m.categoryKey, entry);
+    }
+    const byCategory = Array.from(byCategoryMap.entries())
+      .map(([key, value]) => ({ key, name: value.name, total: value.total }))
+      .sort((a, b) => b.total - a.total);
+
+    // Distribuição por resultado.
+    const outcomeOrder: RelationshipMessageOutcome[] = [
+      RelationshipMessageOutcome.PENDING,
+      RelationshipMessageOutcome.REPLIED,
+      RelationshipMessageOutcome.SCHEDULED,
+      RelationshipMessageOutcome.PURCHASED,
+      RelationshipMessageOutcome.NO_REPLY,
+    ];
+    const byOutcome = outcomeOrder.map((outcome) => ({
+      outcome,
+      total: sentMessages.filter((m) => m.outcome === outcome).length,
+    }));
+
+    // Série temporal (envios por dia).
+    const dayMap = new Map<string, number>();
+    for (let i = 0; i < days; i += 1) {
+      const d = new Date(since.getTime() + i * 24 * 60 * 60 * 1000);
+      dayMap.set(d.toISOString().slice(0, 10), 0);
+    }
+    for (const m of sentMessages) {
+      const key = m.createdAt.toISOString().slice(0, 10);
+      if (dayMap.has(key)) {
+        dayMap.set(key, (dayMap.get(key) || 0) + 1);
+      }
+    }
+    const timeline = Array.from(dayMap.entries()).map(([date, total]) => ({ date, total }));
+
+    // Cobertura: dos clientes atualmente em cada categoria de oportunidade,
+    // quantos já foram contatados (envio confirmado nos últimos `days`).
+    const insights = await this.getCustomerRelationshipInsights();
+    const contactedByCategory = new Map<string, Set<string>>();
+    for (const m of sentMessages) {
+      if (!m.customerId) continue;
+      const set = contactedByCategory.get(m.categoryKey) ?? new Set<string>();
+      set.add(m.customerId);
+      contactedByCategory.set(m.categoryKey, set);
+    }
+    const coverage = insights.categories.map((category) => {
+      const contactedSet = contactedByCategory.get(category.key) ?? new Set<string>();
+      const contacted = category.customers.filter((c) => contactedSet.has(c.id)).length;
+      return {
+        key: category.key,
+        name: category.name,
+        accentColor: category.accentColor,
+        totalOpportunities: category.count,
+        contacted,
+        pending: Math.max(0, category.count - contacted),
+      };
+    });
+
+    return {
+      generatedAt: now.toISOString(),
+      periodDays: days,
+      summary: {
+        totalSent: sentMessages.length,
+        pendingConfirmation: messages.filter((m) => m.status === RelationshipMessageStatus.PENDING)
+          .length,
+        customersImpacted: uniqueCustomers.size,
+        replied: sentMessages.filter(
+          (m) =>
+            m.outcome === RelationshipMessageOutcome.REPLIED ||
+            m.outcome === RelationshipMessageOutcome.SCHEDULED ||
+            m.outcome === RelationshipMessageOutcome.PURCHASED
+        ).length,
+      },
+      byCategory,
+      byOutcome,
+      timeline,
+      coverage,
+    };
   }
 }
 

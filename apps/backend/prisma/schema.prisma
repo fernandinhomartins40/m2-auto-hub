@@ -216,6 +216,7 @@ model Admin {
   auditLogs        AuditLog[]
   assignedTickets  SupportTicket[]
   landingPageConfigHistory LandingPageConfigHistory[]
+  relationshipMessages RelationshipMessage[]
 
   @@index([email])
   @@index([role])
@@ -270,6 +271,7 @@ model Customer {
   supportTickets SupportTicket[]
   loyaltyTransactions LoyaltyTransaction[]
   loyaltyRedemptions  LoyaltyRedemption[]
+  relationshipMessages RelationshipMessage[]
 
   @@index([email])
   @@index([cpf])
@@ -1471,6 +1473,7 @@ model RelationshipCategory {
   updatedAt DateTime @updatedAt
 
   templates RelationshipTemplate[]
+  messages  RelationshipMessage[]
 
   @@index([isActive, sortOrder])
   @@map("relationship_categories")
@@ -1490,8 +1493,60 @@ model RelationshipTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  category RelationshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category  RelationshipCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  messages  RelationshipMessage[]
 
   @@index([categoryId, isActive, sortOrder])
   @@map("relationship_templates")
+}
+
+enum RelationshipMessageStatus {
+  PENDING /// aberto no WhatsApp, aguardando confirmação do admin
+  SENT /// admin confirmou o envio
+}
+
+enum RelationshipMessageOutcome {
+  PENDING /// sem retorno registrado ainda
+  REPLIED /// cliente respondeu
+  SCHEDULED /// cliente agendou algo (revisão/visita)
+  PURCHASED /// gerou nova venda
+  NO_REPLY /// sem resposta
+}
+
+/// Registro de cada mensagem de relacionamento disparada para um cliente.
+/// Guarda snapshots (nome do cliente, categoria e corpo) para o histórico
+/// sobreviver a edições/exclusões de categorias, templates ou clientes.
+model RelationshipMessage {
+  id         String  @id @default(uuid())
+  customerId String?
+  categoryId String?
+  templateId String?
+  adminId    String?
+
+  // Snapshots imutáveis para o histórico.
+  customerName String
+  customerPhone String
+  categoryKey  String
+  categoryName String
+  templateName String?
+  messageBody  String                     @db.Text
+
+  status  RelationshipMessageStatus  @default(PENDING)
+  outcome RelationshipMessageOutcome @default(PENDING)
+  notes   String?                    @db.Text
+
+  createdAt   DateTime  @default(now())
+  confirmedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  customer Customer?             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  category RelationshipCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  template RelationshipTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  admin    Admin?                @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([categoryKey, createdAt])
+  @@index([customerId, createdAt])
+  @@index([createdAt])
+  @@map("relationship_messages")
 }

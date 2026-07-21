@@ -101,3 +101,24 @@ export const RELATIONSHIP_RULE_OPERATORS: Array<{
 export const RELATIONSHIP_SORT_FIELDS = RELATIONSHIP_RULE_FIELDS.filter(
   (field) => field.type === "number"
 );
+
+/** Rótulos e cores dos resultados de contato. */
+export const RELATIONSHIP_OUTCOMES: Array<{
+  value: string;
+  label: string;
+  badgeClass: string;
+}> = [
+  { value: "PENDING", label: "Sem retorno", badgeClass: "bg-slate-100 text-slate-700" },
+  { value: "REPLIED", label: "Respondeu", badgeClass: "bg-blue-100 text-blue-700" },
+  { value: "SCHEDULED", label: "Agendou", badgeClass: "bg-amber-100 text-amber-700" },
+  { value: "PURCHASED", label: "Comprou", badgeClass: "bg-emerald-100 text-emerald-700" },
+  { value: "NO_REPLY", label: "Sem resposta", badgeClass: "bg-rose-100 text-rose-700" },
+];
+
+export function outcomeLabel(value: string) {
+  return RELATIONSHIP_OUTCOMES.find((o) => o.value === value)?.label ?? value;
+}
+
+export function outcomeBadgeClass(value: string) {
+  return RELATIONSHIP_OUTCOMES.find((o) => o.value === value)?.badgeClass ?? "bg-slate-100 text-slate-700";
+}

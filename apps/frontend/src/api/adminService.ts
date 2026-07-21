@@ -339,6 +339,58 @@ export interface RelationshipTemplateInput {
   sortOrder?: number;
 }
 
+export type RelationshipMessageStatus = "PENDING" | "SENT";
+export type RelationshipMessageOutcome =
+  | "PENDING"
+  | "REPLIED"
+  | "SCHEDULED"
+  | "PURCHASED"
+  | "NO_REPLY";
+
+export interface RelationshipMessage {
+  id: string;
+  customerId: string | null;
+  customerName: string;
+  customerPhone: string;
+  categoryKey: string;
+  categoryName: string;
+  templateName: string | null;
+  messageBody: string;
+  status: RelationshipMessageStatus;
+  outcome: RelationshipMessageOutcome;
+  notes: string | null;
+  adminName: string | null;
+  createdAt: string;
+  confirmedAt: string | null;
+}
+
+export interface RelationshipMessagesResponse {
+  items: RelationshipMessage[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface RelationshipDashboard {
+  generatedAt: string;
+  periodDays: number;
+  summary: {
+    totalSent: number;
+    pendingConfirmation: number;
+    customersImpacted: number;
+    replied: number;
+  };
+  byCategory: Array<{ key: string; name: string; total: number }>;
+  byOutcome: Array<{ outcome: RelationshipMessageOutcome; total: number }>;
+  timeline: Array<{ date: string; total: number }>;
+  coverage: Array<{
+    key: string;
+    name: string;
+    accentColor: string;
+    totalOpportunities: number;
+    contacted: number;
+    pending: number;
+  }>;
+}
+
 export interface AdminCustomerVehicle {
   id: string;
   customerId: string;
@@ -1025,6 +1077,56 @@ class AdminService {
 
   async deleteRelationshipTemplate(id: string): Promise<{ success: boolean }> {
     const response = await apiClient.delete(`/admin/relationship/templates/${id}`);
+    return response.data;
+  }
+
+  async createRelationshipMessage(data: {
+    customerId: string;
+    categoryId?: string | null;
+    templateId?: string | null;
+    messageBody: string;
+  }): Promise<RelationshipMessage> {
+    const response = await apiClient.post("/admin/relationship/messages", data);
+    return response.data;
+  }
+
+  async confirmRelationshipMessage(
+    id: string,
+    data?: { outcome?: RelationshipMessageOutcome; notes?: string }
+  ): Promise<RelationshipMessage> {
+    const response = await apiClient.patch(`/admin/relationship/messages/${id}/confirm`, data ?? {});
+    return response.data;
+  }
+
+  async updateRelationshipMessageOutcome(
+    id: string,
+    data: { outcome?: RelationshipMessageOutcome; notes?: string }
+  ): Promise<RelationshipMessage> {
+    const response = await apiClient.patch(`/admin/relationship/messages/${id}/outcome`, data);
+    return response.data;
+  }
+
+  async deleteRelationshipMessage(id: string): Promise<{ success: boolean }> {
+    const response = await apiClient.delete(`/admin/relationship/messages/${id}`);
+    return response.data;
+  }
+
+  async getRelationshipMessages(params?: {
+    page?: number;
+    limit?: number;
+    categoryKey?: string;
+    status?: string;
+    outcome?: string;
+    customerId?: string;
+    from?: string;
+    to?: string;
+  }): Promise<RelationshipMessagesResponse> {
+    const response = await apiClient.get("/admin/relationship/messages", { params });
+    return response.data;
+  }
+
+  async getRelationshipDashboard(params?: { days?: number }): Promise<RelationshipDashboard> {
+    const response = await apiClient.get("/admin/relationship/dashboard", { params });
     return response.data;
   }
 

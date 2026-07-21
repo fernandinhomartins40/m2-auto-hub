@@ -47,6 +47,12 @@ router.delete('/relationship/categories/:id', AdminAuthMiddleware.requireMinRole
 router.post('/relationship/categories/:categoryId/templates', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.createRelationshipTemplate);
 router.put('/relationship/templates/:id', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.updateRelationshipTemplate);
 router.delete('/relationship/templates/:id', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.deleteRelationshipTemplate);
+router.get('/relationship/dashboard', adminController.getRelationshipDashboard);
+router.get('/relationship/messages', adminController.listRelationshipMessages);
+router.post('/relationship/messages', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), adminController.createRelationshipMessage);
+router.patch('/relationship/messages/:id/confirm', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), adminController.confirmRelationshipMessage);
+router.patch('/relationship/messages/:id/outcome', AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), adminController.updateRelationshipMessageOutcome);
+router.delete('/relationship/messages/:id', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.deleteRelationshipMessage);
 router.get('/loyalty/stats', loyaltyController.getAdminStats);
 router.get('/loyalty/settings', loyaltyController.getAdminSettings);
 router.put('/loyalty/settings', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), loyaltyController.updateAdminSettings);

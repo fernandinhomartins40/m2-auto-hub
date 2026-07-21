@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  BarChart3,
   Cake,
   CalendarClock,
+  Check,
   Crown,
   HeartHandshake,
   Loader2,
   MessageCircle,
   RefreshCw,
+  RotateCw,
   Settings2,
   ShoppingBag,
   TrendingDown,
@@ -17,15 +20,18 @@ import adminService, {
   type CustomerRelationshipInsight,
   type CustomerRelationshipInsightsResponse,
   type RelationshipCategoryResult,
+  type RelationshipMessageOutcome,
 } from "@/api/adminService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { AdminPageHeader } from "./AdminPageHeader";
 import { RelationshipSettings } from "./RelationshipSettings";
-import { getRelationshipIcon, renderTemplate } from "./relationshipTemplates";
+import { RelationshipDashboard } from "./RelationshipDashboard";
+import { RELATIONSHIP_OUTCOMES, getRelationshipIcon, renderTemplate } from "./relationshipTemplates";
 
 function formatDate(value: string | null) {
   if (!value) return "Sem registro";
@@ -102,18 +108,74 @@ function metricLabelFor(category: RelationshipCategoryResult, customer: Customer
   }
 }
 
+/** Estado do fluxo de envio por cliente dentro do card. */
+type SendState = {
+  status: "idle" | "pending" | "sent";
+  messageId?: string;
+  outcome?: RelationshipMessageOutcome;
+};
+
 function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
+  const { toast } = useToast();
   const Icon = getRelationshipIcon(category.icon);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(
     () => category.templates.find((t) => t.isDefault)?.id ?? category.templates[0]?.id
   );
+  const [sendState, setSendState] = useState<Record<string, SendState>>({});
 
   const activeTemplate = pickTemplate(category.templates, selectedTemplateId);
   const hasMultipleTemplates = category.templates.length > 1;
 
-  const handleWhatsApp = (customer: CustomerRelationshipInsight) => {
+  const buildMessage = (customer: CustomerRelationshipInsight) => {
     const body = activeTemplate?.body ?? `Olá ${customer.name.split(" ")[0]}!`;
-    openWhatsApp(renderTemplate(body, customer), customer);
+    return renderTemplate(body, customer);
+  };
+
+  // 1º clique: registra o envio (PENDING), abre o WhatsApp, botão vira "Confirmar".
+  const handleSend = async (customer: CustomerRelationshipInsight) => {
+    const message = buildMessage(customer);
+    openWhatsApp(message, customer);
+    try {
+      const record = await adminService.createRelationshipMessage({
+        customerId: customer.id,
+        categoryId: category.id,
+        templateId: activeTemplate?.id ?? null,
+        messageBody: message,
+      });
+      setSendState((prev) => ({ ...prev, [customer.id]: { status: "pending", messageId: record.id } }));
+    } catch (error) {
+      console.error("Erro ao registrar envio:", error);
+      toast({ title: "Não foi possível registrar o envio", variant: "destructive" });
+    }
+  };
+
+  const handleResend = (customer: CustomerRelationshipInsight) => {
+    openWhatsApp(buildMessage(customer), customer);
+  };
+
+  const handleConfirm = async (customerId: string) => {
+    const state = sendState[customerId];
+    if (!state?.messageId) return;
+    try {
+      await adminService.confirmRelationshipMessage(state.messageId);
+      setSendState((prev) => ({ ...prev, [customerId]: { ...state, status: "sent" } }));
+      toast({ title: "Envio confirmado" });
+    } catch (error) {
+      console.error("Erro ao confirmar envio:", error);
+      toast({ title: "Não foi possível confirmar o envio", variant: "destructive" });
+    }
+  };
+
+  const handleOutcome = async (customerId: string, outcome: RelationshipMessageOutcome) => {
+    const state = sendState[customerId];
+    if (!state?.messageId) return;
+    setSendState((prev) => ({ ...prev, [customerId]: { ...state, outcome } }));
+    try {
+      await adminService.updateRelationshipMessageOutcome(state.messageId, { outcome });
+    } catch (error) {
+      console.error("Erro ao registrar resultado:", error);
+      toast({ title: "Não foi possível registrar o resultado", variant: "destructive" });
+    }
   };
 
   return (
@@ -180,11 +242,60 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <Button type="button" size="sm" variant="outline" onClick={() => handleWhatsApp(customer)}>
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      WhatsApp
-                    </Button>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    {(() => {
+                      const state = sendState[customer.id]?.status ?? "idle";
+                      if (state === "idle") {
+                        return (
+                          <Button type="button" size="sm" variant="outline" onClick={() => void handleSend(customer)}>
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            WhatsApp
+                          </Button>
+                        );
+                      }
+                      return (
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {state === "pending" ? (
+                            <Button type="button" size="sm" onClick={() => void handleConfirm(customer.id)}>
+                              <Check className="mr-2 h-4 w-4" />
+                              Confirmar envio
+                            </Button>
+                          ) : (
+                            <Badge variant="secondary" className="gap-1">
+                              <Check className="h-3 w-3" />
+                              Enviado
+                            </Badge>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleResend(customer)}
+                          >
+                            <RotateCw className="mr-2 h-4 w-4" />
+                            Reenviar
+                          </Button>
+                        </div>
+                      );
+                    })()}
+
+                    {sendState[customer.id]?.status === "sent" && (
+                      <Select
+                        value={sendState[customer.id]?.outcome ?? "PENDING"}
+                        onValueChange={(value) => void handleOutcome(customer.id, value as RelationshipMessageOutcome)}
+                      >
+                        <SelectTrigger className="h-8 w-[150px] text-xs">
+                          <SelectValue placeholder="Resultado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {RELATIONSHIP_OUTCOMES.map((outcome) => (
+                            <SelectItem key={outcome.value} value={outcome.value}>
+                              {outcome.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </div>
 
@@ -331,6 +442,10 @@ export function CustomerRelationshipContent() {
             <HeartHandshake className="mr-2 h-4 w-4" />
             Oportunidades
           </TabsTrigger>
+          <TabsTrigger value="dashboard">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
           <TabsTrigger value="settings">
             <Settings2 className="mr-2 h-4 w-4" />
             Tipos e mensagens
@@ -365,6 +480,10 @@ export function CustomerRelationshipContent() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="dashboard">
+          {tab === "dashboard" && <RelationshipDashboard />}
         </TabsContent>
 
         <TabsContent value="settings">

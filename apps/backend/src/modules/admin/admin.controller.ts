@@ -114,6 +114,74 @@ export class AdminController {
     }
   };
 
+  createRelationshipMessage = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const adminId = req.admin?.adminId;
+      const message = await this.adminService.createRelationshipMessage(adminId, req.body);
+      res.status(201).json(message);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  confirmRelationshipMessage = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const message = await this.adminService.confirmRelationshipMessage(req.params.id, req.body);
+      res.json(message);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateRelationshipMessageOutcome = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const message = await this.adminService.updateRelationshipMessageOutcome(req.params.id, req.body);
+      res.json(message);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteRelationshipMessage = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.adminService.deleteRelationshipMessage(req.params.id);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  listRelationshipMessages = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { page, limit, categoryKey, status, outcome, customerId, from, to } = req.query;
+      const result = await this.adminService.listRelationshipMessages({
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+        categoryKey: categoryKey as string | undefined,
+        status: status as string | undefined,
+        outcome: outcome as string | undefined,
+        customerId: customerId as string | undefined,
+        from: from as string | undefined,
+        to: to as string | undefined,
+      });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getRelationshipDashboard = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { days } = req.query;
+      const dashboard = await this.adminService.getRelationshipDashboard({
+        days: days ? Number(days) : undefined,
+      });
+      res.json(dashboard);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   // ==================== ORDERS ====================
 
   getOrders = async (req: Request, res: Response, next: NextFunction) => {
