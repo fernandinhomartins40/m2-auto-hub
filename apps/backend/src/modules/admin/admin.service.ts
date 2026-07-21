@@ -90,6 +90,10 @@ interface RelationshipInsightCustomer {
   daysSinceLastInteraction: number | null;
   daysUntilBirthday: number | null;
   interactionType: 'sale' | 'revision' | 'both';
+  /** Último contato de relacionamento confirmado para este cliente (qualquer categoria). */
+  lastContactedAt: string | null;
+  lastContactOutcome: RelationshipMessageOutcome | null;
+  daysSinceLastContact: number | null;
 }
 
 interface RelationshipCategoryTemplate {
@@ -453,7 +457,7 @@ export class AdminService {
     const vipThreshold = 1000;
     const now = new Date();
 
-    const [customers, orderAggregates, revisionAggregates] = await Promise.all([
+    const [customers, orderAggregates, revisionAggregates, contactAggregates] = await Promise.all([
       prisma.customer.findMany({
         where: {
           status: {
@@ -496,6 +500,17 @@ export class AdminService {
           date: true,
         },
       }),
+      // Último contato de relacionamento confirmado por cliente. Buscamos os
+      // registros SENT ordenados do mais recente e reduzimos em memória para
+      // capturar tambem o resultado (outcome) do contato mais recente.
+      prisma.relationshipMessage.findMany({
+        where: {
+          status: RelationshipMessageStatus.SENT,
+          customerId: { not: null },
+        },
+        select: { customerId: true, confirmedAt: true, createdAt: true, outcome: true },
+        orderBy: [{ confirmedAt: 'desc' }, { createdAt: 'desc' }],
+      }),
     ]);
 
     const orderMap = new Map(
@@ -518,6 +533,17 @@ export class AdminService {
       ])
     );
 
+    // Como contactAggregates vem ordenado do mais recente, o primeiro registro
+    // visto de cada cliente é o último contato confirmado.
+    const contactMap = new Map<string, { at: Date; outcome: RelationshipMessageOutcome }>();
+    for (const contact of contactAggregates) {
+      if (!contact.customerId || contactMap.has(contact.customerId)) continue;
+      contactMap.set(contact.customerId, {
+        at: contact.confirmedAt ?? contact.createdAt,
+        outcome: contact.outcome,
+      });
+    }
+
     const insights = customers
       .map((customer) => {
         const orderData = orderMap.get(customer.id);
@@ -528,6 +554,7 @@ export class AdminService {
         const daysUntilBirthday = customer.birthDate
           ? this.getDaysUntilBirthday(customer.birthDate, now)
           : null;
+        const contactData = contactMap.get(customer.id) || null;
 
         return {
           id: customer.id,
@@ -548,6 +575,9 @@ export class AdminService {
           daysSinceLastInteraction: this.getDaysSince(lastInteractionAt, now),
           daysUntilBirthday,
           interactionType: orderData && revisionData ? 'both' : orderData ? 'sale' : 'revision',
+          lastContactedAt: contactData?.at.toISOString() || null,
+          lastContactOutcome: contactData?.outcome || null,
+          daysSinceLastContact: this.getDaysSince(contactData?.at || null, now),
         } satisfies RelationshipInsightCustomer;
       })
       .filter((customer) => customer.whatsapp);

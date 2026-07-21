@@ -220,6 +220,9 @@ export interface CustomerRelationshipInsight {
   daysSinceLastInteraction: number | null;
   daysUntilBirthday: number | null;
   interactionType: 'sale' | 'revision' | 'both';
+  lastContactedAt: string | null;
+  lastContactOutcome: RelationshipMessageOutcome | null;
+  daysSinceLastContact: number | null;
 }
 
 export interface CustomerRelationshipInsightsResponse {

@@ -6,6 +6,7 @@ import {
   Check,
   Crown,
   HeartHandshake,
+  History,
   Loader2,
   MessageCircle,
   RefreshCw,
@@ -31,7 +32,13 @@ import { useToast } from "@/hooks/use-toast";
 import { AdminPageHeader } from "./AdminPageHeader";
 import { RelationshipSettings } from "./RelationshipSettings";
 import { RelationshipDashboard } from "./RelationshipDashboard";
-import { RELATIONSHIP_OUTCOMES, getRelationshipIcon, renderTemplate } from "./relationshipTemplates";
+import {
+  RELATIONSHIP_OUTCOMES,
+  getRelationshipIcon,
+  outcomeBadgeClass,
+  outcomeLabel,
+  renderTemplate,
+} from "./relationshipTemplates";
 
 function formatDate(value: string | null) {
   if (!value) return "Sem registro";
@@ -106,6 +113,13 @@ function metricLabelFor(category: RelationshipCategoryResult, customer: Customer
       return category.name;
     }
   }
+}
+
+function lastContactLabel(customer: CustomerRelationshipInsight): string | null {
+  if (customer.daysSinceLastContact === null) return null;
+  if (customer.daysSinceLastContact === 0) return "Contatado hoje";
+  if (customer.daysSinceLastContact === 1) return "Contatado ontem";
+  return `Contatado há ${customer.daysSinceLastContact} dias`;
 }
 
 /** Estado do fluxo de envio por cliente dentro do card. */
@@ -226,6 +240,23 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
                     </div>
                     <div className="text-sm text-muted-foreground">{customer.email}</div>
                     <div className="text-sm text-muted-foreground">{formatPhone(customer.whatsapp)}</div>
+                    {sendState[customer.id]?.status !== "sent" && lastContactLabel(customer) && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+                          <History className="h-3 w-3" />
+                          {lastContactLabel(customer)}
+                        </span>
+                        {customer.lastContactOutcome && customer.lastContactOutcome !== "PENDING" && (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${outcomeBadgeClass(
+                              customer.lastContactOutcome
+                            )}`}
+                          >
+                            {outcomeLabel(customer.lastContactOutcome)}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-2 text-xs">
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
                         {metricLabelFor(category, customer)}
