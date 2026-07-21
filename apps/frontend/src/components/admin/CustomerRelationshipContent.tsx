@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   Cake,
@@ -39,11 +39,6 @@ import {
   outcomeLabel,
   renderTemplate,
 } from "./relationshipTemplates";
-
-function formatDate(value: string | null) {
-  if (!value) return "Sem registro";
-  return new Date(value).toLocaleDateString("pt-BR");
-}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -124,10 +119,14 @@ function lastContactLabel(customer: CustomerRelationshipInsight): string | null 
 
 /** Estado do fluxo de envio por cliente dentro do card. */
 type SendState = {
-  status: "idle" | "pending" | "sent";
+  status: "idle" | "pending" | "sent" | "dismissing";
   messageId?: string;
   outcome?: RelationshipMessageOutcome;
 };
+
+/** Segundos que o card confirmado permanece visível para registrar o resultado. */
+const DISMISS_DELAY_MS = 6000;
+const DISMISS_ANIMATION_MS = 320;
 
 function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
   const { toast } = useToast();
@@ -136,6 +135,16 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
     () => category.templates.find((t) => t.isDefault)?.id ?? category.templates[0]?.id
   );
   const [sendState, setSendState] = useState<Record<string, SendState>>({});
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Limpa timers pendentes ao desmontar.
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
+      Object.values(timers).forEach((timer) => clearTimeout(timer));
+    };
+  }, []);
 
   const activeTemplate = pickTemplate(category.templates, selectedTemplateId);
   const hasMultipleTemplates = category.templates.length > 1;
@@ -143,6 +152,25 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
   const buildMessage = (customer: CustomerRelationshipInsight) => {
     const body = activeTemplate?.body ?? `Olá ${customer.name.split(" ")[0]}!`;
     return renderTemplate(body, customer);
+  };
+
+  // Remove o card com uma pequena animação de saída.
+  const dismissCustomer = (customerId: string) => {
+    clearTimeout(timersRef.current[customerId]);
+    setSendState((prev) => ({ ...prev, [customerId]: { ...prev[customerId], status: "dismissing" } }));
+    timersRef.current[customerId] = setTimeout(() => {
+      setHiddenIds((prev) => {
+        const next = new Set(prev);
+        next.add(customerId);
+        return next;
+      });
+    }, DISMISS_ANIMATION_MS);
+  };
+
+  // Agenda o desaparecimento do card após a janela de registro de resultado.
+  const scheduleDismiss = (customerId: string) => {
+    clearTimeout(timersRef.current[customerId]);
+    timersRef.current[customerId] = setTimeout(() => dismissCustomer(customerId), DISMISS_DELAY_MS);
   };
 
   // 1º clique: registra o envio (PENDING), abre o WhatsApp, botão vira "Confirmar".
@@ -173,6 +201,7 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
     try {
       await adminService.confirmRelationshipMessage(state.messageId);
       setSendState((prev) => ({ ...prev, [customerId]: { ...state, status: "sent" } }));
+      scheduleDismiss(customerId);
       toast({ title: "Envio confirmado" });
     } catch (error) {
       console.error("Erro ao confirmar envio:", error);
@@ -184,6 +213,8 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
     const state = sendState[customerId];
     if (!state?.messageId) return;
     setSendState((prev) => ({ ...prev, [customerId]: { ...state, outcome } }));
+    // Escolher um resultado reinicia o cronômetro para dar tempo de decidir.
+    scheduleDismiss(customerId);
     try {
       await adminService.updateRelationshipMessageOutcome(state.messageId, { outcome });
     } catch (error) {
@@ -192,15 +223,23 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
     }
   };
 
+  const visibleCustomers = category.customers.filter((customer) => !hiddenIds.has(customer.id));
+  const doneCount = hiddenIds.size;
+
   return (
     <Card className="border-border/70">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <Icon className="h-4 w-4" style={{ color: category.accentColor }} />
               {category.name}
-              <Badge variant="secondary">{category.count}</Badge>
+              <Badge variant="secondary">{visibleCustomers.length}</Badge>
+              {doneCount > 0 && (
+                <span className="text-xs font-normal text-muted-foreground">
+                  {doneCount} concluído{doneCount > 1 ? "s" : ""}
+                </span>
+              )}
             </CardTitle>
             <CardDescription>{category.description}</CardDescription>
           </div>
@@ -224,118 +263,133 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
         </div>
       </CardHeader>
       <CardContent>
-        {category.customers.length === 0 ? (
+        {visibleCustomers.length === 0 ? (
           <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-            Nenhum cliente nesta categoria no momento.
+            {category.customers.length === 0
+              ? "Nenhum cliente nesta categoria no momento."
+              : "Tudo certo por aqui — todos os contatos desta lista foram enviados. 🎉"}
           </div>
         ) : (
-          <div className="space-y-3">
-            {category.customers.map((customer) => (
-              <div key={customer.id} className="rounded-xl border p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="font-medium text-foreground">{customer.name}</div>
-                      <Badge variant="secondary">{customer.level}</Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">{customer.email}</div>
-                    <div className="text-sm text-muted-foreground">{formatPhone(customer.whatsapp)}</div>
-                    {sendState[customer.id]?.status !== "sent" && lastContactLabel(customer) && (
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
-                          <History className="h-3 w-3" />
-                          {lastContactLabel(customer)}
-                        </span>
-                        {customer.lastContactOutcome && customer.lastContactOutcome !== "PENDING" && (
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${outcomeBadgeClass(
-                              customer.lastContactOutcome
-                            )}`}
-                          >
-                            {outcomeLabel(customer.lastContactOutcome)}
-                          </span>
-                        )}
+          // Carrossel horizontal: cards lado a lado com scroll.
+          <div className="-mx-2 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-2">
+            {visibleCustomers.map((customer) => {
+              const state = sendState[customer.id]?.status ?? "idle";
+              const isDismissing = state === "dismissing";
+              return (
+                <div
+                  key={customer.id}
+                  className={`w-[300px] shrink-0 snap-start rounded-xl border p-4 transition-all duration-300 sm:w-[340px] ${
+                    isDismissing ? "translate-y-2 scale-95 opacity-0" : "opacity-100"
+                  }`}
+                >
+                  <div className="flex min-h-[220px] flex-col justify-between gap-3">
+                    <div className="min-w-0 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="truncate font-medium text-foreground">{customer.name}</div>
+                        <Badge variant="secondary">{customer.level}</Badge>
                       </div>
-                    )}
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
-                        {metricLabelFor(category, customer)}
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
-                        {customer.deliveredOrders} vendas
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
-                        {customer.completedRevisions} revisões
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
-                        {formatCurrency(customer.totalSpent)}
-                      </span>
+                      <div className="truncate text-sm text-muted-foreground">{customer.email}</div>
+                      <div className="text-sm text-muted-foreground">{formatPhone(customer.whatsapp)}</div>
+                      {state !== "sent" && state !== "dismissing" && lastContactLabel(customer) && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+                            <History className="h-3 w-3" />
+                            {lastContactLabel(customer)}
+                          </span>
+                          {customer.lastContactOutcome && customer.lastContactOutcome !== "PENDING" && (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${outcomeBadgeClass(
+                                customer.lastContactOutcome
+                              )}`}
+                            >
+                              {outcomeLabel(customer.lastContactOutcome)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1.5 text-xs">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                          {metricLabelFor(category, customer)}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                          {customer.deliveredOrders} vendas
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                          {customer.completedRevisions} revisões
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                          {formatCurrency(customer.totalSpent)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex shrink-0 flex-col items-end gap-2">
-                    {(() => {
-                      const state = sendState[customer.id]?.status ?? "idle";
-                      if (state === "idle") {
-                        return (
-                          <Button type="button" size="sm" variant="outline" onClick={() => void handleSend(customer)}>
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            WhatsApp
+                    <div className="space-y-2">
+                      {state === "idle" && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => void handleSend(customer)}
+                        >
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          WhatsApp
+                        </Button>
+                      )}
+
+                      {state === "pending" && (
+                        <div className="flex gap-2">
+                          <Button type="button" size="sm" className="flex-1" onClick={() => void handleConfirm(customer.id)}>
+                            <Check className="mr-2 h-4 w-4" />
+                            Confirmar envio
                           </Button>
-                        );
-                      }
-                      return (
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                          {state === "pending" ? (
-                            <Button type="button" size="sm" onClick={() => void handleConfirm(customer.id)}>
-                              <Check className="mr-2 h-4 w-4" />
-                              Confirmar envio
-                            </Button>
-                          ) : (
+                          <Button type="button" size="sm" variant="outline" onClick={() => handleResend(customer)}>
+                            <RotateCw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+
+                      {(state === "sent" || state === "dismissing") && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
                             <Badge variant="secondary" className="gap-1">
                               <Check className="h-3 w-3" />
                               Enviado
                             </Badge>
-                          )}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleResend(customer)}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs"
+                              onClick={() => dismissCustomer(customer.id)}
+                            >
+                              Concluir agora
+                            </Button>
+                          </div>
+                          <Select
+                            value={sendState[customer.id]?.outcome ?? "PENDING"}
+                            onValueChange={(value) =>
+                              void handleOutcome(customer.id, value as RelationshipMessageOutcome)
+                            }
                           >
-                            <RotateCw className="mr-2 h-4 w-4" />
-                            Reenviar
-                          </Button>
+                            <SelectTrigger className="h-8 w-full text-xs">
+                              <SelectValue placeholder="Resultado do contato" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {RELATIONSHIP_OUTCOMES.map((outcome) => (
+                                <SelectItem key={outcome.value} value={outcome.value}>
+                                  {outcome.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                      );
-                    })()}
-
-                    {sendState[customer.id]?.status === "sent" && (
-                      <Select
-                        value={sendState[customer.id]?.outcome ?? "PENDING"}
-                        onValueChange={(value) => void handleOutcome(customer.id, value as RelationshipMessageOutcome)}
-                      >
-                        <SelectTrigger className="h-8 w-[150px] text-xs">
-                          <SelectValue placeholder="Resultado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {RELATIONSHIP_OUTCOMES.map((outcome) => (
-                            <SelectItem key={outcome.value} value={outcome.value}>
-                              {outcome.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                  <div>Última venda: {formatDate(customer.lastOrderAt)}</div>
-                  <div>Última revisão: {formatDate(customer.lastRevisionAt)}</div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
@@ -505,7 +559,7 @@ export function CustomerRelationshipContent() {
               <Loader2 className="h-8 w-8 animate-spin text-moria-orange" />
             </div>
           ) : (
-            <div className="grid gap-6 xl:grid-cols-2">
+            <div className="space-y-6">
               {categories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
               ))}
