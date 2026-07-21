@@ -1,0 +1,25 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'app/router.dart';
+import 'core/theme/app_theme.dart';
+
+void main() {
+  runApp(const ProviderScope(child: M2AdminApp()));
+}
+
+class M2AdminApp extends ConsumerWidget {
+  const M2AdminApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
+      title: 'M2 Auto Hub',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      routerConfig: router,
+    );
+  }
+}

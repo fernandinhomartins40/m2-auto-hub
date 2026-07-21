@@ -40,7 +40,10 @@ export class AdminAuthController {
         success: true,
         data: {
           admin: result.admin,
-          // Token removido do response - agora apenas no cookie httpOnly
+          // Cookie httpOnly continua sendo usado pelo painel web.
+          // O token também é devolvido no corpo para clients nativos
+          // (app Flutter), que autenticam via Authorization: Bearer.
+          token: result.token,
         },
       });
     } catch (error) {
