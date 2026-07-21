@@ -5,6 +5,12 @@ import { ApiError } from '@shared/utils/error.util.js';
 import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
 import { PhoneUtil } from '@shared/utils/phone.util.js';
 import { randomUUID } from 'crypto';
+import {
+  matchesRules,
+  parseRules,
+  sortInsights,
+  type RelationshipRule,
+} from './relationship-rules.js';
 
 // ==================== TYPES ====================
 
@@ -86,6 +92,27 @@ interface RelationshipInsightCustomer {
   interactionType: 'sale' | 'revision' | 'both';
 }
 
+interface RelationshipCategoryTemplate {
+  id: string;
+  name: string;
+  body: string;
+  isDefault: boolean;
+}
+
+interface RelationshipCategoryResult {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  icon: string;
+  accentColor: string;
+  isSystem: boolean;
+  sortOrder: number;
+  count: number;
+  customers: RelationshipInsightCustomer[];
+  templates: RelationshipCategoryTemplate[];
+}
+
 interface CustomerRelationshipInsightsResponse {
   generatedAt: string;
   config: {
@@ -106,6 +133,8 @@ interface CustomerRelationshipInsightsResponse {
   inactiveRevisions: RelationshipInsightCustomer[];
   postSaleFollowUps: RelationshipInsightCustomer[];
   vipAtRisk: RelationshipInsightCustomer[];
+  /** Categorias dinâmicas (sistema + customizadas) com seus templates. */
+  categories: RelationshipCategoryResult[];
 }
 
 const DEFAULT_ORDER_STATUS_FLOW: OrderStatus[] = [
@@ -523,46 +552,98 @@ export class AdminService {
       })
       .filter((customer) => customer.whatsapp);
 
-    const birthdays = insights
-      .filter((customer) => customer.daysUntilBirthday !== null && customer.daysUntilBirthday <= birthdayWindowDays)
-      .sort((a, b) => (a.daysUntilBirthday || 0) - (b.daysUntilBirthday || 0));
+    // Regras padrão das categorias de sistema. As categorias persistidas podem
+    // sobrescrever essas regras; este mapa serve de fallback caso a categoria
+    // de sistema use os parâmetros dinâmicos (janelas configuráveis na tela).
+    const systemRuleBuilders: Record<string, () => RelationshipRule[]> = {
+      birthdays: () => [
+        { field: 'daysUntilBirthday', operator: 'notNull' },
+        { field: 'daysUntilBirthday', operator: 'lte', value: birthdayWindowDays },
+      ],
+      'inactive-sales': () => [
+        { field: 'deliveredOrders', operator: 'gte', value: 1 },
+        { field: 'daysSinceLastOrder', operator: 'gte', value: inactivityDays },
+      ],
+      'inactive-revisions': () => [
+        { field: 'completedRevisions', operator: 'gte', value: 1 },
+        { field: 'daysSinceLastRevision', operator: 'gte', value: inactivityDays },
+      ],
+      'post-sale': () => [
+        { field: 'daysSinceLastInteraction', operator: 'notNull' },
+        { field: 'daysSinceLastInteraction', operator: 'lte', value: postSaleDays },
+      ],
+      vip: () => [
+        { field: 'totalSpent', operator: 'gte', value: vipThreshold },
+        { field: 'daysSinceLastInteraction', operator: 'gte', value: inactivityDays },
+      ],
+    };
 
-    const inactiveSales = insights
-      .filter(
-        (customer) =>
-          customer.deliveredOrders > 0 &&
-          customer.daysSinceLastOrder !== null &&
-          customer.daysSinceLastOrder >= inactivityDays
-      )
-      .sort((a, b) => (b.daysSinceLastOrder || 0) - (a.daysSinceLastOrder || 0));
+    const categoryRecords = await prisma.relationshipCategory.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      include: {
+        templates: {
+          where: { isActive: true },
+          orderBy: [{ isDefault: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+        },
+      },
+    });
 
-    const inactiveRevisions = insights
-      .filter(
-        (customer) =>
-          customer.completedRevisions > 0 &&
-          customer.daysSinceLastRevision !== null &&
-          customer.daysSinceLastRevision >= inactivityDays
-      )
-      .sort((a, b) => (b.daysSinceLastRevision || 0) - (a.daysSinceLastRevision || 0));
+    const categories: RelationshipCategoryResult[] = categoryRecords.map((category) => {
+      // Categorias de sistema cujas regras ainda dependem das janelas
+      // configuráveis usam o builder; as demais usam as regras salvas no banco.
+      const persistedRules = parseRules(category.rules);
+      const builder = systemRuleBuilders[category.key];
+      const rules =
+        category.isSystem && persistedRules.length === 0 && builder ? builder() : persistedRules;
 
-    const postSaleFollowUps = insights
-      .filter((customer) => {
-        if (customer.daysSinceLastInteraction === null) {
-          return false;
-        }
+      const matched = sortInsights(
+        insights.filter((customer) => matchesRules(rules, customer)),
+        category.sortBy,
+        category.sortDir === 'desc' ? 'desc' : 'asc'
+      );
 
-        return customer.daysSinceLastInteraction <= postSaleDays;
-      })
-      .sort((a, b) => (a.daysSinceLastInteraction || 0) - (b.daysSinceLastInteraction || 0));
+      return {
+        id: category.id,
+        key: category.key,
+        name: category.name,
+        description: category.description,
+        icon: category.icon,
+        accentColor: category.accentColor,
+        isSystem: category.isSystem,
+        sortOrder: category.sortOrder,
+        count: matched.length,
+        customers: matched,
+        templates: category.templates.map((template) => ({
+          id: template.id,
+          name: template.name,
+          body: template.body,
+          isDefault: template.isDefault,
+        })),
+      };
+    });
 
-    const vipAtRisk = insights
-      .filter(
-        (customer) =>
-          customer.totalSpent >= vipThreshold &&
-          customer.daysSinceLastInteraction !== null &&
-          customer.daysSinceLastInteraction >= inactivityDays
-      )
-      .sort((a, b) => b.totalSpent - a.totalSpent);
+    const byKey = (key: string) =>
+      categories.find((category) => category.key === key)?.customers ?? [];
+
+    // Retrocompatibilidade: se o banco ainda não tem as categorias de sistema
+    // (antes do seed rodar), recai para o cálculo direto.
+    const hasSystemCategories = categories.some((category) => category.isSystem);
+    const birthdays = hasSystemCategories
+      ? byKey('birthdays')
+      : sortInsights(insights.filter((c) => matchesRules(systemRuleBuilders.birthdays(), c)), 'daysUntilBirthday', 'asc');
+    const inactiveSales = hasSystemCategories
+      ? byKey('inactive-sales')
+      : sortInsights(insights.filter((c) => matchesRules(systemRuleBuilders['inactive-sales'](), c)), 'daysSinceLastOrder', 'desc');
+    const inactiveRevisions = hasSystemCategories
+      ? byKey('inactive-revisions')
+      : sortInsights(insights.filter((c) => matchesRules(systemRuleBuilders['inactive-revisions'](), c)), 'daysSinceLastRevision', 'desc');
+    const postSaleFollowUps = hasSystemCategories
+      ? byKey('post-sale')
+      : sortInsights(insights.filter((c) => matchesRules(systemRuleBuilders['post-sale'](), c)), 'daysSinceLastInteraction', 'asc');
+    const vipAtRisk = hasSystemCategories
+      ? byKey('vip')
+      : sortInsights(insights.filter((c) => matchesRules(systemRuleBuilders.vip(), c)), 'totalSpent', 'desc');
 
     return {
       generatedAt: now.toISOString(),
@@ -584,6 +665,7 @@ export class AdminService {
       inactiveRevisions,
       postSaleFollowUps,
       vipAtRisk,
+      categories,
     };
   }
 
@@ -1753,6 +1835,188 @@ export class AdminService {
 
     // Retornar no formato Quote
     return this.mapOrderToQuote(order as any);
+  }
+
+  // ==================== RELATIONSHIP CATEGORIES ====================
+
+  async listRelationshipCategories() {
+    return prisma.relationshipCategory.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      include: {
+        templates: {
+          orderBy: [{ isDefault: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+        },
+      },
+    });
+  }
+
+  private slugifyCategoryKey(name: string) {
+    const base = name
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+    return base || `cat-${randomUUID().slice(0, 8)}`;
+  }
+
+  async createRelationshipCategory(data: {
+    name: string;
+    description?: string;
+    icon?: string;
+    accentColor?: string;
+    isActive?: boolean;
+    sortOrder?: number;
+    rules?: unknown;
+    sortBy?: string;
+    sortDir?: string;
+  }) {
+    if (!data.name?.trim()) {
+      throw new ApiError(400, 'Nome da categoria é obrigatório');
+    }
+
+    let key = this.slugifyCategoryKey(data.name);
+    const existing = await prisma.relationshipCategory.findUnique({ where: { key } });
+    if (existing) {
+      key = `${key}-${randomUUID().slice(0, 6)}`;
+    }
+
+    return prisma.relationshipCategory.create({
+      data: {
+        key,
+        name: data.name.trim(),
+        description: data.description?.trim() ?? '',
+        icon: data.icon?.trim() || 'MessageCircle',
+        accentColor: data.accentColor?.trim() || '#f97316',
+        isSystem: false,
+        isActive: data.isActive ?? true,
+        sortOrder: data.sortOrder ?? 100,
+        rules: parseRules(data.rules) as unknown as Prisma.InputJsonValue,
+        sortBy: data.sortBy?.trim() || 'daysSinceLastInteraction',
+        sortDir: data.sortDir === 'desc' ? 'desc' : 'asc',
+      },
+    });
+  }
+
+  async updateRelationshipCategory(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      icon?: string;
+      accentColor?: string;
+      isActive?: boolean;
+      sortOrder?: number;
+      rules?: unknown;
+      sortBy?: string;
+      sortDir?: string;
+    }
+  ) {
+    const category = await prisma.relationshipCategory.findUnique({ where: { id } });
+    if (!category) {
+      throw new ApiError(404, 'Categoria não encontrada');
+    }
+
+    const updateData: Prisma.RelationshipCategoryUpdateInput = {};
+    if (data.name !== undefined) updateData.name = data.name.trim();
+    if (data.description !== undefined) updateData.description = data.description.trim();
+    if (data.icon !== undefined) updateData.icon = data.icon.trim() || 'MessageCircle';
+    if (data.accentColor !== undefined) updateData.accentColor = data.accentColor.trim() || '#f97316';
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
+    if (data.rules !== undefined) updateData.rules = parseRules(data.rules) as unknown as Prisma.InputJsonValue;
+    if (data.sortBy !== undefined) updateData.sortBy = data.sortBy.trim() || 'daysSinceLastInteraction';
+    if (data.sortDir !== undefined) updateData.sortDir = data.sortDir === 'desc' ? 'desc' : 'asc';
+
+    return prisma.relationshipCategory.update({ where: { id }, data: updateData });
+  }
+
+  async deleteRelationshipCategory(id: string) {
+    const category = await prisma.relationshipCategory.findUnique({ where: { id } });
+    if (!category) {
+      throw new ApiError(404, 'Categoria não encontrada');
+    }
+    if (category.isSystem) {
+      throw new ApiError(400, 'Categorias de sistema não podem ser excluídas. Você pode desativá-la.');
+    }
+    await prisma.relationshipCategory.delete({ where: { id } });
+    return { success: true };
+  }
+
+  // ==================== RELATIONSHIP TEMPLATES ====================
+
+  async createRelationshipTemplate(
+    categoryId: string,
+    data: { name: string; body: string; isDefault?: boolean; isActive?: boolean; sortOrder?: number }
+  ) {
+    const category = await prisma.relationshipCategory.findUnique({ where: { id: categoryId } });
+    if (!category) {
+      throw new ApiError(404, 'Categoria não encontrada');
+    }
+    if (!data.name?.trim()) {
+      throw new ApiError(400, 'Nome do template é obrigatório');
+    }
+    if (!data.body?.trim()) {
+      throw new ApiError(400, 'Mensagem do template é obrigatória');
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const makeDefault = data.isDefault ?? false;
+      if (makeDefault) {
+        await tx.relationshipTemplate.updateMany({
+          where: { categoryId },
+          data: { isDefault: false },
+        });
+      }
+      return tx.relationshipTemplate.create({
+        data: {
+          categoryId,
+          name: data.name.trim(),
+          body: data.body,
+          isDefault: makeDefault,
+          isActive: data.isActive ?? true,
+          sortOrder: data.sortOrder ?? 0,
+        },
+      });
+    });
+  }
+
+  async updateRelationshipTemplate(
+    id: string,
+    data: { name?: string; body?: string; isDefault?: boolean; isActive?: boolean; sortOrder?: number }
+  ) {
+    const template = await prisma.relationshipTemplate.findUnique({ where: { id } });
+    if (!template) {
+      throw new ApiError(404, 'Template não encontrado');
+    }
+
+    return prisma.$transaction(async (tx) => {
+      if (data.isDefault === true) {
+        await tx.relationshipTemplate.updateMany({
+          where: { categoryId: template.categoryId, id: { not: id } },
+          data: { isDefault: false },
+        });
+      }
+
+      const updateData: Prisma.RelationshipTemplateUpdateInput = {};
+      if (data.name !== undefined) updateData.name = data.name.trim();
+      if (data.body !== undefined) updateData.body = data.body;
+      if (data.isDefault !== undefined) updateData.isDefault = data.isDefault;
+      if (data.isActive !== undefined) updateData.isActive = data.isActive;
+      if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
+
+      return tx.relationshipTemplate.update({ where: { id }, data: updateData });
+    });
+  }
+
+  async deleteRelationshipTemplate(id: string) {
+    const template = await prisma.relationshipTemplate.findUnique({ where: { id } });
+    if (!template) {
+      throw new ApiError(404, 'Template não encontrado');
+    }
+    await prisma.relationshipTemplate.delete({ where: { id } });
+    return { success: true };
   }
 }
 

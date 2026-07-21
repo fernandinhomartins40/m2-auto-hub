@@ -40,6 +40,13 @@ router.use(AdminAuthMiddleware.requireMinRole(AdminRole.STAFF));
 // ==================== DASHBOARD ====================
 router.get('/dashboard/stats', adminController.getDashboardStats);
 router.get('/relationship/insights', adminController.getCustomerRelationshipInsights);
+router.get('/relationship/categories', adminController.listRelationshipCategories);
+router.post('/relationship/categories', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.createRelationshipCategory);
+router.put('/relationship/categories/:id', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.updateRelationshipCategory);
+router.delete('/relationship/categories/:id', AdminAuthMiddleware.requireMinRole(AdminRole.ADMIN), adminController.deleteRelationshipCategory);
+router.post('/relationship/categories/:categoryId/templates', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.createRelationshipTemplate);
+router.put('/relationship/templates/:id', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.updateRelationshipTemplate);
+router.delete('/relationship/templates/:id', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), adminController.deleteRelationshipTemplate);
 router.get('/loyalty/stats', loyaltyController.getAdminStats);
 router.get('/loyalty/settings', loyaltyController.getAdminSettings);
 router.put('/loyalty/settings', AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), loyaltyController.updateAdminSettings);

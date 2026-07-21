@@ -4,6 +4,10 @@ import notificationsService from '../notifications/notifications.service.js';
 import { z } from 'zod';
 import pdfGeneratorService from '@shared/services/pdf-generator.service.js';
 import alprService from '@shared/services/alpr.service.js';
+import {
+  RELATIONSHIP_TEMPLATE_PLACEHOLDERS as relationshipTemplatePlaceholders,
+  RELATIONSHIP_RULE_FIELDS as relationshipRuleFields,
+} from './relationship-rules.js';
 
 const exportQuotePdfSchema = z.object({
   html: z.string().trim().min(1, 'HTML do PDF é obrigatório').max(2_000_000, 'HTML do PDF excede o limite suportado'),
@@ -40,6 +44,71 @@ export class AdminController {
         birthdayWindowDays: birthdayWindowDays ? Number(birthdayWindowDays) : undefined,
       });
       res.json(insights);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ==================== RELATIONSHIP CATEGORIES & TEMPLATES ====================
+
+  listRelationshipCategories = async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const categories = await this.adminService.listRelationshipCategories();
+      res.json({ categories, placeholders: relationshipTemplatePlaceholders, fields: relationshipRuleFields });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createRelationshipCategory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const category = await this.adminService.createRelationshipCategory(req.body);
+      res.status(201).json(category);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateRelationshipCategory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const category = await this.adminService.updateRelationshipCategory(req.params.id, req.body);
+      res.json(category);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteRelationshipCategory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.adminService.deleteRelationshipCategory(req.params.id);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createRelationshipTemplate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const template = await this.adminService.createRelationshipTemplate(req.params.categoryId, req.body);
+      res.status(201).json(template);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateRelationshipTemplate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const template = await this.adminService.updateRelationshipTemplate(req.params.id, req.body);
+      res.json(template);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteRelationshipTemplate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.adminService.deleteRelationshipTemplate(req.params.id);
+      res.json(result);
     } catch (error) {
       next(error);
     }

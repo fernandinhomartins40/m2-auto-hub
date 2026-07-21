@@ -242,6 +242,101 @@ export interface CustomerRelationshipInsightsResponse {
   inactiveRevisions: CustomerRelationshipInsight[];
   postSaleFollowUps: CustomerRelationshipInsight[];
   vipAtRisk: CustomerRelationshipInsight[];
+  categories: RelationshipCategoryResult[];
+}
+
+export type RelationshipRuleOperator =
+  | 'gte'
+  | 'lte'
+  | 'gt'
+  | 'lt'
+  | 'eq'
+  | 'neq'
+  | 'between'
+  | 'isNull'
+  | 'notNull';
+
+export interface RelationshipRule {
+  field: string;
+  operator: RelationshipRuleOperator;
+  value?: number | string | null;
+  value2?: number | string | null;
+}
+
+export interface RelationshipTemplate {
+  id: string;
+  categoryId: string;
+  name: string;
+  body: string;
+  isDefault: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RelationshipCategory {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  icon: string;
+  accentColor: string;
+  isSystem: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  rules: RelationshipRule[];
+  sortBy: string;
+  sortDir: string;
+  createdAt: string;
+  updatedAt: string;
+  templates: RelationshipTemplate[];
+}
+
+/** Categoria já calculada (com clientes e templates) no endpoint de insights. */
+export interface RelationshipCategoryResult {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  icon: string;
+  accentColor: string;
+  isSystem: boolean;
+  sortOrder: number;
+  count: number;
+  customers: CustomerRelationshipInsight[];
+  templates: Array<{ id: string; name: string; body: string; isDefault: boolean }>;
+}
+
+export interface RelationshipTemplatePlaceholder {
+  token: string;
+  description: string;
+}
+
+export interface RelationshipCategoriesResponse {
+  categories: RelationshipCategory[];
+  placeholders: RelationshipTemplatePlaceholder[];
+  fields: string[];
+}
+
+export interface RelationshipCategoryInput {
+  name: string;
+  description?: string;
+  icon?: string;
+  accentColor?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  rules?: RelationshipRule[];
+  sortBy?: string;
+  sortDir?: string;
+}
+
+export interface RelationshipTemplateInput {
+  name: string;
+  body: string;
+  isDefault?: boolean;
+  isActive?: boolean;
+  sortOrder?: number;
 }
 
 export interface AdminCustomerVehicle {
@@ -883,6 +978,53 @@ class AdminService {
     birthdayWindowDays?: number;
   }): Promise<CustomerRelationshipInsightsResponse> {
     const response = await apiClient.get('/admin/relationship/insights', { params });
+    return response.data;
+  }
+
+  async getRelationshipCategories(): Promise<RelationshipCategoriesResponse> {
+    const response = await apiClient.get('/admin/relationship/categories');
+    return response.data;
+  }
+
+  async createRelationshipCategory(data: RelationshipCategoryInput): Promise<RelationshipCategory> {
+    const response = await apiClient.post('/admin/relationship/categories', data);
+    return response.data;
+  }
+
+  async updateRelationshipCategory(
+    id: string,
+    data: Partial<RelationshipCategoryInput>
+  ): Promise<RelationshipCategory> {
+    const response = await apiClient.put(`/admin/relationship/categories/${id}`, data);
+    return response.data;
+  }
+
+  async deleteRelationshipCategory(id: string): Promise<{ success: boolean }> {
+    const response = await apiClient.delete(`/admin/relationship/categories/${id}`);
+    return response.data;
+  }
+
+  async createRelationshipTemplate(
+    categoryId: string,
+    data: RelationshipTemplateInput
+  ): Promise<RelationshipTemplate> {
+    const response = await apiClient.post(
+      `/admin/relationship/categories/${categoryId}/templates`,
+      data
+    );
+    return response.data;
+  }
+
+  async updateRelationshipTemplate(
+    id: string,
+    data: Partial<RelationshipTemplateInput>
+  ): Promise<RelationshipTemplate> {
+    const response = await apiClient.put(`/admin/relationship/templates/${id}`, data);
+    return response.data;
+  }
+
+  async deleteRelationshipTemplate(id: string): Promise<{ success: boolean }> {
+    const response = await apiClient.delete(`/admin/relationship/templates/${id}`);
     return response.data;
   }
 

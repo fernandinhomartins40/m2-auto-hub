@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Cake,
   CalendarClock,
@@ -7,6 +7,7 @@ import {
   Loader2,
   MessageCircle,
   RefreshCw,
+  Settings2,
   ShoppingBag,
   TrendingDown,
   Wrench,
@@ -15,12 +16,16 @@ import {
 import adminService, {
   type CustomerRelationshipInsight,
   type CustomerRelationshipInsightsResponse,
+  type RelationshipCategoryResult,
 } from "@/api/adminService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminPageHeader } from "./AdminPageHeader";
+import { RelationshipSettings } from "./RelationshipSettings";
+import { getRelationshipIcon, renderTemplate } from "./relationshipTemplates";
 
 function formatDate(value: string | null) {
   if (!value) return "Sem registro";
@@ -54,70 +59,102 @@ function getWhatsappNumber(phone: string) {
   return digits.startsWith("55") ? digits : `55${digits}`;
 }
 
-function getFirstName(name: string) {
-  return name.trim().split(" ")[0] || name;
-}
-
-function buildWhatsAppMessage(kind: "birthday" | "inactive-sales" | "inactive-revisions" | "post-sale" | "vip", customer: CustomerRelationshipInsight) {
-  const firstName = getFirstName(customer.name);
-
-  switch (kind) {
-    case "birthday":
-      return `Olá ${firstName}! Passando para desejar um feliz aniversário em nome de toda a equipe. Que seu dia seja excelente e conte com a gente sempre que precisar.`;
-    case "inactive-sales":
-      return `Olá ${firstName}! Tudo bem? Percebemos que faz um tempo desde sua última compra com a gente e gostaríamos de nos colocar à disposição para ajudar no que precisar para o seu veículo.`;
-    case "inactive-revisions":
-      return `Olá ${firstName}! Tudo certo? Faz um tempo desde sua última revisão conosco. Se quiser, podemos te ajudar a programar a próxima manutenção do seu veículo.`;
-    case "vip":
-      return `Olá ${firstName}! Sentimos sua falta por aqui. Como cliente especial, queremos reforçar que seguimos à disposição para cuidar do seu veículo com prioridade no atendimento.`;
-    default:
-      return `Olá ${firstName}! Tudo bem? Estamos entrando em contato no pós-venda para saber se ficou tudo certo com seu atendimento recente e nos colocar à disposição.`;
-  }
-}
-
-function openWhatsApp(kind: "birthday" | "inactive-sales" | "inactive-revisions" | "post-sale" | "vip", customer: CustomerRelationshipInsight) {
+function openWhatsApp(message: string, customer: CustomerRelationshipInsight) {
   const url = `https://api.whatsapp.com/send?phone=${getWhatsappNumber(customer.whatsapp)}&text=${encodeURIComponent(
-    buildWhatsAppMessage(kind, customer)
+    message
   )}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-function RelationshipListCard({
-  title,
-  description,
-  icon: Icon,
-  items,
-  emptyMessage,
-  accentClass,
-  whatsappKind,
-  metricLabel,
-}: {
-  title: string;
-  description: string;
-  icon: typeof Cake;
-  items: CustomerRelationshipInsight[];
-  emptyMessage: string;
-  accentClass: string;
-  whatsappKind: "birthday" | "inactive-sales" | "inactive-revisions" | "post-sale" | "vip";
-  metricLabel: (customer: CustomerRelationshipInsight) => string;
-}) {
+type CategoryTemplate = RelationshipCategoryResult["templates"][number];
+
+function pickTemplate(templates: CategoryTemplate[], selectedId: string | undefined): CategoryTemplate | null {
+  if (templates.length === 0) return null;
+  if (selectedId) {
+    const found = templates.find((template) => template.id === selectedId);
+    if (found) return found;
+  }
+  return templates.find((template) => template.isDefault) ?? templates[0];
+}
+
+function metricLabelFor(category: RelationshipCategoryResult, customer: CustomerRelationshipInsight): string {
+  switch (category.key) {
+    case "birthdays":
+      return customer.daysUntilBirthday === 0
+        ? "Aniversaria hoje"
+        : `Faltam ${customer.daysUntilBirthday} dias`;
+    case "inactive-sales":
+      return `${customer.daysSinceLastOrder ?? 0} dias sem comprar`;
+    case "inactive-revisions":
+      return `${customer.daysSinceLastRevision ?? 0} dias sem revisão`;
+    case "post-sale":
+      return customer.daysSinceLastInteraction === 0
+        ? "Atendimento hoje"
+        : `${customer.daysSinceLastInteraction ?? 0} dias do atendimento`;
+    case "vip":
+      return `${customer.daysSinceLastInteraction ?? 0} dias sem retorno`;
+    default: {
+      const sortBy = category.sortBy as keyof CustomerRelationshipInsight;
+      const value = customer[sortBy];
+      if (typeof value === "number") return `${value}`;
+      return category.name;
+    }
+  }
+}
+
+function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
+  const Icon = getRelationshipIcon(category.icon);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(
+    () => category.templates.find((t) => t.isDefault)?.id ?? category.templates[0]?.id
+  );
+
+  const activeTemplate = pickTemplate(category.templates, selectedTemplateId);
+  const hasMultipleTemplates = category.templates.length > 1;
+
+  const handleWhatsApp = (customer: CustomerRelationshipInsight) => {
+    const body = activeTemplate?.body ?? `Olá ${customer.name.split(" ")[0]}!`;
+    openWhatsApp(renderTemplate(body, customer), customer);
+  };
+
   return (
     <Card className="border-border/70">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Icon className={`h-4 w-4 ${accentClass}`} />
-          {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Icon className="h-4 w-4" style={{ color: category.accentColor }} />
+              {category.name}
+              <Badge variant="secondary">{category.count}</Badge>
+            </CardTitle>
+            <CardDescription>{category.description}</CardDescription>
+          </div>
+          {hasMultipleTemplates && (
+            <div className="w-full sm:w-56">
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {category.templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                      {template.isDefault ? " (padrão)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
-        {items.length === 0 ? (
+        {category.customers.length === 0 ? (
           <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-            {emptyMessage}
+            Nenhum cliente nesta categoria no momento.
           </div>
         ) : (
           <div className="space-y-3">
-            {items.map((customer) => (
+            {category.customers.map((customer) => (
               <div key={customer.id} className="rounded-xl border p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 space-y-2">
@@ -129,7 +166,7 @@ function RelationshipListCard({
                     <div className="text-sm text-muted-foreground">{formatPhone(customer.whatsapp)}</div>
                     <div className="flex flex-wrap gap-2 text-xs">
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
-                        {metricLabel(customer)}
+                        {metricLabelFor(category, customer)}
                       </span>
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
                         {customer.deliveredOrders} vendas
@@ -144,12 +181,7 @@ function RelationshipListCard({
                   </div>
 
                   <div className="flex shrink-0 flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openWhatsApp(whatsappKind, customer)}
-                    >
+                    <Button type="button" size="sm" variant="outline" onClick={() => handleWhatsApp(customer)}>
                       <MessageCircle className="mr-2 h-4 w-4" />
                       WhatsApp
                     </Button>
@@ -169,12 +201,26 @@ function RelationshipListCard({
   );
 }
 
+const SUMMARY_TILES: Array<{
+  key: string;
+  label: string;
+  icon: typeof Cake;
+  colorClass: string;
+}> = [
+  { key: "birthdays", label: "Aniversariantes", icon: Cake, colorClass: "text-pink-600" },
+  { key: "inactive-sales", label: "Sem vendas", icon: ShoppingBag, colorClass: "text-blue-600" },
+  { key: "inactive-revisions", label: "Sem revisões", icon: Wrench, colorClass: "text-orange-600" },
+  { key: "post-sale", label: "Pós-venda", icon: CalendarClock, colorClass: "text-emerald-600" },
+  { key: "vip", label: "VIP em risco", icon: Crown, colorClass: "text-violet-600" },
+];
+
 export function CustomerRelationshipContent() {
   const [data, setData] = useState<CustomerRelationshipInsightsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [inactivityDays, setInactivityDays] = useState("90");
   const [postSaleDays, setPostSaleDays] = useState("15");
   const [birthdayWindowDays, setBirthdayWindowDays] = useState("30");
+  const [tab, setTab] = useState("opportunities");
 
   const loadInsights = async () => {
     setLoading(true);
@@ -194,10 +240,16 @@ export function CustomerRelationshipContent() {
   };
 
   useEffect(() => {
-    void loadInsights();
-  }, [inactivityDays, postSaleDays, birthdayWindowDays]);
+    if (tab === "opportunities") {
+      void loadInsights();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inactivityDays, postSaleDays, birthdayWindowDays, tab]);
 
-  const summary = data?.summary;
+  const categories = useMemo(() => data?.categories ?? [], [data]);
+
+  const summaryByKey = (key: string) =>
+    categories.find((category) => category.key === key)?.count ?? 0;
 
   return (
     <div className="min-w-0 max-w-full space-y-6">
@@ -208,207 +260,117 @@ export function CustomerRelationshipContent() {
             title="Relacionamento com o Cliente"
             description="Acompanhe oportunidades de pos-venda, retencao e contato ativo com clientes."
             actions={
-              <>
-            <div className="hidden">
-              <CardTitle className="flex items-center gap-2">
-                <HeartHandshake className="h-5 w-5 text-moria-orange" />
-                Relacionamento com o Cliente
-              </CardTitle>
-              <CardDescription>
-                Acompanhe oportunidades de pós-venda, retenção e contato ativo com clientes.
-              </CardDescription>
-            </div>
+              tab === "opportunities" ? (
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">Sem retorno em</div>
+                    <Select value={inactivityDays} onValueChange={setInactivityDays}>
+                      <SelectTrigger className="w-full sm:w-[150px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">30 dias</SelectItem>
+                        <SelectItem value="60">60 dias</SelectItem>
+                        <SelectItem value="90">90 dias</SelectItem>
+                        <SelectItem value="120">120 dias</SelectItem>
+                        <SelectItem value="180">180 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">Sem retorno em</div>
-                <Select value={inactivityDays} onValueChange={setInactivityDays}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30">30 dias</SelectItem>
-                    <SelectItem value="60">60 dias</SelectItem>
-                    <SelectItem value="90">90 dias</SelectItem>
-                    <SelectItem value="120">120 dias</SelectItem>
-                    <SelectItem value="180">180 dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">Pós-venda recente</div>
+                    <Select value={postSaleDays} onValueChange={setPostSaleDays}>
+                      <SelectTrigger className="w-full sm:w-[150px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">7 dias</SelectItem>
+                        <SelectItem value="15">15 dias</SelectItem>
+                        <SelectItem value="21">21 dias</SelectItem>
+                        <SelectItem value="30">30 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">Pós-venda recente</div>
-                <Select value={postSaleDays} onValueChange={setPostSaleDays}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="15">15 dias</SelectItem>
-                    <SelectItem value="21">21 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">Aniversários em</div>
+                    <Select value={birthdayWindowDays} onValueChange={setBirthdayWindowDays}>
+                      <SelectTrigger className="w-full sm:w-[150px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">7 dias</SelectItem>
+                        <SelectItem value="15">15 dias</SelectItem>
+                        <SelectItem value="30">30 dias</SelectItem>
+                        <SelectItem value="45">45 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">Aniversários em</div>
-                <Select value={birthdayWindowDays} onValueChange={setBirthdayWindowDays}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="15">15 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
-                    <SelectItem value="45">45 dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => void loadInsights()} disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Atualizar
-              </Button>
-            </div>
-              </>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full self-end sm:w-auto"
+                    onClick={() => void loadInsights()}
+                    disabled={loading}
+                  >
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                    Atualizar
+                  </Button>
+                </div>
+              ) : null
             }
           />
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3">
-              <Cake className="h-8 w-8 text-pink-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">Aniversariantes</div>
-                <div className="text-2xl font-bold">{summary?.birthdays ?? 0}</div>
-              </div>
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="opportunities">
+            <HeartHandshake className="mr-2 h-4 w-4" />
+            Oportunidades
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings2 className="mr-2 h-4 w-4" />
+            Tipos e mensagens
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="opportunities" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {SUMMARY_TILES.map((tile) => (
+              <Card key={tile.key}>
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <tile.icon className={`h-8 w-8 ${tile.colorClass}`} />
+                    <div>
+                      <div className="text-sm text-muted-foreground">{tile.label}</div>
+                      <div className="text-2xl font-bold">{summaryByKey(tile.key)}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {loading && !data ? (
+            <div className="flex h-56 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-moria-orange" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3">
-              <ShoppingBag className="h-8 w-8 text-blue-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">Sem vendas</div>
-                <div className="text-2xl font-bold">{summary?.inactiveSales ?? 0}</div>
-              </div>
+          ) : (
+            <div className="grid gap-6 xl:grid-cols-2">
+              {categories.map((category) => (
+                <CategoryCard key={category.id} category={category} />
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </TabsContent>
 
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3">
-              <Wrench className="h-8 w-8 text-orange-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">Sem revisões</div>
-                <div className="text-2xl font-bold">{summary?.inactiveRevisions ?? 0}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3">
-              <CalendarClock className="h-8 w-8 text-emerald-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">Pós-venda</div>
-                <div className="text-2xl font-bold">{summary?.postSaleFollowUps ?? 0}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3">
-              <Crown className="h-8 w-8 text-violet-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">VIP em risco</div>
-                <div className="text-2xl font-bold">{summary?.vipAtRisk ?? 0}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {loading && !data ? (
-        <div className="flex h-56 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-moria-orange" />
-        </div>
-      ) : (
-        <div className="grid gap-6 xl:grid-cols-2">
-          <RelationshipListCard
-            title="Aniversariantes próximos"
-            description="Use essa lista para fortalecer o vínculo com clientes em datas especiais."
-            icon={Cake}
-            items={data?.birthdays || []}
-            emptyMessage="Nenhum aniversariante encontrado para a janela selecionada."
-            accentClass="text-pink-600"
-            whatsappKind="birthday"
-            metricLabel={(customer) =>
-              customer.daysUntilBirthday === 0
-                ? "Aniversaria hoje"
-                : `Faltam ${customer.daysUntilBirthday} dias`
-            }
-          />
-
-          <RelationshipListCard
-            title="Clientes sem novas vendas"
-            description="Clientes com histórico de compra, mas sem nova venda dentro do período."
-            icon={TrendingDown}
-            items={data?.inactiveSales || []}
-            emptyMessage="Nenhum cliente com vendas inativas nesse período."
-            accentClass="text-blue-600"
-            whatsappKind="inactive-sales"
-            metricLabel={(customer) => `${customer.daysSinceLastOrder || 0} dias sem comprar`}
-          />
-
-          <RelationshipListCard
-            title="Clientes sem novas revisões"
-            description="Clientes que já revisaram conosco, mas estão sem retorno de oficina."
-            icon={Wrench}
-            items={data?.inactiveRevisions || []}
-            emptyMessage="Nenhum cliente com revisões inativas nesse período."
-            accentClass="text-orange-600"
-            whatsappKind="inactive-revisions"
-            metricLabel={(customer) => `${customer.daysSinceLastRevision || 0} dias sem revisão`}
-          />
-
-          <RelationshipListCard
-            title="Fila de pós-venda"
-            description="Clientes com atendimento recente para confirmar satisfação e abrir nova conversa."
-            icon={CalendarClock}
-            items={data?.postSaleFollowUps || []}
-            emptyMessage="Nenhum cliente em janela de pós-venda recente."
-            accentClass="text-emerald-600"
-            whatsappKind="post-sale"
-            metricLabel={(customer) =>
-              customer.daysSinceLastInteraction === 0
-                ? "Atendimento hoje"
-                : `${customer.daysSinceLastInteraction || 0} dias do atendimento`
-            }
-          />
-
-          <RelationshipListCard
-            title="Clientes VIP em risco"
-            description="Clientes de maior valor que estão há bastante tempo sem retornar."
-            icon={Crown}
-            items={data?.vipAtRisk || []}
-            emptyMessage="Nenhum cliente VIP em risco na faixa atual."
-            accentClass="text-violet-600"
-            whatsappKind="vip"
-            metricLabel={(customer) => `${customer.daysSinceLastInteraction || 0} dias sem retorno`}
-          />
-        </div>
-      )}
+        <TabsContent value="settings">
+          <RelationshipSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

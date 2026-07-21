@@ -3,6 +3,7 @@ import { AdminRole, AdminStatus, type LandingPageConfig } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { HashUtil } from '@shared/utils/hash.util.js';
 import { logger } from '@shared/utils/logger.util.js';
+import { ensureRelationshipCategories } from './relationship-categories.js';
 
 const EMPTY_SECTION_JSON = JSON.stringify({});
 const DEFAULT_ADMIN_PASSWORD = 'Test123!';
@@ -92,4 +93,5 @@ export async function ensureDefaultAdmins(): Promise<void> {
 export async function ensureEssentialData(): Promise<void> {
   await ensureLandingPageConfig();
   await ensureDefaultAdmins();
+  await ensureRelationshipCategories();
 }

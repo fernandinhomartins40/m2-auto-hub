@@ -1443,3 +1443,55 @@ model LoyaltyTransaction {
   @@unique([revisionId, type])
   @@map("loyalty_transactions")
 }
+
+// ==================== RELACIONAMENTO COM O CLIENTE ====================
+
+/// Categoria/tipo de interação de relacionamento. As categorias "de sistema"
+/// (isSystem = true) reproduzem os segmentos originais (aniversário, inativos,
+/// pós-venda, VIP) e não podem ser excluídas, apenas editadas. Categorias
+/// customizadas são criadas pelo admin com regras próprias.
+model RelationshipCategory {
+  id          String  @id @default(uuid())
+  key         String  @unique
+  name        String
+  description String  @default("")
+  icon        String  @default("MessageCircle")
+  accentColor String  @default("#f97316")
+  isSystem    Boolean @default(false)
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  /// Regras de segmentação combinadas com AND. Cada item:
+  /// { field, operator, value, value2? }
+  rules   Json   @default("[]")
+  sortBy  String @default("daysSinceLastInteraction")
+  sortDir String @default("asc")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  templates RelationshipTemplate[]
+
+  @@index([isActive, sortOrder])
+  @@map("relationship_categories")
+}
+
+/// Modelo de mensagem (WhatsApp) associado a uma categoria. O corpo suporta
+/// placeholders como {{firstName}}, {{name}}, {{totalSpent}}, etc.
+model RelationshipTemplate {
+  id         String  @id @default(uuid())
+  categoryId String
+  name       String
+  body       String  @db.Text
+  isDefault  Boolean @default(false)
+  isActive   Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category RelationshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId, isActive, sortOrder])
+  @@map("relationship_templates")
+}
