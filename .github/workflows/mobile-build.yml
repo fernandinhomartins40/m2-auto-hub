@@ -1,0 +1,188 @@
+name: Mobile Build (APK + IPA)
+
+# Gera os instaláveis do app admin (apps/mobile):
+#  - Android APK no runner Linux.
+#  - iOS IPA no runner macOS (obrigatório: a Apple exige macOS para compilar iOS).
+#
+# Disparo manual (workflow_dispatch) ou ao criar uma tag de versão (v1.2.3),
+# para não gastar minutos de runner macOS a cada push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "URL base da API embutida no build"
+        required: true
+        default: "https://m2centerauto.com.br/api"
+  push:
+    tags:
+      - "v*"
+
+env:
+  FLUTTER_VERSION: "3.32.8"
+  # Usado quando o disparo é por tag (workflow_dispatch usa o input acima).
+  DEFAULT_API_BASE_URL: "https://m2centerauto.com.br/api"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # ANDROID — APK assinado (se houver secrets de keystore) ou debug-signed.
+  # ---------------------------------------------------------------------------
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Definir API_BASE_URL
+        run: echo "API_BASE_URL=${{ github.event.inputs.api_base_url || env.DEFAULT_API_BASE_URL }}" >> "$GITHUB_ENV"
+
+      # A keystore de release não fica no git. Se os secrets existirem,
+      # recriamos android/key.properties + a keystore para assinar o release.
+      # Sem secrets, o build cai na assinatura de debug (APK instalável para teste,
+      # porém não publicável na Play Store).
+      - name: Restaurar keystore de release (se houver secrets)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::warning::Sem secrets de keystore — APK sairá com assinatura de debug (não publicável na Play Store)."
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      - run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --dart-define=API_BASE_URL="$API_BASE_URL"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # iOS — IPA. Assinado se houver os secrets da Apple; senão, --no-codesign.
+  #
+  # IMPORTANTE: um .ipa que INSTALA num iPhone precisa ser assinado com um
+  # certificado da sua conta Apple Developer. Sem os secrets abaixo, o build
+  # gera um .ipa NÃO assinado (valida a compilação, mas não instala no device).
+  # Para um IPA instalável, configure em Settings > Secrets:
+  #   IOS_CERTIFICATE_BASE64        (certificado .p12 em base64)
+  #   IOS_CERTIFICATE_PASSWORD      (senha do .p12)
+  #   IOS_PROVISION_PROFILE_BASE64  (perfil .mobileprovision em base64 — Ad Hoc p/ teste)
+  #   IOS_EXPORT_METHOD             (ex.: ad-hoc, app-store, development)
+  # ---------------------------------------------------------------------------
+  ios:
+    name: iOS IPA
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Definir API_BASE_URL
+        run: echo "API_BASE_URL=${{ github.event.inputs.api_base_url || env.DEFAULT_API_BASE_URL }}" >> "$GITHUB_ENV"
+
+      - run: flutter pub get
+
+      # Detecta se há secrets de assinatura para escolher o caminho.
+      - name: Verificar secrets de assinatura
+        id: signing
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          if [ -n "$IOS_CERTIFICATE_BASE64" ] && [ -n "$IOS_PROVISION_PROFILE_BASE64" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Sem secrets de assinatura iOS — gerando IPA NÃO assinado (não instala no iPhone). Veja apps/mobile/BUILD_E_PUBLICACAO.md."
+          fi
+
+      # ---- Caminho ASSINADO (instalável) ----
+      - name: Importar certificado e perfil (assinado)
+        if: steps.signing.outputs.signed == 'true'
+        env:
+          CERT_B64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          CERT_PWD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          PROFILE_B64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          # Keychain temporária
+          KEYCHAIN=$RUNNER_TEMP/app.keychain-db
+          KEYCHAIN_PWD=$(uuidgen)
+          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+
+          echo "$CERT_B64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -P "$CERT_PWD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PWD" "$KEYCHAIN" >/dev/null
+
+          # Provisioning profile
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$PROFILE_B64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision"
+
+      - name: Build IPA (assinado)
+        if: steps.signing.outputs.signed == 'true'
+        run: |
+          flutter build ipa --release \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --export-options-plist=ios/ExportOptions.plist
+
+      # ---- Caminho NÃO assinado (valida build; não instala no device) ----
+      - name: Build IPA (não assinado)
+        if: steps.signing.outputs.signed == 'false'
+        run: |
+          flutter build ipa --release \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --no-codesign
+
+      - name: Localizar artefato IPA/xcarchive
+        id: artifact
+        run: |
+          if ls build/ios/ipa/*.ipa >/dev/null 2>&1; then
+            echo "path=apps/mobile/build/ios/ipa" >> "$GITHUB_OUTPUT"
+            echo "name=app-release-ipa" >> "$GITHUB_OUTPUT"
+          else
+            # Sem assinatura o Flutter não empacota .ipa; subimos o .xcarchive.
+            echo "path=apps/mobile/build/ios/archive" >> "$GITHUB_OUTPUT"
+            echo "name=app-ios-xcarchive-unsigned" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: ${{ steps.artifact.outputs.path }}
+          if-no-files-found: error

@@ -34,7 +34,13 @@ export class SettingsController {
         description:
           settings.pwaAdminDescription?.trim() ||
           'Acesse o painel do lojista para vendas, operacao e gestao da loja.',
-        startUrl: '/pwa-entry?app=admin',
+        startUrl: '/store-panel?source=pwa-admin',
+        // O que separa as instalações é o `id` distinto (+ start_url distinto).
+        // Mantemos scope '/' para que o botão instalar (na tela /admin-login,
+        // fora de /store-panel) consiga disparar a instalação — um scope
+        // restrito bloquearia o install fora dele. O manifest admin é servido
+        // desde o HTML nas rotas de admin (ver index.html), garantindo que o
+        // navegador instale o app do painel, não o do cliente.
         scope: '/',
         display: settings.pwaAdminDisplay || 'standalone',
         backgroundColor: settings.pwaAdminBackgroundColor || '#0f172a',
@@ -57,7 +63,8 @@ export class SettingsController {
         description:
           settings.pwaMechanicDescription?.trim() ||
           'Acompanhe revisoes, checklist e atendimento da oficina em um app dedicado.',
-        startUrl: '/pwa-entry?app=mechanic',
+        startUrl: '/mechanic-panel?source=pwa-mechanic',
+        // scope '/' + id/start_url distintos (ver comentário no perfil admin).
         scope: '/',
         display: settings.pwaMechanicDisplay || 'standalone',
         backgroundColor: settings.pwaMechanicBackgroundColor || '#0f172a',
@@ -80,6 +87,7 @@ export class SettingsController {
         settings.pwaDescription?.trim() ||
         'Acesse sua area do cliente, acompanhe pedidos, revisoes e veiculos pelo celular.',
       startUrl: '/customer?source=pwa-customer',
+      // scope '/' + id/start_url distintos (ver comentário no perfil admin).
       scope: '/',
       display: settings.pwaDisplay || 'standalone',
       backgroundColor: settings.pwaBackgroundColor || '#0f172a',
