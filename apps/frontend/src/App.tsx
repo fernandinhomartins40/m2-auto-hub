@@ -18,6 +18,7 @@ import Index from "./pages/Index";
 import MechanicPanelPage from "./pages/MechanicPanelPage";
 import MyAccount from "./pages/MyAccount";
 import NotFound from "./pages/NotFound";
+import PwaAdminInstallPage from "./pages/PwaAdminInstallPage";
 import PwaEntryPage from "./pages/PwaEntryPage";
 import PublicQuoteApprovalPage from "./pages/PublicQuoteApprovalPage";
 import StorePanel from "./pages/StorePanel";
@@ -49,6 +50,7 @@ const App = () => (
                           <Route path="/customer-login/*" element={<CustomerLoginPage />} />
                           <Route path="/admin-login/*" element={<AdminLoginPage />} />
                           <Route path="/pwa-entry" element={<PwaEntryPage />} />
+                          <Route path="/pwa-admin" element={<PwaAdminInstallPage />} />
                           <Route path="/customer" element={<CustomerPanel />} />
                           <Route path="/my-account" element={<MyAccount />} />
                           <Route path="/quote-approval/:token" element={<PublicQuoteApprovalPage />} />

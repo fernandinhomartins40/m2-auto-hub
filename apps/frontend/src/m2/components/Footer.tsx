@@ -1,4 +1,4 @@
-import { MessageCircle, Settings } from "lucide-react";
+import { Download, MessageCircle, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -123,19 +123,33 @@ const Footer = () => {
               ) : null}
             </div>
 
-            <Link
-              to="/admin-login/?redirect=%2Fstore-panel"
-              className="inline-flex md:justify-end"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                className="border-primary/40 bg-transparent text-primary hover:bg-primary hover:text-primary-foreground"
+            <div className="flex flex-col gap-2 md:items-end">
+              <Link
+                to="/admin-login/?redirect=%2Fstore-panel"
+                className="inline-flex md:justify-end"
               >
-                <Settings size={16} />
-                Painel do Lojista
-              </Button>
-            </Link>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-primary/40 bg-transparent text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  <Settings size={16} />
+                  Painel do Lojista
+                </Button>
+              </Link>
+
+              <Link to="/pwa-admin" className="inline-flex md:justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-secondary-foreground/60 hover:text-primary"
+                >
+                  <Download size={14} />
+                  Instalar App do Painel
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
