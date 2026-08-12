@@ -4,9 +4,6 @@ import notificationsService from '../notifications/notifications.service.js';
 import { z } from 'zod';
 import pdfGeneratorService from '@shared/services/pdf-generator.service.js';
 import alprService from '@shared/services/alpr.service.js';
-import plateLookupService from '@shared/services/plate-lookup.service.js';
-import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
-import { buildPlacaFipeUrl } from '@shared/utils/placa-fipe-parser.util.js';
 import {
   RELATIONSHIP_TEMPLATE_PLACEHOLDERS as relationshipTemplatePlaceholders,
   RELATIONSHIP_RULE_FIELDS as relationshipRuleFields,
@@ -429,67 +426,6 @@ export class AdminController {
 
       const result = await this.adminService.lookupVehicleByPlate(plate);
       res.json(result);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * GET /admin/vehicles/assisted-url
-   * Devolve a URL publica de consulta, para o painel abrir no navegador do
-   * atendente (que passa pela protecao anti-bot naturalmente).
-   */
-  getAssistedLookupUrl = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { plate } = req.query;
-
-      if (!plate || typeof plate !== 'string') {
-        res.status(400).json({ error: 'Placa e obrigatoria' });
-        return;
-      }
-
-      const [normalizedPlate] = LicensePlateUtil.toPossibleValidPlates(plate);
-
-      if (!normalizedPlate) {
-        res.status(400).json({ error: 'Placa invalida' });
-        return;
-      }
-
-      res.json({ plate: normalizedPlate, url: buildPlacaFipeUrl(normalizedPlate) });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * POST /admin/vehicles/assisted-result
-   * Recebe o texto da pagina lida pelo navegador do atendente, extrai os dados
-   * tecnicos e grava na base propria.
-   */
-  saveAssistedLookupResult = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { plate, pageText } = req.body ?? {};
-
-      if (typeof plate !== 'string' || typeof pageText !== 'string' || !pageText.trim()) {
-        res.status(400).json({ error: 'Placa e conteudo da pagina sao obrigatorios' });
-        return;
-      }
-
-      const result = await plateLookupService.saveAssistedResult(plate, pageText);
-
-      if (!result) {
-        res.status(404).json({
-          found: false,
-          error: 'Nao foi possivel extrair os dados do veiculo desta pagina',
-        });
-        return;
-      }
-
-      res.json({ found: true, technicalData: result });
     } catch (error) {
       next(error);
     }

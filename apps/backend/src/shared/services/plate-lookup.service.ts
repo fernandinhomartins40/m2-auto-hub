@@ -173,8 +173,9 @@ export class ApiBrasilPlateProvider implements PlateLookupProvider {
 /**
  * Consulta em navegador real rodando no servidor (servico plate-scraper).
  *
- * E a camada de fallback: so entra quando a consulta assistida no navegador do
- * atendente nao resolveu. Nao exige token nem plano pago.
+ * A pagina de origem recusa navegador headless (403 do Cloudflare), mas
+ * responde normalmente a um Chrome de verdade - o servico roda headful sobre
+ * Xvfb. E automatica e nao exige token nem plano pago.
  */
 export class PlacaFipeServerProvider implements PlateLookupProvider {
   readonly name = 'placafipe';
@@ -279,31 +280,6 @@ export class PlateLookupService {
   async isEnabled(): Promise<boolean> {
     const providers = await this.resolveProviders();
     return providers.length > 0;
-  }
-
-  /**
-   * Grava no cache um resultado vindo da consulta assistida (o proprio
-   * navegador do atendente carregou a pagina e enviou o texto).
-   *
-   * Devolve `null` quando a pagina nao trouxe dados - a placa provavelmente
-   * nao existe na base de origem, e o fluxo segue para o cadastro manual.
-   */
-  async saveAssistedResult(plate: string, pageText: string): Promise<PlateLookupResult | null> {
-    const normalizedPlate = LicensePlateUtil.normalize(plate);
-
-    if (!LicensePlateUtil.isValid(normalizedPlate)) {
-      return null;
-    }
-
-    const parsed = parsePlacaFipeText(pageText, normalizedPlate);
-
-    if (!parsed) {
-      return null;
-    }
-
-    await this.persist(parsed, 'placafipe', 'assisted', { source: 'assisted' });
-
-    return { ...parsed, source: 'external', provider: 'placafipe', origin: 'assisted' };
   }
 
   /** Grava (ou atualiza) uma placa no cache proprio. */

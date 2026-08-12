@@ -152,8 +152,8 @@ export function PlateLookupSection({
           <Info className="h-4 w-4" />
           <AlertDescription className="space-y-2">
             <p>
-              A consulta acontece em camadas, e as duas primeiras são{' '}
-              <strong>gratuitas</strong>:
+              Basta digitar a placa: o sistema busca sozinho, em camadas, e as duas
+              primeiras são <strong>gratuitas</strong>:
             </p>
             <ol className="ml-4 list-decimal space-y-0.5 text-sm">
               <li>
@@ -161,12 +161,8 @@ export function PlateLookupSection({
                 hora, sem custo.
               </li>
               <li>
-                <strong>Consulta assistida</strong> — o atendente abre a consulta no próprio
-                navegador e o sistema guarda o resultado.
-              </li>
-              <li>
-                <strong>Consulta automática no servidor</strong> — tentada quando a assistida
-                não resolve.
+                <strong>Consulta automática</strong> — placa nova é buscada sozinha pelo
+                servidor, sem nenhuma ação do atendente.
               </li>
               <li>
                 <strong>API paga</strong> (abaixo) — último recurso, opcional.
@@ -211,7 +207,7 @@ export function PlateLookupSection({
           <div>
             <Label htmlFor="plate-lookup-enabled">Ativar consultas externas</Label>
             <p className="text-sm text-muted-foreground">
-              Liga as camadas 2 a 4. Quando desligado, apenas a base própria da oficina
+              Liga a busca automática. Quando desligado, apenas a base própria da oficina
               é usada.
             </p>
           </div>

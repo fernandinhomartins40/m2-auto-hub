@@ -77,14 +77,6 @@ router.patch('/orders/:id/status', AdminAuthMiddleware.requireMinRole(AdminRole.
 
 // ==================== CUSTOMERS ====================
 router.get('/vehicles/lookup', adminController.lookupVehicleByPlate);
-// Consulta assistida: o painel abre a pagina no navegador do atendente e
-// devolve o texto para o servidor extrair e cachear.
-router.get('/vehicles/assisted-url', adminController.getAssistedLookupUrl);
-router.post(
-  '/vehicles/assisted-result',
-  AdminAuthMiddleware.requireMinRole(AdminRole.STAFF),
-  adminController.saveAssistedLookupResult
-);
 router.post(
   '/vehicles/recognize',
   AdminAuthMiddleware.requireMinRole(AdminRole.STAFF),

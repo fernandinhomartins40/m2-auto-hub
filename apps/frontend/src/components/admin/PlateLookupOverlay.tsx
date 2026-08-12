@@ -29,7 +29,6 @@ import adminService, { type AdminRevision, type VehicleLookupResult } from '@/ap
 import serviceOrderService, { type ServiceOrder } from '@/api/serviceOrderService';
 import { normalizePlate, isValidBrazilianPlate, formatPlate } from '@/utils/licensePlate';
 import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
-import { AssistedPlateLookupDialog } from './AssistedPlateLookupDialog';
 import { ServiceOrderModal, type ServiceOrderInitialData } from './ServiceOrderModal';
 import { ServiceOrderDetailsModal } from './ServiceOrderDetailsModal';
 import { RevisionEditModal } from './RevisionEditModal';
@@ -69,7 +68,6 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
   const [revisions, setRevisions] = useState<AdminRevision[]>([]);
 
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [assistedOpen, setAssistedOpen] = useState(false);
   const [osModalOpen, setOsModalOpen] = useState(false);
   const [osInitial, setOsInitial] = useState<ServiceOrderInitialData | null>(null);
   const [osEditing, setOsEditing] = useState<ServiceOrder | null>(null);
@@ -211,18 +209,6 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
                       Placa <strong>{formatPlate(normalizePlate(plateInput))}</strong> não encontrada no cadastro.
                     </AlertDescription>
                   </Alert>
-
-                  {/* Sem dados técnicos: oferece a consulta assistida, feita no
-                      navegador do próprio atendente. */}
-                  {!lookup?.technicalData && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setAssistedOpen(true)}
-                    >
-                      <Search className="h-4 w-4 mr-2" /> Identificar veículo pela placa
-                    </Button>
-                  )}
 
                   {/* Dados técnicos vindos da base própria ou da consulta externa:
                       permitem abrir a OS já com o veículo identificado. */}
@@ -375,18 +361,6 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
 
       {/* Câmera / ALPR */}
       <RevisionVehicleLookupDialog isOpen={cameraOpen} onClose={() => setCameraOpen(false)} onResolved={handleCameraResolved} />
-
-      {/* Consulta assistida no navegador do atendente */}
-      <AssistedPlateLookupDialog
-        isOpen={assistedOpen}
-        plate={normalizePlate(plateInput)}
-        onClose={() => setAssistedOpen(false)}
-        onResolved={(data) =>
-          setLookup((atual) =>
-            atual ? { ...atual, technicalData: data } : { found: false, plate: data.plate, technicalData: data }
-          )
-        }
-      />
 
       {/* OS: criar / continuar */}
       <ServiceOrderModal

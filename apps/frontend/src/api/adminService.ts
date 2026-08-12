@@ -1163,28 +1163,6 @@ class AdminService {
     return response.data;
   }
 
-  /** URL pública de consulta, para abrir no navegador do atendente. */
-  async getAssistedLookupUrl(plate: string): Promise<{ plate: string; url: string }> {
-    const response = await apiClient.get('/admin/vehicles/assisted-url', {
-      params: { plate },
-    });
-
-    return response.data;
-  }
-
-  /** Envia o texto da página lida pelo atendente para extração e cache. */
-  async saveAssistedLookupResult(
-    plate: string,
-    pageText: string
-  ): Promise<{ found: boolean; technicalData?: PlateTechnicalData }> {
-    const response = await apiClient.post('/admin/vehicles/assisted-result', {
-      plate,
-      pageText,
-    });
-
-    return response.data;
-  }
-
   async recognizeVehiclePlate(image: Blob): Promise<RecognizedPlateResponse> {
     const formData = new FormData();
     formData.append('image', image, 'plate-capture.jpg');
