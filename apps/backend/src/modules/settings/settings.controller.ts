@@ -3,6 +3,8 @@ import { ZodError } from 'zod';
 import { processLandingPageImage, processPwaIcon } from '../../middleware/upload.middleware.js';
 import { updateSettingsSchema } from './dto/update-settings.dto.js';
 import { settingsService } from './settings.service.js';
+import { CryptoUtil } from '@shared/utils/crypto.util.js';
+import plateLookupService from '@shared/services/plate-lookup.service.js';
 
 export class SettingsController {
   private buildAbsoluteUrl(req: Request, value: string) {
@@ -105,7 +107,7 @@ export class SettingsController {
   async getSettings(_req: Request, res: Response): Promise<void> {
     try {
       const settings = await settingsService.getSettings();
-      res.status(200).json({ success: true, data: settings });
+      res.status(200).json({ success: true, data: settingsService.maskSecrets(settings) });
     } catch (error: any) {
       res.status(500).json({
         success: false,
@@ -222,7 +224,7 @@ export class SettingsController {
 
       res.status(200).json({
         success: true,
-        data: updated,
+        data: settingsService.maskSecrets(updated),
         message: 'Configurações atualizadas com sucesso',
       });
     } catch (error: any) {
@@ -302,7 +304,7 @@ export class SettingsController {
 
       res.status(200).json({
         success: true,
-        data: reset,
+        data: settingsService.maskSecrets(reset),
         message: 'Configurações resetadas para os valores padrão',
       });
     } catch (error: any) {
@@ -333,6 +335,54 @@ export class SettingsController {
       res.status(500).json({
         success: false,
         error: 'Erro ao testar conexão WhatsApp',
+        details: error.message,
+      });
+    }
+  }
+
+  /**
+   * Testa os tokens de consulta de placa. Aceita os tokens digitados no
+   * formulario; se vierem vazios, usa os que ja estao salvos.
+   */
+  async testPlateLookup(req: Request, res: Response): Promise<void> {
+    try {
+      const { bearerToken, deviceToken, plate } = req.body ?? {};
+
+      let effectiveBearer = typeof bearerToken === 'string' ? bearerToken.trim() : '';
+      let effectiveDevice = typeof deviceToken === 'string' ? deviceToken.trim() : '';
+
+      if (!effectiveBearer || !effectiveDevice) {
+        const settings = await settingsService.getSettings();
+        effectiveBearer =
+          effectiveBearer || CryptoUtil.decrypt(settings.plateLookupBearerToken) || '';
+        effectiveDevice =
+          effectiveDevice || CryptoUtil.decrypt(settings.plateLookupDeviceToken) || '';
+      }
+
+      if (!effectiveBearer || !effectiveDevice) {
+        res.status(400).json({
+          success: false,
+          error: 'Informe o Bearer Token e o Device Token para testar.',
+        });
+        return;
+      }
+
+      const result = await plateLookupService.testCredentials({
+        bearerToken: effectiveBearer,
+        deviceToken: effectiveDevice,
+        plate: typeof plate === 'string' ? plate : undefined,
+      });
+
+      res.status(200).json({
+        success: true,
+        connected: result.success,
+        message: result.message,
+        sample: result.sample,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao testar a consulta de placa',
         details: error.message,
       });
     }

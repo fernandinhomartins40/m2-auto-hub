@@ -28,5 +28,6 @@ router.post(
 router.post('/test-whatsapp', AdminAuthMiddleware.authenticate, settingsController.testWhatsApp.bind(settingsController));
 router.post('/test-correios', AdminAuthMiddleware.authenticate, settingsController.testCorreios.bind(settingsController));
 router.post('/test-payment', AdminAuthMiddleware.authenticate, settingsController.testPayment.bind(settingsController));
+router.post('/test-plate-lookup', AdminAuthMiddleware.authenticate, settingsController.testPlateLookup.bind(settingsController));
 
 export default router;

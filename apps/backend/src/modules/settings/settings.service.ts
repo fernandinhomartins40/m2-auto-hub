@@ -1,5 +1,6 @@
 import { Settings } from '@prisma/client';
 import { prisma } from '@config/database.js';
+import { CryptoUtil } from '@shared/utils/crypto.util.js';
 import { UpdateSettingsDTO } from './dto/update-settings.dto.js';
 
 export class SettingsService {
@@ -126,10 +127,43 @@ export class SettingsService {
       settings = await this.createDefaultSettings();
     }
 
+    const { plateLookupBearerToken, plateLookupDeviceToken, ...rest } = data;
+
+    const updateData: Record<string, unknown> = { ...rest };
+
+    // Tokens de placa sao guardados criptografados. String vazia significa
+    // "limpar"; campo ausente significa "manter o token atual", para que o
+    // painel possa salvar as demais configuracoes sem reenviar o segredo.
+    if (plateLookupBearerToken !== undefined) {
+      updateData.plateLookupBearerToken = plateLookupBearerToken
+        ? CryptoUtil.encrypt(plateLookupBearerToken)
+        : null;
+    }
+
+    if (plateLookupDeviceToken !== undefined) {
+      updateData.plateLookupDeviceToken = plateLookupDeviceToken
+        ? CryptoUtil.encrypt(plateLookupDeviceToken)
+        : null;
+    }
+
     return prisma.settings.update({
       where: { id: settings.id },
-      data,
+      data: updateData,
     });
+  }
+
+  /**
+   * Remove os tokens da resposta, devolvendo apenas se estao configurados.
+   * O segredo nunca sai do servidor depois de salvo.
+   */
+  maskSecrets(settings: Settings) {
+    const { plateLookupBearerToken, plateLookupDeviceToken, ...safe } = settings;
+
+    return {
+      ...safe,
+      plateLookupBearerTokenSet: Boolean(plateLookupBearerToken),
+      plateLookupDeviceTokenSet: Boolean(plateLookupDeviceToken),
+    };
   }
 
   async resetSettings(): Promise<Settings> {
@@ -171,6 +205,9 @@ export class SettingsService {
         correiosApiKey: null,
         paymentGatewayKey: null,
         googleAnalyticsId: null,
+        plateLookupEnabled: false,
+        plateLookupBearerToken: null,
+        plateLookupDeviceToken: null,
         pdfHeaderLogoUrl: null,
         pdfHeaderHtml:
           '<p><strong>M2 Center Auto</strong></p><p>contato@m2centerauto.com.br • WhatsApp: (11) 99999-9999</p>',

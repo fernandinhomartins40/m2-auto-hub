@@ -32,6 +32,11 @@ export const updateSettingsSchema = z.object({
   // Integrações
   whatsappApiKey: z.string().nullable().optional(),
   correiosApiKey: z.string().nullable().optional(),
+  plateLookupEnabled: z.boolean().optional(),
+  plateLookupProvider: z.string().optional(),
+  // String vazia limpa o token; campo ausente mantem o que ja esta salvo.
+  plateLookupBearerToken: z.string().optional(),
+  plateLookupDeviceToken: z.string().optional(),
   paymentGatewayKey: z.string().nullable().optional(),
   googleAnalyticsId: z.string().nullable().optional(),
 

@@ -1,4 +1,5 @@
 import { prisma } from '@config/database.js';
+import { CryptoUtil } from '@shared/utils/crypto.util.js';
 import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
 import { logger } from '@shared/utils/logger.util.js';
 
@@ -72,13 +73,25 @@ function parseText(value: unknown): string | null {
 export class ApiBrasilPlateProvider implements PlateLookupProvider {
   readonly name = 'apibrasil';
 
-  private readonly baseUrl =
-    process.env.PLATE_LOOKUP_API_URL?.replace(/\/+$/, '') ||
-    'https://gateway.apibrasil.io/api/v2/vehicles';
-
-  private readonly bearerToken = process.env.PLATE_LOOKUP_BEARER_TOKEN || '';
-  private readonly deviceToken = process.env.PLATE_LOOKUP_DEVICE_TOKEN || '';
+  private readonly baseUrl: string;
+  private readonly bearerToken: string;
+  private readonly deviceToken: string;
   private readonly timeoutMs = Number(process.env.PLATE_LOOKUP_TIMEOUT_MS || 8000);
+
+  /**
+   * As credenciais vem das configuracoes do painel. O `.env` continua aceito
+   * como fallback para quem ja configurou por la.
+   */
+  constructor(credentials?: { bearerToken?: string | null; deviceToken?: string | null }) {
+    this.baseUrl = (
+      process.env.PLATE_LOOKUP_API_URL || 'https://gateway.apibrasil.io/api/v2/vehicles'
+    ).replace(/\/+$/, '');
+
+    this.bearerToken =
+      credentials?.bearerToken || process.env.PLATE_LOOKUP_BEARER_TOKEN || '';
+    this.deviceToken =
+      credentials?.deviceToken || process.env.PLATE_LOOKUP_DEVICE_TOKEN || '';
+  }
 
   isConfigured(): boolean {
     return Boolean(this.bearerToken && this.deviceToken);
@@ -155,10 +168,93 @@ export class ApiBrasilPlateProvider implements PlateLookupProvider {
 }
 
 export class PlateLookupService {
-  constructor(private readonly provider: PlateLookupProvider = new ApiBrasilPlateProvider()) {}
+  /**
+   * Quando um provedor e injetado (testes), ele e usado como esta. Caso
+   * contrario o provedor e montado por consulta, com as credenciais salvas
+   * no painel - assim trocar o token nao exige reiniciar o servidor.
+   */
+  constructor(private readonly provider?: PlateLookupProvider) {}
 
-  isEnabled(): boolean {
-    return this.provider.isConfigured();
+  private async resolveProvider(): Promise<PlateLookupProvider> {
+    if (this.provider) {
+      return this.provider;
+    }
+
+    const settings = await prisma.settings
+      .findFirst({
+        select: {
+          plateLookupEnabled: true,
+          plateLookupBearerToken: true,
+          plateLookupDeviceToken: true,
+        },
+      })
+      .catch(() => null);
+
+    if (settings && !settings.plateLookupEnabled) {
+      // Desligado no painel: a consulta externa fica off de verdade, sem cair
+      // no fallback do .env. So o cache proprio responde.
+      return {
+        name: 'apibrasil',
+        isConfigured: () => false,
+        lookup: async () => null,
+      };
+    }
+
+    return new ApiBrasilPlateProvider({
+      bearerToken: CryptoUtil.decrypt(settings?.plateLookupBearerToken ?? null),
+      deviceToken: CryptoUtil.decrypt(settings?.plateLookupDeviceToken ?? null),
+    });
+  }
+
+  async isEnabled(): Promise<boolean> {
+    const provider = await this.resolveProvider();
+    return provider.isConfigured();
+  }
+
+  /**
+   * Testa credenciais informadas no painel contra o provedor, sem salvar nada
+   * e sem gravar no cache. Serve para o usuario conferir os tokens na hora.
+   */
+  async testCredentials(credentials: {
+    bearerToken: string;
+    deviceToken: string;
+    plate?: string;
+  }): Promise<{ success: boolean; message: string; sample?: PlateTechnicalData }> {
+    const provider = new ApiBrasilPlateProvider({
+      bearerToken: credentials.bearerToken,
+      deviceToken: credentials.deviceToken,
+    });
+
+    if (!provider.isConfigured()) {
+      return { success: false, message: 'Informe os dois tokens para testar.' };
+    }
+
+    const plate = LicensePlateUtil.normalize(credentials.plate || 'ABC1D23');
+
+    if (!LicensePlateUtil.isValid(plate)) {
+      return { success: false, message: 'Placa de teste invalida.' };
+    }
+
+    try {
+      const result = await provider.lookup(plate);
+
+      if (!result) {
+        return {
+          success: false,
+          message:
+            'Os tokens foram aceitos, mas nenhum dado voltou para esta placa. Tente outra placa real.',
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Conexao bem-sucedida.',
+        sample: result.data,
+      };
+    } catch (error) {
+      logger.warn(`Plate lookup credential test failed: ${String(error)}`);
+      return { success: false, message: 'Nao foi possivel conectar ao provedor.' };
+    }
   }
 
   /**
@@ -205,7 +301,9 @@ export class PlateLookupService {
       };
     }
 
-    if (!this.provider.isConfigured()) {
+    const provider = await this.resolveProvider();
+
+    if (!provider.isConfigured()) {
       return null;
     }
 
@@ -214,7 +312,7 @@ export class PlateLookupService {
     let result: { data: PlateTechnicalData; raw: unknown } | null = null;
 
     try {
-      result = await this.provider.lookup(normalizedPlate);
+      result = await provider.lookup(normalizedPlate);
     } catch (error) {
       logger.warn(`Plate lookup provider failed for ${normalizedPlate}: ${String(error)}`);
       return null;
@@ -238,7 +336,7 @@ export class PlateLookupService {
           fuel: data.fuel,
           city: data.city,
           state: data.state,
-          provider: this.provider.name,
+          provider: provider.name,
           rawResponse: raw as never,
         },
       });
@@ -247,9 +345,9 @@ export class PlateLookupService {
       logger.warn(`Failed to cache plate lookup for ${normalizedPlate}: ${String(error)}`);
     }
 
-    logger.info(`Plate ${normalizedPlate} resolved via ${this.provider.name}`);
+    logger.info(`Plate ${normalizedPlate} resolved via ${provider.name}`);
 
-    return { ...data, source: 'external', provider: this.provider.name };
+    return { ...data, source: 'external', provider: provider.name };
   }
 }
 

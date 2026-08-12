@@ -36,6 +36,13 @@ export interface StoreSettings {
   paymentConnected: boolean;
   googleAnalyticsId?: string | null;
   analyticsConnected: boolean;
+
+  // Consulta de placa. Os tokens nunca voltam do servidor: o backend informa
+  // apenas se já estão configurados.
+  plateLookupEnabled: boolean;
+  plateLookupProvider: string;
+  plateLookupBearerTokenSet?: boolean;
+  plateLookupDeviceTokenSet?: boolean;
   pdfHeaderLogoUrl?: string | null;
   pdfHeaderHtml: string;
   pdfFooterLogoUrl?: string | null;
@@ -251,6 +258,38 @@ class SettingsService {
       { apiKey }
     );
     return { connected: response.data.connected, message: response.data.message };
+  }
+
+  /**
+   * Testa os tokens de consulta de placa. Tokens em branco fazem o servidor
+   * usar os que já estão salvos.
+   */
+  async testPlateLookup(params: {
+    bearerToken?: string;
+    deviceToken?: string;
+    plate?: string;
+  }): Promise<{
+    connected: boolean;
+    message: string;
+    sample?: {
+      brand: string | null;
+      model: string | null;
+      year: number | null;
+      color: string | null;
+    };
+  }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      connected: boolean;
+      message: string;
+      sample?: { brand: string | null; model: string | null; year: number | null; color: string | null };
+    }>('/settings/test-plate-lookup', params);
+
+    return {
+      connected: response.data.connected,
+      message: response.data.message,
+      sample: response.data.sample,
+    };
   }
 }
 

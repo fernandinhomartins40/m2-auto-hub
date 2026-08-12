@@ -10,6 +10,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { clearSettingsCache } from '@/hooks/useStoreSettings';
 import settingsService from '@/api/settingsService';
 import { PdfBrandingSection } from './settings/PdfBrandingSection';
+import { PlateLookupSection } from './settings/PlateLookupSection';
 import {
   MessageCircle,
   CheckCircle,
@@ -82,6 +83,13 @@ export function SettingsContent() {
     pdfHeaderHtml: '',
     pdfFooterLogoUrl: '',
     pdfFooterHtml: '',
+    // Consulta de placa. Os tokens começam vazios: o servidor nunca devolve o
+    // valor salvo, apenas a flag de configurado.
+    plateLookupEnabled: false,
+    plateLookupBearerToken: '',
+    plateLookupDeviceToken: '',
+    plateLookupBearerTokenSet: false,
+    plateLookupDeviceTokenSet: false,
     // Flags
     whatsappConnected: false,
     correiosConnected: false,
@@ -139,6 +147,11 @@ export function SettingsContent() {
         pdfHeaderHtml: settings.pdfHeaderHtml || '',
         pdfFooterLogoUrl: settings.pdfFooterLogoUrl || '',
         pdfFooterHtml: settings.pdfFooterHtml || '',
+        plateLookupEnabled: settings.plateLookupEnabled ?? false,
+        plateLookupBearerToken: '',
+        plateLookupDeviceToken: '',
+        plateLookupBearerTokenSet: settings.plateLookupBearerTokenSet ?? false,
+        plateLookupDeviceTokenSet: settings.plateLookupDeviceTokenSet ?? false,
         whatsappConnected: settings.whatsappConnected,
         correiosConnected: settings.correiosConnected,
         paymentConnected: settings.paymentConnected,
@@ -372,9 +385,18 @@ export function SettingsContent() {
 
     setIsSaving(true);
     try {
+      // Flags de "token já salvo" são apenas de exibição e não vão ao backend.
+      const {
+        plateLookupBearerTokenSet: _bearerSet,
+        plateLookupDeviceTokenSet: _deviceSet,
+        plateLookupBearerToken,
+        plateLookupDeviceToken,
+        ...rest
+      } = formData;
+
       // Preparar dados para envio (converter phone para formato WhatsApp no backend)
       const dataToSend = {
-        ...formData,
+        ...rest,
         // Remove formatação de CNPJ e CEP
         cnpj: formData.cnpj ? unformatValue(formData.cnpj) : undefined,
         zipCode: formData.zipCode ? unformatValue(formData.zipCode) : undefined,
@@ -383,9 +405,29 @@ export function SettingsContent() {
         whatsapp: toWhatsAppFormat(formData.whatsapp),
         pdfHeaderLogoUrl: formData.pdfHeaderLogoUrl.trim() || null,
         pdfFooterLogoUrl: formData.pdfFooterLogoUrl.trim() || null,
+        // Campo em branco significa "manter o token atual": só envia quando o
+        // usuário digitou algo, senão salvar outra configuração apagaria o token.
+        ...(plateLookupBearerToken.trim()
+          ? { plateLookupBearerToken: plateLookupBearerToken.trim() }
+          : {}),
+        ...(plateLookupDeviceToken.trim()
+          ? { plateLookupDeviceToken: plateLookupDeviceToken.trim() }
+          : {}),
       };
 
       await updateSettings(dataToSend);
+
+      // Tokens não voltam do servidor: limpa os campos e marca como salvos.
+      setFormData((prev) => ({
+        ...prev,
+        plateLookupBearerToken: '',
+        plateLookupDeviceToken: '',
+        plateLookupBearerTokenSet:
+          prev.plateLookupBearerTokenSet || Boolean(plateLookupBearerToken.trim()),
+        plateLookupDeviceTokenSet:
+          prev.plateLookupDeviceTokenSet || Boolean(plateLookupDeviceToken.trim()),
+      }));
+
       // Limpar cache público para atualizar frontend
       clearSettingsCache();
       toast.success('Configurações salvas com sucesso!', {
@@ -972,6 +1014,17 @@ export function SettingsContent() {
             pdfHeaderHtml={formData.pdfHeaderHtml}
             pdfFooterLogoUrl={formData.pdfFooterLogoUrl}
             pdfFooterHtml={formData.pdfFooterHtml}
+            onChange={handleInputChange}
+          />
+
+          <Separator />
+
+          <PlateLookupSection
+            enabled={formData.plateLookupEnabled}
+            bearerToken={formData.plateLookupBearerToken}
+            deviceToken={formData.plateLookupDeviceToken}
+            bearerTokenSet={formData.plateLookupBearerTokenSet}
+            deviceTokenSet={formData.plateLookupDeviceTokenSet}
             onChange={handleInputChange}
           />
 

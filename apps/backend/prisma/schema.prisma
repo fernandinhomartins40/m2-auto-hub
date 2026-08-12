@@ -1339,6 +1339,14 @@ model Settings {
   paymentGatewayKey String?
   googleAnalyticsId String?
 
+  // Consulta de placa (dados tecnicos do veiculo).
+  // Tokens guardados criptografados (AES-256-GCM) e nunca devolvidos em claro
+  // pela API - o painel recebe apenas a flag de configurado.
+  plateLookupEnabled     Boolean @default(false)
+  plateLookupProvider    String  @default("apibrasil")
+  plateLookupBearerToken String?
+  plateLookupDeviceToken String?
+
   // Branding dos PDFs
   pdfHeaderLogoUrl String?
   pdfHeaderHtml    String @default("")
