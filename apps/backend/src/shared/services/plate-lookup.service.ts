@@ -2,6 +2,7 @@ import { prisma } from '@config/database.js';
 import { CryptoUtil } from '@shared/utils/crypto.util.js';
 import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
 import { logger } from '@shared/utils/logger.util.js';
+import { parsePlacaFipeText } from '@shared/utils/placa-fipe-parser.util.js';
 
 /**
  * Dados tecnicos de um veiculo obtidos por placa.
@@ -25,6 +26,8 @@ export interface PlateLookupResult extends PlateTechnicalData {
   /** De onde vieram os dados: cache proprio ou consulta externa. */
   source: 'cache' | 'external';
   provider: string;
+  /** Como o dado foi obtido originalmente. */
+  origin?: string;
 }
 
 /**
@@ -167,6 +170,60 @@ export class ApiBrasilPlateProvider implements PlateLookupProvider {
   }
 }
 
+/**
+ * Consulta em navegador real rodando no servidor (servico plate-scraper).
+ *
+ * E a camada de fallback: so entra quando a consulta assistida no navegador do
+ * atendente nao resolveu. Nao exige token nem plano pago.
+ */
+export class PlacaFipeServerProvider implements PlateLookupProvider {
+  readonly name = 'placafipe';
+
+  private readonly serviceUrl =
+    process.env.PLATE_SCRAPER_URL?.replace(/\/+$/, '') || 'http://plate-scraper:8100';
+
+  private readonly timeoutMs = Number(process.env.PLATE_SCRAPER_TIMEOUT_MS || 60000);
+
+  isConfigured(): boolean {
+    return process.env.PLATE_SCRAPER_ENABLED !== 'false';
+  }
+
+  async lookup(plate: string): Promise<{ data: PlateTechnicalData; raw: unknown } | null> {
+    let response: Response;
+
+    try {
+      response = await fetch(`${this.serviceUrl}/lookup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plate }),
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+    } catch (error) {
+      logger.warn(`Plate scraper indisponivel para ${plate}: ${String(error)}`);
+      return null;
+    }
+
+    if (!response.ok) {
+      logger.warn(`Plate scraper retornou HTTP ${response.status} para ${plate}`);
+      return null;
+    }
+
+    const payload = (await response.json().catch(() => null)) as { text?: string } | null;
+
+    if (!payload?.text) {
+      return null;
+    }
+
+    const parsed = parsePlacaFipeText(payload.text, plate);
+
+    if (!parsed) {
+      return null;
+    }
+
+    return { data: parsed, raw: { source: 'plate-scraper' } };
+  }
+}
+
 export class PlateLookupService {
   /**
    * Quando um provedor e injetado (testes), ele e usado como esta. Caso
@@ -175,9 +232,15 @@ export class PlateLookupService {
    */
   constructor(private readonly provider?: PlateLookupProvider) {}
 
-  private async resolveProvider(): Promise<PlateLookupProvider> {
+  /**
+   * Monta a cadeia de provedores externos, na ordem em que devem ser tentados.
+   *
+   * O scraper em navegador real vem primeiro por ser gratuito; a API paga so
+   * entra se houver token configurado, como ultimo recurso.
+   */
+  private async resolveProviders(): Promise<PlateLookupProvider[]> {
     if (this.provider) {
-      return this.provider;
+      return [this.provider];
     }
 
     const settings = await prisma.settings
@@ -190,25 +253,92 @@ export class PlateLookupService {
       })
       .catch(() => null);
 
+    // Desligado no painel: nenhuma consulta externa, so o cache proprio.
     if (settings && !settings.plateLookupEnabled) {
-      // Desligado no painel: a consulta externa fica off de verdade, sem cair
-      // no fallback do .env. So o cache proprio responde.
-      return {
-        name: 'apibrasil',
-        isConfigured: () => false,
-        lookup: async () => null,
-      };
+      return [];
     }
 
-    return new ApiBrasilPlateProvider({
+    const chain: PlateLookupProvider[] = [];
+
+    const scraper = new PlacaFipeServerProvider();
+    if (scraper.isConfigured()) {
+      chain.push(scraper);
+    }
+
+    const apiBrasil = new ApiBrasilPlateProvider({
       bearerToken: CryptoUtil.decrypt(settings?.plateLookupBearerToken ?? null),
       deviceToken: CryptoUtil.decrypt(settings?.plateLookupDeviceToken ?? null),
     });
+    if (apiBrasil.isConfigured()) {
+      chain.push(apiBrasil);
+    }
+
+    return chain;
   }
 
   async isEnabled(): Promise<boolean> {
-    const provider = await this.resolveProvider();
-    return provider.isConfigured();
+    const providers = await this.resolveProviders();
+    return providers.length > 0;
+  }
+
+  /**
+   * Grava no cache um resultado vindo da consulta assistida (o proprio
+   * navegador do atendente carregou a pagina e enviou o texto).
+   *
+   * Devolve `null` quando a pagina nao trouxe dados - a placa provavelmente
+   * nao existe na base de origem, e o fluxo segue para o cadastro manual.
+   */
+  async saveAssistedResult(plate: string, pageText: string): Promise<PlateLookupResult | null> {
+    const normalizedPlate = LicensePlateUtil.normalize(plate);
+
+    if (!LicensePlateUtil.isValid(normalizedPlate)) {
+      return null;
+    }
+
+    const parsed = parsePlacaFipeText(pageText, normalizedPlate);
+
+    if (!parsed) {
+      return null;
+    }
+
+    await this.persist(parsed, 'placafipe', 'assisted', { source: 'assisted' });
+
+    return { ...parsed, source: 'external', provider: 'placafipe', origin: 'assisted' };
+  }
+
+  /** Grava (ou atualiza) uma placa no cache proprio. */
+  private async persist(
+    data: PlateTechnicalData & { displacement?: string | null; power?: string | null },
+    provider: string,
+    origin: string,
+    raw: unknown
+  ): Promise<void> {
+    const payload = {
+      brand: data.brand,
+      model: data.model,
+      year: data.year,
+      color: data.color,
+      chassisNumber: data.chassisNumber,
+      fuel: data.fuel,
+      city: data.city,
+      state: data.state,
+      displacement: data.displacement ?? null,
+      power: data.power ?? null,
+      provider,
+      origin,
+      rawResponse: raw as never,
+    };
+
+    try {
+      await prisma.vehiclePlateLookup.upsert({
+        where: { plate: data.plate },
+        create: { plate: data.plate, ...payload },
+        update: payload,
+      });
+    } catch (error) {
+      // Falhar ao cachear nao pode derrubar a consulta em si.
+      logger.warn(`Failed to cache plate lookup for ${data.plate}: ${String(error)}`);
+    }
   }
 
   /**
@@ -298,56 +428,37 @@ export class PlateLookupService {
         fuel: cached.fuel,
         city: cached.city,
         state: cached.state,
+        origin: cached.origin,
       };
     }
 
-    const provider = await this.resolveProvider();
+    // Percorre a cadeia de provedores: o primeiro que responder vence. Uma
+    // falha nunca derruba o atendimento - o chamador segue para o manual.
+    for (const provider of await this.resolveProviders()) {
+      let result: { data: PlateTechnicalData; raw: unknown } | null = null;
 
-    if (!provider.isConfigured()) {
-      return null;
+      try {
+        result = await provider.lookup(normalizedPlate);
+      } catch (error) {
+        logger.warn(
+          `Plate lookup provider ${provider.name} failed for ${normalizedPlate}: ${String(error)}`
+        );
+        continue;
+      }
+
+      if (!result) {
+        continue;
+      }
+
+      const origin = provider.name === 'placafipe' ? 'server' : 'api';
+      await this.persist(result.data, provider.name, origin, result.raw);
+
+      logger.info(`Plate ${normalizedPlate} resolved via ${provider.name}`);
+
+      return { ...result.data, source: 'external', provider: provider.name, origin };
     }
 
-    // Uma falha do provedor externo nunca deve derrubar o atendimento: o
-    // chamador segue para o cadastro manual como se nada tivesse sido achado.
-    let result: { data: PlateTechnicalData; raw: unknown } | null = null;
-
-    try {
-      result = await provider.lookup(normalizedPlate);
-    } catch (error) {
-      logger.warn(`Plate lookup provider failed for ${normalizedPlate}: ${String(error)}`);
-      return null;
-    }
-
-    if (!result) {
-      return null;
-    }
-
-    const { data, raw } = result;
-
-    try {
-      await prisma.vehiclePlateLookup.create({
-        data: {
-          plate: normalizedPlate,
-          brand: data.brand,
-          model: data.model,
-          year: data.year,
-          color: data.color,
-          chassisNumber: data.chassisNumber,
-          fuel: data.fuel,
-          city: data.city,
-          state: data.state,
-          provider: provider.name,
-          rawResponse: raw as never,
-        },
-      });
-    } catch (error) {
-      // Corrida entre dois atendimentos da mesma placa nao deve quebrar a consulta.
-      logger.warn(`Failed to cache plate lookup for ${normalizedPlate}: ${String(error)}`);
-    }
-
-    logger.info(`Plate ${normalizedPlate} resolved via ${provider.name}`);
-
-    return { ...data, source: 'external', provider: provider.name };
+    return null;
   }
 }
 

@@ -1,0 +1,14 @@
+{
+  "name": "m2-plate-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Consulta de dados tecnicos de placa em navegador real (fallback do fluxo assistido)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}

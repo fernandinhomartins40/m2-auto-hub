@@ -37,7 +37,7 @@ export interface PlateLookupSectionProps {
 
 const STEPS = [
   {
-    title: 'Crie uma conta gratuita',
+    title: 'Crie uma conta',
     body: (
       <>
         Acesse{' '}
@@ -50,20 +50,17 @@ const STEPS = [
           app.apibrasil.io
           <ExternalLink className="ml-1 inline h-3 w-3" />
         </a>{' '}
-        e cadastre-se. O plano gratuito não exige cartão de crédito.
+        e cadastre-se.
       </>
     ),
   },
   {
-    title: 'Abra "Minhas APIs"',
-    body: <>No menu lateral do painel da API Brasil, clique em <strong>Minhas APIs</strong>.</>,
-  },
-  {
-    title: 'Ative a "API Placa Dados"',
+    title: 'Contrate um plano com consulta de placa',
     body: (
       <>
-        Localize <strong>API Placa Dados</strong> na lista e ative o plano gratuito
-        (100 consultas por dia).
+        A consulta por placa exige plano pago — em agosto de 2026, o{' '}
+        <strong>Data Plus</strong> a R$ 384/mês. Confirme os valores no site antes de
+        contratar.
       </>
     ),
   },
@@ -71,8 +68,8 @@ const STEPS = [
     title: 'Copie os dois tokens',
     body: (
       <>
-        Na tela da API aparecem o <strong>Bearer Token</strong> e o{' '}
-        <strong>Device Token</strong>. Copie os dois e cole nos campos abaixo.
+        Em <strong>Minhas APIs</strong>, copie o <strong>Bearer Token</strong> e o{' '}
+        <strong>Device Token</strong> e cole nos campos abaixo.
       </>
     ),
   },
@@ -153,22 +150,45 @@ export function PlateLookupSection({
         {/* Como funciona */}
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertDescription className="space-y-1">
+          <AlertDescription className="space-y-2">
             <p>
-              Cada placa consultada fica salva na base da oficina. Da segunda vez em diante
-              a mesma placa <strong>não gasta consulta</strong> — a base cresce sozinha
-              conforme os atendimentos.
+              A consulta acontece em camadas, e as duas primeiras são{' '}
+              <strong>gratuitas</strong>:
             </p>
+            <ol className="ml-4 list-decimal space-y-0.5 text-sm">
+              <li>
+                <strong>Base própria da oficina</strong> — placa já conhecida responde na
+                hora, sem custo.
+              </li>
+              <li>
+                <strong>Consulta assistida</strong> — o atendente abre a consulta no próprio
+                navegador e o sistema guarda o resultado.
+              </li>
+              <li>
+                <strong>Consulta automática no servidor</strong> — tentada quando a assistida
+                não resolve.
+              </li>
+              <li>
+                <strong>API paga</strong> (abaixo) — último recurso, opcional.
+              </li>
+            </ol>
             <p className="text-muted-foreground">
-              Sem os tokens o sistema continua funcionando: usa apenas a base própria e,
-              quando a placa é nova, abre o cadastro manual.
+              Cada placa consultada fica salva: da segunda vez em diante ela não consome
+              nenhuma consulta. Sem configurar nada aqui, o sistema já funciona pelas
+              camadas gratuitas.
             </p>
           </AlertDescription>
         </Alert>
 
         {/* Passo a passo */}
         <div className="rounded-lg border bg-muted/40 p-4">
-          <p className="mb-3 text-sm font-semibold">Como obter os tokens gratuitos</p>
+          <p className="mb-1 text-sm font-semibold">
+            API paga (opcional) — como obter os tokens
+          </p>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Só é necessária se você quiser um quarto nível de garantia. As camadas
+            gratuitas atendem a maioria dos casos.
+          </p>
           <ol className="space-y-3">
             {STEPS.map((step, index) => (
               <li key={step.title} className="flex gap-3">
@@ -189,9 +209,10 @@ export function PlateLookupSection({
         {/* Ativação */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <Label htmlFor="plate-lookup-enabled">Ativar consulta automática</Label>
+            <Label htmlFor="plate-lookup-enabled">Ativar consultas externas</Label>
             <p className="text-sm text-muted-foreground">
-              Quando desligado, apenas a base própria da oficina é usada.
+              Liga as camadas 2 a 4. Quando desligado, apenas a base própria da oficina
+              é usada.
             </p>
           </div>
           <Switch

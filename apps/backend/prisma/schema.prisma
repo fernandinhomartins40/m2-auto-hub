@@ -897,10 +897,15 @@ model VehiclePlateLookup {
   fuel          String?
   city          String?
   state         String?
+  displacement  String?
+  power         String?
   // Resposta bruta do provedor, para reprocessar sem gastar nova consulta.
   rawResponse   Json?
-  // Provedor que originou o registro (ex.: "apibrasil").
+  // Provedor que originou o registro (ex.: "apibrasil", "placafipe").
   provider      String
+  // Como o dado chegou: "assisted" (navegador do atendente), "server"
+  // (Playwright no servidor), "api" (provedor pago) ou "manual".
+  origin        String  @default("api")
   // Numero de vezes que o cache evitou uma chamada externa.
   hitCount      Int      @default(0)
   lastAccessAt  DateTime @default(now())

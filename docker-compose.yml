@@ -30,6 +30,20 @@ services:
       timeout: 10s
       retries: 5
 
+  # Consulta de placa em navegador real (headful sobre Xvfb). E o fallback do
+  # fluxo assistido, quando o navegador do atendente nao resolve.
+  plate-scraper:
+    build:
+      context: ./services/plate-scraper
+    container_name: m2-plate-scraper
+    restart: unless-stopped
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   backend:
     build:
       context: ./apps/backend
@@ -53,6 +67,8 @@ services:
       COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
       ALPR_SERVICE_URL: http://alpr:8000
+      PLATE_SCRAPER_URL: http://plate-scraper:8100
+      PLATE_SCRAPER_ENABLED: ${PLATE_SCRAPER_ENABLED:-true}
       PLATE_LOOKUP_API_URL: ${PLATE_LOOKUP_API_URL:-https://gateway.apibrasil.io/api/v2/vehicles}
       PLATE_LOOKUP_BEARER_TOKEN: ${PLATE_LOOKUP_BEARER_TOKEN:-}
       PLATE_LOOKUP_DEVICE_TOKEN: ${PLATE_LOOKUP_DEVICE_TOKEN:-}

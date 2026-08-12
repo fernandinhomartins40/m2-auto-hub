@@ -424,6 +424,9 @@ export interface PlateTechnicalData {
   state: string | null;
   source: 'cache' | 'external';
   provider: string;
+  origin?: string;
+  displacement?: string | null;
+  power?: string | null;
 }
 
 export interface VehicleLookupResult {
@@ -1155,6 +1158,28 @@ class AdminService {
   async lookupVehicleByPlate(plate: string): Promise<VehicleLookupResult> {
     const response = await apiClient.get('/admin/vehicles/lookup', {
       params: { plate },
+    });
+
+    return response.data;
+  }
+
+  /** URL pública de consulta, para abrir no navegador do atendente. */
+  async getAssistedLookupUrl(plate: string): Promise<{ plate: string; url: string }> {
+    const response = await apiClient.get('/admin/vehicles/assisted-url', {
+      params: { plate },
+    });
+
+    return response.data;
+  }
+
+  /** Envia o texto da página lida pelo atendente para extração e cache. */
+  async saveAssistedLookupResult(
+    plate: string,
+    pageText: string
+  ): Promise<{ found: boolean; technicalData?: PlateTechnicalData }> {
+    const response = await apiClient.post('/admin/vehicles/assisted-result', {
+      plate,
+      pageText,
     });
 
     return response.data;
