@@ -99,6 +99,12 @@ log "Starting alpr"
 compose up -d --no-build --no-deps alpr
 wait_healthy alpr 18 5
 
+log "Starting plate-scraper"
+compose up -d --no-build --no-deps plate-scraper
+# A consulta de placa degrada para o cadastro manual se este servico cair,
+# entao um scraper doente nao deve abortar o deploy inteiro.
+wait_healthy plate-scraper 24 5 || log "AVISO: plate-scraper nao ficou saudavel; consulta de placa cai no cadastro manual"
+
 log "Starting backend"
 compose up -d --no-build --no-deps backend
 wait_healthy backend 18 5
