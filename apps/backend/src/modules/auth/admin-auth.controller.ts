@@ -3,6 +3,7 @@ import { AdminAuthService } from './admin-auth.service.js';
 import { adminLoginSchema } from './dto/admin-login.dto.js';
 import { createAdminSchema } from './dto/create-admin.dto.js';
 import { changePasswordSchema } from './dto/change-password.dto.js';
+import { updateAdminProfileSchema } from './dto/update-profile.dto.js';
 import { logger } from '@shared/utils/logger.util.js';
 import {
   createClearCookieOptions,
@@ -81,9 +82,10 @@ export class AdminAuthController {
         throw new Error('Admin not authenticated');
       }
 
+      const dto = updateAdminProfileSchema.parse(req.body);
       const admin = await this.adminAuthService.updateProfile(
         req.admin.adminId,
-        req.body
+        dto
       );
 
       res.status(200).json({

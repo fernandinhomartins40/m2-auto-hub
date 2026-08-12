@@ -52,6 +52,7 @@ import AdminUsersSection from "./AdminUsersSection";
 import { PromotionsManagement } from "./PromotionsManagement";
 import { PwaSettingsContent } from "./PwaSettingsContent";
 import { SettingsContent } from "./SettingsContent";
+import { AdminAccountContent } from "./AdminAccountContent";
 import { CustomerRelationshipContent } from "./CustomerRelationshipContent";
 import { AdminSupportContent } from "./AdminSupportContent";
 import LoyaltyManagement from "./LoyaltyManagement";
@@ -2855,6 +2856,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         return <PwaSettingsContent />;
       case 'settings':
         return <SettingsContent />;
+      case 'account':
+        return <AdminAccountContent />;
       default:
         return renderDashboard();
     }

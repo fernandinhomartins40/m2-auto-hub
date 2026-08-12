@@ -13,6 +13,19 @@ import type { Customer, Address, Order, OrderItem, RegisterRequest } from "@mori
 export type { Customer, Address, Order, OrderItem } from "@moria/types";
 export type RegisterData = RegisterRequest;
 
+/**
+ * Payload de atualização de perfil. `currentPassword` não é um campo do
+ * cliente: acompanha a requisição apenas para autorizar a troca de email.
+ */
+export interface UpdateProfilePayload {
+  name?: string;
+  email?: string;
+  phone?: string;
+  cpf?: string;
+  birthDate?: string;
+  currentPassword?: string;
+}
+
 interface AuthState {
   customer: Customer | null;
   isAuthenticated: boolean;
@@ -26,7 +39,7 @@ export interface AuthContextType {
   login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  updateProfile: (data: Partial<Customer>) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (data: UpdateProfilePayload) => Promise<{ success: boolean; error?: string }>;
   addAddress: (address: AddressPayload) => Promise<{ success: boolean; error?: string }>;
   updateAddress: (id: string, address: Partial<AddressPayload>) => Promise<{ success: boolean; error?: string }>;
   deleteAddress: (id: string) => Promise<{ success: boolean; error?: string }>;
@@ -179,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateProfile = async (data: Partial<Customer>) => {
+  const updateProfile = async (data: UpdateProfilePayload) => {
     if (!state.customer) return { success: false, error: "Usuário não autenticado" };
 
     try {

@@ -6,6 +6,7 @@ import { ApiError } from '@shared/utils/error.util.js';
 import { AdminLoginDto } from './dto/admin-login.dto.js';
 import { CreateAdminDto } from './dto/create-admin.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+import { UpdateAdminProfileDto } from './dto/update-profile.dto.js';
 import { logger } from '@shared/utils/logger.util.js';
 
 export interface AdminAuthResponse {
@@ -102,13 +103,48 @@ export class AdminAuthService {
 
   /**
    * Update admin profile
+   *
+   * Apenas nome e email — trocar o email exige a senha atual, por ser o
+   * identificador de login.
    */
   async updateProfile(
     adminId: string,
-    data: {
-      name?: string;
-    }
+    dto: UpdateAdminProfileDto
   ): Promise<Omit<Admin, 'password'>> {
+    const current = await prisma.admin.findUnique({ where: { id: adminId } });
+
+    if (!current) {
+      throw ApiError.notFound('Admin not found');
+    }
+
+    const data: { name?: string; email?: string } = {};
+
+    if (dto.name !== undefined) {
+      data.name = dto.name;
+    }
+
+    if (dto.email !== undefined && dto.email !== current.email) {
+      const isPasswordValid = await HashUtil.comparePassword(
+        dto.currentPassword ?? '',
+        current.password
+      );
+
+      if (!isPasswordValid) {
+        logger.warn(`Email change failed - invalid password: ${current.email}`);
+        throw ApiError.unauthorized('Current password is incorrect');
+      }
+
+      const existing = await prisma.admin.findFirst({
+        where: { email: dto.email, NOT: { id: adminId } },
+      });
+
+      if (existing) {
+        throw ApiError.conflict('Email already in use');
+      }
+
+      data.email = dto.email;
+    }
+
     const admin = await prisma.admin.update({
       where: { id: adminId },
       data,

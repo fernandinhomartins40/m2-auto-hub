@@ -1,11 +1,13 @@
 // src/api/errorHandler.ts
 import { AxiosError } from 'axios';
+import { translateApiMessage } from '@/lib/apiError';
 
 interface ApiErrorResponse {
   message?: string;
   error?: string;
   code?: string;
-  details?: Record<string, unknown>;
+  // O middleware de erro devolve os erros de validação do Zod como array.
+  details?: Array<{ field?: string; message?: string }> | Record<string, unknown>;
 }
 
 export class ApiError extends Error {
@@ -13,7 +15,7 @@ export class ApiError extends Error {
     message: string,
     public code?: string,
     public status?: number,
-    public details?: Record<string, unknown>
+    public details?: ApiErrorResponse['details']
   ) {
     super(message);
     this.name = 'ApiError';
@@ -32,10 +34,19 @@ const isAxiosError = (error: unknown): error is AxiosError<ApiErrorResponse> => 
 export const handleApiError = (error: unknown): ApiError => {
   if (isAxiosError(error)) {
     if (error.response) {
-      // Erro de resposta do servidor
+      // Erro de resposta do servidor.
+      // Nos erros de validação do Zod a mensagem útil fica em details[], já que
+      // `error` traz apenas "Validation failed".
       const { status, data } = error.response;
+      const detail = Array.isArray(data?.details)
+        ? (data.details[0] as { message?: string } | undefined)?.message
+        : undefined;
+      const rawMessage = detail || data?.message || data?.error;
+
       return new ApiError(
-        data.message || `Erro ${status}: ${data.error || 'Ocorreu um erro inesperado'}`,
+        rawMessage
+          ? translateApiMessage(rawMessage)
+          : `Erro ${status}: Ocorreu um erro inesperado`,
         data.code || 'API_ERROR',
         status,
         data.details

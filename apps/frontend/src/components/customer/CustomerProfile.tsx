@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { PasswordInput } from "../ui/password-input";
 import { isPasswordStrong } from "@/lib/passwordUtils";
+import { readApiError } from "@/lib/apiError";
 
 const emptyAddressForm: AddressPayload = {
   type: 'HOME',
@@ -43,6 +44,25 @@ const emptyAddressForm: AddressPayload = {
   isDefault: false,
 };
 
+/**
+ * O input `type="date"` só aceita `YYYY-MM-DD`, mas a API devolve a data em ISO
+ * completo. Sem esse recorte o campo aparece vazio mesmo com data cadastrada.
+ */
+function toDateInputValue(value?: string | null) {
+  if (!value) return '';
+  return value.slice(0, 10);
+}
+
+function buildProfileForm(customer: { name?: string; email?: string; phone?: string; cpf?: string | null; birthDate?: string | null } | null) {
+  return {
+    name: customer?.name || '',
+    email: customer?.email || '',
+    phone: customer?.phone || '',
+    cpf: customer?.cpf || '',
+    birthDate: toDateInputValue(customer?.birthDate),
+  };
+}
+
 export function CustomerProfile() {
   const { customer, updateProfile, addAddress, updateAddress, deleteAddress } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -50,13 +70,8 @@ export function CustomerProfile() {
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
-  const [profileForm, setProfileForm] = useState({
-    name: customer?.name || '',
-    email: customer?.email || '',
-    phone: customer?.phone || '',
-    cpf: customer?.cpf || '',
-    birthDate: customer?.birthDate || '',
-  });
+  const [profileForm, setProfileForm] = useState(() => buildProfileForm(customer));
+  const [profilePassword, setProfilePassword] = useState('');
 
   const [addressForm, setAddressForm] = useState<AddressPayload>(emptyAddressForm);
 
@@ -67,14 +82,37 @@ export function CustomerProfile() {
 
   if (!customer) return null;
 
+  const emailChanged =
+    profileForm.email.trim().toLowerCase() !== (customer?.email || '').toLowerCase();
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!profileForm.name.trim()) {
+      toast.error("Nome é obrigatório");
+      return;
+    }
+
+    if (emailChanged && !profilePassword) {
+      toast.error("Informe a senha atual para alterar o email");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await updateProfile(profileForm);
+      const result = await updateProfile({
+        name: profileForm.name.trim(),
+        email: profileForm.email.trim(),
+        phone: profileForm.phone.trim(),
+        cpf: profileForm.cpf.trim(),
+        birthDate: profileForm.birthDate,
+        ...(emailChanged ? { currentPassword: profilePassword } : {}),
+      });
+
       if (result.success) {
         toast.success("Perfil atualizado com sucesso!");
+        setProfilePassword('');
         setIsEditing(false);
       } else {
         toast.error(result.error || "Erro ao atualizar perfil");
@@ -229,8 +267,7 @@ export function CustomerProfile() {
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        const error = await response.json();
-        toast.error(error.message || "Erro ao alterar senha");
+        toast.error(await readApiError(response, "Erro ao alterar senha"));
       }
     } catch (error) {
       console.error('Error changing password:', error);
@@ -273,13 +310,8 @@ export function CustomerProfile() {
                   variant={isEditing ? "outline" : "default"}
                   onClick={() => {
                     if (isEditing) {
-                      setProfileForm({
-                        name: customer.name || '',
-                        email: customer.email || '',
-                        phone: customer.phone || '',
-                        cpf: customer.cpf || '',
-                        birthDate: customer.birthDate || '',
-                      });
+                      setProfileForm(buildProfileForm(customer));
+                      setProfilePassword('');
                     }
                     setIsEditing(!isEditing);
                   }}
@@ -368,6 +400,24 @@ export function CustomerProfile() {
                     </div>
                   </div>
                 </div>
+
+                {isEditing && emailChanged && (
+                  <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <Label htmlFor="profile-email-password">
+                      Senha atual (necessária para alterar o email)
+                    </Label>
+                    <PasswordInput
+                      id="profile-email-password"
+                      value={profilePassword}
+                      onChange={(e) => setProfilePassword(e.target.value)}
+                      placeholder="Digite sua senha atual"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      O email é usado para entrar na sua conta.
+                    </p>
+                  </div>
+                )}
 
                 {isEditing && (
                   <div className="flex justify-end space-x-2 pt-4">

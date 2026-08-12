@@ -7,6 +7,7 @@ import { PhoneUtil } from '@shared/utils/phone.util.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+import { UpdateCustomerProfileDto } from './dto/update-profile.dto.js';
 import { logger } from '@shared/utils/logger.util.js';
 
 export interface AuthResponse {
@@ -203,47 +204,88 @@ export class AuthService {
 
   /**
    * Update customer profile
+   *
+   * Trocar o email exige a senha atual, por ser o identificador de login.
    */
   async updateProfile(
     customerId: string,
-    data: {
-      name?: string;
-      phone?: string;
-      cpf?: string;
-      birthDate?: Date;
-    }
+    dto: UpdateCustomerProfileDto
   ): Promise<Omit<Customer, 'password'>> {
-    const normalizedCpf = data.cpf ? data.cpf.replace(/\D/g, '') : undefined;
-    const normalizedPhone = data.phone ? PhoneUtil.normalize(data.phone) : undefined;
+    const current = await prisma.customer.findUnique({
+      where: { id: customerId },
+    });
 
-    if (normalizedPhone) {
+    if (!current) {
+      throw ApiError.notFound('Customer not found');
+    }
+
+    const data: Prisma.CustomerUpdateInput = {};
+
+    if (dto.name !== undefined) {
+      data.name = dto.name;
+    }
+
+    if (dto.phone !== undefined) {
+      const normalizedPhone = PhoneUtil.normalize(dto.phone);
       const existingPhoneCustomer = await this.findCustomerByPhone(normalizedPhone);
 
       if (existingPhoneCustomer && existingPhoneCustomer.id !== customerId) {
         throw ApiError.conflict('Phone already in use');
       }
+
+      data.phone = normalizedPhone;
     }
 
-    if (normalizedCpf) {
-      const existingCpf = await prisma.customer.findFirst({
-        where: {
-          cpf: normalizedCpf,
-          NOT: { id: customerId },
-        },
+    if (dto.cpf !== undefined) {
+      const normalizedCpf = dto.cpf.replace(/\D/g, '');
+
+      if (normalizedCpf) {
+        const existingCpf = await prisma.customer.findFirst({
+          where: {
+            cpf: normalizedCpf,
+            NOT: { id: customerId },
+          },
+        });
+
+        if (existingCpf) {
+          throw ApiError.conflict('CPF already in use');
+        }
+
+        data.cpf = normalizedCpf;
+      } else {
+        data.cpf = null;
+      }
+    }
+
+    if (dto.birthDate !== undefined) {
+      data.birthDate = dto.birthDate ? new Date(dto.birthDate) : null;
+    }
+
+    if (dto.email !== undefined && dto.email !== current.email) {
+      const isPasswordValid = await HashUtil.comparePassword(
+        dto.currentPassword ?? '',
+        current.password
+      );
+
+      if (!isPasswordValid) {
+        logger.warn(`Email change failed - invalid password: ${current.email}`);
+        throw ApiError.unauthorized('Current password is incorrect');
+      }
+
+      const existingEmail = await prisma.customer.findFirst({
+        where: { email: dto.email, NOT: { id: customerId } },
       });
 
-      if (existingCpf) {
-        throw ApiError.conflict('CPF already in use');
+      if (existingEmail) {
+        throw ApiError.conflict('Email already in use');
       }
+
+      data.email = dto.email;
     }
 
     const customer = await prisma.customer.update({
       where: { id: customerId },
-      data: {
-        ...data,
-        ...(normalizedPhone !== undefined ? { phone: normalizedPhone } : {}),
-        ...(normalizedCpf !== undefined ? { cpf: normalizedCpf } : {}),
-      },
+      data,
     });
 
     const { password, ...customerWithoutPassword } = customer;

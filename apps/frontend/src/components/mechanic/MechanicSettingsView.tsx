@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { PasswordInput } from "../ui/password-input";
 import { isPasswordStrong } from "@/lib/passwordUtils";
+import { readApiError } from "@/lib/apiError";
 
 const API_URL = (import.meta.env.VITE_API_BASE_URL?.trim() || '/api').replace(/\/$/, '');
 
@@ -61,11 +62,13 @@ interface Preferences {
 }
 
 export default function MechanicSettingsView() {
-  const { admin } = useAdminAuth();
+  const { admin, refreshProfile } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("profile");
 
   // Profile state
   const [name, setName] = useState(admin?.name || "");
+  const [email, setEmail] = useState(admin?.email || "");
+  const [profilePassword, setProfilePassword] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // Password state
@@ -88,6 +91,12 @@ export default function MechanicSettingsView() {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
   const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+
+  // Mantém o formulário em sincronia quando o perfil chega/é atualizado.
+  useEffect(() => {
+    setName(admin?.name || "");
+    setEmail(admin?.email || "");
+  }, [admin?.name, admin?.email]);
 
   // Load data based on active tab
   useEffect(() => {
@@ -159,9 +168,26 @@ export default function MechanicSettingsView() {
     }
   };
 
+  const emailChanged = email.trim().toLowerCase() !== (admin?.email || "").toLowerCase();
+
   const handleUpdateProfile = async () => {
     if (!name.trim()) {
       toast.error("Nome é obrigatório");
+      return;
+    }
+
+    if (name.trim().length < 3) {
+      toast.error("O nome deve ter pelo menos 3 caracteres");
+      return;
+    }
+
+    if (!email.trim()) {
+      toast.error("Email é obrigatório");
+      return;
+    }
+
+    if (emailChanged && !profilePassword) {
+      toast.error("Informe a senha atual para alterar o email");
       return;
     }
 
@@ -171,14 +197,19 @@ export default function MechanicSettingsView() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          ...(emailChanged ? { currentPassword: profilePassword } : {}),
+        }),
       });
 
       if (response.ok) {
         toast.success("Perfil atualizado com sucesso");
+        setProfilePassword("");
+        await refreshProfile();
       } else {
-        const error = await response.json();
-        toast.error(error.message || "Erro ao atualizar perfil");
+        toast.error(await readApiError(response, "Erro ao atualizar perfil"));
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -219,8 +250,7 @@ export default function MechanicSettingsView() {
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        const error = await response.json();
-        toast.error(error.message || "Erro ao alterar senha");
+        toast.error(await readApiError(response, "Erro ao alterar senha"));
       }
     } catch (error) {
       console.error('Error changing password:', error);
@@ -245,8 +275,7 @@ export default function MechanicSettingsView() {
       if (response.ok) {
         toast.success("Preferências salvas com sucesso");
       } else {
-        const error = await response.json();
-        toast.error(error.message || "Erro ao salvar preferências");
+        toast.error(await readApiError(response, "Erro ao salvar preferências"));
       }
     } catch (error) {
       console.error('Error saving preferences:', error);
@@ -327,12 +356,31 @@ export default function MechanicSettingsView() {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  value={admin?.email || ""}
-                  disabled
-                  className="bg-gray-100"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@empresa.com"
+                  disabled={isUpdatingProfile}
                 />
-                <p className="text-xs text-gray-500">O email não pode ser alterado</p>
+                <p className="text-xs text-gray-500">
+                  Este é o email usado para entrar no painel
+                </p>
               </div>
+
+              {emailChanged && (
+                <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <Label htmlFor="profilePassword">
+                    Senha atual (necessária para alterar o email)
+                  </Label>
+                  <PasswordInput
+                    id="profilePassword"
+                    value={profilePassword}
+                    onChange={(e) => setProfilePassword(e.target.value)}
+                    placeholder="Digite sua senha atual"
+                    disabled={isUpdatingProfile}
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Função</Label>

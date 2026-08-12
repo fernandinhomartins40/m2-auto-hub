@@ -8,6 +8,8 @@ interface Admin {
   role: "SUPER_ADMIN" | "ADMIN" | "MANAGER" | "STAFF";
   status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
   permissions?: string[];
+  createdAt?: string;
+  lastLoginAt?: string | null;
 }
 
 interface AdminAuthState {
@@ -22,6 +24,7 @@ interface AdminAuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
   hasRole: (role: string | string[]) => boolean;
   hasMinRole: (minRole: string) => boolean;
 }
@@ -166,6 +169,22 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /** Recarrega o perfil do servidor após uma edição de conta. */
+  const refreshProfile = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/admin/profile`, {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setState((prev) => ({ ...prev, admin: data.data, isAuthenticated: true }));
+      }
+    } catch (error) {
+      console.error("Erro ao recarregar perfil:", error);
+    }
+  };
+
   const hasRole = (roles: string | string[]) => {
     if (!state.admin) return false;
     const roleArray = Array.isArray(roles) ? roles : [roles];
@@ -185,6 +204,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     isLoading: state.isLoading,
     login,
     logout,
+    refreshProfile,
     hasRole,
     hasMinRole,
   };

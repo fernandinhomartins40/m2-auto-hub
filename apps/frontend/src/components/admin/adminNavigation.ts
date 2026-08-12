@@ -16,6 +16,7 @@ import {
   Smartphone,
   Store,
   Tag,
+  UserCircle,
   UserCog,
   Users,
   Wrench,
@@ -56,6 +57,7 @@ export const adminSidebarItems: AdminNavItem[] = [
   { id: "promotions", label: "Promoções", icon: Percent, section: "Marketing" },
   { id: "landing-page", label: "Landing Page", icon: Palette, section: "Marketing" },
 
+  { id: "account", label: "Minha Conta", icon: UserCircle, section: "Gestão" },
   { id: "reports", label: "Relatórios", icon: BarChart3, section: "Gestão" },
   { id: "pwa-settings", label: "PWA", icon: Smartphone, section: "Gestão" },
   { id: "settings", label: "Configurações", icon: Settings, section: "Gestão" },

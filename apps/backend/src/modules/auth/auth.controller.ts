@@ -3,6 +3,7 @@ import { AuthService } from './auth.service.js';
 import { loginSchema } from './dto/login.dto.js';
 import { registerSchema } from './dto/register.dto.js';
 import { changePasswordSchema } from './dto/change-password.dto.js';
+import { updateCustomerProfileSchema } from './dto/update-profile.dto.js';
 import {
   createClearCookieOptions,
   createSessionCookieOptions,
@@ -88,9 +89,10 @@ export class AuthController {
         throw new Error('User not authenticated');
       }
 
+      const dto = updateCustomerProfileSchema.parse(req.body);
       const customer = await this.authService.updateProfile(
         req.user.customerId,
-        req.body
+        dto
       );
 
       res.status(200).json({

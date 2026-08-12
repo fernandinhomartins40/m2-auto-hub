@@ -10,6 +10,19 @@ interface ApiResponse<T> {
   data: T;
 }
 
+/**
+ * `currentPassword` só é exigido quando o email muda — o backend usa esse
+ * campo para autorizar a troca do identificador de login.
+ */
+export interface UpdateProfileRequest {
+  name?: string;
+  email?: string;
+  phone?: string;
+  cpf?: string;
+  birthDate?: string;
+  currentPassword?: string;
+}
+
 class AuthService {
   async login(data: LoginRequest): Promise<ApiResponse<{ customer: Customer }>> {
     const response = await apiClient.post<ApiResponse<{ customer: Customer }>>('/auth/login', data);
@@ -31,7 +44,7 @@ class AuthService {
     return response.data.data;
   }
 
-  async updateProfile(data: Partial<Customer>): Promise<Customer> {
+  async updateProfile(data: UpdateProfileRequest): Promise<Customer> {
     const response = await apiClient.put<ApiResponse<Customer>>('/auth/profile', data);
     return response.data.data;
   }

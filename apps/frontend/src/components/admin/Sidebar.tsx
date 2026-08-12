@@ -95,7 +95,11 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
 
       <div className="hidden space-y-2 border-t border-gray-700 p-4 md:block">
         {admin ? (
-          <div className="mb-4 rounded-xl border border-gray-700 bg-gray-800/40 p-3">
+          <button
+            type="button"
+            onClick={() => onTabChange("account")}
+            className="mb-4 w-full rounded-xl border border-gray-700 bg-gray-800/40 p-3 text-left transition-colors hover:border-moria-orange/40 hover:bg-gray-800"
+          >
             <div className="flex items-center space-x-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-moria-orange">
                 <User className="h-5 w-5 text-white" />
@@ -105,7 +109,7 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
                 <p className="truncate text-xs text-gray-400">{admin.role.replace(/_/g, " ")}</p>
               </div>
             </div>
-          </div>
+          </button>
         ) : null}
 
         <Link to="/">
