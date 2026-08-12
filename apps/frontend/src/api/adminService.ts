@@ -408,11 +408,30 @@ export interface AdminCustomerVehicle {
   updatedAt: string;
 }
 
+/**
+ * Dados tecnicos vindos do cache proprio de placas ou da consulta externa.
+ * Preenchido apenas quando o veiculo ainda nao esta no cadastro.
+ */
+export interface PlateTechnicalData {
+  plate: string;
+  brand: string | null;
+  model: string | null;
+  year: number | null;
+  color: string | null;
+  chassisNumber: string | null;
+  fuel: string | null;
+  city: string | null;
+  state: string | null;
+  source: 'cache' | 'external';
+  provider: string;
+}
+
 export interface VehicleLookupResult {
   found: boolean;
   plate: string;
   customer?: ProvisionalUser;
   vehicle?: AdminCustomerVehicle;
+  technicalData?: PlateTechnicalData;
 }
 
 export interface RecognizedPlateCandidate {

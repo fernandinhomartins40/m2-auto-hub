@@ -17,6 +17,11 @@ x-backend-env: &backend-env
   COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}
   COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
   ALPR_SERVICE_URL: http://alpr:8000
+  # Consulta de placa: sem os tokens, usa apenas a base propria de placas.
+  PLATE_LOOKUP_API_URL: ${PLATE_LOOKUP_API_URL:-https://gateway.apibrasil.io/api/v2/vehicles}
+  PLATE_LOOKUP_BEARER_TOKEN: ${PLATE_LOOKUP_BEARER_TOKEN:-}
+  PLATE_LOOKUP_DEVICE_TOKEN: ${PLATE_LOOKUP_DEVICE_TOKEN:-}
+  PLATE_LOOKUP_TIMEOUT_MS: ${PLATE_LOOKUP_TIMEOUT_MS:-8000}
   LOG_LEVEL: ${LOG_LEVEL:-info}
   # URL publica HTTPS usada para montar redirect/callback de OAuth e webhooks dos marketplaces
   APP_BASE_URL: ${APP_BASE_URL:-https://m2centerauto.com.br}

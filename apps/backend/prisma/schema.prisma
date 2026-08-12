@@ -881,6 +881,37 @@ model CustomerVehicle {
   @@map("customer_vehicles")
 }
 
+// Cache proprio de dados tecnicos de placas.
+//
+// Cada placa consultada na API externa e gravada aqui, formando a base propria
+// da oficina: a partir da segunda consulta a mesma placa nao gasta cota da API.
+// Guarda apenas dados tecnicos do veiculo - nunca dados do proprietario.
+model VehiclePlateLookup {
+  id            String  @id @default(uuid())
+  plate         String  @unique
+  brand         String?
+  model         String?
+  year          Int?
+  color         String?
+  chassisNumber String?
+  fuel          String?
+  city          String?
+  state         String?
+  // Resposta bruta do provedor, para reprocessar sem gastar nova consulta.
+  rawResponse   Json?
+  // Provedor que originou o registro (ex.: "apibrasil").
+  provider      String
+  // Numero de vezes que o cache evitou uma chamada externa.
+  hitCount      Int      @default(0)
+  lastAccessAt  DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([plate])
+  @@map("vehicle_plate_lookups")
+}
+
 // Categorias do Checklist
 model ChecklistCategory {
   id          String  @id @default(uuid())

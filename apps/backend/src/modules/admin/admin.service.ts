@@ -4,6 +4,7 @@ import { HashUtil } from '@shared/utils/hash.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
 import { PhoneUtil } from '@shared/utils/phone.util.js';
+import plateLookupService from '@shared/services/plate-lookup.service.js';
 import { randomUUID } from 'crypto';
 import {
   matchesRules,
@@ -796,6 +797,20 @@ export class AdminService {
         },
         customer: this.mapCustomerToResponse(vehicle.customer),
       };
+    }
+
+    // Nao esta no cadastro: tenta o cache proprio de placas e, se necessario,
+    // a consulta externa, para ao menos pre-preencher os dados do veiculo.
+    for (const normalizedPlate of possiblePlates) {
+      const technicalData = await plateLookupService.lookup(normalizedPlate);
+
+      if (technicalData) {
+        return {
+          found: false,
+          plate: technicalData.plate,
+          technicalData,
+        };
+      }
     }
 
     return {

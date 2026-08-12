@@ -140,7 +140,16 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         mileage: lookup.vehicle.mileage ?? null,
       });
     } else {
-      setOsInitial({ vehiclePlate: normalizePlate(plateInput) });
+      // Sem cadastro, mas com dados técnicos: já identifica o veículo na OS.
+      const technical = lookup?.technicalData;
+      const vehicleLabel = technical
+        ? [technical.brand, technical.model, technical.year].filter(Boolean).join(' ').trim()
+        : '';
+
+      setOsInitial({
+        vehiclePlate: normalizePlate(plateInput),
+        vehicleLabel: vehicleLabel || null,
+      });
     }
     setOsEditing(null);
     setOsModalOpen(true);
@@ -200,6 +209,41 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
                       Placa <strong>{formatPlate(normalizePlate(plateInput))}</strong> não encontrada no cadastro.
                     </AlertDescription>
                   </Alert>
+
+                  {/* Dados técnicos vindos da base própria ou da consulta externa:
+                      permitem abrir a OS já com o veículo identificado. */}
+                  {lookup?.technicalData && (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3">
+                      <div className="flex items-start gap-2">
+                        <Car className="h-4 w-4 mt-0.5 text-blue-600 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-blue-900">
+                            {[lookup.technicalData.brand, lookup.technicalData.model]
+                              .filter(Boolean)
+                              .join(' ') || 'Veículo identificado'}
+                            {lookup.technicalData.year ? ` ${lookup.technicalData.year}` : ''}
+                          </p>
+                          <p className="mt-1 text-sm text-blue-800">
+                            {[
+                              lookup.technicalData.color,
+                              lookup.technicalData.fuel,
+                              [lookup.technicalData.city, lookup.technicalData.state]
+                                .filter(Boolean)
+                                .join('/'),
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                          <p className="mt-1.5 text-xs text-blue-700">
+                            {lookup.technicalData.source === 'cache'
+                              ? 'Dados da base própria da oficina.'
+                              : 'Dados da consulta veicular. Confirme antes de salvar.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <Button onClick={startNewOs} className="w-full bg-moria-orange hover:bg-moria-orange/90">
                     <Plus className="h-4 w-4 mr-2" /> Criar OS com esta placa
                   </Button>
