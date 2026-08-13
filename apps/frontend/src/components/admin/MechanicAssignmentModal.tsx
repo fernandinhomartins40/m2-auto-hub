@@ -148,7 +148,7 @@ export function MechanicAssignmentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-3xl sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
             {isTransfer ? (

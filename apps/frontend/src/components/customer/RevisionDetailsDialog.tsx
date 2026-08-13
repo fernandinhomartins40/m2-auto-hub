@@ -114,7 +114,7 @@ export function RevisionDetailsDialog({ revision, isOpen, onClose }: RevisionDet
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-2xl flex items-center gap-2">
             <FileText className="h-6 w-6 text-moria-orange" />

@@ -193,7 +193,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Camera className="h-5 w-5" /> Consulta por Placa

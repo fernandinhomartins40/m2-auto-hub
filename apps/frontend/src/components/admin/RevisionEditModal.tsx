@@ -182,7 +182,7 @@ export function RevisionEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-h-[calc(100vh-9rem)] sm:max-h-[calc(100vh-4rem)] my-4 sm:my-auto flex flex-col p-0">
+      <DialogContent className="sm:max-w-6xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] sm:max-h-[calc(100vh-4rem)] my-4 sm:my-auto flex flex-col p-0">
         {/* Compact Header */}
         <DialogHeader className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2">
           <DialogTitle className="text-base sm:text-lg font-bold leading-tight">

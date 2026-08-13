@@ -3,14 +3,16 @@ import * as React from "react";
 import { DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
+// Prefixadas com sm: porque no celular o modal ocupa a tela inteira - um
+// max-w sem prefixo deixaria a caixa estreita no meio da tela.
 const sizeClasses = {
-  sm: "max-w-[32rem]",
-  md: "max-w-[40rem]",
-  lg: "max-w-[48rem]",
-  xl: "max-w-[56rem]",
-  "2xl": "max-w-[64rem]",
-  "3xl": "max-w-[72rem]",
-  full: "max-w-[min(96rem,100%)]",
+  sm: "sm:max-w-[32rem]",
+  md: "sm:max-w-[40rem]",
+  lg: "sm:max-w-[48rem]",
+  xl: "sm:max-w-[56rem]",
+  "2xl": "sm:max-w-[64rem]",
+  "3xl": "sm:max-w-[72rem]",
+  full: "sm:max-w-[min(96rem,100%)]",
 } as const;
 
 export type ResponsiveDialogSize = keyof typeof sizeClasses;
@@ -26,7 +28,9 @@ export const ResponsiveDialogContent = React.forwardRef<
   <DialogContent
     ref={ref}
     className={cn(
-      "w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] md:w-[calc(100vw-4rem)] max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl shadow-2xl",
+      // A geometria do celular vem do DialogContent (tela cheia); aqui só o
+      // que vale do sm: para cima, senão a caixa flutuante volta no mobile.
+      "sm:w-[calc(100vw-2rem)] md:w-[calc(100vw-4rem)] sm:max-h-[calc(100vh-3rem)] sm:overflow-hidden sm:rounded-2xl sm:shadow-2xl",
       sizeClasses[size],
       className
     )}

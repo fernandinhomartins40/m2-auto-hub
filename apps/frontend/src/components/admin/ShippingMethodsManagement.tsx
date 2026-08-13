@@ -292,7 +292,7 @@ export function ShippingMethodsManagement() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)]">
+        <DialogContent className="sm:max-w-md sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)]">
           <DialogHeader>
             <DialogTitle>
               {editingMethod ? "Editar Método de Envio" : "Novo Método de Envio"}

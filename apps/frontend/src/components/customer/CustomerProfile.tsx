@@ -616,7 +616,7 @@ export function CustomerProfile() {
       </Tabs>
 
       <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingAddress ? 'Editar Endereço' : 'Novo Endereço'}

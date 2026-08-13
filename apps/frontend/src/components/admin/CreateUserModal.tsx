@@ -121,7 +121,7 @@ export default function CreateUserModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden p-0 flex flex-col gap-0">
+      <DialogContent className="sm:max-w-[500px] sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden p-0 flex flex-col gap-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle>Criar Novo Usuário</DialogTitle>
         </DialogHeader>

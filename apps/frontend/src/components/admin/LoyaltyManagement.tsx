@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   adjustPoints,
   createReward,
@@ -194,7 +194,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar fidelidade',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel carregar o programa de fidelidade.',
+        description: error.response?.data?.error || 'Não foi possível carregar o programa de fidelidade.',
         variant: 'destructive',
       });
     } finally {
@@ -210,7 +210,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar recompensas',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel carregar as recompensas.',
+        description: error.response?.data?.error || 'Não foi possível carregar as recompensas.',
         variant: 'destructive',
       });
     }
@@ -224,7 +224,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar clientes',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel carregar os clientes com pontos.',
+        description: error.response?.data?.error || 'Não foi possível carregar os clientes com pontos.',
         variant: 'destructive',
       });
     }
@@ -238,7 +238,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar resgates',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel carregar os resgates.',
+        description: error.response?.data?.error || 'Não foi possível carregar os resgates.',
         variant: 'destructive',
       });
     }
@@ -258,7 +258,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao salvar configuracoes',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel salvar as regras do programa.',
+        description: error.response?.data?.error || 'Não foi possível salvar as regras do programa.',
         variant: 'destructive',
       });
     } finally {
@@ -287,7 +287,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao salvar recompensa',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel salvar a recompensa.',
+        description: error.response?.data?.error || 'Não foi possível salvar a recompensa.',
         variant: 'destructive',
       });
     } finally {
@@ -305,12 +305,12 @@ export default function LoyaltyManagement() {
       await Promise.all([loadRewards(rewardsPage), loadOverview()]);
       toast({
         title: 'Recompensa removida',
-        description: 'A recompensa foi excluÃ­da do catÃ¡logo.',
+        description: 'A recompensa foi excluída do catálogo.',
       });
     } catch (error: any) {
       toast({
         title: 'Erro ao excluir recompensa',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel excluir a recompensa.',
+        description: error.response?.data?.error || 'Não foi possível excluir a recompensa.',
         variant: 'destructive',
       });
     }
@@ -341,7 +341,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao ajustar pontos',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel ajustar os pontos do cliente.',
+        description: error.response?.data?.error || 'Não foi possível ajustar os pontos do cliente.',
         variant: 'destructive',
       });
     } finally {
@@ -361,7 +361,7 @@ export default function LoyaltyManagement() {
     } catch (error: any) {
       toast({
         title: 'Erro ao usar resgate',
-        description: error.response?.data?.error || 'NÃ£o foi possÃ­vel marcar este resgate como utilizado.',
+        description: error.response?.data?.error || 'Não foi possível marcar este resgate como utilizado.',
         variant: 'destructive',
       });
     } finally {
@@ -623,7 +623,7 @@ export default function LoyaltyManagement() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="loyalty-program-description">DescriÃ§Ã£o curta</Label>
+                <Label htmlFor="loyalty-program-description">Descrição curta</Label>
                 <Textarea
                   id="loyalty-program-description"
                   value={settingsForm.programDescription}
@@ -792,7 +792,7 @@ export default function LoyaltyManagement() {
           {!rewards.length ? (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
-                Nenhuma recompensa cadastrada ainda. Crie a primeira opÃ§Ã£o de troca para ativar o catÃ¡logo do cliente.
+                Nenhuma recompensa cadastrada ainda. Crie a primeira opção de troca para ativar o catálogo do cliente.
               </CardContent>
             </Card>
           ) : null}
@@ -803,7 +803,7 @@ export default function LoyaltyManagement() {
                 Anterior
               </Button>
               <span className="text-sm text-muted-foreground">
-                PÃ¡gina {rewardsPage} de {rewardsTotalPages}
+                Página {rewardsPage} de {rewardsTotalPages}
               </span>
               <Button
                 variant="outline"
@@ -821,7 +821,7 @@ export default function LoyaltyManagement() {
             <CardHeader>
               <CardTitle>Clientes com saldo de pontos</CardTitle>
               <CardDescription>
-                Acompanhe quem esta acumulando saldo e faÃ§a ajustes manuais quando necessario.
+                Acompanhe quem esta acumulando saldo e faça ajustes manuais quando necessario.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -873,7 +873,7 @@ export default function LoyaltyManagement() {
                     Anterior
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    PÃ¡gina {customersPage} de {customersTotalPages}
+                    Página {customersPage} de {customersTotalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -933,10 +933,10 @@ export default function LoyaltyManagement() {
                           </Badge>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {redemption.customer?.name || 'Cliente'} â€¢ codigo {redemption.code} â€¢ {redemption.pointsSpent} pontos
+                          {redemption.customer?.name || 'Cliente'} • codigo {redemption.code} • {redemption.pointsSpent} pontos
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Criado em {formatDate(redemption.createdAt)} â€¢ validade {formatDate(redemption.expiresAt)}
+                          Criado em {formatDate(redemption.createdAt)} • validade {formatDate(redemption.expiresAt)}
                         </p>
                       </div>
 
@@ -976,7 +976,7 @@ export default function LoyaltyManagement() {
                     Anterior
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    PÃ¡gina {redemptionsPage} de {redemptionsTotalPages}
+                    Página {redemptionsPage} de {redemptionsTotalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -993,7 +993,7 @@ export default function LoyaltyManagement() {
       </Tabs>
 
       <Dialog open={rewardDialogOpen} onOpenChange={setRewardDialogOpen}>
-        <DialogContent className="max-h-[calc(100vh-4rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingReward ? 'Editar recompensa' : 'Nova recompensa'}</DialogTitle>
             <DialogDescription>
@@ -1013,7 +1013,7 @@ export default function LoyaltyManagement() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="reward-description">DescriÃ§Ã£o</Label>
+              <Label htmlFor="reward-description">Descrição</Label>
               <Textarea
                 id="reward-description"
                 rows={3}
@@ -1148,7 +1148,7 @@ export default function LoyaltyManagement() {
       </Dialog>
 
       <Dialog open={pointsDialogOpen} onOpenChange={setPointsDialogOpen}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Ajustar saldo de pontos</DialogTitle>
             <DialogDescription>

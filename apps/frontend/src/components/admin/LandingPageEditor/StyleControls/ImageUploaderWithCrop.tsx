@@ -447,7 +447,7 @@ export const ImageUploaderWithCrop = ({
 
       {/* Dialog de Crop */}
       <Dialog open={showCropper} onOpenChange={(open) => !open && handleCropCancel()}>
-        <DialogContent className="max-w-4xl w-[calc(100vw-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-6rem)] sm:max-h-[calc(100vh-4rem)] overflow-auto">
+        <DialogContent className="sm:max-w-4xl w-[calc(100vw-2rem)] sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)] overflow-auto">
           <DialogHeader>
             <DialogTitle>Ajustar Imagem</DialogTitle>
             <DialogDescription>

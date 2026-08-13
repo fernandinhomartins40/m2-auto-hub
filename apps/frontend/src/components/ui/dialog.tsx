@@ -29,14 +29,25 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    /** Mantém o formato de caixa centrada também no celular (avisos curtos). */
+    mobileAsSheet?: boolean
+  }
+>(({ className, children, mobileAsSheet = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[0.5rem] right-[0.5rem] top-[50%] z-50 grid w-[calc(100vw-1rem)] max-w-lg mx-auto translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-2xl max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-3rem)] sm:left-[50%] sm:right-auto sm:w-auto sm:translate-x-[-50%]",
+        // Base comum a todos os tamanhos.
+        "fixed z-50 grid gap-4 border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        // No celular o padrão é tela cheia: caixa flutuante com scroll interno
+        // esconde o botão de salvar sob o teclado e trava a rolagem.
+        mobileAsSheet
+          ? "left-[0.5rem] right-[0.5rem] top-[50%] w-[calc(100vw-1rem)] mx-auto translate-y-[-50%] rounded-2xl p-6 max-h-[calc(100vh-1rem)] data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          : "inset-0 w-screen h-[100dvh] max-h-[100dvh] rounded-none p-4 overflow-y-auto data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        // Do sm para cima volta a ser a caixa centrada de sempre.
+        "sm:inset-auto sm:left-[50%] sm:right-auto sm:top-[50%] sm:h-auto sm:w-auto sm:max-w-lg sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:p-6 sm:max-h-[calc(100vh-3rem)] sm:overflow-visible sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
       {...props}

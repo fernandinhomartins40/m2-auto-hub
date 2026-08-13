@@ -189,7 +189,7 @@ function CategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar categoria" : "Nova categoria de interação"}</DialogTitle>
           <DialogDescription>
@@ -460,7 +460,7 @@ function TemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+      <DialogContent className="sm:max-w-xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar template" : "Novo template de mensagem"}</DialogTitle>
           <DialogDescription>Use os campos entre chaves para personalizar automaticamente.</DialogDescription>

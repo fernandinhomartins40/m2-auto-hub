@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { AdminPageHeader } from './AdminPageHeader';
@@ -68,7 +68,7 @@ export function AdminProductsSection({
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
 
-  // Estados do dialog de confirmaÃ§Ã£o
+  // Estados do dialog de confirmação
   const [deleteDialog, setDeleteDialog] = useState({ open: false, productId: null, productName: '' });
 
   const categoryNames = useMemo(
@@ -156,7 +156,7 @@ export function AdminProductsSection({
     try {
       await refreshProductsView();
     } catch (refreshError) {
-      console.error('Erro ao atualizar lista de produtos apÃ³s salvar:', refreshError);
+      console.error('Erro ao atualizar lista de produtos após salvar:', refreshError);
     }
   };
 
@@ -330,7 +330,7 @@ export function AdminProductsSection({
               <p>
                 {searchTerm || statusFilter !== 'all'
                   ? 'Tente ajustar os filtros de busca'
-                  : 'Adicione produtos ao seu catÃ¡logo'
+                  : 'Adicione produtos ao seu catálogo'
                 }
               </p>
             </div>
@@ -346,7 +346,7 @@ export function AdminProductsSection({
                 return (
                   <div key={product.id} className="border rounded-lg p-3 sm:p-4 md:p-6 hover:border-moria-orange/50 transition-colors w-full max-w-full overflow-hidden">
                     <div className="flex flex-col gap-2.5 mb-3 sm:gap-3 sm:mb-4">
-                      {/* InformaÃ§Ãµes bÃ¡sicas */}
+                      {/* Informações básicas */}
                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2.5 sm:gap-3 w-full">
                         <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
                           {/* Miniatura do produto */}
@@ -357,7 +357,7 @@ export function AdminProductsSection({
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  // Fallback para Ã­cone se a imagem falhar
+                                  // Fallback para ícone se a imagem falhar
                                   e.currentTarget.style.display = 'none';
                                   e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-moria-orange text-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>';
                                 }}
@@ -401,12 +401,12 @@ export function AdminProductsSection({
                       </div>
                     </div>
 
-                    {/* InformaÃ§Ãµes detalhadas */}
+                    {/* Informações detalhadas */}
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-3 sm:mb-4">
                       <div className="flex items-start space-x-2 min-w-0">
                         <DollarSign className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0 flex-1">
-                          <span className="text-xs md:text-sm text-gray-600">PreÃ§o: </span>
+                          <span className="text-xs md:text-sm text-gray-600">Preço: </span>
                           <span className="font-medium text-xs md:text-sm break-words">
                             {product.promoPrice
                               ? formatPrice(product.promoPrice)
@@ -449,7 +449,7 @@ export function AdminProductsSection({
                       </div>
                     </div>
 
-                    {/* AÃ§Ãµes */}
+                    {/* Ações */}
                     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
                       <Button
                         variant="outline"
@@ -508,14 +508,14 @@ export function AdminProductsSection({
         onSaved={refreshProductsView}
       />
 
-      {/* Dialog de confirmaÃ§Ã£o de exclusÃ£o */}
+      {/* Dialog de confirmação de exclusão */}
       <AlertDialog open={deleteDialog.open} onOpenChange={handleCancelDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusÃ£o</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o produto "{deleteDialog.productName}"? 
-              Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -221,23 +221,19 @@
     overflow-y: auto;
   }
 
-  /* Dialog/Modal - Garantir margens laterais e espaço do menu fixo inferior */
-  /* EXCETO Drawers (que devem ficar na lateral) */
+  /* Dialog/Modal - no celular ocupam a tela inteira.
+     A caixa flutuante com margens obrigava scroll interno e escondia o botão
+     de salvar sob o teclado. EXCETO Drawers, que ficam na lateral. */
   body.store-page [data-radix-dialog-content]:not([data-drawer]):not(.drawer-content),
   body.store-page [role="dialog"]:not([data-drawer]):not(.drawer-content) {
-    /* Forçar margens laterais em mobile */
-    left: 1rem !important;
-    right: 1rem !important;
-    width: auto !important;
-    max-width: calc(100% - 2rem) !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-
-    /* Remover transform-x para não centralizar com translate */
-    transform: translateY(-50%) !important;
-
-    /* Ajustar posição vertical para não sobrepor menu fixo */
-    top: calc(50% - 2rem) !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    transform: none !important;
+    border-radius: 0 !important;
   }
 
   /* Garantir que apenas o conteúdo scrollável tenha overflow */

@@ -130,7 +130,7 @@ export default function EditUserModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)]">
+      <DialogContent className="sm:max-w-[500px] sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)]">
         <DialogHeader>
           <DialogTitle>Editar Usuário</DialogTitle>
         </DialogHeader>

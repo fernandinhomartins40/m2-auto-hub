@@ -183,7 +183,7 @@ export function RevisionDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)] flex flex-col p-0">
+      <DialogContent className="sm:max-w-5xl sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
             <FileText className="h-6 w-6 text-moria-orange" />

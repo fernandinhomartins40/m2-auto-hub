@@ -298,7 +298,7 @@ export function CustomerOrders() {
                             Ver Detalhes
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)] p-0 flex flex-col gap-0">
+                        <DialogContent className="sm:max-w-2xl sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)] p-0 flex flex-col gap-0">
                           <DialogHeader className="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b flex-shrink-0">
                             <DialogTitle className="text-base sm:text-lg md:text-xl">Detalhes do Pedido #{order.id.slice(0, 8)}</DialogTitle>
                             <DialogDescription className="text-xs sm:text-sm">

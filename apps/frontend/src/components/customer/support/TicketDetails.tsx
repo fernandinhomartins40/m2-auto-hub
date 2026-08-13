@@ -41,7 +41,7 @@ export function TicketDetails({ open, onOpenChange, ticket }: TicketDetailsProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-4xl overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-1">

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit, Trash2, Plus, Loader2, Power, PowerOff, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import adminService from '@/api/adminService';
@@ -23,7 +23,7 @@ interface AdminUser {
 }
 
 const ROLE_LABELS = {
-  STAFF: 'MecÃ¢nico',
+  STAFF: 'Mecânico',
   MANAGER: 'Gerente',
   ADMIN: 'Administrador',
   SUPER_ADMIN: 'Super Admin',
@@ -67,7 +67,7 @@ export default function AdminUsersSection() {
       setUsers(response.data || []);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error('Erro ao carregar usuÃ¡rios', {
+      toast.error('Erro ao carregar usuários', {
         description: err.response?.data?.message || 'Erro desconhecido',
       });
       setUsers([]); // Set empty array on error
@@ -94,17 +94,17 @@ export default function AdminUsersSection() {
   };
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o usuÃ¡rio ${userName}?`)) {
+    if (!window.confirm(`Tem certeza que deseja excluir o usuário ${userName}?`)) {
       return;
     }
 
     try {
       await adminService.deleteAdminUser(userId);
-      toast.success('UsuÃ¡rio excluÃ­do com sucesso');
+      toast.success('Usuário excluído com sucesso');
       fetchUsers();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error('Erro ao excluir usuÃ¡rio', {
+      toast.error('Erro ao excluir usuário', {
         description: err.response?.data?.message || 'Erro desconhecido',
       });
     }
@@ -125,17 +125,17 @@ export default function AdminUsersSection() {
     const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     const action = newStatus === 'ACTIVE' ? 'ativar' : 'desativar';
 
-    if (!window.confirm(`Tem certeza que deseja ${action} o usuÃ¡rio ${userName}?`)) {
+    if (!window.confirm(`Tem certeza que deseja ${action} o usuário ${userName}?`)) {
       return;
     }
 
     try {
       await adminService.updateAdminUser(userId, { status: newStatus });
-      toast.success(`UsuÃ¡rio ${action === 'ativar' ? 'ativado' : 'desativado'} com sucesso`);
+      toast.success(`Usuário ${action === 'ativar' ? 'ativado' : 'desativado'} com sucesso`);
       fetchUsers();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(`Erro ao ${action} usuÃ¡rio`, {
+      toast.error(`Erro ao ${action} usuário`, {
         description: err.response?.data?.message || 'Erro desconhecido',
       });
     }
@@ -144,7 +144,7 @@ export default function AdminUsersSection() {
   if (!permissions.canManageAdmins) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500">VocÃª nÃ£o tem permissÃ£o para acessar esta seÃ§Ã£o.</p>
+        <p className="text-red-500">Você não tem permissão para acessar esta seção.</p>
       </div>
     );
   }
@@ -214,7 +214,7 @@ export default function AdminUsersSection() {
         </div>
       ) : users.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-gray-500">Nenhum usuÃ¡rio encontrado.</p>
+          <p className="text-gray-500">Nenhum usuário encontrado.</p>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
@@ -227,7 +227,7 @@ export default function AdminUsersSection() {
                 <TableHead>Cargo</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Criado em</TableHead>
-                <TableHead className="text-center">AÃ§Ãµes</TableHead>
+                <TableHead className="text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -254,7 +254,7 @@ export default function AdminUsersSection() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleStatus(user.id, user.status, user.name)}
-                            title={user.status === 'ACTIVE' ? 'Desativar usuÃ¡rio' : 'Ativar usuÃ¡rio'}
+                            title={user.status === 'ACTIVE' ? 'Desativar usuário' : 'Ativar usuário'}
                           >
                             {user.status === 'ACTIVE' ? (
                               <PowerOff className="h-4 w-4 text-orange-500" />

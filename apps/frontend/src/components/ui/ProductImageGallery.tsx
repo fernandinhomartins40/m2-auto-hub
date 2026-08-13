@@ -209,7 +209,7 @@ export function ProductImageGallery({
       {/* Modal Fullscreen */}
       {enableFullscreen && (
         <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-          <DialogContent className="max-w-4xl w-full max-h-[90vh] p-0">
+          <DialogContent className="sm:max-w-4xl w-full p-0">
             <DialogHeader className="p-4 pb-0">
               <DialogTitle className="flex items-center justify-between">
                 <span>{productName} - Galeria de Imagens</span>

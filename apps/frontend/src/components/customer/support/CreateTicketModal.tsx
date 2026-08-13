@@ -59,7 +59,7 @@ export function CreateTicketModal({ open, onOpenChange }: CreateTicketModalProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Criar Novo Ticket</DialogTitle>
           <DialogDescription>

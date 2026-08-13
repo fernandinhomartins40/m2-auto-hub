@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, RotateCcw, Save, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings } from '@/hooks/useSettings';
@@ -234,9 +234,9 @@ export function PwaSettingsContent() {
         pwaMechanicMaskableIconUrl: profiles.mechanic.maskableIconUrl.trim() || null,
       });
       clearSettingsCache();
-      toast.success('ConfiguraÃ§Ãµes do PWA salvas com sucesso.');
+      toast.success('Configurações do PWA salvas com sucesso.');
     } catch (error: any) {
-      toast.error('Erro ao salvar configuraÃ§Ãµes do PWA', {
+      toast.error('Erro ao salvar configurações do PWA', {
         description: error?.message || 'Tente novamente.',
       });
     } finally {
@@ -245,7 +245,7 @@ export function PwaSettingsContent() {
   };
 
   const handleReset = async () => {
-    if (!confirm('Tem certeza que deseja restaurar as configuraÃ§Ãµes do PWA para o padrÃ£o?')) {
+    if (!confirm('Tem certeza que deseja restaurar as configurações do PWA para o padrão?')) {
       return;
     }
 
@@ -253,9 +253,9 @@ export function PwaSettingsContent() {
     try {
       await resetSettings();
       clearSettingsCache();
-      toast.success('ConfiguraÃ§Ãµes do PWA restauradas para o padrÃ£o.');
+      toast.success('Configurações do PWA restauradas para o padrão.');
     } catch (error: any) {
-      toast.error('Erro ao restaurar configuraÃ§Ãµes do PWA', {
+      toast.error('Erro ao restaurar configurações do PWA', {
         description: error?.message || 'Tente novamente.',
       });
     } finally {
@@ -302,7 +302,7 @@ export function PwaSettingsContent() {
               ) : (
                 <>
                   <RotateCcw className="mr-2 h-4 w-4" />
-                  Restaurar PadrÃ£o
+                  Restaurar Padrão
                 </>
               )}
             </Button>
@@ -315,7 +315,7 @@ export function PwaSettingsContent() {
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Salvar ConfiguraÃ§Ãµes do PWA
+                  Salvar Configurações do PWA
                 </>
               )}
             </Button>

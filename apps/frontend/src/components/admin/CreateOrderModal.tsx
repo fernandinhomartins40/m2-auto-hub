@@ -517,7 +517,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] md:w-[calc(100vw-4rem)] max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-3rem)] p-0 flex flex-col gap-0">
+      <DialogContent className="sm:max-w-4xl sm:w-[calc(100vw-2rem)] md:w-[calc(100vw-4rem)] sm:max-h-[calc(100vh-3rem)] p-0 flex flex-col gap-0">
         <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-gray-50/50 flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <ShoppingCart className="h-5 w-5 text-moria-orange" />

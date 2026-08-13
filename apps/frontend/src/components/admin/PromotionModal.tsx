@@ -524,7 +524,7 @@ export function PromotionModal({ isOpen, onClose, onSave, promotion, loading = f
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl sm:w-[calc(100%-4rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-orange-50 to-yellow-50 flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <TrendingUp className="h-6 w-6 text-moria-orange" />

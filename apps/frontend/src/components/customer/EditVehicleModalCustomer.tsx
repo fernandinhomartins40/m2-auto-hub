@@ -175,7 +175,7 @@ export function EditVehicleModalCustomer({ vehicle, isOpen, onClose, onSuccess }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="sm:max-w-3xl overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gray-50/50">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Car className="h-5 w-5 text-moria-orange" />

@@ -70,7 +70,7 @@ export function ServiceOrderDetailsModal({ order, isOpen, onClose, onChanged, re
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             OS #{order.number}

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * LandingPageContent - Conteudo do editor da Landing Page
  * Integrado ao StorePanel - Responsivo mobile/desktop
  */
@@ -47,9 +47,9 @@ const orderedTabs = [
   { value: 'hero', label: 'Hero' },
   { value: 'contact', label: 'Destaques' },
   { value: 'aboutPage', label: 'Sobre da Home' },
-  { value: 'about', label: 'ServiÃ§os' },
-  { value: 'products', label: 'PeÃ§as' },
-  { value: 'services', label: 'PromoÃ§Ãµes' },
+  { value: 'about', label: 'Serviços' },
+  { value: 'products', label: 'Peças' },
+  { value: 'services', label: 'Promoções' },
   { value: 'contactPage', label: 'Contato' },
   { value: 'footer', label: 'Footer' },
   { value: 'marquee', label: 'Marquee' },
