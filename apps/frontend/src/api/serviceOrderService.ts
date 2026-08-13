@@ -53,6 +53,8 @@ export interface ServiceOrderItemInput {
   name: string;
   unitPrice: number;
   quantity: number;
+  /** Item da revisão que originou esta linha, quando a OS vem de um checklist. */
+  revisionCheckId?: string | null;
 }
 
 export interface ServiceOrderInput {

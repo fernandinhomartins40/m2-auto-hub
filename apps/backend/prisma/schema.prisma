@@ -827,6 +827,15 @@ enum RevisionStatus {
   CANCELLED
 }
 
+// Estado de um item avaliado no checklist da revisao.
+enum RevisionCheckStatus {
+  NOT_CHECKED
+  OK
+  ATTENTION
+  CRITICAL
+  NOT_APPLICABLE
+}
+
 enum RevisionAppointmentStatus {
   REQUESTED
   SCHEDULED
@@ -938,7 +947,8 @@ model ChecklistCategory {
   updatedAt DateTime @updatedAt
 
   // Relations
-  items ChecklistItem[]
+  items  ChecklistItem[]
+  checks RevisionCheck[]
 
   @@index([order])
   @@map("checklist_categories")
@@ -959,6 +969,7 @@ model ChecklistItem {
 
   // Relations
   category ChecklistCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  checks   RevisionCheck[]
 
   @@index([categoryId])
   @@index([order])
@@ -995,6 +1006,9 @@ model Revision {
   appointment      RevisionAppointment?
   // OS gerada a partir dos itens com problema desta revisao.
   serviceOrders    ServiceOrder[]
+  // Espelho relacional de checklistItems: permite consultar por item/status
+  // sem varrer JSON (ex.: quantos veiculos com freio critico no mes).
+  checks           RevisionCheck[]
 
   @@index([customerId])
   @@index([vehicleId])
@@ -1099,6 +1113,40 @@ model ServiceOrder {
 }
 
 // Item da OS (servico ou produto)
+// Item avaliado numa revisao.
+//
+// O campo Revision.checklistItems (Json) continua sendo a fonte que as telas
+// atuais leem; esta tabela e o espelho consultavel, para relatorios e para
+// ligar cada item ao que foi orcado na OS.
+model RevisionCheck {
+  id         String              @id @default(uuid())
+  revisionId String
+  // Referencia ao catalogo, opcional: o item pode ser desativado depois e o
+  // historico da revisao precisa sobreviver a isso.
+  itemId     String?
+  categoryId String?
+  // Nomes no momento da avaliacao (cache), preservados mesmo se o catalogo mudar.
+  itemName     String
+  categoryName String
+  status       RevisionCheckStatus @default(NOT_CHECKED)
+  notes        String?             @db.Text
+  photos       Json? // array de URLs
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  revision Revision           @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  item     ChecklistItem?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  category ChecklistCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  // Pecas e mao de obra lancados para resolver este item.
+  orderItems ServiceOrderItem[]
+
+  @@index([revisionId])
+  @@index([itemId])
+  @@index([status])
+  @@map("revision_checks")
+}
+
 model ServiceOrderItem {
   id             String               @id @default(uuid())
   serviceOrderId String
@@ -1113,14 +1161,20 @@ model ServiceOrderItem {
   quantity  Int     @default(1)
   subtotal  Decimal @db.Decimal(10, 2)
 
+  // Item da revisao que originou esta linha, quando a OS veio de um checklist.
+  // Permite responder "o que foi feito para o freio critico deste carro".
+  revisionCheckId String?
+
   createdAt DateTime @default(now())
 
-  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
-  product      Product?     @relation(fields: [productId], references: [id])
-  service      Service?     @relation(fields: [serviceId], references: [id])
+  serviceOrder  ServiceOrder   @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  product       Product?       @relation(fields: [productId], references: [id])
+  service       Service?       @relation(fields: [serviceId], references: [id])
+  revisionCheck RevisionCheck? @relation(fields: [revisionCheckId], references: [id], onDelete: SetNull)
 
   @@index([serviceOrderId])
   @@index([productId])
+  @@index([revisionCheckId])
   @@map("service_order_items")
 }
 

@@ -8,6 +8,8 @@ export const serviceOrderItemInputSchema = z.object({
   name: z.string().trim().min(1, 'Nome do item é obrigatório').max(200),
   unitPrice: z.number().min(0, 'Preço não pode ser negativo'),
   quantity: z.number().int().min(1, 'Quantidade mínima é 1'),
+  // Item da revisao que originou esta linha, quando a OS vem de um checklist.
+  revisionCheckId: z.string().uuid().optional().nullable(),
 });
 export type ServiceOrderItemInput = z.infer<typeof serviceOrderItemInputSchema>;
 

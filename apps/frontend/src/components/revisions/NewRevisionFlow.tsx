@@ -72,7 +72,14 @@ export function NewRevisionFlow({ onFinished }: NewRevisionFlowProps) {
       );
 
       if (temProblema && linhas.length > 0) {
-        const revisaoId = (revisao as { id?: string })?.id;
+        const revisaoId = revisao?.id;
+
+        // A revisão devolve os checks já gravados; o orçamento referencia o
+        // item do checklist pelo id do catálogo, então mapeamos um para o
+        // outro para que cada peça/serviço fique ligado ao problema que resolve.
+        const checkPorItem = new Map(
+          (revisao?.checks ?? []).map((c) => [c.itemId ?? c.itemName, c.id])
+        );
 
         await serviceOrderService.create({
           customerId: alvo.customerId,
@@ -87,7 +94,10 @@ export function NewRevisionFlow({ onFinished }: NewRevisionFlowProps) {
             )
             .map((a) => `${a.itemName}${a.notes ? `: ${a.notes}` : ''}`)
             .join('\n'),
-          items: linhas.map(({ origemItemId: _origem, ...item }) => item),
+          items: linhas.map(({ origemItemId, ...item }) => ({
+            ...item,
+            revisionCheckId: checkPorItem.get(origemItemId) ?? null,
+          })),
           ...(revisaoId ? { revisionId: revisaoId } : {}),
         });
 

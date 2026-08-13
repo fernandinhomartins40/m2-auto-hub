@@ -21,6 +21,17 @@ export interface UpdateRevisionRequest {
   mechanicNotes?: string;
 }
 
+/** Item avaliado, espelhado em tabela para consulta e para ligar à OS. */
+export interface RevisionCheck {
+  id: string;
+  itemId: string | null;
+  categoryId: string | null;
+  itemName: string;
+  categoryName: string;
+  status: 'NOT_CHECKED' | 'OK' | 'ATTENTION' | 'CRITICAL' | 'NOT_APPLICABLE';
+  notes: string | null;
+}
+
 export interface RevisionResponse {
   id: string;
   customerId: string;
@@ -29,6 +40,8 @@ export interface RevisionResponse {
   mileage: number | null;
   status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   checklistItems: any;
+  /** Presente ao criar/atualizar: as linhas relacionais correspondentes. */
+  checks?: RevisionCheck[];
   generalNotes: string | null;
   recommendations: string | null;
   assignedMechanicId: string | null;

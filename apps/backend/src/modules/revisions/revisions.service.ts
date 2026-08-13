@@ -1,4 +1,4 @@
-import { Revision, RevisionStatus } from '@prisma/client';
+import { Prisma, Revision, RevisionCheckStatus, RevisionStatus } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { CreateRevisionDto } from './dto/create-revision.dto.js';
@@ -223,12 +223,55 @@ export class RevisionsService {
         checklistItems: dto.checklistItems,
         generalNotes: dto.generalNotes,
         recommendations: dto.recommendations,
+        // Espelho relacional: o Json acima continua servindo as telas atuais,
+        // e estas linhas tornam os itens consultaveis por status/categoria.
+        checks: { create: await this.buildChecks(dto.checklistItems) },
       },
+      include: { checks: true },
     });
 
     logger.info(`Revision created: ${revision.id} for vehicle ${dto.vehicleId}`);
 
     return revision;
+  }
+
+  /**
+   * Monta as linhas de RevisionCheck a partir dos itens do checklist.
+   *
+   * As FKs para o catalogo so sao preenchidas quando o item/categoria ainda
+   * existe - assim uma revisao antiga sobrevive a mudanca do catalogo, mantendo
+   * os nomes como estavam no momento da avaliacao.
+   */
+  private async buildChecks(
+    itens: CreateRevisionDto['checklistItems']
+  ): Promise<Prisma.RevisionCheckCreateWithoutRevisionInput[]> {
+    if (!itens?.length) {
+      return [];
+    }
+
+    const [itensValidos, categoriasValidas] = await Promise.all([
+      prisma.checklistItem.findMany({
+        where: { id: { in: itens.map((i) => i.itemId) } },
+        select: { id: true },
+      }),
+      prisma.checklistCategory.findMany({
+        where: { id: { in: itens.map((i) => i.categoryId) } },
+        select: { id: true },
+      }),
+    ]);
+
+    const idsItens = new Set(itensValidos.map((i) => i.id));
+    const idsCategorias = new Set(categoriasValidas.map((c) => c.id));
+
+    return itens.map((item) => ({
+      itemId: idsItens.has(item.itemId) ? item.itemId : null,
+      categoryId: idsCategorias.has(item.categoryId) ? item.categoryId : null,
+      itemName: item.itemName,
+      categoryName: item.categoryName,
+      status: item.status as RevisionCheckStatus,
+      notes: item.notes || null,
+      photos: item.photos?.length ? (item.photos as Prisma.InputJsonValue) : undefined,
+    }));
   }
 
   /**
@@ -273,6 +316,12 @@ export class RevisionsService {
 
     if (dto.checklistItems) {
       updateData.checklistItems = dto.checklistItems;
+      // O espelho relacional e regravado junto, senao Json e tabela divergem.
+      // deleteMany + create mantem os dois sempre com o mesmo conteudo.
+      updateData.checks = {
+        deleteMany: {},
+        create: await this.buildChecks(dto.checklistItems),
+      };
     }
 
     if (dto.generalNotes !== undefined) {

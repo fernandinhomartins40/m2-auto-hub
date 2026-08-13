@@ -152,9 +152,6 @@ export class RevisionsController {
         throw new Error('Admin not authenticated');
       }
 
-      // Log payload para debug
-      console.log('📥 Received revision creation payload:', JSON.stringify(req.body, null, 2));
-
       const dto = createRevisionSchema.parse(req.body);
       const revision = await this.revisionsService.createRevision(
         dto.customerId,

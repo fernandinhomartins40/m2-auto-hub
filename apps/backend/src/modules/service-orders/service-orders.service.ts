@@ -40,6 +40,7 @@ export class ServiceOrdersService {
       unitPrice: new Prisma.Decimal(item.unitPrice),
       quantity: item.quantity,
       subtotal: new Prisma.Decimal(item.unitPrice * item.quantity),
+      revisionCheckId: item.revisionCheckId ?? null,
     }));
   }
 
