@@ -446,16 +446,27 @@ export function RevisionVehicleLookupDialog({
       const result = await adminService.lookupVehicleByPlate(normalizedPlate);
       setLookupResult(result);
       setManualPlate(result.plate);
+      const identificado = result.technicalData
+        ? `${result.technicalData.brand ?? ''} ${result.technicalData.model ?? ''}`.trim()
+        : '';
+
       setAutoScanStatus(
         result.found
           ? `Placa confirmada: ${formatPlate(result.plate)}. Veiculo encontrado.`
-          : `Placa confirmada: ${formatPlate(result.plate)}. Veiculo ainda nao cadastrado.`
+          : identificado
+            ? `Placa confirmada: ${formatPlate(result.plate)}. ${identificado} - ainda sem cliente vinculado.`
+            : `Placa confirmada: ${formatPlate(result.plate)}. Veiculo ainda nao cadastrado.`
       );
 
       if (result.found) {
         toast({
           title: 'Veículo encontrado',
           description: `${result.vehicle?.brand} ${result.vehicle?.model} • ${formatPlate(result.plate)}`,
+        });
+      } else if (identificado) {
+        toast({
+          title: 'Veículo identificado',
+          description: `${identificado} • ${formatPlate(result.plate)}`,
         });
       }
     } catch (error: any) {

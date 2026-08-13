@@ -22,6 +22,7 @@ import {
   ArrowRight,
   Plus,
   AlertCircle,
+  CheckCircle2,
   Phone,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -67,6 +68,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [revisions, setRevisions] = useState<AdminRevision[]>([]);
 
+  const [elapsed, setElapsed] = useState(0);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [osModalOpen, setOsModalOpen] = useState(false);
   const [osInitial, setOsInitial] = useState<ServiceOrderInitialData | null>(null);
@@ -83,6 +85,21 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
       setRevisions([]);
     }
   }, [isOpen]);
+
+  // Conta os segundos da busca para trocar a mensagem de progresso.
+  useEffect(() => {
+    if (!loading) {
+      setElapsed(0);
+      return;
+    }
+
+    const inicio = Date.now();
+    const timer = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - inicio) / 1000));
+    }, 500);
+
+    return () => clearInterval(timer);
+  }, [loading]);
 
   const runSearch = async (plateRaw: string) => {
     const plate = normalizePlate(plateRaw);
@@ -108,7 +125,15 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         setRevisions([]);
       }
     } catch (err: any) {
-      toast({ title: 'Erro na consulta', description: err?.response?.data?.error, variant: 'destructive' });
+      // Num timeout não existe `err.response`, então a descrição vinha vazia e
+      // a falha passava despercebida.
+      const description =
+        err?.code === 'ECONNABORTED'
+          ? 'A consulta demorou mais que o esperado. Tente novamente ou cadastre o veículo manualmente.'
+          : err?.response?.data?.error || 'Não foi possível consultar a placa agora.';
+
+      toast({ title: 'Erro na consulta', description, variant: 'destructive' });
+      setLookup(null);
     } finally {
       setLoading(false);
     }
@@ -198,6 +223,24 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
             </Button>
           </div>
 
+          {/* Carregando: a consulta externa abre um navegador real e leva alguns
+              segundos, então a espera precisa ficar explícita. */}
+          {loading && (
+            <div className="flex items-start gap-3 rounded-lg border bg-blue-50/60 p-4">
+              <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-blue-600" />
+              <div className="min-w-0">
+                <p className="font-medium text-blue-900">
+                  Consultando {formatPlate(normalizePlate(plateInput))}...
+                </p>
+                <p className="mt-0.5 text-sm text-blue-800">
+                  {elapsed < 3
+                    ? 'Procurando no cadastro da oficina.'
+                    : 'Buscando os dados do veículo na consulta externa — pode levar alguns segundos.'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Resultado */}
           {searched && !loading && (
             <div className="space-y-4 pt-2">
@@ -206,42 +249,69 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Placa <strong>{formatPlate(normalizePlate(plateInput))}</strong> não encontrada no cadastro.
+                      Placa <strong>{formatPlate(normalizePlate(plateInput))}</strong>{' '}
+                      {lookup?.technicalData
+                        ? 'ainda não tem cliente vinculado no cadastro.'
+                        : 'não encontrada no cadastro.'}
                     </AlertDescription>
                   </Alert>
 
                   {/* Dados técnicos vindos da base própria ou da consulta externa:
                       permitem abrir a OS já com o veículo identificado. */}
-                  {lookup?.technicalData && (
-                    <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3">
-                      <div className="flex items-start gap-2">
-                        <Car className="h-4 w-4 mt-0.5 text-blue-600 shrink-0" />
+                  {lookup?.technicalData ? (
+                    <div className="rounded-lg border-2 border-green-300 bg-green-50/70 p-4">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-blue-900">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                            Veículo identificado
+                          </p>
+                          <p className="mt-1 text-lg font-bold text-green-900">
                             {[lookup.technicalData.brand, lookup.technicalData.model]
                               .filter(Boolean)
-                              .join(' ') || 'Veículo identificado'}
+                              .join(' ')}
                             {lookup.technicalData.year ? ` ${lookup.technicalData.year}` : ''}
                           </p>
-                          <p className="mt-1 text-sm text-blue-800">
+
+                          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-green-900 sm:grid-cols-3">
                             {[
-                              lookup.technicalData.color,
-                              lookup.technicalData.fuel,
-                              [lookup.technicalData.city, lookup.technicalData.state]
-                                .filter(Boolean)
-                                .join('/'),
+                              ['Cor', lookup.technicalData.color],
+                              ['Combustível', lookup.technicalData.fuel],
+                              ['Chassi', lookup.technicalData.chassisNumber],
+                              ['Cilindrada', lookup.technicalData.displacement],
+                              ['Potência', lookup.technicalData.power],
+                              [
+                                'Local',
+                                [lookup.technicalData.city, lookup.technicalData.state]
+                                  .filter(Boolean)
+                                  .join('/'),
+                              ],
                             ]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </p>
-                          <p className="mt-1.5 text-xs text-blue-700">
+                              .filter(([, valor]) => valor)
+                              .map(([rotulo, valor]) => (
+                                <div key={String(rotulo)} className="min-w-0">
+                                  <dt className="text-xs text-green-700">{rotulo}</dt>
+                                  <dd className="truncate font-medium">{valor}</dd>
+                                </div>
+                              ))}
+                          </dl>
+
+                          <p className="mt-3 text-xs text-green-700">
                             {lookup.technicalData.source === 'cache'
-                              ? 'Dados da base própria da oficina.'
-                              : 'Dados da consulta veicular. Confirme antes de salvar.'}
+                              ? 'Da base própria da oficina — sem nova consulta externa.'
+                              : 'Da consulta veicular, agora salvo na base. Confira antes de gravar.'}
                           </p>
                         </div>
                       </div>
                     </div>
+                  ) : (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        Não foi possível identificar o veículo automaticamente. Preencha os
+                        dados ao criar a OS.
+                      </AlertDescription>
+                    </Alert>
                   )}
 
                   <Button onClick={startNewOs} className="w-full bg-moria-orange hover:bg-moria-orange/90">

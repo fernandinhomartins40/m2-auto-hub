@@ -1158,6 +1158,10 @@ class AdminService {
   async lookupVehicleByPlate(plate: string): Promise<VehicleLookupResult> {
     const response = await apiClient.get('/admin/vehicles/lookup', {
       params: { plate },
+      // Placa desconhecida vai para a consulta externa, que abre um navegador
+      // real e leva ~8s. O timeout padrão de 10s do apiClient cortava a
+      // resposta antes de ela chegar, e a tela dizia "não encontrada".
+      timeout: 45000,
     });
 
     return response.data;
