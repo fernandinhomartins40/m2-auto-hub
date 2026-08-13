@@ -1346,7 +1346,10 @@ model Settings {
   // Consulta de placa (dados tecnicos do veiculo).
   // Tokens guardados criptografados (AES-256-GCM) e nunca devolvidos em claro
   // pela API - o painel recebe apenas a flag de configurado.
-  plateLookupEnabled     Boolean @default(false)
+  // Ligado por padrao: a consulta principal e gratuita (navegador no servidor),
+  // entao nao ha custo em deixar ativa. Desligar so faz sentido para usar
+  // exclusivamente a base propria da oficina.
+  plateLookupEnabled     Boolean @default(true)
   plateLookupProvider    String  @default("apibrasil")
   plateLookupBearerToken String?
   plateLookupDeviceToken String?

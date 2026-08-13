@@ -256,6 +256,7 @@ export class PlateLookupService {
 
     // Desligado no painel: nenhuma consulta externa, so o cache proprio.
     if (settings && !settings.plateLookupEnabled) {
+      logger.info('Plate lookup: consultas externas desligadas nas configuracoes');
       return [];
     }
 
@@ -410,7 +411,14 @@ export class PlateLookupService {
 
     // Percorre a cadeia de provedores: o primeiro que responder vence. Uma
     // falha nunca derruba o atendimento - o chamador segue para o manual.
-    for (const provider of await this.resolveProviders()) {
+    const providers = await this.resolveProviders();
+
+    if (providers.length === 0) {
+      logger.info(`Plate ${normalizedPlate} nao esta no cache e nao ha provedor ativo`);
+      return null;
+    }
+
+    for (const provider of providers) {
       let result: { data: PlateTechnicalData; raw: unknown } | null = null;
 
       try {
@@ -434,6 +442,11 @@ export class PlateLookupService {
       return { ...result.data, source: 'external', provider: provider.name, origin };
     }
 
+    logger.info(
+      `Plate ${normalizedPlate} nao resolvida por nenhum provedor (${providers
+        .map((p) => p.name)
+        .join(', ')})`
+    );
     return null;
   }
 }
