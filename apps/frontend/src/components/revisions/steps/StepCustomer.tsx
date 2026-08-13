@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { ArrowRight, Car, Loader2, User } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Car, Check, Loader2, Search, User, UserPlus, X } from 'lucide-react';
 
-import adminService, { type VehicleLookupResult } from '@/api/adminService';
+import adminService, {
+  type ProvisionalUser,
+  type VehicleLookupResult,
+} from '@/api/adminService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,15 +29,21 @@ interface StepCustomerProps {
 /**
  * Passo 2: confirmar cliente e veiculo.
  *
- * Quando a placa ja esta cadastrada, mostra apenas o resumo - nada de
- * formulario. Caso contrario, faz o cadastro rapido aproveitando os dados
- * tecnicos que a consulta trouxe.
+ * Placa ja cadastrada mostra so o resumo. Caso contrario, o campo de nome
+ * tambem busca no cadastro: o carro pode ser novo mas o dono ja existir, e
+ * criar um cliente duplicado quebraria o historico. So quando nao ha resultado
+ * e que se cria o pre-cadastro (nome + WhatsApp), completado depois na ficha.
  */
 export function StepCustomer({ lookup, onConfirmed, onBack }: StepCustomerProps) {
   const { toast } = useToast();
   const [salvando, setSalvando] = useState(false);
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
+
+  const [resultados, setResultados] = useState<ProvisionalUser[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [selecionado, setSelecionado] = useState<ProvisionalUser | null>(null);
+  const buscaRef = useRef<number>();
 
   const tecnico = lookup.technicalData;
   const veiculoLabel = lookup.vehicle
@@ -43,13 +52,80 @@ export function StepCustomer({ lookup, onConfirmed, onBack }: StepCustomerProps)
 
   const jaCadastrado = Boolean(lookup.found && lookup.vehicle && lookup.customer);
 
-  const cadastrarEContinuar = async () => {
+  // Busca enquanto digita, com um respiro para não disparar a cada tecla.
+  useEffect(() => {
+    if (jaCadastrado || selecionado) return;
+
+    const termo = nome.trim();
+    if (termo.length < 2) {
+      setResultados([]);
+      return;
+    }
+
+    window.clearTimeout(buscaRef.current);
+    buscaRef.current = window.setTimeout(async () => {
+      setBuscando(true);
+      try {
+        const { customers } = await adminService.getCustomers({ search: termo, limit: 6 });
+        setResultados(customers || []);
+      } catch {
+        setResultados([]);
+      } finally {
+        setBuscando(false);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(buscaRef.current);
+  }, [nome, jaCadastrado, selecionado]);
+
+  /** Cria o veículo para o cliente informado e segue para o checklist. */
+  const vincularVeiculo = async (cliente: ProvisionalUser) => {
+    const veiculo = await adminService.createVehicleForCustomer(cliente.id, {
+      brand: tecnico?.brand || 'Não informado',
+      model: tecnico?.model || 'Não informado',
+      year: tecnico?.year || new Date().getFullYear(),
+      plate: lookup.plate,
+      color: tecnico?.color || '',
+      chassisNumber: tecnico?.chassisNumber || undefined,
+      fuel: tecnico?.fuel || undefined,
+      displacement: tecnico?.displacement || undefined,
+      power: tecnico?.power || undefined,
+      city: tecnico?.city || undefined,
+      state: tecnico?.state || undefined,
+    });
+
+    onConfirmed({
+      customerId: cliente.id,
+      customerName: cliente.name,
+      customerPhone: cliente.whatsapp,
+      vehicleId: veiculo.id,
+      vehicleLabel: veiculoLabel,
+      plate: lookup.plate,
+    });
+  };
+
+  const usarClienteExistente = async (cliente: ProvisionalUser) => {
+    setSalvando(true);
+    try {
+      await vincularVeiculo(cliente);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      toast({
+        title: 'Erro ao vincular veículo',
+        description: err?.response?.data?.error || 'Tente novamente.',
+        variant: 'destructive',
+      });
+      setSalvando(false);
+    }
+  };
+
+  const criarPreCadastro = async () => {
     if (!nome.trim()) {
       toast({ title: 'Informe o nome do cliente', variant: 'destructive' });
       return;
     }
     if (!telefone.trim()) {
-      toast({ title: 'Informe o telefone do cliente', variant: 'destructive' });
+      toast({ title: 'Informe o WhatsApp do cliente', variant: 'destructive' });
       return;
     }
 
@@ -60,33 +136,13 @@ export function StepCustomer({ lookup, onConfirmed, onBack }: StepCustomerProps)
       const cliente = await adminService.createCustomer({
         name: nome.trim(),
         phone: somenteDigitos,
-        // O cadastro exige email, mas no balcão raramente se tem um. Gera a
-        // partir do telefone, que já é único, e o cliente ajusta depois.
+        // Pré-cadastro: o e-mail é obrigatório no cadastro, mas no balcão
+        // raramente se tem um. Gera a partir do telefone, que já é único, e a
+        // ficha completa do cliente é preenchida depois.
         email: `${somenteDigitos}@sememail.local`,
       });
 
-      const veiculo = await adminService.createVehicleForCustomer(cliente.id, {
-        brand: tecnico?.brand || 'Não informado',
-        model: tecnico?.model || 'Não informado',
-        year: tecnico?.year || new Date().getFullYear(),
-        plate: lookup.plate,
-        color: tecnico?.color || '',
-        chassisNumber: tecnico?.chassisNumber || undefined,
-        fuel: tecnico?.fuel || undefined,
-        displacement: tecnico?.displacement || undefined,
-        power: tecnico?.power || undefined,
-        city: tecnico?.city || undefined,
-        state: tecnico?.state || undefined,
-      });
-
-      onConfirmed({
-        customerId: cliente.id,
-        customerName: cliente.name,
-        customerPhone: cliente.phone,
-        vehicleId: veiculo.id,
-        vehicleLabel: veiculoLabel,
-        plate: lookup.plate,
-      });
+      await vincularVeiculo(cliente);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
       toast({
@@ -94,7 +150,6 @@ export function StepCustomer({ lookup, onConfirmed, onBack }: StepCustomerProps)
         description: err?.response?.data?.error || 'Tente novamente.',
         variant: 'destructive',
       });
-    } finally {
       setSalvando(false);
     }
   };
@@ -148,47 +203,116 @@ export function StepCustomer({ lookup, onConfirmed, onBack }: StepCustomerProps)
           <div>
             <h2 className="text-lg font-bold">De quem é o veículo?</h2>
             <p className="text-sm text-muted-foreground">
-              Este veículo ainda não está no cadastro. Informe o cliente para continuar.
+              Digite o nome para buscar no cadastro. Se ainda não existir, um cadastro
+              rápido é criado com nome e WhatsApp.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="rev-cliente-nome">Nome do cliente</Label>
-              <Input
-                id="rev-cliente-nome"
-                className="h-12"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="João da Silva"
+          {selecionado ? (
+            <div className="flex items-center gap-3 rounded-xl border-2 border-green-300 bg-green-50/70 p-4">
+              <Check className="h-5 w-5 shrink-0 text-green-600" />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-green-900">{selecionado.name}</p>
+                <p className="text-sm text-green-800">{selecionado.whatsapp}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => {
+                  setSelecionado(null);
+                  setNome('');
+                }}
                 disabled={salvando}
-                autoFocus
-              />
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="rev-cliente-nome">Cliente</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="rev-cliente-nome"
+                    className="h-12 pl-10"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    placeholder="Buscar por nome, telefone ou CPF"
+                    disabled={salvando}
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  {buscando && (
+                    <Loader2 className="absolute right-3 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
+                  )}
+                </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="rev-cliente-fone">Telefone / WhatsApp</Label>
-              <Input
-                id="rev-cliente-fone"
-                className="h-12"
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-                placeholder="(11) 99999-9999"
-                disabled={salvando}
-                inputMode="tel"
-              />
+                {resultados.length > 0 && (
+                  <div className="overflow-hidden rounded-lg border">
+                    {resultados.map((cliente) => (
+                      <button
+                        key={cliente.id}
+                        type="button"
+                        onClick={() => setSelecionado(cliente)}
+                        disabled={salvando}
+                        className="flex w-full items-center gap-3 border-b px-4 py-3 text-left last:border-b-0 hover:bg-muted"
+                      >
+                        <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{cliente.name}</span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {cliente.whatsapp}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {nome.trim().length >= 2 && !buscando && resultados.length === 0 && (
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <UserPlus className="h-4 w-4" />
+                    Nenhum cliente encontrado. Informe o WhatsApp para cadastrar.
+                  </p>
+                )}
+              </div>
+
+              {/* O WhatsApp só é pedido quando de fato vamos criar alguém. */}
+              {nome.trim().length >= 2 && resultados.length === 0 && !buscando && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="rev-cliente-fone">WhatsApp</Label>
+                  <Input
+                    id="rev-cliente-fone"
+                    className="h-12"
+                    value={telefone}
+                    onChange={(e) => setTelefone(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    disabled={salvando}
+                    inputMode="tel"
+                  />
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           <Button
             className="h-12 w-full bg-moria-orange hover:bg-moria-orange/90"
-            onClick={cadastrarEContinuar}
-            disabled={salvando}
+            onClick={() =>
+              selecionado ? usarClienteExistente(selecionado) : criarPreCadastro()
+            }
+            disabled={salvando || (!selecionado && nome.trim().length < 2)}
           >
             {salvando ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cadastrando...
+                Salvando...
+              </>
+            ) : selecionado ? (
+              <>
+                Iniciar revisão
+                <ArrowRight className="ml-2 h-4 w-4" />
               </>
             ) : (
               <>
