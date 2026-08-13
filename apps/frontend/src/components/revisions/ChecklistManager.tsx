@@ -10,7 +10,12 @@ import { useRevisions } from '../../contexts/RevisionsContext';
 import { cn } from '../../lib/utils';
 import { ChecklistCategory, ChecklistItem } from '../../types/revisions';
 
-export function ChecklistManager() {
+interface ChecklistManagerProps {
+  /** Avisa quem exibe a lista para recarregar apos criar/desabilitar itens. */
+  onChanged?: () => void;
+}
+
+export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
   const {
     categories,
     addCategory,
@@ -138,7 +143,13 @@ export function ChecklistManager() {
         Gerenciar Checklist
       </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(aberto) => {
+          setIsOpen(aberto);
+          if (!aberto) onChanged?.();
+        }}
+      >
         <DialogContent className="sm:max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
