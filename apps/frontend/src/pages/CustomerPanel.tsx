@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 
 import { useAuth } from "../contexts/AuthContext";
@@ -7,6 +8,7 @@ import { CustomerCoupons } from "../components/customer/CustomerCoupons";
 import { CustomerDashboard } from "../components/customer/CustomerDashboard";
 import { CustomerFavorites } from "../components/customer/CustomerFavorites";
 import { CustomerLayout } from "../components/customer/CustomerLayout";
+import { customerSlugFromTab, customerTabFromSlug } from "../components/customer/customerNavigation";
 import { CustomerOrders } from "../components/customer/CustomerOrders";
 import { CustomerProfile } from "../components/customer/CustomerProfile";
 import { CustomerQuotes } from "../components/customer/CustomerQuotes";
@@ -17,7 +19,25 @@ import "../styles/cliente.css";
 
 export default function CustomerPanel() {
   const { customer, isLoading } = useAuth();
-  const [currentTab, setCurrentTab] = useState("dashboard");
+  const navigate = useNavigate();
+  const { tab: tabSlug } = useParams<{ tab: string }>();
+
+  // A URL e a fonte de verdade da aba: o voltar do celular funciona e o
+  // cliente pode recarregar sem perder a tela em que estava.
+  const currentTab = customerTabFromSlug(tabSlug);
+
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      navigate(`/customer/${customerSlugFromTab(tab)}`);
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    if (tabSlug && customerSlugFromTab(currentTab) !== tabSlug) {
+      navigate(`/customer/${customerSlugFromTab(currentTab)}`, { replace: true });
+    }
+  }, [tabSlug, currentTab, navigate]);
 
   if (isLoading) {
     return (
@@ -41,7 +61,7 @@ export default function CustomerPanel() {
       case "profile":
         return <CustomerProfile />;
       case "quotes":
-        return <CustomerQuotes onNavigateToProfile={() => setCurrentTab("profile")} />;
+        return <CustomerQuotes onNavigateToProfile={() => handleTabChange("profile")} />;
       case "orders":
         return <CustomerOrders />;
       case "vehicles":
@@ -61,7 +81,7 @@ export default function CustomerPanel() {
 
   return (
     <>
-      <CustomerLayout currentTab={currentTab} onTabChange={setCurrentTab}>
+      <CustomerLayout currentTab={currentTab} onTabChange={handleTabChange}>
         {renderTabContent()}
       </CustomerLayout>
 

@@ -70,6 +70,51 @@ export const adminSidebarItems: AdminNavItem[] = [
   },
 ];
 
+/**
+ * Slug de URL de cada tela do painel.
+ *
+ * O `id` continua sendo a chave interna (usada pelo switch de conteúdo e pela
+ * navegação); o slug é só o que aparece na barra de endereços. Manter os dois
+ * separados evita ter de renomear ids por toda a base para deixar a URL legível.
+ */
+export const adminTabSlugs: Record<string, string> = {
+  dashboard: "dashboard",
+  orders: "pedidos",
+  quotes: "orcamentos",
+  "service-orders": "ordens-de-servico",
+  revisions: "revisoes",
+  products: "produtos",
+  services: "servicos",
+  marketplaces: "marketplaces",
+  customers: "clientes",
+  relationship: "relacionamento",
+  support: "suporte",
+  loyalty: "fidelidade",
+  coupons: "cupons",
+  promotions: "promocoes",
+  "landing-page": "landing-page",
+  account: "minha-conta",
+  reports: "relatorios",
+  "pwa-settings": "pwa",
+  settings: "configuracoes",
+  users: "usuarios",
+};
+
+const slugToTab: Record<string, string> = Object.fromEntries(
+  Object.entries(adminTabSlugs).map(([tab, slug]) => [slug, tab])
+);
+
+/** Slug da URL para o id interno da aba. `dashboard` quando não reconhecido. */
+export function tabFromSlug(slug: string | undefined): string {
+  if (!slug) return "dashboard";
+  return slugToTab[slug] ?? "dashboard";
+}
+
+/** Id interno da aba para o slug da URL. */
+export function slugFromTab(tab: string): string {
+  return adminTabSlugs[tab] ?? "dashboard";
+}
+
 // "Produtos" fica no menu "Mais" (drawer) para liberar o centro da barra,
 // onde fica o botão de Consulta por Placa.
 export const adminBottomNavItems: AdminNavItem[] = [

@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { ClipboardCheck, LogOut, User } from "lucide-react";
+import { useCallback, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ClipboardCheck, ClipboardList, LogOut, User } from "lucide-react";
 import { MechanicContent } from "./MechanicContent";
+import { mechanicSlugFromTab, mechanicTabFromSlug } from "./mechanicNavigation";
 import StoreLayout from "../store/StoreLayout";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
 import "../../styles/lojista.css";
@@ -9,11 +11,32 @@ import "../../styles/store-mobile.css";
 import "../../styles/store-animations.css";
 
 export default function MechanicPanel() {
-  const [activeTab, setActiveTab] = useState("revisions");
+  const navigate = useNavigate();
+  const { tab: tabSlug } = useParams<{ tab: string }>();
   const { admin, logout } = useAdminAuth();
 
+  // A URL é a fonte de verdade da aba, para o voltar do celular funcionar e a
+  // tela sobreviver a um recarregamento.
+  const activeTab = mechanicTabFromSlug(tabSlug);
+
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      navigate(`/mechanic-panel/${mechanicSlugFromTab(tab)}`);
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    if (tabSlug && mechanicSlugFromTab(activeTab) !== tabSlug) {
+      navigate(`/mechanic-panel/${mechanicSlugFromTab(activeTab)}`, { replace: true });
+    }
+  }, [tabSlug, activeTab, navigate]);
+
+  // "Minhas OS" existia na sidebar do desktop mas ficava de fora da barra
+  // inferior, deixando a tela inacessivel no celular.
   const bottomNavItems = [
     { id: "revisions", label: "Revisoes", icon: ClipboardCheck },
+    { id: "service-orders", label: "Minhas OS", icon: ClipboardList },
     { id: "settings", label: "Perfil", icon: User },
     { id: "logout", label: "Sair", icon: LogOut },
   ];
@@ -23,7 +46,7 @@ export default function MechanicPanel() {
   return (
     <StoreLayout
       currentTab={activeTab}
-      onTabChange={setActiveTab}
+      onTabChange={handleTabChange}
       bottomNavItems={bottomNavItems}
       drawerItems={drawerItems}
       adminName={admin?.name}
@@ -52,6 +75,7 @@ export default function MechanicPanel() {
 function getPageTitle(tab: string): string {
   const titles: Record<string, string> = {
     revisions: "Minhas Revisoes",
+    "service-orders": "Minhas Ordens de Servico",
     settings: "Perfil",
   };
 
@@ -61,6 +85,7 @@ function getPageTitle(tab: string): string {
 function getPageDescription(tab: string): string {
   const descriptions: Record<string, string> = {
     revisions: "Gerencie suas revisoes atribuidas e acompanhe o progresso",
+    "service-orders": "Acompanhe as ordens de servico atribuidas a voce",
     settings: "Gerencie seu perfil, seguranca e preferencias",
   };
 

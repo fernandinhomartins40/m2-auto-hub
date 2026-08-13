@@ -51,11 +51,16 @@ const App = () => (
                           <Route path="/admin-login/*" element={<AdminLoginPage />} />
                           <Route path="/pwa-entry" element={<PwaEntryPage />} />
                           <Route path="/pwa-admin" element={<PwaAdminInstallPage />} />
-                          <Route path="/customer" element={<CustomerPanel />} />
+                          <Route path="/customer" element={<Navigate to="/customer/inicio" replace />} />
+                          <Route path="/customer/:tab" element={<CustomerPanel />} />
                           <Route path="/my-account" element={<MyAccount />} />
                           <Route path="/quote-approval/:token" element={<PublicQuoteApprovalPage />} />
-                          <Route path="/store-panel" element={<StorePanel />} />
-                          <Route path="/mechanic-panel" element={<MechanicPanelPage />} />
+                          {/* Cada seção do painel tem a própria URL, para o voltar
+                              do navegador funcionar e o link ser compartilhável. */}
+                          <Route path="/store-panel" element={<Navigate to="/store-panel/dashboard" replace />} />
+                          <Route path="/store-panel/:tab" element={<StorePanel />} />
+                          <Route path="/mechanic-panel" element={<Navigate to="/mechanic-panel/revisoes" replace />} />
+                          <Route path="/mechanic-panel/:tab" element={<MechanicPanelPage />} />
                           <Route path="/admin" element={<Navigate to="/store-panel" replace />} />
                           <Route path="/admin/*" element={<Navigate to="/store-panel" replace />} />
                           <Route path="*" element={<NotFound />} />
