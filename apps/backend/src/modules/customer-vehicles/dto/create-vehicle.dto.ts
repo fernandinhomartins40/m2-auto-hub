@@ -22,10 +22,12 @@ export const createVehicleSchema = z.object({
     .max(10, 'Plate must not exceed 10 characters')
     .trim()
     .toUpperCase(),
+  // A consulta por placa devolve o chassi mascarado (ex.: *****T143563), entao
+  // exigir 17 caracteres rejeitaria o dado que o proprio sistema preencheu.
   chassisNumber: z
     .string()
-    .min(17, 'Chassis number must be 17 characters')
-    .max(17, 'Chassis number must be 17 characters')
+    .max(17, 'Chassis number must not exceed 17 characters')
+    .trim()
     .optional()
     .transform(val => val || undefined),
   color: z
@@ -41,6 +43,12 @@ export const createVehicleSchema = z.object({
     .min(0, 'Mileage cannot be negative')
     .optional()
     .transform(val => val || undefined),
+  // Dados tecnicos vindos da consulta por placa.
+  fuel: z.string().max(30).trim().optional().transform(val => val || undefined),
+  displacement: z.string().max(20).trim().optional().transform(val => val || undefined),
+  power: z.string().max(20).trim().optional().transform(val => val || undefined),
+  city: z.string().max(80).trim().optional().transform(val => val || undefined),
+  state: z.string().max(2).trim().toUpperCase().optional().transform(val => val || undefined),
 });
 
 export type CreateVehicleDto = z.infer<typeof createVehicleSchema>;

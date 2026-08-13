@@ -404,6 +404,11 @@ export interface AdminCustomerVehicle {
   color: string;
   mileage: number | null;
   chassisNumber: string | null;
+  fuel?: string | null;
+  displacement?: string | null;
+  power?: string | null;
+  city?: string | null;
+  state?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1044,6 +1049,11 @@ class AdminService {
     color: string;
     mileage?: number;
     chassisNumber?: string;
+    fuel?: string;
+    displacement?: string;
+    power?: string;
+    city?: string;
+    state?: string;
   }): Promise<any> {
     const response = await apiClient.post(`/admin/customers/${customerId}/vehicles`, data);
     return response.data;

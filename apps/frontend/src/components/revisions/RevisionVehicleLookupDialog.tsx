@@ -1246,7 +1246,25 @@ export function RevisionVehicleLookupDialog({
           isOpen={createVehicleOpen}
           onClose={() => setCreateVehicleOpen(false)}
           onSuccess={handleCreateVehicleSuccess}
-          initialValues={{ plate: resolvedPlate }}
+          // Aproveita os dados que a consulta por placa acabou de trazer, para
+          // o atendente nao redigitar o que o sistema ja descobriu.
+          initialValues={{
+            plate: resolvedPlate,
+            ...(lookupResult?.technicalData
+              ? {
+                  brand: lookupResult.technicalData.brand ?? undefined,
+                  model: lookupResult.technicalData.model ?? undefined,
+                  year: lookupResult.technicalData.year ?? undefined,
+                  color: lookupResult.technicalData.color ?? undefined,
+                  chassisNumber: lookupResult.technicalData.chassisNumber ?? undefined,
+                  fuel: lookupResult.technicalData.fuel ?? undefined,
+                  displacement: lookupResult.technicalData.displacement ?? undefined,
+                  power: lookupResult.technicalData.power ?? undefined,
+                  city: lookupResult.technicalData.city ?? undefined,
+                  state: lookupResult.technicalData.state ?? undefined,
+                }
+              : {}),
+          }}
         />
       )}
 

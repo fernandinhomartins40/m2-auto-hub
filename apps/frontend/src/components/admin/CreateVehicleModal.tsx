@@ -22,6 +22,11 @@ interface CreateVehicleModalProps {
     color: string;
     mileage: number | string;
     chassisNumber: string;
+    fuel: string;
+    displacement: string;
+    power: string;
+    city: string;
+    state: string;
   }>;
 }
 
@@ -33,6 +38,11 @@ const EMPTY_FORM_DATA = {
   color: '',
   mileage: '',
   chassisNumber: '',
+  fuel: '',
+  displacement: '',
+  power: '',
+  city: '',
+  state: '',
 };
 
 const buildInitialFormData = (initialValues?: CreateVehicleModalProps['initialValues']) => ({
@@ -43,6 +53,11 @@ const buildInitialFormData = (initialValues?: CreateVehicleModalProps['initialVa
   color: initialValues?.color ?? EMPTY_FORM_DATA.color,
   mileage: initialValues?.mileage !== undefined ? String(initialValues.mileage) : EMPTY_FORM_DATA.mileage,
   chassisNumber: initialValues?.chassisNumber ?? EMPTY_FORM_DATA.chassisNumber,
+  fuel: initialValues?.fuel ?? EMPTY_FORM_DATA.fuel,
+  displacement: initialValues?.displacement ?? EMPTY_FORM_DATA.displacement,
+  power: initialValues?.power ?? EMPTY_FORM_DATA.power,
+  city: initialValues?.city ?? EMPTY_FORM_DATA.city,
+  state: initialValues?.state ?? EMPTY_FORM_DATA.state,
 });
 
 export function CreateVehicleModal({
@@ -167,6 +182,11 @@ export function CreateVehicleModal({
         color: formData.color.trim(),
         mileage: formData.mileage ? parseInt(formData.mileage) : undefined,
         chassisNumber: formData.chassisNumber.trim() || undefined,
+        fuel: formData.fuel.trim() || undefined,
+        displacement: formData.displacement.trim() || undefined,
+        power: formData.power.trim() || undefined,
+        city: formData.city.trim() || undefined,
+        state: formData.state.trim().toUpperCase() || undefined,
       });
 
       toast({
@@ -356,6 +376,76 @@ export function CreateVehicleModal({
               maxLength={17}
               className="mt-1 h-9 text-sm"
             />
+          </div>
+
+          {/* Dados técnicos: preenchidos pela consulta por placa, editáveis. */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div>
+              <Label htmlFor="fuel" className="text-xs">Combustível</Label>
+              <Input
+                id="fuel"
+                value={formData.fuel}
+                onChange={(e) => setFormData({ ...formData, fuel: e.target.value })}
+                placeholder="Gasolina"
+                disabled={isCreating}
+                maxLength={30}
+                className="mt-1 h-9 text-sm"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="displacement" className="text-xs">Cilindrada</Label>
+              <Input
+                id="displacement"
+                value={formData.displacement}
+                onChange={(e) => setFormData({ ...formData, displacement: e.target.value })}
+                placeholder="1000 cc"
+                disabled={isCreating}
+                maxLength={20}
+                className="mt-1 h-9 text-sm"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="power" className="text-xs">Potência</Label>
+              <Input
+                id="power"
+                value={formData.power}
+                onChange={(e) => setFormData({ ...formData, power: e.target.value })}
+                placeholder="55 cv"
+                disabled={isCreating}
+                maxLength={20}
+                className="mt-1 h-9 text-sm"
+              />
+            </div>
+
+            <div className="col-span-2 sm:col-span-2">
+              <Label htmlFor="city" className="text-xs">Município de registro</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="PONTA GROSSA"
+                disabled={isCreating}
+                maxLength={80}
+                className="mt-1 h-9 text-sm"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="state" className="text-xs">UF</Label>
+              <Input
+                id="state"
+                value={formData.state}
+                onChange={(e) =>
+                  setFormData({ ...formData, state: e.target.value.toUpperCase().slice(0, 2) })
+                }
+                placeholder="PR"
+                disabled={isCreating}
+                maxLength={2}
+                className="mt-1 h-9 text-sm uppercase"
+              />
+            </div>
           </div>
         </form>
         </ScrollArea>

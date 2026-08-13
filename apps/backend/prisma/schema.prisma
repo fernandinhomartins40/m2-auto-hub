@@ -866,6 +866,14 @@ model CustomerVehicle {
   chassisNumber String?
   color         String?
   mileage       Int?
+  // Dados tecnicos que a consulta por placa traz e a oficina usa para
+  // identificar oleo, filtro e a versao correta do motor.
+  fuel          String?
+  displacement  String?
+  power         String?
+  // Municipio/UF de registro do veiculo.
+  city          String?
+  state         String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

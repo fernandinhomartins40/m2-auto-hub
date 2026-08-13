@@ -26,10 +26,11 @@ export const updateVehicleSchema = z.object({
     .trim()
     .toUpperCase()
     .optional(),
+  // Aceita o chassi mascarado que a consulta por placa devolve (*****T143563).
   chassisNumber: z
     .string()
-    .min(17, 'Chassis number must be 17 characters')
-    .max(17, 'Chassis number must be 17 characters')
+    .max(17, 'Chassis number must not exceed 17 characters')
+    .trim()
     .nullable()
     .optional()
     .transform(val => val || undefined),
@@ -48,6 +49,12 @@ export const updateVehicleSchema = z.object({
     .nullable()
     .optional()
     .transform(val => val || undefined),
+  // Dados tecnicos vindos da consulta por placa.
+  fuel: z.string().max(30).trim().nullable().optional().transform(val => val || undefined),
+  displacement: z.string().max(20).trim().nullable().optional().transform(val => val || undefined),
+  power: z.string().max(20).trim().nullable().optional().transform(val => val || undefined),
+  city: z.string().max(80).trim().nullable().optional().transform(val => val || undefined),
+  state: z.string().max(2).trim().toUpperCase().nullable().optional().transform(val => val || undefined),
 });
 
 export type UpdateVehicleDto = z.infer<typeof updateVehicleSchema>;

@@ -836,6 +836,11 @@ export class AdminService {
     color: string;
     mileage?: number;
     chassisNumber?: string;
+    fuel?: string;
+    displacement?: string;
+    power?: string;
+    city?: string;
+    state?: string;
   }) {
     try {
       // Verificar se o cliente existe
@@ -879,6 +884,11 @@ export class AdminService {
           color: data.color.trim(),
           mileage: data.mileage || null,
           chassisNumber: data.chassisNumber ? data.chassisNumber.trim().toUpperCase() : null,
+          fuel: data.fuel?.trim() || null,
+          displacement: data.displacement?.trim() || null,
+          power: data.power?.trim() || null,
+          city: data.city?.trim() || null,
+          state: data.state?.trim().toUpperCase() || null,
         }
       });
 
