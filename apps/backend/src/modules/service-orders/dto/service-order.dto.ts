@@ -30,6 +30,8 @@ const baseFields = {
 export const createServiceOrderSchema = z.object({
   ...baseFields,
   items: z.array(serviceOrderItemInputSchema).default([]),
+  // Preenchido quando a OS nasce do checklist de uma revisao.
+  revisionId: z.string().uuid().optional(),
 });
 export type CreateServiceOrderDto = z.infer<typeof createServiceOrderSchema>;
 

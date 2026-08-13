@@ -34,9 +34,9 @@ export const createRevisionSchema = z.object({
     .min(0, 'Mileage cannot be negative')
     .optional()
     .transform(val => val || undefined),
-  checklistItems: z
-    .array(checklistItemCheckSchema)
-    .min(1, 'At least one checklist item is required'),
+  // Sem minimo: nem toda revisao passa por todos os itens, e o que nao foi
+  // avaliado simplesmente nao entra na lista (vale como NOT_CHECKED).
+  checklistItems: z.array(checklistItemCheckSchema).default([]),
   generalNotes: z
     .string()
     .max(5000, 'General notes must not exceed 5000 characters')

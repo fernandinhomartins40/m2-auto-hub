@@ -109,6 +109,7 @@ export class ServiceOrdersService {
         laborTotal: new Prisma.Decimal(totals.laborTotal),
         partsTotal: new Prisma.Decimal(totals.partsTotal),
         total: new Prisma.Decimal(totals.total),
+        revisionId: dto.revisionId ?? null,
         items: { create: this.mapItemsToCreate(dto.items) },
       },
       include: itemsInclude,

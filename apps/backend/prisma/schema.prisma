@@ -993,6 +993,8 @@ model Revision {
   vehicle          CustomerVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   assignedMechanic Admin?          @relation(fields: [assignedMechanicId], references: [id])
   appointment      RevisionAppointment?
+  // OS gerada a partir dos itens com problema desta revisao.
+  serviceOrders    ServiceOrder[]
 
   @@index([customerId])
   @@index([vehicleId])
@@ -1073,6 +1075,9 @@ model ServiceOrder {
 
   stockApplied Boolean @default(false) // trava idempotente da baixa de estoque
 
+  // Revisao que originou esta OS, quando criada a partir do checklist.
+  revisionId String?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   completedAt DateTime?
@@ -1083,11 +1088,13 @@ model ServiceOrder {
   vehicle          CustomerVehicle?   @relation(fields: [vehicleId], references: [id])
   assignedMechanic Admin?             @relation(fields: [assignedMechanicId], references: [id])
   items            ServiceOrderItem[]
+  revision         Revision?          @relation(fields: [revisionId], references: [id])
 
   @@index([status])
   @@index([assignedMechanicId])
   @@index([customerId])
   @@index([createdAt])
+  @@index([revisionId])
   @@map("service_orders")
 }
 

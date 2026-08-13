@@ -68,6 +68,8 @@ export interface ServiceOrderInput {
   assignedMechanicId?: string | null;
   discount?: number;
   items: ServiceOrderItemInput[];
+  /** Preenchido quando a OS nasce do checklist de uma revisão. */
+  revisionId?: string;
 }
 
 export interface ServiceOrderStatistics {

@@ -36,7 +36,7 @@ import {
   BarChart3,
   FileText
 } from "lucide-react";
-import { RevisionsContent } from "./RevisionsContent";
+import { NewRevisionFlow } from "../revisions/NewRevisionFlow";
 import { RevisionsListContent } from "./RevisionsListContent";
 import { RevisionAppointmentsContent } from "./RevisionAppointmentsContent";
 import { ProductModal } from "./ProductModal";
@@ -2230,7 +2230,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             ) : revisionView === 'list' ? (
               <RevisionsListContent />
             ) : (
-              <RevisionsContent />
+              <NewRevisionFlow onFinished={() => setRevisionView('list')} />
             )}
           </div>
         );
