@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
+import { formatCurrency } from '@/lib/format';
 
 interface OrderDetailsModalProps {
   order: StoreOrder | null;
@@ -189,12 +190,6 @@ export function OrderDetailsModal({
     return null;
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const formatDateTime = (value: string) => {
     return new Date(value).toLocaleString("pt-BR");

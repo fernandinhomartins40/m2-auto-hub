@@ -15,6 +15,7 @@ import serviceOrderService, {
 } from '@/api/serviceOrderService';
 import productService from '@/api/productService';
 import serviceService from '@/api/serviceService';
+import { formatCurrency as money } from '@/lib/format';
 
 interface Props {
   isOpen: boolean;
@@ -37,9 +38,6 @@ interface CatalogService {
   category?: string;
   basePrice?: number;
 }
-
-const money = (v: number | string) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
 export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
   const { toast } = useToast();

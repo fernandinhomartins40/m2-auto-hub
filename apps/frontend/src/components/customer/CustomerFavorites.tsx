@@ -41,6 +41,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface FavoriteProductData extends Product {
   favoriteId: string;
@@ -384,12 +385,6 @@ export function CustomerFavorites() {
     loadFavoritesData();
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(price);
-  };
 
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('pt-BR', {

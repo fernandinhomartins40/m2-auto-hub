@@ -8,6 +8,7 @@ import { ItemStatus } from '@/types/revisions';
 import type { ServiceOrderItemInput } from '@/api/serviceOrderService';
 
 import type { AvaliacaoItem } from './StepChecklist';
+import { formatCurrency as dinheiro } from '@/lib/format';
 
 export interface OrcamentoLinha extends ServiceOrderItemInput {
   /** Item do checklist que originou esta linha. */
@@ -22,9 +23,6 @@ interface StepBudgetProps {
   onBack: () => void;
   salvando: boolean;
 }
-
-const dinheiro = (v: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
 /**
  * Passo 4: orcamento dos itens com problema.

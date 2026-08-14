@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Crown, Star, Award, Trophy } from "lucide-react";
 import { Customer } from "@/contexts/AuthContext";
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface CustomerLevelProps {
   customer: Customer;
@@ -81,12 +82,6 @@ export function CustomerLevel({ customer, className = "" }: CustomerLevelProps) 
     ? Math.max(0, nextLevelInfo.minSpent - customer.totalSpent)
     : 0;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(price);
-  };
 
   return (
     <Card className={`${className}`}>

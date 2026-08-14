@@ -36,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface AdminProductsSectionProps {
   searchTerm: string;
@@ -192,13 +193,6 @@ export function AdminProductsSection({
   };
 
   // Helper functions
-  const formatPrice = (price) => {
-    if (!price) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
 
   const getStockStatus = (product) => {
     if (product.stock === 0) {

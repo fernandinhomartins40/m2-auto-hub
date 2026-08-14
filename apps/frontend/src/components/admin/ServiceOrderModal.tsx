@@ -37,6 +37,7 @@ import serviceService from '@/api/serviceService';
 import revisionService from '@/api/revisionService';
 import { CreateCustomerModal } from './CreateCustomerModal';
 import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
+import { formatCurrency as money } from '@/lib/format';
 
 /** Dados iniciais para pré-preencher a OS (ex.: vindos da leitura de placa). */
 export interface ServiceOrderInitialData {
@@ -75,9 +76,6 @@ interface Mechanic {
   id: string;
   name: string;
 }
-
-const money = (v: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
 export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData }: Props) {
   const { toast } = useToast();

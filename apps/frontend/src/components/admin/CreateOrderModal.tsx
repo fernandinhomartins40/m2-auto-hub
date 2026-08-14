@@ -28,6 +28,7 @@ import { useToast } from "../../hooks/use-toast";
 import adminService from "../../api/adminService";
 import productService from "../../api/productService";
 import serviceService from "../../api/serviceService";
+import { formatCurrency } from '@/lib/format';
 
 interface CreateOrderModalProps {
   isOpen: boolean;
@@ -305,12 +306,6 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
     return selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const validateStep = (stepNumber: number): boolean => {
     switch (stepNumber) {

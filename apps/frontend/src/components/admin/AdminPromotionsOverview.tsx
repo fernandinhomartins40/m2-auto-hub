@@ -23,9 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Separator } from "../ui/separator";
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price);
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface AdminPromotionsOverviewProps {
   searchTerm: string;

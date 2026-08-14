@@ -90,6 +90,7 @@ import {
   type ReportExportSection,
 } from "@/utils/reportPdf";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface StoreOrder {
   id: string;
@@ -449,12 +450,6 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     setFilteredProducts(filtered);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(price);
-  };
 
   const getStatusInfo = (status: string) => {
     const statusMap = {

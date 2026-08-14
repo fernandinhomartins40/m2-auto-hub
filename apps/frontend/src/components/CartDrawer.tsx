@@ -6,17 +6,12 @@ import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
 import { CheckoutDrawer } from "./CheckoutDrawer";
 import { Trash2, Plus, Minus, MessageCircle, ShoppingBag, X, Wrench, Package } from "lucide-react";
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 export function CartDrawer() {
   const { items, isOpen, totalItems, totalPrice, closeCart, removeItem, updateQuantity, clearCart } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(price);
-  };
 
   const products = items.filter(item => item.type !== 'service');
   const services = items.filter(item => item.type === 'service');

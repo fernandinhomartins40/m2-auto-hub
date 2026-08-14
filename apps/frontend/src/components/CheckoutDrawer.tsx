@@ -31,6 +31,7 @@ import guestOrderService from "../api/guestOrderService";
 import orderService from "../api/orderService";
 import addressService from "../api/addressService";
 import { CouponInput } from "./CouponInput";
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface CheckoutDrawerProps {
   open: boolean;
@@ -132,12 +133,6 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     }
   }, [selectedAddressId, customer]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(price);
-  };
 
   const formatWhatsApp = (value: string) => {
     const numbers = value.replace(/\D/g, '');

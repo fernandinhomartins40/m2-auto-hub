@@ -7,9 +7,7 @@ import { Separator } from "../ui/separator";
 import { AdminPageHeader } from "./AdminPageHeader";
 import type { CompleteReportData } from "@/api/reportService";
 import type { ReportExportSection } from "@/utils/reportPdf";
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price);
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface AdminReportsSectionProps {
   reportData: CompleteReportData | null;

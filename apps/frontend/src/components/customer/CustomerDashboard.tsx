@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Calendar
 } from "lucide-react";
+import { formatCurrency } from '@/lib/format';
 
 export function CustomerDashboard() {
   const { customer, getOrders } = useAuth();
@@ -62,12 +63,6 @@ export function CustomerDashboard() {
 
   if (!customer) return null;
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const getStatusInfo = (status: string) => {
     const statusMap = {

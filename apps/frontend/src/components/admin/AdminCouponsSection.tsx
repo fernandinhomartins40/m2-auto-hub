@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { CouponModal } from './CouponModal';
 import { AdminPageHeader } from './AdminPageHeader';
 import { useAdminCoupons } from '../../hooks/useAdminCoupons';
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface AdminCouponsSectionProps {
   searchTerm: string;
@@ -175,16 +176,6 @@ export function AdminCouponsSection({
     }
   };
 
-  const formatPrice = (price?: number | string | null) => {
-    if (price === undefined || price === null) {
-      return 'R$ 0,00';
-    }
-
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(Number(price));
-  };
 
   const formatDiscount = (coupon: Coupon) => {
     if (coupon.discountType === 'PERCENTAGE') {

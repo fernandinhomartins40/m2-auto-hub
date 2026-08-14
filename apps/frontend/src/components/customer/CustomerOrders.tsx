@@ -23,6 +23,7 @@ import {
   CreditCard,
   RefreshCw
 } from "lucide-react";
+import { formatCurrency } from '@/lib/format';
 
 export function CustomerOrders() {
   const { getOrders } = useAuth();
@@ -71,12 +72,6 @@ export function CustomerOrders() {
     setFilteredOrders(filtered);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const getStatusInfo = (status: string) => {
     const statusMap = {

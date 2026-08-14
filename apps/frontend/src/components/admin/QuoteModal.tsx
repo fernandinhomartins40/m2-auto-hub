@@ -24,6 +24,7 @@ import {
 import { Quote } from "../../api/adminService";
 import adminService from "../../api/adminService";
 import { useToast } from "../../hooks/use-toast";
+import { formatCurrency } from '@/lib/format';
 
 interface QuoteModalProps {
   quote: Quote | null;
@@ -69,12 +70,6 @@ export function QuoteModal({ quote, isOpen, onClose, onUpdate, onOpenOrder }: Qu
   const isApproved = ['APPROVED', 'approved', 'accepted'].includes(quote.status);
   const isRejected = ['REJECTED', 'rejected'].includes(quote.status);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const calculateTotal = () => {
     return items.reduce((sum, item) => sum + (item.quotedPrice * item.quantity), 0);

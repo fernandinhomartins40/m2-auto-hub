@@ -15,6 +15,7 @@ import { Loader2, Play, CheckCircle2, XCircle, UserCog } from 'lucide-react';
 import serviceOrderService, { ServiceOrder, ServiceOrderStatus } from '@/api/serviceOrderService';
 import revisionService from '@/api/revisionService';
 import { useToast } from '../ui/use-toast';
+import { formatCurrency as money } from '@/lib/format';
 
 interface Props {
   order: ServiceOrder | null;
@@ -23,9 +24,6 @@ interface Props {
   onChanged: () => void;
   restricted?: boolean;
 }
-
-const money = (v: number | string) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
 const STATUS_META: Record<ServiceOrderStatus, { label: string; color: string }> = {
   OPEN: { label: 'Aberta', color: 'bg-yellow-100 text-yellow-800' },

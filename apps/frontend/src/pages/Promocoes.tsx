@@ -9,6 +9,7 @@ import { Gift, Tag, Clock, TrendingUp, Package, Truck, Search, Calendar, Loader2
 import promotionService from '../api/promotionService';
 import type { AdvancedPromotion } from '../types/promotions';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 export default function Promocoes() {
   const navigate = useNavigate();
@@ -33,12 +34,6 @@ export default function Promocoes() {
     }
   };
 
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {

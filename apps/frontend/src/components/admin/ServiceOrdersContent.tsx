@@ -30,6 +30,7 @@ import serviceOrderService, {
   ServiceOrderStatus,
 } from '@/api/serviceOrderService';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency as money } from '@/lib/format';
 
 interface Props {
   /** Quando definido, filtra apenas as OS deste mecânico (uso no painel oficina). */
@@ -37,9 +38,6 @@ interface Props {
   /** Oculta ações restritas a gestão (atribuir/cancelar/excluir). */
   restricted?: boolean;
 }
-
-const money = (v: number | string) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
 const STATUS_META: Record<ServiceOrderStatus, { label: string; color: string }> = {
   OPEN: { label: 'Aberta', color: 'bg-yellow-100 text-yellow-800' },

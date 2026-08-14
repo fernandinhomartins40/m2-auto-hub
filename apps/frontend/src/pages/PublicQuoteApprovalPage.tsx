@@ -5,12 +5,7 @@ import { CheckCircle2, Clock, Loader2, ThumbsDown, ThumbsUp, Wrench } from "luci
 import customerService, { type PublicQuotePayload } from "@/api/customerService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
+import { formatCurrency } from '@/lib/format';
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return "Nao informado";

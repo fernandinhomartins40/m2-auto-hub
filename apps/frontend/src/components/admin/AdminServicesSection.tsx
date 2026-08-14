@@ -33,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface ServiceWithStatus {
   id: string;
@@ -217,13 +218,6 @@ export function AdminServicesSection({
   };
 
   // Helper functions
-  const formatPrice = (price?: number): string => {
-    if (!price) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
 
   return (
     <div className="space-y-6">

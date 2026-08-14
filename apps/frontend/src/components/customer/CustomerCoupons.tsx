@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import couponService from '@/api/couponService';
 import type { Coupon } from '@/api/couponService';
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 export function CustomerCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -59,13 +60,6 @@ export function CustomerCoupons() {
     }
   };
 
-  const formatPrice = (price: number | string) => {
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(numPrice);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {

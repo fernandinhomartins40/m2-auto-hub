@@ -20,6 +20,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
 import { Textarea } from '../ui/textarea';
+import { formatCurrency } from '@/lib/format';
 
 interface RequestQuoteModalProps {
   isOpen: boolean;
@@ -36,12 +37,6 @@ interface SelectedService {
   basePrice?: number;
   quantity: number;
 }
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
 
 export function RequestQuoteModal({
   isOpen,

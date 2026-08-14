@@ -32,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface AdminPromotionsSectionProps {
   searchTerm: string;
@@ -159,13 +160,6 @@ export function AdminPromotionsSection({
   };
 
   // Helper functions
-  const formatPrice = (price) => {
-    if (!price) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
 
   const formatDiscount = (promotion) => {
     if (promotion.discountType === 'percentage') {

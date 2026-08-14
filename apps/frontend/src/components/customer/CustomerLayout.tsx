@@ -27,6 +27,7 @@ import {
   ShoppingCart,
   FileText,
 } from "lucide-react";
+import { formatCurrency } from '@/lib/format';
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -119,12 +120,6 @@ export function CustomerLayout({
       .slice(0, 2);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const getMembershipLevel = (totalSpent: number) => {
     if (totalSpent >= 5000)

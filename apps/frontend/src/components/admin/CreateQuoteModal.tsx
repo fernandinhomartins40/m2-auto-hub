@@ -29,6 +29,7 @@ import {
 import { useToast } from "../../hooks/use-toast";
 import adminService from "../../api/adminService";
 import serviceService from "../../api/serviceService";
+import { formatCurrency } from '@/lib/format';
 
 interface CreateQuoteModalProps {
   isOpen: boolean;
@@ -281,12 +282,6 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
     return selectedItems.reduce((sum, item) => sum + (item.quotedPrice * item.quantity), 0);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const validateStep = (stepNumber: number): boolean => {
     switch (stepNumber) {

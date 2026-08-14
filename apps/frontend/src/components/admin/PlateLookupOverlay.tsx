@@ -33,14 +33,12 @@ import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupD
 import { ServiceOrderModal, type ServiceOrderInitialData } from './ServiceOrderModal';
 import { ServiceOrderDetailsModal } from './ServiceOrderDetailsModal';
 import { RevisionEditModal } from './RevisionEditModal';
+import { formatCurrency as money } from '@/lib/format';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const money = (v: number | string) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
 const OS_STATUS: Record<string, { label: string; color: string }> = {
   OPEN: { label: 'Aberta', color: 'bg-yellow-100 text-yellow-800' },

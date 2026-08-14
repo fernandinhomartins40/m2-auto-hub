@@ -22,6 +22,7 @@ import {
 import adminService, { type ProvisionalUser as AdminCustomer, type StoreOrder } from "../../api/adminService";
 import { useToast } from "../../hooks/use-toast";
 import { OrderDetailsModal } from "./OrderDetailsModal";
+import { formatCurrency } from '@/lib/format';
 
 interface CustomerOrdersModalProps {
   customer: AdminCustomer | null;
@@ -67,12 +68,6 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const getStatusInfo = (status: string) => {
     const statusMap: Record<string, { label: string; color: string; icon: any }> = {
