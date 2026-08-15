@@ -229,9 +229,10 @@
 /* Header do Admin */
 .lojista-header {
   background: white;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 1rem 2rem;
-  margin: -2rem -2rem 2rem -2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .lojista-title {
@@ -262,8 +263,8 @@
   }
 
   .lojista-header {
-    margin: -1rem -1rem 1rem -1rem;
-    padding: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.875rem 1rem;
   }
 
   .metrica-card {
