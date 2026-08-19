@@ -188,6 +188,17 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
     if (lookup?.vehicle) void runSearch(lookup.vehicle.plate);
   };
 
+  /**
+   * Criada a OS, o atendimento acabou: fecha a consulta junto com o modal.
+   * Antes o overlay ficava aberto por baixo e era preciso fechar na mão.
+   *
+   * Não recarrega a busca de propósito — a consulta está saindo da tela, e
+   * recarregá-la só gastaria uma requisição cujo resultado ninguém veria.
+   */
+  const handleOsSaved = () => {
+    onClose();
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
@@ -434,7 +445,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
       <ServiceOrderModal
         isOpen={osModalOpen}
         onClose={() => setOsModalOpen(false)}
-        onSaved={refreshAfterChange}
+        onSaved={handleOsSaved}
         order={osEditing}
         initialData={osInitial}
       />
