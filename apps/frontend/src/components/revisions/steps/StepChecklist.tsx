@@ -130,14 +130,15 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
     [categorias]
   );
 
+  // Sem `.slice(0, 8)`: o corte em oito sugestoes escondia itens que casavam
+  // com a busca e nao havia como chegar neles — "freio" sozinho ja passa de
+  // oito. A lista rola em vez de truncar.
   const sugestoes = useMemo(() => {
     const termo = semAcento(busca);
     if (!termo) return [];
-    return todosItens
-      .filter(
-        (i) => semAcento(i.name).includes(termo) || semAcento(i.categoryName).includes(termo)
-      )
-      .slice(0, 8);
+    return todosItens.filter(
+      (i) => semAcento(i.name).includes(termo) || semAcento(i.categoryName).includes(termo)
+    );
   }, [busca, todosItens]);
 
   const avaliado = (itemId: string) => avaliacoes.find((a) => a.itemId === itemId);
@@ -239,7 +240,7 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
         />
 
         {sugestoes.length > 0 && (
-          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border bg-background shadow-lg">
+          <div className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border bg-background shadow-lg">
             {sugestoes.map((item) => {
               const jaTem = Boolean(avaliado(item.id));
               return (
