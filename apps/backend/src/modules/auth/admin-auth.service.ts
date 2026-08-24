@@ -696,13 +696,39 @@ export class AdminAuthService {
         throw ApiError.badRequest('Cannot delete yourself');
       }
 
-      // Soft delete
-      await prisma.admin.update({
+      const target = await prisma.admin.findUnique({
         where: { id: targetAdminId },
-        data: { status: AdminStatus.INACTIVE },
+        select: { id: true, email: true, role: true },
       });
 
-      logger.info(`Admin ${targetAdminId} deleted (soft) by ${deleter.email}`);
+      if (!target) {
+        throw ApiError.notFound('Target admin not found');
+      }
+
+      // A oficina precisa manter ao menos um SUPER_ADMIN, senão ninguém
+      // consegue gerenciar usuários depois.
+      //
+      // Pela API esta guarda é inalcançável (excluir um SUPER_ADMIN exige que
+      // o autor também seja um, logo haveria dois). Ela existe para chamadas
+      // diretas ao service — scripts de manutenção, seeds e jobs.
+      if (target.role === AdminRole.SUPER_ADMIN) {
+        const superAdmins = await prisma.admin.count({
+          where: { role: AdminRole.SUPER_ADMIN },
+        });
+
+        if (superAdmins <= 1) {
+          throw ApiError.badRequest(
+            'Não é possível excluir o único SUPER_ADMIN do sistema'
+          );
+        }
+      }
+
+      // Exclusão real. O histórico de trabalho (revisões, OS, agendamentos e
+      // tickets) permanece: as FKs usam ON DELETE SET NULL, então o registro
+      // apenas fica sem responsável — o nome segue no cache `mechanicName`.
+      await prisma.admin.delete({ where: { id: targetAdminId } });
+
+      logger.info(`Admin ${target.email} deleted by ${deleter.email}`);
     } catch (error) {
       logger.error('Admin deletion error:', error);
       throw error;

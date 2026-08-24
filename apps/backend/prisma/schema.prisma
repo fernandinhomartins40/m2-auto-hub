@@ -1002,7 +1002,7 @@ model Revision {
   // Relations
   customer         Customer        @relation(fields: [customerId], references: [id])
   vehicle          CustomerVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  assignedMechanic Admin?          @relation(fields: [assignedMechanicId], references: [id])
+  assignedMechanic Admin?          @relation(fields: [assignedMechanicId], references: [id], onDelete: SetNull)
   appointment      RevisionAppointment?
   // OS gerada a partir dos itens com problema desta revisao.
   serviceOrders    ServiceOrder[]
@@ -1041,7 +1041,7 @@ model RevisionAppointment {
 
   customer         Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
   vehicle          CustomerVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  assignedMechanic Admin?          @relation(fields: [assignedMechanicId], references: [id])
+  assignedMechanic Admin?          @relation(fields: [assignedMechanicId], references: [id], onDelete: SetNull)
   revision         Revision?       @relation(fields: [revisionId], references: [id], onDelete: SetNull)
 
   @@index([customerId])
@@ -1100,7 +1100,7 @@ model ServiceOrder {
   // Relations
   customer         Customer?          @relation(fields: [customerId], references: [id])
   vehicle          CustomerVehicle?   @relation(fields: [vehicleId], references: [id])
-  assignedMechanic Admin?             @relation(fields: [assignedMechanicId], references: [id])
+  assignedMechanic Admin?             @relation(fields: [assignedMechanicId], references: [id], onDelete: SetNull)
   items            ServiceOrderItem[]
   revision         Revision?          @relation(fields: [revisionId], references: [id])
 
@@ -1231,7 +1231,7 @@ model SupportTicket {
 
   // Relations
   customer     Customer      @relation(fields: [customerId], references: [id])
-  assignedTo   Admin?        @relation(fields: [assignedToId], references: [id])
+  assignedTo   Admin?        @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
   messages     TicketMessage[]
 
   @@index([customerId])

@@ -94,7 +94,21 @@ export default function AdminUsersSection() {
   };
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o usuário ${userName}?`)) {
+    // Linhas separadas e unidas com join: quebra de linha escrita direto
+    // dentro do template literal ja quebrou o build uma vez.
+    const confirmado = window.confirm(
+      [
+        `Excluir permanentemente o usuário ${userName}?`,
+        '',
+        'Esta ação não pode ser desfeita. As revisões, ordens de serviço e ' +
+          'atendimentos que ele realizou continuam registrados, mas ficam ' +
+          'sem responsável atribuído.',
+        '',
+        'Para apenas suspender o acesso, use "Desativar usuário".',
+      ].join('\n')
+    );
+
+    if (!confirmado) {
       return;
     }
 
@@ -103,9 +117,12 @@ export default function AdminUsersSection() {
       toast.success('Usuário excluído com sucesso');
       fetchUsers();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
+      const err = error as { response?: { data?: { error?: string; message?: string } } };
       toast.error('Erro ao excluir usuário', {
-        description: err.response?.data?.message || 'Erro desconhecido',
+        description:
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          'Tente novamente.',
       });
     }
   };
