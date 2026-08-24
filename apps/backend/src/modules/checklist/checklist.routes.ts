@@ -20,15 +20,19 @@ router.get('/items/:id', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.r
 router.get('/categories/:categoryId/items', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.STAFF), checklistController.getItemsByCategory);
 
 // Categories management (managers and above)
+//
+// ATENCAO: `/reorder` precisa vir ANTES de `/:id`. O Express casa na ordem de
+// declaracao, entao com `/:id` na frente o pedido de reordenacao chegava ao
+// updateCategory com id="reorder" e morria no Zod como UUID invalido.
+router.put('/categories/reorder', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.updateCategoriesOrder);
 router.post('/categories', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.createCategory);
 router.put('/categories/:id', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.updateCategory);
 router.delete('/categories/:id', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.ADMIN), checklistController.deleteCategory);
-router.put('/categories/reorder', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.updateCategoriesOrder);
 
-// Items management (managers and above)
+// Items management (managers and above) - mesma regra: `/reorder` antes de `/:id`.
+router.put('/items/reorder', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.updateItemsOrder);
 router.post('/items', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.createItem);
 router.put('/items/:id', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.updateItem);
 router.delete('/items/:id', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.ADMIN), checklistController.deleteItem);
-router.put('/items/reorder', AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.MANAGER), checklistController.updateItemsOrder);
 
 export default router;

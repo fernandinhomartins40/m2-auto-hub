@@ -33,45 +33,55 @@ export interface ChecklistStructureResponse {
   enabledItems: number;
 }
 
+/**
+ * O backend responde `{ success, data }` em todas as rotas do checklist. Metade
+ * dos metodos aqui devolvia `response.data` cru e entregava o envelope inteiro
+ * no lugar do objeto — desempacotar num so lugar evita repetir o erro.
+ */
+const conteudo = <T,>(response: { data: unknown }): T => {
+  const corpo = response.data as { data?: T } | T;
+  return corpo && typeof corpo === 'object' && 'data' in corpo
+    ? ((corpo as { data: T }).data ?? (corpo as T))
+    : (corpo as T);
+};
+
 class ChecklistService {
   /**
    * Get complete checklist structure (For authenticated customers)
    */
   async getChecklistStructure(): Promise<ChecklistStructureResponse> {
-    const response = await apiClient.get('/checklist/structure/customer');
-    return response.data.data || response.data;
+    return conteudo(await apiClient.get('/checklist/structure/customer'));
   }
 
   /**
    * Get complete checklist structure (Admin only)
    */
   async getChecklistStructureAdmin(): Promise<ChecklistStructureResponse> {
-    const response = await apiClient.get('/checklist/structure');
-    return response.data.data || response.data;
+    return conteudo(await apiClient.get('/checklist/structure'));
   }
 
   /**
    * Get only enabled categories with enabled items (Admin)
    */
   async getEnabledCategories(): Promise<ChecklistCategory[]> {
-    const response = await apiClient.get('/checklist/categories/enabled');
-    return response.data;
+    return conteudo(await apiClient.get('/checklist/categories/enabled'));
   }
 
   /**
-   * Get all categories (Admin)
+   * Todas as categorias, com os itens inclusive desabilitados: e a visao que a
+   * tela de gerenciamento precisa para religar o que foi escondido.
    */
   async getCategories(): Promise<ChecklistCategory[]> {
-    const response = await apiClient.get('/checklist/categories');
-    return response.data;
+    return conteudo(
+      await apiClient.get('/checklist/categories', { params: { includeItems: 'true' } })
+    );
   }
 
   /**
    * Get category by ID (Admin)
    */
   async getCategoryById(id: string): Promise<ChecklistCategory> {
-    const response = await apiClient.get(`/checklist/categories/${id}`);
-    return response.data;
+    return conteudo(await apiClient.get(`/checklist/categories/${id}`));
   }
 
   /**
@@ -83,8 +93,7 @@ class ChecklistService {
     icon?: string;
     order?: number;
   }): Promise<ChecklistCategory> {
-    const response = await apiClient.post('/checklist/categories', data);
-    return response.data;
+    return conteudo(await apiClient.post('/checklist/categories', data));
   }
 
   /**
@@ -100,8 +109,7 @@ class ChecklistService {
       isEnabled?: boolean;
     }
   ): Promise<ChecklistCategory> {
-    const response = await apiClient.put(`/checklist/categories/${id}`, data);
-    return response.data;
+    return conteudo(await apiClient.put(`/checklist/categories/${id}`, data));
   }
 
   /**
@@ -115,16 +123,14 @@ class ChecklistService {
    * Get all items (Admin)
    */
   async getItems(): Promise<ChecklistItem[]> {
-    const response = await apiClient.get('/checklist/items');
-    return response.data;
+    return conteudo(await apiClient.get('/checklist/items'));
   }
 
   /**
    * Get items by category (Admin)
    */
   async getItemsByCategory(categoryId: string): Promise<ChecklistItem[]> {
-    const response = await apiClient.get(`/checklist/categories/${categoryId}/items`);
-    return response.data;
+    return conteudo(await apiClient.get(`/checklist/categories/${categoryId}/items`));
   }
 
   /**
@@ -136,8 +142,7 @@ class ChecklistService {
     description?: string;
     order?: number;
   }): Promise<ChecklistItem> {
-    const response = await apiClient.post('/checklist/items', data);
-    return response.data;
+    return conteudo(await apiClient.post('/checklist/items', data));
   }
 
   /**
@@ -146,14 +151,14 @@ class ChecklistService {
   async updateItem(
     id: string,
     data: {
+      categoryId?: string;
       name?: string;
       description?: string;
       order?: number;
       isEnabled?: boolean;
     }
   ): Promise<ChecklistItem> {
-    const response = await apiClient.put(`/checklist/items/${id}`, data);
-    return response.data;
+    return conteudo(await apiClient.put(`/checklist/items/${id}`, data));
   }
 
   /**
@@ -165,16 +170,23 @@ class ChecklistService {
 
   /**
    * Update categories order (Admin - Manager+)
+   *
+   * A API espera `{ categories: [{ id, order }] }`; a versao antiga mandava uma
+   * lista de ids e era rejeitada pelo Zod.
    */
   async updateCategoriesOrder(categoryIds: string[]): Promise<void> {
-    await apiClient.put('/checklist/categories/reorder', { categoryIds });
+    await apiClient.put('/checklist/categories/reorder', {
+      categories: categoryIds.map((id, order) => ({ id, order })),
+    });
   }
 
   /**
    * Update items order (Admin - Manager+)
    */
   async updateItemsOrder(itemIds: string[]): Promise<void> {
-    await apiClient.put('/checklist/items/reorder', { itemIds });
+    await apiClient.put('/checklist/items/reorder', {
+      items: itemIds.map((id, order) => ({ id, order })),
+    });
   }
 }
 

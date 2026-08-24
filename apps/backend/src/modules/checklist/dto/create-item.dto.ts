@@ -15,12 +15,13 @@ export const createItemSchema = z.object({
     .trim()
     .optional()
     .transform(val => val || undefined),
-  isDefault: z.boolean().optional().default(false),
   isEnabled: z.boolean().optional().default(true),
+  // Opcional: sem `order` o item entra no fim da categoria.
   order: z
-    .number({ required_error: 'Order is required' })
+    .number()
     .int('Order must be an integer')
-    .min(0, 'Order must be non-negative'),
+    .min(0, 'Order must be non-negative')
+    .optional(),
 });
 
 export type CreateItemDto = z.infer<typeof createItemSchema>;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Settings, Plus, Edit, Trash2, Eye, EyeOff, GripVertical } from 'lucide-react';
+import { Settings, Plus, Edit, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -15,9 +16,23 @@ interface ChecklistManagerProps {
   onChanged?: () => void;
 }
 
+/**
+ * Mensagem de erro vinda da API. O backend responde `{ error: { message } }` ou
+ * `{ message }` conforme a camada que barrou; sem isso o usuario so via
+ * "erro" generico e nao entendia, por exemplo, que a categoria tem itens.
+ */
+function mensagemDeErro(erro: unknown, padrao: string): string {
+  const resposta = (erro as { response?: { data?: unknown } })?.response?.data as
+    | { error?: { message?: string }; message?: string }
+    | undefined;
+  return resposta?.error?.message || resposta?.message || padrao;
+}
+
 export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
   const {
     categories,
+    isLoadingCategories,
+    reloadCategories,
     addCategory,
     updateCategory,
     deleteCategory,
@@ -33,6 +48,9 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
   const [editingItem, setEditingItem] = useState<{ category: ChecklistCategory; item: ChecklistItem } | null>(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState<string | null>(null);
+  // Uma gravacao por vez: trava os botoes enquanto a API responde para nao
+  // disparar duas criacoes com duplo clique.
+  const [salvando, setSalvando] = useState(false);
 
   const [newCategory, setNewCategory] = useState({
     name: '',
@@ -45,90 +63,160 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
     description: ''
   });
 
-  const handleAddCategory = () => {
-    if (!newCategory.name) {
-      alert('Digite o nome da categoria');
+  /** Executa a operacao, avisa o resultado e mantem a lista em dia. */
+  const executar = async (
+    acao: () => Promise<unknown>,
+    sucesso: string,
+    erroPadrao: string
+  ): Promise<boolean> => {
+    setSalvando(true);
+    try {
+      await acao();
+      toast.success(sucesso);
+      onChanged?.();
+      return true;
+    } catch (erro) {
+      toast.error(mensagemDeErro(erro, erroPadrao));
+      return false;
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategory.name.trim()) {
+      toast.error('Digite o nome da categoria');
       return;
     }
 
-    const maxOrder = Math.max(...categories.map(c => c.order), 0);
-    addCategory({
-      ...newCategory,
-      isDefault: false,
-      isEnabled: true,
-      order: maxOrder + 1,
-      items: []
-    });
+    const ok = await executar(
+      () =>
+        addCategory({
+          ...newCategory,
+          name: newCategory.name.trim(),
+          isDefault: false,
+          isEnabled: true,
+          order: categories.length,
+          items: []
+        }),
+      'Categoria criada',
+      'Não foi possível criar a categoria'
+    );
 
-    setNewCategory({ name: '', description: '', icon: '🔧' });
-    setIsAddingCategory(false);
+    if (ok) {
+      setNewCategory({ name: '', description: '', icon: '🔧' });
+      setIsAddingCategory(false);
+    }
   };
 
-  const handleUpdateCategory = () => {
+  const handleUpdateCategory = async () => {
     if (!editingCategory) return;
 
-    updateCategory(editingCategory.id, {
-      name: editingCategory.name,
-      description: editingCategory.description,
-      icon: editingCategory.icon
-    });
+    const ok = await executar(
+      () =>
+        updateCategory(editingCategory.id, {
+          name: editingCategory.name,
+          description: editingCategory.description,
+          icon: editingCategory.icon
+        }),
+      'Categoria atualizada',
+      'Não foi possível atualizar a categoria'
+    );
 
-    setEditingCategory(null);
+    if (ok) setEditingCategory(null);
   };
 
-  const handleDeleteCategory = (categoryId: string, isDefault: boolean) => {
+  const handleDeleteCategory = async (categoryId: string, isDefault: boolean) => {
     if (isDefault) {
-      alert('Categorias padrão não podem ser excluídas. Use o botão de visibilidade para desabilitá-las.');
+      toast.error(
+        'Categorias padrão não podem ser excluídas. Use o botão de visibilidade para desabilitá-las.'
+      );
       return;
     }
 
-    if (confirm('Deseja realmente excluir esta categoria e todos os seus itens?')) {
-      deleteCategory(categoryId);
-    }
+    if (!confirm('Deseja realmente excluir esta categoria e todos os seus itens?')) return;
+
+    await executar(
+      () => deleteCategory(categoryId),
+      'Categoria excluída',
+      'Não foi possível excluir a categoria'
+    );
   };
 
-  const handleAddItem = (categoryId: string) => {
-    if (!newItem.name) {
-      alert('Digite o nome do item');
+  const handleToggleCategory = (category: ChecklistCategory) =>
+    executar(
+      () => toggleCategoryEnabled(category.id),
+      category.isEnabled ? 'Categoria desabilitada' : 'Categoria habilitada',
+      'Não foi possível alterar a categoria'
+    );
+
+  const handleAddItem = async (categoryId: string) => {
+    if (!newItem.name.trim()) {
+      toast.error('Digite o nome do item');
       return;
     }
 
     const category = categories.find(c => c.id === categoryId);
     if (!category) return;
 
-    const maxOrder = Math.max(...category.items.map(i => i.order), 0);
-    addItemToCategory(categoryId, {
-      ...newItem,
-      isDefault: false,
-      isEnabled: true,
-      order: maxOrder + 1
-    });
+    const ok = await executar(
+      () =>
+        addItemToCategory(categoryId, {
+          ...newItem,
+          name: newItem.name.trim(),
+          isDefault: false,
+          isEnabled: true,
+          order: category.items.length
+        }),
+      'Item adicionado',
+      'Não foi possível adicionar o item'
+    );
 
-    setNewItem({ name: '', description: '' });
-    setIsAddingItem(null);
+    if (ok) {
+      setNewItem({ name: '', description: '' });
+      setIsAddingItem(null);
+    }
   };
 
-  const handleUpdateItem = () => {
+  const handleUpdateItem = async () => {
     if (!editingItem) return;
 
-    updateItem(editingItem.category.id, editingItem.item.id, {
-      name: editingItem.item.name,
-      description: editingItem.item.description
-    });
+    const ok = await executar(
+      () =>
+        updateItem(editingItem.category.id, editingItem.item.id, {
+          name: editingItem.item.name,
+          description: editingItem.item.description
+        }),
+      'Item atualizado',
+      'Não foi possível atualizar o item'
+    );
 
-    setEditingItem(null);
+    if (ok) setEditingItem(null);
   };
 
-  const handleDeleteItem = (categoryId: string, itemId: string, isDefault: boolean) => {
+  const handleDeleteItem = async (categoryId: string, itemId: string, isDefault: boolean) => {
     if (isDefault) {
-      alert('Itens padrão não podem ser excluídos. Use o botão de visibilidade para desabilitá-los.');
+      toast.error(
+        'Itens padrão não podem ser excluídos. Use o botão de visibilidade para desabilitá-los.'
+      );
       return;
     }
 
-    if (confirm('Deseja realmente excluir este item?')) {
-      deleteItem(categoryId, itemId);
-    }
+    if (!confirm('Deseja realmente excluir este item?')) return;
+
+    await executar(
+      () => deleteItem(categoryId, itemId),
+      'Item excluído',
+      'Não foi possível excluir o item'
+    );
   };
+
+  const handleToggleItem = (category: ChecklistCategory, item: ChecklistItem) =>
+    executar(
+      () => toggleItemEnabled(category.id, item.id),
+      item.isEnabled ? 'Item desabilitado' : 'Item habilitado',
+      'Não foi possível alterar o item'
+    );
 
   const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
 
@@ -147,10 +235,15 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
         open={isOpen}
         onOpenChange={(aberto) => {
           setIsOpen(aberto);
-          if (!aberto) onChanged?.();
+          if (aberto) {
+            // Outro usuario pode ter mexido no catalogo desde o ultimo load.
+            reloadCategories();
+          } else {
+            onChanged?.();
+          }
         }}
       >
-        <DialogContent className="sm:max-w-4xl overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
@@ -163,6 +256,7 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
             {!isAddingCategory && (
               <Button
                 onClick={() => setIsAddingCategory(true)}
+                disabled={salvando}
                 className="w-full bg-moria-orange hover:bg-moria-orange/90"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -204,11 +298,17 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={handleAddCategory} className="bg-moria-orange hover:bg-moria-orange/90">
+                    <Button
+                      onClick={handleAddCategory}
+                      disabled={salvando}
+                      className="bg-moria-orange hover:bg-moria-orange/90"
+                    >
+                      {salvando && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Adicionar
                     </Button>
                     <Button
                       variant="outline"
+                      disabled={salvando}
                       onClick={() => {
                         setIsAddingCategory(false);
                         setNewCategory({ name: '', description: '', icon: '🔧' });
@@ -221,73 +321,82 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
               </Card>
             )}
 
+            {isLoadingCategories && categories.length === 0 && (
+              <div className="flex justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+
             {/* Categories List */}
             <div className="space-y-4">
               {sortedCategories.map((category) => (
                 <Card key={category.id} className={cn('border-2', !category.isEnabled && 'opacity-50')}>
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1">
-                        <GripVertical className="h-5 w-5 text-gray-400 mt-1" />
-                        <div className="flex items-start gap-3 flex-1">
-                          <span className="text-2xl">{category.icon}</span>
-                          <div className="flex-1">
-                            {editingCategory?.id === category.id ? (
-                              <div className="space-y-2">
-                                <Input
-                                  value={editingCategory.name}
-                                  onChange={(e) =>
-                                    setEditingCategory({ ...editingCategory, name: e.target.value })
-                                  }
-                                />
-                                <Input
-                                  value={editingCategory.description || ''}
-                                  onChange={(e) =>
-                                    setEditingCategory({ ...editingCategory, description: e.target.value })
-                                  }
-                                  placeholder="Descrição"
-                                />
-                                <Input
-                                  value={editingCategory.icon || ''}
-                                  onChange={(e) =>
-                                    setEditingCategory({ ...editingCategory, icon: e.target.value })
-                                  }
-                                  placeholder="Ícone"
-                                  maxLength={2}
-                                  className="w-20"
-                                />
-                                <div className="flex gap-2">
-                                  <Button size="sm" onClick={handleUpdateCategory}>
-                                    Salvar
-                                  </Button>
-                                  <Button size="sm" variant="outline" onClick={() => setEditingCategory(null)}>
-                                    Cancelar
-                                  </Button>
-                                </div>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-1 items-start gap-3">
+                        <span className="text-2xl">{category.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          {editingCategory?.id === category.id ? (
+                            <div className="space-y-2">
+                              <Input
+                                value={editingCategory.name}
+                                onChange={(e) =>
+                                  setEditingCategory({ ...editingCategory, name: e.target.value })
+                                }
+                              />
+                              <Input
+                                value={editingCategory.description || ''}
+                                onChange={(e) =>
+                                  setEditingCategory({ ...editingCategory, description: e.target.value })
+                                }
+                                placeholder="Descrição"
+                              />
+                              <Input
+                                value={editingCategory.icon || ''}
+                                onChange={(e) =>
+                                  setEditingCategory({ ...editingCategory, icon: e.target.value })
+                                }
+                                placeholder="Ícone"
+                                maxLength={2}
+                                className="w-20"
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={handleUpdateCategory} disabled={salvando}>
+                                  Salvar
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => setEditingCategory(null)}>
+                                  Cancelar
+                                </Button>
                               </div>
-                            ) : (
-                              <>
-                                <h3 className="font-semibold text-lg flex items-center gap-2">
-                                  {category.name}
-                                  {category.isDefault && (
-                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                      Padrão
-                                    </span>
-                                  )}
-                                </h3>
-                                {category.description && (
-                                  <p className="text-sm text-gray-600">{category.description}</p>
+                            </div>
+                          ) : (
+                            <>
+                              <h3 className="font-semibold text-lg flex flex-wrap items-center gap-2">
+                                <span className="break-words">{category.name}</span>
+                                {category.isDefault && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                    Padrão
+                                  </span>
                                 )}
-                              </>
-                            )}
-                          </div>
+                                {!category.isEnabled && (
+                                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                                    Desabilitada
+                                  </span>
+                                )}
+                              </h3>
+                              {category.description && (
+                                <p className="text-sm text-gray-600 break-words">{category.description}</p>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex shrink-0 gap-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => toggleCategoryEnabled(category.id)}
+                          disabled={salvando}
+                          onClick={() => handleToggleCategory(category)}
                           title={category.isEnabled ? 'Desabilitar' : 'Habilitar'}
                         >
                           {category.isEnabled ? (
@@ -300,6 +409,7 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                           <Button
                             size="sm"
                             variant="outline"
+                            disabled={salvando}
                             onClick={() => setEditingCategory(category)}
                           >
                             <Edit className="h-4 w-4" />
@@ -309,6 +419,7 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                           <Button
                             size="sm"
                             variant="outline"
+                            disabled={salvando}
                             onClick={() => handleDeleteCategory(category.id, category.isDefault)}
                             className="text-red-600 hover:text-red-700"
                           >
@@ -321,17 +432,17 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
 
                   <CardContent className="space-y-2">
                     {/* Items */}
-                    {category.items
+                    {[...category.items]
                       .sort((a, b) => a.order - b.order)
                       .map((item) => (
                         <div
                           key={item.id}
                           className={cn(
-                            'flex items-center justify-between gap-4 p-2 rounded border',
+                            'flex flex-wrap items-center justify-between gap-2 p-2 rounded border',
                             !item.isEnabled && 'opacity-50'
                           )}
                         >
-                          <div className="flex-1">
+                          <div className="min-w-0 flex-1">
                             {editingItem?.item.id === item.id ? (
                               <div className="space-y-2">
                                 <Input
@@ -354,7 +465,7 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                                   placeholder="Descrição"
                                 />
                                 <div className="flex gap-2">
-                                  <Button size="sm" onClick={handleUpdateItem}>
+                                  <Button size="sm" onClick={handleUpdateItem} disabled={salvando}>
                                     Salvar
                                   </Button>
                                   <Button size="sm" variant="outline" onClick={() => setEditingItem(null)}>
@@ -364,25 +475,31 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                               </div>
                             ) : (
                               <>
-                                <p className="font-medium text-sm flex items-center gap-2">
-                                  {item.name}
+                                <p className="font-medium text-sm flex flex-wrap items-center gap-2">
+                                  <span className="break-words">{item.name}</span>
                                   {item.isDefault && (
                                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
                                       Padrão
                                     </span>
                                   )}
+                                  {!item.isEnabled && (
+                                    <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">
+                                      Oculto
+                                    </span>
+                                  )}
                                 </p>
                                 {item.description && (
-                                  <p className="text-xs text-gray-600">{item.description}</p>
+                                  <p className="text-xs text-gray-600 break-words">{item.description}</p>
                                 )}
                               </>
                             )}
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex shrink-0 gap-1">
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => toggleItemEnabled(category.id, item.id)}
+                              disabled={salvando}
+                              onClick={() => handleToggleItem(category, item)}
                               title={item.isEnabled ? 'Desabilitar' : 'Habilitar'}
                             >
                               {item.isEnabled ? (
@@ -395,6 +512,7 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                               <Button
                                 size="sm"
                                 variant="ghost"
+                                disabled={salvando}
                                 onClick={() => setEditingItem({ category, item })}
                               >
                                 <Edit className="h-3 w-3" />
@@ -404,6 +522,7 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                               <Button
                                 size="sm"
                                 variant="ghost"
+                                disabled={salvando}
                                 onClick={() => handleDeleteItem(category.id, item.id, item.isDefault)}
                                 className="text-red-600 hover:text-red-700"
                               >
@@ -422,21 +541,25 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                             value={newItem.name}
                             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                             placeholder="Nome do item *"
-                            size={1}
                           />
                           <Input
                             value={newItem.description}
                             onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
                             placeholder="Descrição (opcional)"
-                            size={1}
                           />
                           <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleAddItem(category.id)}>
+                            <Button
+                              size="sm"
+                              disabled={salvando}
+                              onClick={() => handleAddItem(category.id)}
+                            >
+                              {salvando && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
                               Adicionar
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
+                              disabled={salvando}
                               onClick={() => {
                                 setIsAddingItem(null);
                                 setNewItem({ name: '', description: '' });
@@ -451,6 +574,7 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
                       <Button
                         size="sm"
                         variant="outline"
+                        disabled={salvando}
                         onClick={() => setIsAddingItem(category.id)}
                         className="w-full"
                       >

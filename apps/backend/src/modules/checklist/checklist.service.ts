@@ -19,16 +19,15 @@ export class ChecklistService {
   /**
    * Get all categories
    */
+  /**
+   * Visao de gerenciamento: traz tudo, inclusive desabilitado. Sem os itens
+   * desligados a tela de gerenciar nao teria como religa-los.
+   */
   async getCategories(includeItems: boolean = false): Promise<CategoryWithItems[]> {
     return prisma.checklistCategory.findMany({
       orderBy: { order: 'asc' },
       include: {
-        items: includeItems
-          ? {
-              where: { isEnabled: true },
-              orderBy: { order: 'asc' },
-            }
-          : false,
+        items: includeItems ? { orderBy: { order: 'asc' } } : false,
       },
     }) as Promise<CategoryWithItems[]>;
   }
@@ -71,12 +70,31 @@ export class ChecklistService {
     return category as CategoryWithItems;
   }
 
+  /** Proxima posicao livre na lista de categorias. */
+  private async proximaOrdemCategoria(): Promise<number> {
+    const ultima = await prisma.checklistCategory.findFirst({
+      orderBy: { order: 'desc' },
+      select: { order: true },
+    });
+    return (ultima?.order ?? -1) + 1;
+  }
+
+  /** Proxima posicao livre dentro de uma categoria. */
+  private async proximaOrdemItem(categoryId: string): Promise<number> {
+    const ultimo = await prisma.checklistItem.findFirst({
+      where: { categoryId },
+      orderBy: { order: 'desc' },
+      select: { order: true },
+    });
+    return (ultimo?.order ?? -1) + 1;
+  }
+
   /**
    * Create category
    */
   async createCategory(dto: CreateCategoryDto): Promise<ChecklistCategory> {
     const category = await prisma.checklistCategory.create({
-      data: dto,
+      data: { ...dto, order: dto.order ?? (await this.proximaOrdemCategoria()) },
     });
 
     logger.info(`Checklist category created: ${category.name}`);
@@ -176,7 +194,7 @@ export class ChecklistService {
     await this.getCategoryById(dto.categoryId);
 
     const item = await prisma.checklistItem.create({
-      data: dto,
+      data: { ...dto, order: dto.order ?? (await this.proximaOrdemItem(dto.categoryId)) },
     });
 
     logger.info(`Checklist item created: ${item.name} in category ${dto.categoryId}`);

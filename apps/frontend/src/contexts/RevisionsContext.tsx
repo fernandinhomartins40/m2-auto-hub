@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import {
   Customer,
   Vehicle,
@@ -8,7 +8,9 @@ import {
   DEFAULT_CHECKLIST_CATEGORIES,
   DEFAULT_CHECKLIST_ITEMS
 } from '../types/revisions';
-import checklistService from '../api/checklistService';
+import checklistService, {
+  type ChecklistCategory as ApiChecklistCategory
+} from '../api/checklistService';
 import revisionService from '../api/revisionService';
 import { useAuth } from './AuthContext';
 import { useAdminAuth } from './AdminAuthContext';
@@ -30,17 +32,23 @@ interface RevisionsContextData {
   getVehiclesByCustomer: (customerId: string) => Vehicle[];
 
   // Checklist Categories & Items
+  //
+  // Todas as mutacoes vao ao backend e devolvem Promise: a personalizacao do
+  // lojista precisa sobreviver ao F5. Antes eram `setState` locais, entao o
+  // item criado sumia no primeiro recarregamento da lista.
   categories: ChecklistCategory[];
-  addCategory: (category: Omit<ChecklistCategory, 'id' | 'createdAt'>) => ChecklistCategory;
-  updateCategory: (id: string, category: Partial<ChecklistCategory>) => void;
-  toggleCategoryEnabled: (id: string) => void;
-  deleteCategory: (id: string) => void;
+  isLoadingCategories: boolean;
+  reloadCategories: () => Promise<void>;
+  addCategory: (category: Omit<ChecklistCategory, 'id' | 'createdAt'>) => Promise<ChecklistCategory>;
+  updateCategory: (id: string, category: Partial<ChecklistCategory>) => Promise<void>;
+  toggleCategoryEnabled: (id: string) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   getCategory: (id: string) => ChecklistCategory | undefined;
 
-  addItemToCategory: (categoryId: string, item: Omit<ChecklistItem, 'id' | 'categoryId' | 'createdAt'>) => ChecklistItem;
-  updateItem: (categoryId: string, itemId: string, item: Partial<ChecklistItem>) => void;
-  toggleItemEnabled: (categoryId: string, itemId: string) => void;
-  deleteItem: (categoryId: string, itemId: string) => void;
+  addItemToCategory: (categoryId: string, item: Omit<ChecklistItem, 'id' | 'categoryId' | 'createdAt'>) => Promise<ChecklistItem>;
+  updateItem: (categoryId: string, itemId: string, item: Partial<ChecklistItem>) => Promise<void>;
+  toggleItemEnabled: (categoryId: string, itemId: string) => Promise<void>;
+  deleteItem: (categoryId: string, itemId: string) => Promise<void>;
 
   // Revisions
   revisions: Revision[];
@@ -55,6 +63,52 @@ interface RevisionsContextData {
 }
 
 const RevisionsContext = createContext<RevisionsContextData>({} as RevisionsContextData);
+
+/** Converte o formato da API para o tipo usado nas telas. */
+function paraCategoriaLocal(cat: ApiChecklistCategory): ChecklistCategory {
+  return {
+    id: cat.id,
+    name: cat.name,
+    description: cat.description,
+    icon: cat.icon,
+    order: cat.order,
+    isDefault: cat.isDefault,
+    isEnabled: cat.isEnabled,
+    createdAt: new Date(cat.createdAt),
+    items: (cat.items || []).map(item => ({
+      id: item.id,
+      categoryId: item.categoryId,
+      name: item.name,
+      description: item.description,
+      order: item.order,
+      isDefault: item.isDefault,
+      isEnabled: item.isEnabled,
+      createdAt: new Date(item.createdAt)
+    }))
+  };
+}
+
+/**
+ * Catalogo embutido, usado so quando nao ha sessao ou a API falhou. Os ids sao
+ * sinteticos: servem para exibir, nunca para gravar.
+ */
+function categoriasPadrao(): ChecklistCategory[] {
+  const agora = Date.now();
+  return DEFAULT_CHECKLIST_CATEGORIES.map((cat, index) => {
+    const categoryId = `cat-${agora}-${index}`;
+    return {
+      ...cat,
+      id: categoryId,
+      createdAt: new Date(),
+      items: (DEFAULT_CHECKLIST_ITEMS[cat.name] || []).map((item, itemIndex) => ({
+        ...item,
+        id: `item-${agora}-${index}-${itemIndex}`,
+        categoryId,
+        createdAt: new Date()
+      }))
+    };
+  });
+}
 
 export function RevisionsProvider({ children }: { children: ReactNode }) {
   const { customer } = useAuth();
@@ -72,96 +126,44 @@ export function RevisionsProvider({ children }: { children: ReactNode }) {
   });
 
   const [categories, setCategories] = useState<ChecklistCategory[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
   // Revisions - load from API instead of localStorage
   const [revisions, setRevisions] = useState<Revision[]>([]);
   const [isLoadingRevisions, setIsLoadingRevisions] = useState(false);
 
   // Load categories from backend
-  useEffect(() => {
-    const loadCategories = async () => {
-      // Don't load if neither admin nor customer is logged in
-      if (!admin && !customer) {
-        // Use default categories when no user is logged in
-        const defaultCategories: ChecklistCategory[] = DEFAULT_CHECKLIST_CATEGORIES.map((cat, index) => {
-          const categoryId = `cat-${Date.now()}-${index}`;
-          const categoryName = cat.name;
-          const defaultItems = DEFAULT_CHECKLIST_ITEMS[categoryName] || [];
+  const reloadCategories = useCallback(async () => {
+    // Sem sessao nao ha o que consultar: mostra o catalogo padrao so para a
+    // tela nao ficar vazia (vitrine/demo). Esses ids sao locais e nao servem
+    // para gravar nada.
+    if (!admin && !customer) {
+      setCategories(categoriasPadrao());
+      setIsLoadingCategories(false);
+      return;
+    }
 
-          return {
-            ...cat,
-            id: categoryId,
-            createdAt: new Date(),
-            items: defaultItems.map((item, itemIndex) => ({
-              ...item,
-              id: `item-${Date.now()}-${index}-${itemIndex}`,
-              categoryId: categoryId,
-              createdAt: new Date()
-            }))
-          };
-        });
+    setIsLoadingCategories(true);
+    try {
+      // Admin usa a rota de gerenciamento (`/categories?includeItems=true`),
+      // que traz tambem o que esta desabilitado — sem isso o gerenciador nao
+      // consegue religar um item escondido.
+      const categorias = admin
+        ? await checklistService.getCategories()
+        : (await checklistService.getChecklistStructure()).categories;
 
-        setCategories(defaultCategories);
-        return;
-      }
-
-      try {
-        // Use admin endpoint if admin is logged in, otherwise use customer endpoint
-        const data = admin
-          ? await checklistService.getChecklistStructureAdmin()
-          : await checklistService.getChecklistStructure();
-
-        // Transform backend data to match frontend types
-        const transformedCategories: ChecklistCategory[] = data.categories.map(cat => ({
-          id: cat.id,
-          name: cat.name,
-          description: cat.description,
-          icon: cat.icon,
-          order: cat.order,
-          isDefault: cat.isDefault,
-          isEnabled: cat.isEnabled,
-          createdAt: new Date(cat.createdAt),
-          items: cat.items.map(item => ({
-            id: item.id,
-            categoryId: item.categoryId,
-            name: item.name,
-            description: item.description,
-            order: item.order,
-            isDefault: item.isDefault,
-            isEnabled: item.isEnabled,
-            createdAt: new Date(item.createdAt)
-          }))
-        }));
-
-        setCategories(transformedCategories);
-      } catch (error) {
-        console.error('Error loading checklist categories:', error);
-
-        // Fallback to default categories if API fails
-        const defaultCategories: ChecklistCategory[] = DEFAULT_CHECKLIST_CATEGORIES.map((cat, index) => {
-          const categoryId = `cat-${Date.now()}-${index}`;
-          const categoryName = cat.name;
-          const defaultItems = DEFAULT_CHECKLIST_ITEMS[categoryName] || [];
-
-          return {
-            ...cat,
-            id: categoryId,
-            createdAt: new Date(),
-            items: defaultItems.map((item, itemIndex) => ({
-              ...item,
-              id: `item-${Date.now()}-${index}-${itemIndex}`,
-              categoryId: categoryId,
-              createdAt: new Date()
-            }))
-          };
-        });
-
-        setCategories(defaultCategories);
-      }
-    };
-
-    loadCategories();
+      setCategories(categorias.map(paraCategoriaLocal));
+    } catch (error) {
+      console.error('Error loading checklist categories:', error);
+      setCategories(categoriasPadrao());
+    } finally {
+      setIsLoadingCategories(false);
+    }
   }, [admin, customer]);
+
+  useEffect(() => {
+    reloadCategories();
+  }, [reloadCategories]);
 
   // Load revisions from API when customer is authenticated
   const loadRevisions = async () => {
@@ -283,109 +285,105 @@ export function RevisionsProvider({ children }: { children: ReactNode }) {
     return vehicles.filter(vehicle => vehicle.customerId === customerId);
   };
 
-  // Category methods
-  const addCategory = (category: Omit<ChecklistCategory, 'id' | 'createdAt'>): ChecklistCategory => {
-    const newCategory: ChecklistCategory = {
-      ...category,
-      id: `cat-${Date.now()}`,
-      createdAt: new Date()
-    };
-    setCategories(prev => [...prev, newCategory]);
-    return newCategory;
+  // =========================================================================
+  // Checklist: categorias e itens
+  //
+  // Tudo aqui grava no backend e recarrega a lista. A versao anterior so
+  // mexia no estado local, entao a personalizacao do lojista existia apenas
+  // ate o proximo recarregamento.
+  // =========================================================================
+
+  const addCategory = async (
+    category: Omit<ChecklistCategory, 'id' | 'createdAt'>
+  ): Promise<ChecklistCategory> => {
+    const criada = await checklistService.createCategory({
+      name: category.name,
+      description: category.description || undefined,
+      icon: category.icon || undefined
+    });
+
+    await reloadCategories();
+    return paraCategoriaLocal({ ...criada, items: [] });
   };
 
-  const updateCategory = (id: string, updates: Partial<ChecklistCategory>) => {
-    setCategories(prev =>
-      prev.map(category =>
-        category.id === id ? { ...category, ...updates } : category
-      )
-    );
+  const updateCategory = async (id: string, updates: Partial<ChecklistCategory>) => {
+    await checklistService.updateCategory(id, {
+      name: updates.name,
+      description: updates.description ?? undefined,
+      icon: updates.icon ?? undefined,
+      order: updates.order,
+      isEnabled: updates.isEnabled
+    });
+    await reloadCategories();
   };
 
-  const toggleCategoryEnabled = (id: string) => {
-    setCategories(prev =>
-      prev.map(category =>
-        category.id === id
-          ? { ...category, isEnabled: !category.isEnabled }
-          : category
-      )
-    );
+  const toggleCategoryEnabled = async (id: string) => {
+    const atual = categories.find(c => c.id === id);
+    if (!atual) return;
+
+    await checklistService.updateCategory(id, { isEnabled: !atual.isEnabled });
+    await reloadCategories();
   };
 
-  const deleteCategory = (id: string) => {
-    setCategories(prev => prev.filter(category => category.id !== id));
+  const deleteCategory = async (id: string) => {
+    await checklistService.deleteCategory(id);
+    await reloadCategories();
   };
 
   const getCategory = (id: string) => {
     return categories.find(category => category.id === id);
   };
 
-  // Item methods
-  const addItemToCategory = (
+  const addItemToCategory = async (
     categoryId: string,
     item: Omit<ChecklistItem, 'id' | 'categoryId' | 'createdAt'>
-  ): ChecklistItem => {
-    const newItem: ChecklistItem = {
-      ...item,
-      id: `item-${Date.now()}`,
+  ): Promise<ChecklistItem> => {
+    const criado = await checklistService.createItem({
       categoryId,
-      createdAt: new Date()
+      name: item.name,
+      description: item.description || undefined
+    });
+
+    await reloadCategories();
+    return {
+      id: criado.id,
+      categoryId: criado.categoryId,
+      name: criado.name,
+      description: criado.description,
+      order: criado.order,
+      isDefault: criado.isDefault,
+      isEnabled: criado.isEnabled,
+      createdAt: new Date(criado.createdAt)
     };
-
-    setCategories(prev =>
-      prev.map(category =>
-        category.id === categoryId
-          ? { ...category, items: [...category.items, newItem] }
-          : category
-      )
-    );
-
-    return newItem;
   };
 
-  const updateItem = (categoryId: string, itemId: string, updates: Partial<ChecklistItem>) => {
-    setCategories(prev =>
-      prev.map(category =>
-        category.id === categoryId
-          ? {
-              ...category,
-              items: category.items.map(item =>
-                item.id === itemId ? { ...item, ...updates } : item
-              )
-            }
-          : category
-      )
-    );
+  const updateItem = async (
+    _categoryId: string,
+    itemId: string,
+    updates: Partial<ChecklistItem>
+  ) => {
+    await checklistService.updateItem(itemId, {
+      name: updates.name,
+      description: updates.description ?? undefined,
+      order: updates.order,
+      isEnabled: updates.isEnabled
+    });
+    await reloadCategories();
   };
 
-  const toggleItemEnabled = (categoryId: string, itemId: string) => {
-    setCategories(prev =>
-      prev.map(category =>
-        category.id === categoryId
-          ? {
-              ...category,
-              items: category.items.map(item =>
-                item.id === itemId
-                  ? { ...item, isEnabled: !item.isEnabled }
-                  : item
-              )
-            }
-          : category
-      )
-    );
+  const toggleItemEnabled = async (categoryId: string, itemId: string) => {
+    const atual = categories
+      .find(c => c.id === categoryId)
+      ?.items.find(i => i.id === itemId);
+    if (!atual) return;
+
+    await checklistService.updateItem(itemId, { isEnabled: !atual.isEnabled });
+    await reloadCategories();
   };
 
-  const deleteItem = (categoryId: string, itemId: string) => {
-    setCategories(prev =>
-      prev.map(category =>
-        category.id === categoryId
-          ? {
-              ...category,
-              items: category.items.filter(item => item.id !== itemId)
-            }
-          : category
-      )
-    );
+  const deleteItem = async (_categoryId: string, itemId: string) => {
+    await checklistService.deleteItem(itemId);
+    await reloadCategories();
   };
 
   // Revision methods
@@ -441,6 +439,8 @@ export function RevisionsProvider({ children }: { children: ReactNode }) {
         getVehicle,
         getVehiclesByCustomer,
         categories,
+        isLoadingCategories,
+        reloadCategories,
         addCategory,
         updateCategory,
         toggleCategoryEnabled,

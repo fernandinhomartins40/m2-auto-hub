@@ -18,7 +18,6 @@ export const updateItemSchema = z.object({
     .nullable()
     .optional()
     .transform(val => val || undefined),
-  isDefault: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
   order: z
     .number()
