@@ -600,7 +600,7 @@ export function RelationshipSettings() {
           </p>
         </div>
         <Button type="button" onClick={() => setCategoryDialog({ open: true, category: null })}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="h-4 w-4 shrink-0" />
           Nova categoria
         </Button>
       </div>

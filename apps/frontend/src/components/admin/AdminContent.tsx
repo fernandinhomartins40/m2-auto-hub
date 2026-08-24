@@ -962,7 +962,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               onClick={() => setIsCreateQuoteModalOpen(true)}
               className="bg-moria-orange hover:bg-moria-orange/90"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 shrink-0" />
               Criar Orçamento
             </Button>
           }
@@ -1516,7 +1516,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                 onClick={() => setIsCreateOrderModalOpen(true)}
                 className="bg-moria-orange hover:bg-moria-orange/90"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 shrink-0" />
                 Novo Pedido
               </Button>
               <Button
@@ -1525,7 +1525,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                 onClick={handleExportOrdersPdf}
                 disabled={isExportingOrdersPdf}
               >
-                <FileText className="h-4 w-4 mr-2" />
+                <FileText className="h-4 w-4 shrink-0" />
                 {isExportingOrdersPdf ? 'Gerando PDF...' : 'PDF'}
               </Button>
               <Button
@@ -1533,7 +1533,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                 size="sm"
                 onClick={() => handleExportOrders('csv')}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 shrink-0" />
                 CSV
               </Button>
               <Button
@@ -1541,7 +1541,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                 size="sm"
                 onClick={() => handleExportOrders('excel')}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 shrink-0" />
                 Excel
               </Button>
             </>
@@ -1772,7 +1772,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               onClick={() => setIsCreateCustomerModalOpen(true)}
               className="mt-4 bg-moria-orange hover:bg-moria-orange/90"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 shrink-0" />
               Cadastrar primeiro cliente
             </Button>
           </div>
@@ -2073,11 +2073,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                       <p className="text-sm text-gray-600">Último backup: Hoje às 03:00</p>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">
-                          <RefreshCw className="h-4 w-4 mr-2" />
+                          <RefreshCw className="h-4 w-4 shrink-0" />
                           Fazer Backup
                         </Button>
                         <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4 mr-2" />
+                          <Download className="h-4 w-4 shrink-0" />
                           Baixar
                         </Button>
                       </div>
@@ -2092,11 +2092,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                       <p className="text-sm text-gray-600">Exporte dados para análise externa</p>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">
-                          <FileText className="h-4 w-4 mr-2" />
+                          <FileText className="h-4 w-4 shrink-0" />
                           Excel
                         </Button>
                         <Button size="sm" variant="outline">
-                          <FileText className="h-4 w-4 mr-2" />
+                          <FileText className="h-4 w-4 shrink-0" />
                           CSV
                         </Button>
                       </div>
@@ -2111,11 +2111,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             {/* Botões de Ação */}
             <div className="flex justify-between">
               <Button variant="outline" className="text-red-600 hover:text-red-700">
-                <AlertCircle className="h-4 w-4 mr-2" />
+                <AlertCircle className="h-4 w-4 shrink-0" />
                 Limpar Dados de Teste
               </Button>
               <Button className="bg-moria-orange hover:bg-moria-orange/90">
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-4 w-4 shrink-0" />
                 Salvar Configurações
               </Button>
             </div>
@@ -2213,7 +2213,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                     onClick={() => setRevisionView('create')}
                     className="flex-1 sm:flex-none h-9 text-sm"
                   >
-                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <Plus className="h-4 w-4 sm: shrink-0" />
                     <span className="hidden sm:inline">Nova Revisão</span>
                     <span className="sm:hidden">Nova</span>
                   </Button>

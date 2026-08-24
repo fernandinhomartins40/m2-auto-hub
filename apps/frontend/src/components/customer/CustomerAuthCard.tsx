@@ -186,7 +186,7 @@ export function CustomerAuthCard({
                   <Button type="submit" className="w-full bg-moria-orange hover:bg-moria-orange/90" disabled={isLoading}>
                     {isLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                         Entrando...
                       </>
                     ) : (
@@ -312,7 +312,7 @@ export function CustomerAuthCard({
                   <Button type="submit" className="w-full bg-moria-orange hover:bg-moria-orange/90" disabled={isLoading}>
                     {isLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                         Criando conta...
                       </>
                     ) : (

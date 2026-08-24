@@ -145,7 +145,7 @@ export function ProductCategoriesModal({
               <div className="flex gap-2">
                 {editingCategory ? (
                   <Button type="button" variant="outline" onClick={handleCancelEdit} disabled={isSaving}>
-                    <X className="h-4 w-4 mr-2" />
+                    <X className="h-4 w-4 shrink-0" />
                     Cancelar
                   </Button>
                 ) : null}
@@ -192,7 +192,7 @@ export function ProductCategoriesModal({
                       disabled={isSaving}
                       className="shrink-0"
                     >
-                      <Pencil className="h-4 w-4 mr-2" />
+                      <Pencil className="h-4 w-4 shrink-0" />
                       Editar
                     </Button>
                   </div>

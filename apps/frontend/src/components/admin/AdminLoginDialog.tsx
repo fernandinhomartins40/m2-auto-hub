@@ -126,12 +126,12 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || isLoading}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   Entrando...
                 </>
               ) : (
                 <>
-                  <LogIn className="mr-2 h-4 w-4" />
+                  <LogIn className="h-4 w-4 shrink-0" />
                   Entrar no Painel
                 </>
               )}
@@ -149,7 +149,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 onClick={() => handleAutoFill("admin@m2centerauto.com.br", "Test123!")}
                 disabled={isSubmitting}
               >
-                <Shield className="mr-2 h-3 w-3" />
+                <Shield className="h-3 w-3 shrink-0" />
                 Super Admin - Senha: Test123!
               </Button>
               <Button
@@ -160,7 +160,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 onClick={() => handleAutoFill("gerente@m2centerauto.com.br", "Test123!")}
                 disabled={isSubmitting}
               >
-                <Shield className="mr-2 h-3 w-3" />
+                <Shield className="h-3 w-3 shrink-0" />
                 Gerente - Senha: Test123!
               </Button>
               <Button
@@ -171,7 +171,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 onClick={() => handleAutoFill("mecanico@m2centerauto.com.br", "Test123!")}
                 disabled={isSubmitting}
               >
-                <Shield className="mr-2 h-3 w-3" />
+                <Shield className="h-3 w-3 shrink-0" />
                 Mecânico - Senha: Test123!
               </Button>
             </div>

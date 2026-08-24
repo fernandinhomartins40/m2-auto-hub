@@ -215,11 +215,11 @@ export function ShippingMethodsManagement() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleSeedDefault}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 shrink-0" />
                 Criar Padrões
               </Button>
               <Button onClick={() => handleOpenDialog()}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 shrink-0" />
                 Novo Método
               </Button>
             </div>

@@ -209,7 +209,7 @@ export function CartDrawer() {
                       className="w-full h-10 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg"
                       size="sm"
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
+                      <MessageCircle className="w-4 h-4 shrink-0" />
                       Finalizar {hasServices && hasProducts ? 'Pedido e Orçamento' : hasServices ? 'Orçamento' : 'Compra'}
                     </Button>
                     

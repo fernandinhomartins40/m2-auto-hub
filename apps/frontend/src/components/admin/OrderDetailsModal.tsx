@@ -279,9 +279,9 @@ export function OrderDetailsModal({
                 disabled={isExportingPdf}
               >
                 {isExportingPdf ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 ) : (
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 shrink-0" />
                 )}
                 {isExportingPdf ? "Gerando PDF..." : "Exportar PDF"}
               </Button>
@@ -379,9 +379,9 @@ export function OrderDetailsModal({
                       className="min-h-[44px] h-11 text-sm flex-1"
                     >
                       {updatingButton === nextStatus ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                       ) : (
-                        <NextStatusIcon className="h-4 w-4 mr-2" />
+                        <NextStatusIcon className="h-4 w-4 shrink-0" />
                       )}
                       {NEXT_STEP_LABELS[nextStatus]}
                     </Button>
@@ -394,9 +394,9 @@ export function OrderDetailsModal({
                         className="min-h-[44px] h-11 text-sm sm:w-auto"
                       >
                         {updatingButton === "CANCELLED" ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                         ) : (
-                          <X className="h-4 w-4 mr-2" />
+                          <X className="h-4 w-4 shrink-0" />
                         )}
                         Cancelar pedido
                       </Button>

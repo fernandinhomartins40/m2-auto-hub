@@ -204,7 +204,7 @@ export function PwaInstallBanner({ appType, className = "" }: PwaInstallBannerPr
                 disabled={isInstalling}
                 className="min-w-[180px] bg-blue-600 hover:bg-blue-700"
               >
-                <Download className="mr-2 h-4 w-4" />
+                <Download className="h-4 w-4 shrink-0" />
                 {isInstalling ? "Instalando..." : "Instalar app"}
               </Button>
             </div>

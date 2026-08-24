@@ -420,8 +420,13 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
       </div>
 
       {/* Sem `-mx-4`: a margem negativa so ficava alinhada se o pai tivesse
-          exatamente px-4, e vazava para fora nas telas que usam outro padding. */}
-      <div className="sticky bottom-0 border-t bg-background/95 px-4 py-3 backdrop-blur sm:rounded-lg sm:border">
+          exatamente px-4, e vazava para fora nas telas que usam outro padding.
+
+          Fundo opaco (`bg-background`, sem o /95 nem o backdrop-blur): sendo
+          `sticky`, a barra passa por cima da lista, e com fundo translucido o
+          item que ficava atras vazava atraves do texto do resumo. O `z-10`
+          garante que ela fique acima dos cards. */}
+      <div className="sticky bottom-0 z-10 border-t bg-background px-4 py-3 sm:rounded-lg sm:border">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
             {avaliacoes.length} {avaliacoes.length === 1 ? 'item avaliado' : 'itens avaliados'}

@@ -246,9 +246,9 @@ export function AdminPromotionsSection({
                 className="bg-moria-orange hover:bg-moria-orange/90 w-full md:w-auto"
               >
                 {createLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 ) : (
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 shrink-0" />
                 )}
                 Nova Promoção
               </Button>
@@ -423,7 +423,7 @@ export function AdminPromotionsSection({
                         disabled={updateLoading}
                         className="w-full md:w-auto text-sm"
                       >
-                        <Edit className="h-4 w-4 mr-2" />
+                        <Edit className="h-4 w-4 shrink-0" />
                         Editar
                       </Button>
 
@@ -434,7 +434,7 @@ export function AdminPromotionsSection({
                         disabled={deleteLoading}
                         className="text-red-600 hover:text-red-700 hover:border-red-300 w-full md:w-auto text-sm"
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
+                        <Trash2 className="h-4 w-4 shrink-0" />
                         Excluir
                       </Button>
                     </div>

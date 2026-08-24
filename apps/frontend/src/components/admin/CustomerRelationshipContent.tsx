@@ -340,7 +340,7 @@ function CategoryCard({ category }: { category: RelationshipCategoryResult }) {
                       {state === "pending" && (
                         <div className="flex gap-2">
                           <Button type="button" size="sm" className="flex-1" onClick={() => void handleConfirm(customer.id)}>
-                            <Check className="mr-2 h-4 w-4" />
+                            <Check className="h-4 w-4 shrink-0" />
                             Confirmar envio
                           </Button>
                           <Button type="button" size="sm" variant="outline" onClick={() => handleResend(customer)}>

@@ -128,12 +128,12 @@ export function CouponInput({
             >
               {isValidating ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   Validando...
                 </>
               ) : (
                 <>
-                  <Check className="h-4 w-4 mr-2" />
+                  <Check className="h-4 w-4 shrink-0" />
                   Aplicar
                 </>
               )}

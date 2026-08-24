@@ -227,14 +227,14 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => void loadQuotes()}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="h-4 w-4 shrink-0" />
             Atualizar
           </Button>
           <Button
             className="bg-moria-orange hover:bg-moria-orange/90"
             onClick={() => setIsRequestModalOpen(true)}
           >
-            <Wrench className="mr-2 h-4 w-4" />
+            <Wrench className="h-4 w-4 shrink-0" />
             Solicitar orcamento
           </Button>
         </div>
@@ -326,7 +326,7 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
               className="bg-moria-orange hover:bg-moria-orange/90"
               onClick={() => setIsRequestModalOpen(true)}
             >
-              <Wrench className="mr-2 h-4 w-4" />
+              <Wrench className="h-4 w-4 shrink-0" />
               Solicitar primeiro orcamento
             </Button>
           </CardContent>
@@ -458,9 +458,9 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
                       disabled={exportingQuoteId === quote.id}
                     >
                       {exportingQuoteId === quote.id ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                       ) : (
-                        <FileDown className="mr-2 h-4 w-4" />
+                        <FileDown className="h-4 w-4 shrink-0" />
                       )}
                       {exportingQuoteId === quote.id ? 'Gerando PDF...' : 'Exportar PDF'}
                     </Button>
@@ -471,7 +471,7 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
                           className="bg-green-600 hover:bg-green-700"
                           onClick={() => void handleApprove(quote.id)}
                         >
-                          <ThumbsUp className="mr-2 h-4 w-4" />
+                          <ThumbsUp className="h-4 w-4 shrink-0" />
                           Aprovar e Virar Pedido
                         </Button>
                         <Button
@@ -479,7 +479,7 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
                           className="text-red-600 hover:text-red-700"
                           onClick={() => void handleReject(quote.id)}
                         >
-                          <ThumbsDown className="mr-2 h-4 w-4" />
+                          <ThumbsDown className="h-4 w-4 shrink-0" />
                           Rejeitar
                         </Button>
                       </>

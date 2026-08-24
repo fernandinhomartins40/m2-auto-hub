@@ -863,12 +863,12 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   Processando...
                 </>
               ) : (
                 <>
-                  <MessageCircle className="mr-2 h-4 w-4" />
+                  <MessageCircle className="h-4 w-4 shrink-0" />
                   Finalizar via WhatsApp
                 </>
               )}

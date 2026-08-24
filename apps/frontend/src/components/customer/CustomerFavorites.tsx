@@ -477,7 +477,7 @@ export function CustomerFavorites() {
             size="sm"
             onClick={() => setShowStats(!showStats)}
           >
-            <TrendingUp className="h-4 w-4 mr-2" />
+            <TrendingUp className="h-4 w-4 shrink-0" />
             Estatísticas
           </Button>
 
@@ -485,7 +485,7 @@ export function CustomerFavorites() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
+                  <Share2 className="h-4 w-4 shrink-0" />
                   Mais
                 </Button>
               </DropdownMenuTrigger>
@@ -550,7 +550,7 @@ export function CustomerFavorites() {
               onClick={handleRetry}
               className="ml-4"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 shrink-0" />
               Tentar Novamente
             </Button>
           </AlertDescription>
@@ -642,7 +642,7 @@ export function CustomerFavorites() {
                   size="sm"
                   onClick={handleBulkAddToCart}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  <ShoppingCart className="h-4 w-4 shrink-0" />
                   Adicionar ao Carrinho
                 </Button>
                 <Button
@@ -650,7 +650,7 @@ export function CustomerFavorites() {
                   size="sm"
                   onClick={handleBulkRemove}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-4 w-4 shrink-0" />
                   Remover
                 </Button>
               </div>

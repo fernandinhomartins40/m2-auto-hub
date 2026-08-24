@@ -400,12 +400,12 @@ export default function MechanicSettingsView() {
               >
                 {isUpdatingProfile ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                     Salvando...
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-4 w-4 shrink-0" />
                     Salvar Alterações
                   </>
                 )}
@@ -466,12 +466,12 @@ export default function MechanicSettingsView() {
               >
                 {isChangingPassword ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                     Alterando...
                   </>
                 ) : (
                   <>
-                    <Lock className="h-4 w-4 mr-2" />
+                    <Lock className="h-4 w-4 shrink-0" />
                     Alterar Senha
                   </>
                 )}
@@ -776,12 +776,12 @@ export default function MechanicSettingsView() {
                   >
                     {isSavingPreferences ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                         Salvando...
                       </>
                     ) : (
                       <>
-                        <Save className="h-4 w-4 mr-2" />
+                        <Save className="h-4 w-4 shrink-0" />
                         Salvar Preferências
                       </>
                     )}

@@ -50,9 +50,9 @@ export function AdminReportsSection({
         disabled={!isReportReady || exportingReportPdfKey !== null}
       >
         {exportingReportPdfKey === section ? (
-          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+          <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
         ) : (
-          <FileText className="h-4 w-4 mr-2" />
+          <FileText className="h-4 w-4 shrink-0" />
         )}
         PDF
       </Button>
@@ -62,7 +62,7 @@ export function AdminReportsSection({
         onClick={() => handleExportReportSpreadsheet("excel", section)}
         disabled={!isReportReady}
       >
-        <Download className="h-4 w-4 mr-2" />
+        <Download className="h-4 w-4 shrink-0" />
         Excel
       </Button>
     </div>
@@ -99,9 +99,9 @@ export function AdminReportsSection({
                   disabled={!isReportReady || exportingReportPdfKey !== null}
                 >
                   {exportingReportPdfKey === "complete" ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
                   ) : (
-                    <FileText className="h-4 w-4 mr-2" />
+                    <FileText className="h-4 w-4 shrink-0" />
                   )}
                   Exportar PDF
                 </Button>
@@ -110,7 +110,7 @@ export function AdminReportsSection({
                   onClick={() => handleExportReportSpreadsheet("excel", "complete")}
                   disabled={!isReportReady}
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 shrink-0" />
                   Exportar Excel
                 </Button>
                 <Button
@@ -118,7 +118,7 @@ export function AdminReportsSection({
                   onClick={() => handleExportReportSpreadsheet("csv", "complete")}
                   disabled={!isReportReady}
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-4 w-4 shrink-0" />
                   Exportar CSV
                 </Button>
               </>

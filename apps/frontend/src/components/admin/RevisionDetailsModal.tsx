@@ -559,12 +559,12 @@ export function RevisionDetailsModal({
               onClick={() => onEdit(revision.id)}
               className="bg-moria-orange hover:bg-moria-orange/90"
             >
-              <Edit className="h-4 w-4 mr-2" />
+              <Edit className="h-4 w-4 shrink-0" />
               Editar
             </Button>
           )}
           <Button variant="outline" onClick={handleExportPdf} disabled={isExportingPdf}>
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 shrink-0" />
             {isExportingPdf ? 'Gerando PDF...' : 'Exportar PDF'}
           </Button>
         </DialogFooter>

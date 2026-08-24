@@ -359,7 +359,7 @@ export function AdminSupportContent() {
         actions={
           <>
             <Button className="w-full sm:w-auto" variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
-              <ExternalLink className="mr-2 h-4 w-4" />
+              <ExternalLink className="h-4 w-4 shrink-0" />
               WhatsApp do suporte
             </Button>
             <Button className="w-full sm:w-auto" variant="outline" onClick={() => void handleRefresh()} disabled={loading}>
@@ -512,11 +512,11 @@ export function AdminSupportContent() {
                 {selectedTicket ? (
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap xl:justify-end">
                     <Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={handleAssignToMe}>
-                      <UserCheck className="mr-2 h-4 w-4" />
+                      <UserCheck className="h-4 w-4 shrink-0" />
                       Assumir ticket
                     </Button>
                     <Button className="w-full sm:w-auto" variant="outline" size="sm" onClick={openCustomerWhatsApp}>
-                      <Phone className="mr-2 h-4 w-4" />
+                      <Phone className="h-4 w-4 shrink-0" />
                       WhatsApp do cliente
                     </Button>
                   </div>
@@ -654,11 +654,11 @@ export function AdminSupportContent() {
 
                       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                         <Button className="w-full sm:w-auto" variant="outline" onClick={openSupportWhatsApp} disabled={!config}>
-                          <ExternalLink className="mr-2 h-4 w-4" />
+                          <ExternalLink className="h-4 w-4 shrink-0" />
                           Mudar para WhatsApp
                         </Button>
                         <Button className="w-full sm:w-auto" onClick={() => void handleSendMessage()} disabled={sendingMessage || !replyMessage.trim()}>
-                          <Send className="mr-2 h-4 w-4" />
+                          <Send className="h-4 w-4 shrink-0" />
                           {sendingMessage ? "Enviando..." : internalOnly ? "Salvar observação" : "Enviar resposta"}
                         </Button>
                       </div>

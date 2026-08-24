@@ -156,11 +156,11 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
               Atualizar
             </Button>
             <Button variant="outline" size="sm" onClick={() => setPlateLookupOpen(true)}>
-              <Camera className="h-4 w-4 mr-2" />
+              <Camera className="h-4 w-4 shrink-0" />
               Criação rápida (ler placa)
             </Button>
             <Button size="sm" onClick={openNew} className="bg-moria-orange hover:bg-moria-orange/90">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 shrink-0" />
               Nova OS
             </Button>
           </>

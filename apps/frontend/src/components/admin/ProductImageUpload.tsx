@@ -358,7 +358,7 @@ export function ProductImageUpload({
                 </div>
 
                 <Button variant="outline" size="sm" className="mt-2" type="button">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 shrink-0" />
                   Selecionar Imagens
                 </Button>
               </div>

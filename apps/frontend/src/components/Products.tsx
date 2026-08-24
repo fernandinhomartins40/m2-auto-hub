@@ -398,7 +398,7 @@ export function Products() {
                       }}
                       disabled={!inStock}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 shrink-0" />
                       {activePromotion ? 'Aproveitar Promoção' : 'Adicionar ao Carrinho'}
                     </Button>
                   </div>

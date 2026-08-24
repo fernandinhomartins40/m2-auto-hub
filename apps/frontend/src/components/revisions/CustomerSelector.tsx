@@ -132,7 +132,7 @@ export function CustomerSelector({ selectedCustomer, onSelectCustomer }: Custome
             onClick={() => setIsDialogOpen(true)}
             className="w-full h-9 text-sm bg-moria-orange hover:bg-moria-orange/90"
           >
-            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm: shrink-0" />
             Selecionar Cliente
           </Button>
         )}
@@ -155,7 +155,7 @@ export function CustomerSelector({ selectedCustomer, onSelectCustomer }: Custome
                   onClick={() => setIsCreateModalOpen(true)}
                   className="w-full sm:w-auto bg-moria-orange hover:bg-moria-orange/90"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 shrink-0" />
                   Novo Cliente
                 </Button>
               </ResponsiveDialogTitleRow>

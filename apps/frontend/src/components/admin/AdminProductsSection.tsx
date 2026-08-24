@@ -242,9 +242,9 @@ export function AdminProductsSection({
                   className="w-full sm:w-auto"
                 >
                   {categoriesLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   ) : (
-                    <Tag className="h-4 w-4 mr-2" />
+                    <Tag className="h-4 w-4 shrink-0" />
                   )}
                   Categorias
                 </Button>
@@ -255,9 +255,9 @@ export function AdminProductsSection({
                   disabled={loading || categoriesLoading}
                 >
                   {(loading || categoriesLoading) ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   ) : (
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 shrink-0" />
                   )}
                   Novo Produto
                 </Button>
@@ -462,7 +462,7 @@ export function AdminProductsSection({
                         disabled={updateLoading}
                         className="w-full text-xs md:text-sm"
                       >
-                        <Edit className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                        <Edit className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
                         Editar
                       </Button>
 
@@ -473,7 +473,7 @@ export function AdminProductsSection({
                         disabled={deleteLoading}
                         className="col-span-2 text-red-600 hover:text-red-700 hover:border-red-300 w-full text-xs md:text-sm sm:col-span-1"
                       >
-                        <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                        <Trash2 className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
                         Excluir
                       </Button>
                     </div>

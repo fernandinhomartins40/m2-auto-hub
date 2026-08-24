@@ -160,7 +160,7 @@ export function MobileDrawer({
             className="w-full border-primary/20 text-primary hover:text-primary-hover hover:bg-primary/10"
             onClick={handleLogout}
           >
-            <LogOut className="w-4 h-4 mr-2" />
+            <LogOut className="w-4 h-4 shrink-0" />
             Sair da Conta
           </Button>
         </div>

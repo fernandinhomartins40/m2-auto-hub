@@ -340,12 +340,12 @@ export function AdminAccountContent() {
                 <Button type="submit" disabled={isSavingProfile} className="w-full sm:w-auto">
                   {isSavingProfile ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                       Salvando...
                     </>
                   ) : (
                     <>
-                      <Save className="mr-2 h-4 w-4" />
+                      <Save className="h-4 w-4 shrink-0" />
                       Salvar Alterações
                     </>
                   )}
@@ -412,12 +412,12 @@ export function AdminAccountContent() {
                 <Button type="submit" disabled={isChangingPassword} className="w-full sm:w-auto">
                   {isChangingPassword ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                       Alterando...
                     </>
                   ) : (
                     <>
-                      <KeyRound className="mr-2 h-4 w-4" />
+                      <KeyRound className="h-4 w-4 shrink-0" />
                       Alterar Senha
                     </>
                   )}

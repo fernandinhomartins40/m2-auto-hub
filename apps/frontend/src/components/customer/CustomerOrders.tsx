@@ -137,7 +137,7 @@ export function CustomerOrders() {
           <p className="text-muted-foreground">Acompanhe o status dos seus pedidos</p>
         </div>
         <Button onClick={loadOrders} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <RefreshCw className="h-4 w-4 shrink-0" />
           Atualizar
         </Button>
       </div>
@@ -289,7 +289,7 @@ export function CustomerOrders() {
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button variant="outline" className="min-h-[44px] touch-manipulation" onClick={() => setSelectedOrder(order)}>
-                            <Eye className="mr-2 h-4 w-4" />
+                            <Eye className="h-4 w-4 shrink-0" />
                             Ver Detalhes
                           </Button>
                         </DialogTrigger>
@@ -391,7 +391,7 @@ export function CustomerOrders() {
                           className="min-h-[44px] touch-manipulation"
                           onClick={() => handleTrackingClick(order.trackingCode!)}
                         >
-                          <Truck className="mr-2 h-4 w-4" />
+                          <Truck className="h-4 w-4 shrink-0" />
                           Rastrear
                         </Button>
                       )}
@@ -401,7 +401,7 @@ export function CustomerOrders() {
                         className="min-h-[44px] touch-manipulation"
                         onClick={() => handleOrderSupport(order.id)}
                       >
-                        <MessageCircle className="mr-2 h-4 w-4" />
+                        <MessageCircle className="h-4 w-4 shrink-0" />
                         Suporte
                       </Button>
                     </div>

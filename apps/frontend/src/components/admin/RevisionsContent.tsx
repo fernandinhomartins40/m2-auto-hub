@@ -477,9 +477,9 @@ export function RevisionsContent() {
             disabled={progress.percentage < 100 || isSaving}
           >
             {isSaving ? (
-              <Loader2 className="mr-1.5 h-3 w-3 animate-spin sm:mr-2 sm:h-4 sm:w-4" />
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin sm: sm:h-4 sm:w-4 shrink-0" />
             ) : (
-              <Save className="mr-1.5 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
+              <Save className="mr-1.5 h-3 w-3 sm: sm:h-4 sm:w-4 shrink-0" />
             )}
             Finalizar Revisão
           </Button>

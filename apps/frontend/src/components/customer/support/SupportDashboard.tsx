@@ -59,7 +59,7 @@ export function SupportDashboard() {
           <p className="text-muted-foreground">Como podemos te ajudar hoje?</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)} className="bg-moria-orange hover:bg-moria-orange/90">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 shrink-0" />
           Novo Ticket
         </Button>
       </div>

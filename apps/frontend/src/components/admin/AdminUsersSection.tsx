@@ -177,7 +177,7 @@ export default function AdminUsersSection() {
           actions={
             permissions.canCreateAdmins ? (
               <Button onClick={() => setIsCreateOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="h-4 w-4 shrink-0" />
                 Novo Usuário
               </Button>
             ) : null

@@ -272,7 +272,7 @@ export function PromotionsManagement() {
                     className="bg-moria-orange hover:bg-moria-orange/90"
                     onClick={() => handleOpenModal()}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 shrink-0" />
                     Nova Promoção
                   </Button>
                 </>
@@ -333,7 +333,7 @@ export function PromotionsManagement() {
                 <Gift className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
                 <p className="text-muted-foreground">Nenhuma promoção encontrada</p>
                 <Button variant="outline" className="mt-4" onClick={() => handleOpenModal()}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 shrink-0" />
                   Criar primeira promoção
                 </Button>
               </div>

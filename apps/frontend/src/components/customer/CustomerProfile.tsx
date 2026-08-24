@@ -434,12 +434,12 @@ export function CustomerProfile() {
                     >
                       {isLoading ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                           Salvando...
                         </>
                       ) : (
                         <>
-                          <Save className="mr-2 h-4 w-4" />
+                          <Save className="h-4 w-4 shrink-0" />
                           Salvar Alterações
                         </>
                       )}
@@ -512,12 +512,12 @@ export function CustomerProfile() {
                 >
                   {isChangingPassword ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                       Alterando Senha...
                     </>
                   ) : (
                     <>
-                      <Save className="mr-2 h-4 w-4" />
+                      <Save className="h-4 w-4 shrink-0" />
                       Alterar Senha
                     </>
                   )}
@@ -541,7 +541,7 @@ export function CustomerProfile() {
                   </CardDescription>
                 </div>
                 <Button onClick={() => openAddressDialog()}>
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="h-4 w-4 shrink-0" />
                   Novo Endereço
                 </Button>
               </div>
@@ -553,7 +553,7 @@ export function CustomerProfile() {
                   <MapPin className="mx-auto h-12 w-12 text-muted-foreground/50" />
                   <p className="mt-2">Nenhum endereço cadastrado</p>
                   <Button variant="outline" className="mt-4" onClick={() => openAddressDialog()}>
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="h-4 w-4 shrink-0" />
                     Adicionar Primeiro Endereço
                   </Button>
                 </div>
@@ -746,7 +746,7 @@ export function CustomerProfile() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                     {editingAddress ? 'Atualizando...' : 'Salvando...'}
                   </>
                 ) : (

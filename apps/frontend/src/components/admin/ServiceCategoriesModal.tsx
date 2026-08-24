@@ -145,7 +145,7 @@ export function ServiceCategoriesModal({
               <div className="flex gap-2">
                 {editingCategory ? (
                   <Button type="button" variant="outline" onClick={handleCancelEdit} disabled={isSaving}>
-                    <X className="h-4 w-4 mr-2" />
+                    <X className="h-4 w-4 shrink-0" />
                     Cancelar
                   </Button>
                 ) : null}
@@ -157,11 +157,11 @@ export function ServiceCategoriesModal({
                   className="bg-moria-orange hover:bg-moria-orange/90"
                 >
                   {isSaving ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   ) : editingCategory ? (
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-4 w-4 shrink-0" />
                   ) : (
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 shrink-0" />
                   )}
                   {editingCategory ? 'Salvar' : 'Criar'}
                 </Button>
@@ -201,7 +201,7 @@ export function ServiceCategoriesModal({
                       disabled={isSaving}
                       className="shrink-0"
                     >
-                      <Pencil className="h-4 w-4 mr-2" />
+                      <Pencil className="h-4 w-4 shrink-0" />
                       Editar
                     </Button>
                   </div>

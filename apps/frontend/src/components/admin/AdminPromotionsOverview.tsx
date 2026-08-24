@@ -119,7 +119,7 @@ export function AdminPromotionsOverview({
                 size="sm" 
                 className="bg-moria-orange hover:bg-moria-orange/90"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 shrink-0" />
                 Nova Promoção
               </Button>
             </div>

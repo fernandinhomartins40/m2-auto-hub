@@ -401,7 +401,7 @@ function PwaIconCropper({
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
-          <X className="mr-2 h-4 w-4" />
+          <X className="h-4 w-4 shrink-0" />
           Cancelar
         </Button>
         <Button onClick={handleApply} disabled={!completedCrop || isSubmitting}>
@@ -525,7 +525,7 @@ function PwaIconUploadCard({
                 onClick={onRemove}
                 disabled={isUploading}
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className="h-4 w-4 shrink-0" />
                 Remover
               </Button>
             ) : null}

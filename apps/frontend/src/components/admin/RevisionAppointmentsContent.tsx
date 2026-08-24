@@ -245,7 +245,7 @@ export function RevisionAppointmentsContent() {
               <option value="CANCELLED">Cancelado</option>
             </select>
             <Button variant="outline" onClick={() => void loadAppointments()}>
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className="h-4 w-4 shrink-0" />
               Atualizar
             </Button>
           </div>
@@ -355,7 +355,7 @@ export function RevisionAppointmentsContent() {
                           setIsScheduleOpen(true);
                         }}
                       >
-                        <CalendarClock className="mr-2 h-4 w-4" />
+                        <CalendarClock className="h-4 w-4 shrink-0" />
                         {appointment.status === 'SCHEDULED' ? 'Reagendar' : 'Programar'}
                       </Button>
                     )}
@@ -364,7 +364,7 @@ export function RevisionAppointmentsContent() {
                         className="bg-moria-orange hover:bg-moria-orange/90"
                         onClick={() => void handleStart(appointment.id)}
                       >
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
+                        <ClipboardCheck className="h-4 w-4 shrink-0" />
                         Iniciar revisao
                       </Button>
                     )}
@@ -374,7 +374,7 @@ export function RevisionAppointmentsContent() {
                         className="text-red-600 hover:text-red-700"
                         onClick={() => void handleCancel(appointment.id)}
                       >
-                        <XCircle className="mr-2 h-4 w-4" />
+                        <XCircle className="h-4 w-4 shrink-0" />
                         Cancelar
                       </Button>
                     )}

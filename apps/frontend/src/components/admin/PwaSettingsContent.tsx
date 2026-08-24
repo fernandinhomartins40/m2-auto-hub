@@ -296,12 +296,12 @@ export function PwaSettingsContent() {
             >
               {isResetting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   Restaurando...
                 </>
               ) : (
                 <>
-                  <RotateCcw className="mr-2 h-4 w-4" />
+                  <RotateCcw className="h-4 w-4 shrink-0" />
                   Restaurar Padrão
                 </>
               )}
@@ -309,12 +309,12 @@ export function PwaSettingsContent() {
             <Button className="w-full bg-moria-orange hover:bg-moria-orange/90 sm:w-auto" onClick={handleSave} disabled={isSaving || isResetting}>
               {isSaving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   Salvando...
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="h-4 w-4 shrink-0" />
                   Salvar Configurações do PWA
                 </>
               )}

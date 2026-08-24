@@ -134,7 +134,7 @@ export function FavoriteNotificationSettings() {
               </>
             ) : (
               <>
-                <Bell className="h-4 w-4 mr-2" />
+                <Bell className="h-4 w-4 shrink-0" />
                 Verificar Atualizações Agora
               </>
             )}

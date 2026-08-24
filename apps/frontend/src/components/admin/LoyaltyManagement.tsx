@@ -419,11 +419,11 @@ export default function LoyaltyManagement() {
         actions={
           <>
             <Button variant="outline" onClick={() => void Promise.all([loadOverview(), loadRewards(rewardsPage), loadCustomers(customersPage), loadRedemptions(redemptionsPage, redemptionStatusFilter)])}>
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className="h-4 w-4 shrink-0" />
               Atualizar
             </Button>
             <Button onClick={() => openRewardDialog()}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
               Nova recompensa
             </Button>
           </>
@@ -776,11 +776,11 @@ export default function LoyaltyManagement() {
 
                   <div className="flex justify-between gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => openRewardDialog(reward)}>
-                      <Pencil className="mr-2 h-4 w-4" />
+                      <Pencil className="h-4 w-4 shrink-0" />
                       Editar
                     </Button>
                     <Button variant="outline" className="flex-1 text-destructive" onClick={() => void handleDeleteReward(reward.id)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="h-4 w-4 shrink-0" />
                       Excluir
                     </Button>
                   </div>
@@ -947,9 +947,9 @@ export default function LoyaltyManagement() {
                             disabled={usingRedemption === redemption.code}
                           >
                             {usingRedemption === redemption.code ? (
-                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                              <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
                             ) : (
-                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              <ShieldCheck className="h-4 w-4 shrink-0" />
                             )}
                             Marcar como utilizado
                           </Button>

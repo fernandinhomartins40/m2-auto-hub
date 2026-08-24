@@ -104,7 +104,7 @@ export function CustomerVehicles() {
           onClick={() => setIsCreateModalOpen(true)}
           className="bg-moria-orange hover:bg-moria-orange/90"
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="h-4 w-4 shrink-0" />
           Cadastrar Veiculo
         </Button>
       </div>
@@ -133,7 +133,7 @@ export function CustomerVehicles() {
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-moria-orange hover:bg-moria-orange/90"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
               Cadastrar Primeiro Veiculo
             </Button>
           </CardContent>
@@ -212,7 +212,7 @@ export function CustomerVehicles() {
                     size="sm"
                     onClick={() => setSchedulingVehicle(vehicle)}
                   >
-                    <ClipboardCheck className="mr-2 h-4 w-4" />
+                    <ClipboardCheck className="h-4 w-4 shrink-0" />
                     Agendar Revisao
                   </Button>
                   <div className="flex gap-2">
@@ -222,7 +222,7 @@ export function CustomerVehicles() {
                       className="flex-1"
                       onClick={() => setEditingVehicle(vehicle)}
                     >
-                      <Edit className="mr-2 h-4 w-4" />
+                      <Edit className="h-4 w-4 shrink-0" />
                       Editar
                     </Button>
                     <Button
@@ -231,7 +231,7 @@ export function CustomerVehicles() {
                       className="flex-1 text-red-600 hover:bg-red-50 hover:text-red-700"
                       onClick={() => setDeletingVehicle(vehicle)}
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="h-4 w-4 shrink-0" />
                       Remover
                     </Button>
                   </div>

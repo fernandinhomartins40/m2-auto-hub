@@ -139,17 +139,17 @@ export function LandingPageContent() {
 
         <div className="hidden md:flex items-center gap-2 flex-wrap">
           <Button variant="outline" onClick={handlePreview} size="sm">
-            <Eye className="h-4 w-4 mr-2" />
+            <Eye className="h-4 w-4 shrink-0" />
             Visualizar
           </Button>
 
           <Button variant="outline" onClick={handleExport} title="Exportar (Ctrl+E)" size="sm">
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 shrink-0" />
             Exportar
           </Button>
 
           <Button variant="outline" onClick={handleImport} size="sm">
-            <Upload className="h-4 w-4 mr-2" />
+            <Upload className="h-4 w-4 shrink-0" />
             Importar
           </Button>
 
@@ -159,7 +159,7 @@ export function LandingPageContent() {
             className="text-red-600 hover:text-red-700"
             size="sm"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
+            <RotateCcw className="h-4 w-4 shrink-0" />
             Restaurar Padrao
           </Button>
 
@@ -171,12 +171,12 @@ export function LandingPageContent() {
           >
             {isSaving ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 Salvando...
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 shrink-0" />
                 Salvar
               </>
             )}
@@ -192,12 +192,12 @@ export function LandingPageContent() {
           >
             {isSaving ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 Salvando...
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 shrink-0" />
                 Salvar
               </>
             )}

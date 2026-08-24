@@ -243,7 +243,7 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
                   className="w-full"
                   onClick={() => window.open(guide.consoleUrl, "_blank")}
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                  <ExternalLink className="h-4 w-4 shrink-0" />
                   Abrir o painel de desenvolvedor da {guide.displayName}
                 </Button>
 

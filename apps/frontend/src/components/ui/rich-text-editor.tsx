@@ -99,11 +99,11 @@ export function RichTextEditor({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => formatBlock('p')}>
-              <Pilcrow className="mr-2 h-4 w-4" />
+              <Pilcrow className="h-4 w-4 shrink-0" />
               Parágrafo
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => formatBlock('h2')}>
-              <Heading2 className="mr-2 h-4 w-4" />
+              <Heading2 className="h-4 w-4 shrink-0" />
               Título
             </Button>
             <Button type="button" variant="outline" size="icon" onClick={() => runCommand('bold')}>

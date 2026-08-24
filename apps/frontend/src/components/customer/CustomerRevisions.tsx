@@ -456,7 +456,7 @@ export function CustomerRevisions() {
                             className="sm:w-auto"
                             onClick={() => handleCancelAppointment(appointment.id)}
                           >
-                            <XCircle className="mr-2 h-4 w-4" />
+                            <XCircle className="h-4 w-4 shrink-0" />
                             Cancelar solicitacao
                           </Button>
                         )}
@@ -567,7 +567,7 @@ export function CustomerRevisions() {
                     )}
 
                     <Button onClick={() => handleViewDetails(revision)} className="w-full" variant="outline">
-                      <Eye className="mr-2 h-4 w-4" />
+                      <Eye className="h-4 w-4 shrink-0" />
                       Ver detalhes completos
                     </Button>
                   </CardContent>
@@ -598,7 +598,7 @@ export function CustomerRevisions() {
                   </CardHeader>
                   <CardContent>
                     <Button onClick={() => handleViewDetails(revision)} className="w-full" variant="outline">
-                      <Eye className="mr-2 h-4 w-4" />
+                      <Eye className="h-4 w-4 shrink-0" />
                       Ver relatorio completo
                     </Button>
                   </CardContent>

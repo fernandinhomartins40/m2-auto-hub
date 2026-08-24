@@ -165,7 +165,7 @@ export function ProductImageCropper({
 
       <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">
         <Button variant="outline" onClick={onCancel} type="button" className="w-full sm:w-auto">
-          <X className="mr-2 h-4 w-4" />
+          <X className="h-4 w-4 shrink-0" />
           Cancelar
         </Button>
         <Button
@@ -174,7 +174,7 @@ export function ProductImageCropper({
           type="button"
           disabled={!completedCrop}
         >
-          <Check className="mr-2 h-4 w-4" />
+          <Check className="h-4 w-4 shrink-0" />
           Aplicar Corte
         </Button>
       </div>

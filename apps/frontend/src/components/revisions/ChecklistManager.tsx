@@ -227,7 +227,10 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
         onClick={() => setIsOpen(true)}
         className="border-moria-orange text-moria-orange hover:bg-moria-orange hover:text-white"
       >
-        <Settings className="h-4 w-4 mr-2" />
+        {/* `shrink-0` e obrigatorio: o Button ja e flex com gap-2, entao sem
+            isso o icone era comprimido a zero e o glifo transbordava para fora
+            da borda esquerda. O `mr-2` saiu porque duplicava o gap. */}
+        <Settings className="h-4 w-4 shrink-0" />
         Gerenciar Checklist
       </Button>
 

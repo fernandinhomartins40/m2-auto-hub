@@ -111,9 +111,9 @@ export function ArrayEditor<T extends { id: string }>({
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm" className="flex-1 justify-start">
                         {isExpanded ? (
-                          <ChevronUp className="h-4 w-4 mr-2" />
+                          <ChevronUp className="h-4 w-4 shrink-0" />
                         ) : (
-                          <ChevronDown className="h-4 w-4 mr-2" />
+                          <ChevronDown className="h-4 w-4 shrink-0" />
                         )}
                         <span className="font-medium">{getItemLabel(item, index)}</span>
                       </Button>
