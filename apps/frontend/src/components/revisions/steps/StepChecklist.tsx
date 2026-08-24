@@ -32,8 +32,12 @@ export interface AvaliacaoItem {
 interface StepChecklistProps {
   avaliacoes: AvaliacaoItem[];
   onChange: (avaliacoes: AvaliacaoItem[]) => void;
-  onNext: () => void;
-  onBack: () => void;
+  /**
+   * Navegação do assistente. Omitidas quando o checklist é embutido em outra
+   * tela (continuar revisão), que tem os próprios botões de salvar.
+   */
+  onNext?: () => void;
+  onBack?: () => void;
 }
 
 /**
@@ -89,6 +93,7 @@ const semAcento = (texto: string) =>
  * o checklist inteiro so faria o atendimento demorar.
  */
 export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChecklistProps) {
+  const comNavegacao = Boolean(onNext || onBack);
   const [categorias, setCategorias] = useState<ChecklistCategory[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState('');
@@ -421,18 +426,20 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" className="h-11" onClick={onBack}>
-            Voltar
-          </Button>
-          <Button
-            className="h-11 flex-1 bg-moria-orange hover:bg-moria-orange/90"
-            onClick={onNext}
-          >
-            Continuar
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
+        {comNavegacao && (
+          <div className="flex gap-2">
+            <Button variant="outline" className="h-11" onClick={onBack}>
+              Voltar
+            </Button>
+            <Button
+              className="h-11 flex-1 bg-moria-orange hover:bg-moria-orange/90"
+              onClick={onNext}
+            >
+              Continuar
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

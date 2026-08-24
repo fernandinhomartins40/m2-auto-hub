@@ -8,9 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Separator } from '../ui/separator';
 import { Progress } from '../ui/progress';
-import { RevisionChecklist } from '../revisions/RevisionChecklist';
-import { useRevisions } from '../../contexts/RevisionsContext';
-import { RevisionChecklistItem, ItemStatus } from '../../types/revisions';
+import { StepChecklist, type AvaliacaoItem } from '../revisions/steps/StepChecklist';
+import { ItemStatus } from '../../types/revisions';
 import { AdminRevision } from '../../api/adminService';
 import revisionService from '../../api/revisionService';
 import { useToast } from '../../hooks/use-toast';
@@ -28,12 +27,11 @@ export function RevisionEditModal({
   onClose,
   onSuccess,
 }: RevisionEditModalProps) {
-  const { categories } = useRevisions();
   const { toast } = useToast();
   const [mileage, setMileage] = useState<number>(0);
   const [generalNotes, setGeneralNotes] = useState('');
   const [recommendations, setRecommendations] = useState('');
-  const [revisionItems, setRevisionItems] = useState<RevisionChecklistItem[]>([]);
+  const [revisionItems, setRevisionItems] = useState<AvaliacaoItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,17 +67,17 @@ export function RevisionEditModal({
         }
       }
 
-      const items: RevisionChecklistItem[] = Array.isArray(checklistArray)
-        ? checklistArray.map((item: any) => {
-            return {
-              itemId: item.itemId,
-              status: item.status as ItemStatus,
-              notes: item.notes,
-              photos: item.photos || [],
-              checkedAt: item.checkedAt,
-              checkedBy: item.checkedBy,
-            };
-          })
+      // itemName e categoryName ja estao gravados no checklist; sem eles a
+      // busca nao teria o que mostrar ao continuar a revisao.
+      const items: AvaliacaoItem[] = Array.isArray(checklistArray)
+        ? checklistArray.map((item: any) => ({
+            itemId: item.itemId,
+            itemName: item.itemName ?? '',
+            categoryId: item.categoryId ?? '',
+            categoryName: item.categoryName ?? '',
+            status: item.status as ItemStatus,
+            notes: item.notes ?? '',
+          }))
         : [];
 
       setRevisionItems(items);
@@ -95,44 +93,20 @@ export function RevisionEditModal({
     }
   };
 
-  const handleUpdateItem = (itemId: string, updates: Partial<RevisionChecklistItem>) => {
-    setRevisionItems((prev) => {
-      const existingIndex = prev.findIndex((item) => item.itemId === itemId);
-      if (existingIndex >= 0) {
-        const newItems = [...prev];
-        newItems[existingIndex] = { ...newItems[existingIndex], ...updates };
-        return newItems;
-      } else {
-        return [...prev, { itemId, status: ItemStatus.NOT_CHECKED, ...updates }];
-      }
-    });
-  };
-
   const handleSave = async (status?: 'draft' | 'in_progress' | 'completed') => {
     if (!revision) return;
 
     setIsSaving(true);
     try {
       // Transform checklist items to backend format
-      const checklistItems = revisionItems.map((item) => {
-        const categoryData = categories.find((cat) =>
-          cat.items.some((catItem) => catItem.id === item.itemId)
-        );
-        const itemData = categoryData?.items.find((catItem) => catItem.id === item.itemId);
-
-        const checkItem: any = {
-          categoryId: categoryData?.id || '',
-          categoryName: categoryData?.name || '',
-          itemId: item.itemId,
-          itemName: itemData?.name || '',
-          status: item.status,
-        };
-
-        if (item.notes) checkItem.notes = item.notes;
-        if (item.photos && item.photos.length > 0) checkItem.photos = item.photos;
-
-        return checkItem;
-      });
+      const checklistItems = revisionItems.map((item) => ({
+        categoryId: item.categoryId,
+        categoryName: item.categoryName,
+        itemId: item.itemId,
+        itemName: item.itemName,
+        status: item.status,
+        ...(item.notes ? { notes: item.notes } : {}),
+      }));
 
       // Map status to backend format
       let backendStatus = revision.status;
@@ -319,7 +293,7 @@ export function RevisionEditModal({
               </Card>
 
               {/* Checklist - Maximum Space */}
-              <RevisionChecklist revisionItems={revisionItems} onUpdateItem={handleUpdateItem} />
+              <StepChecklist avaliacoes={revisionItems} onChange={setRevisionItems} />
             </div>
           )}
         </div>
