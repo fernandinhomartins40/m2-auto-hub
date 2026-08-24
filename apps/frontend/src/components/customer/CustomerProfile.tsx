@@ -296,10 +296,16 @@ export function CustomerProfile() {
         <TabsContent value="personal">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
+              {/* flex-wrap + gap: sem isso o botao ficava por cima do titulo
+                  e da descricao no celular.
+                  `basis-[14rem]` em vez de `flex-1` puro: com min-w-0 o bloco
+                  encolhia ate zero e nunca disparava a quebra de linha — so
+                  espremia o texto por baixo do botao. Com uma base minima ele
+                  prefere quebrar quando nao cabe. */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 flex-1 basis-[14rem]">
                   <CardTitle className="flex items-center">
-                    <User className="mr-2 h-5 w-5" />
+                    <User className="mr-2 h-5 w-5 shrink-0" />
                     Informações Pessoais
                   </CardTitle>
                   <CardDescription>
@@ -524,7 +530,7 @@ export function CustomerProfile() {
         <TabsContent value="addresses">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center">
                     <MapPin className="mr-2 h-5 w-5" />

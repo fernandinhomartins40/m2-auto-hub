@@ -243,7 +243,9 @@ export function ChecklistManager({ onChanged }: ChecklistManagerProps = {}) {
           }
         }}
       >
-        <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto">
+        {/* A rolagem e a altura maxima vem do DialogContent base; repetir aqui
+            criava dois containers roláveis aninhados. */}
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />

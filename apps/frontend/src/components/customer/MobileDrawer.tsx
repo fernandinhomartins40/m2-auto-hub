@@ -82,7 +82,9 @@ export function MobileDrawer({
 
       <div
         className={cn(
-          "fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transition-transform duration-300 ease-out",
+          // `flex flex-col` e necessario para o `flex-1` da <nav> valer: sem
+          // isso a lista crescia alem da tela e o menu nao rolava.
+          "fixed top-0 right-0 flex h-full w-80 max-w-[85vw] flex-col bg-white shadow-2xl z-50 transition-transform duration-300 ease-out",
           open ? "translate-x-0" : "translate-x-full"
         )}
         role="dialog"
@@ -125,7 +127,7 @@ export function MobileDrawer({
 
         <Separator />
 
-        <nav className="flex-1 overflow-y-auto p-2">
+        <nav className="min-h-0 flex-1 overflow-y-auto p-2">
           <div className="space-y-1">
             {menuItems.map((item) => {
               const Icon = item.icon;

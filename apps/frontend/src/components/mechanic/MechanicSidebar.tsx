@@ -81,7 +81,9 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
         </div>
       )}
 
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      {/* min-h-0: sem isso o flex-1 nao encolhe abaixo do conteudo e a lista
+          estoura a altura da tela em notebook, escondendo os ultimos itens. */}
+      <nav className="min-h-0 flex-1 p-4 space-y-2 overflow-y-auto">
         {menuItems.map((item) => {
           const IconComponent = item.icon;
           const isActive = activeTab === item.id;

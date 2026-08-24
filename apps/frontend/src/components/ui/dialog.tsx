@@ -47,7 +47,18 @@ const DialogContent = React.forwardRef<
           ? "left-[0.5rem] right-[0.5rem] top-[50%] w-[calc(100vw-1rem)] mx-auto translate-y-[-50%] rounded-2xl p-6 max-h-[calc(100vh-1rem)] data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           : "inset-0 w-screen h-[100dvh] max-h-[100dvh] rounded-none p-4 overflow-y-auto data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         // Do sm para cima volta a ser a caixa centrada de sempre.
-        "sm:inset-auto sm:left-[50%] sm:right-auto sm:top-[50%] sm:h-auto sm:w-auto sm:max-w-lg sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:p-6 sm:max-h-[calc(100vh-3rem)] sm:overflow-visible sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
+        //
+        // `sm:overflow-auto` no lugar do antigo `sm:overflow-visible`: com
+        // altura limitada e overflow visivel, o conteudo que passava de
+        // 100vh-3rem simplesmente vazava para fora sem barra de rolagem e
+        // ficava inalcancavel (o gerenciador do checklist cortava no meio de um
+        // item em notebook).
+        //
+        // Os dois eixos precisam ser `auto`: pela spec, quando um eixo e
+        // auto/scroll o outro nao pode continuar `visible` — o navegador o
+        // promove a auto de qualquer jeito, e a combinacao mista fazia texto
+        // vazar por baixo da caixa em vez de rolar.
+        "sm:inset-auto sm:left-[50%] sm:right-auto sm:top-[50%] sm:h-auto sm:w-auto sm:max-w-lg sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:p-6 sm:max-h-[calc(100vh-3rem)] sm:overflow-auto sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
       {...props}

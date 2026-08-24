@@ -40,8 +40,19 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
         <h2 className="mt-2 text-lg font-bold leading-tight text-white">Painel do Lojista</h2>
       </div>
 
-      <nav className="sidebar-scrollbar flex overflow-x-auto p-2 md:flex-1 md:overflow-x-visible md:overflow-y-auto md:px-3 md:py-4">
-        <div className="flex w-full gap-1 md:flex-col md:gap-3">
+      {/* Tres coisas sao obrigatorias juntas para a lista rolar no desktop:
+          - `md:min-h-0`: item flex tem min-height:auto e se recusa a encolher
+            abaixo do conteudo, entao sozinho o `flex-1` nao limita a altura;
+          - `md:h-full`: da ao nav uma altura concreta para o overflow morder;
+          - `md:flex-col` no proprio nav: ele nasce `flex-row` para a barra do
+            celular, e em linha o filho de menu esticava a altura do nav pelo
+            conteudo (align-items: stretch), anulando o scroll.
+          Sem isso, em notebook (768px) a lista estourava e os ultimos itens
+          do menu ficavam inalcancaveis. */}
+      <nav className="sidebar-scrollbar flex overflow-x-auto p-2 md:h-full md:min-h-0 md:flex-1 md:flex-col md:overflow-x-visible md:overflow-y-auto md:px-3 md:py-4">
+        {/* `md:shrink-0` impede que o bloco seja comprimido pelo nav em vez de
+            gerar rolagem. */}
+        <div className="flex w-full gap-1 md:flex-col md:gap-3 md:shrink-0">
           {onPlateLookup && (
             <button
               onClick={onPlateLookup}

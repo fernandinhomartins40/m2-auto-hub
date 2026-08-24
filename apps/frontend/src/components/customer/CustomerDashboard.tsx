@@ -131,8 +131,11 @@ export function CustomerDashboard() {
       {/* Welcome Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          {/* flex-wrap + gap + min-w-0: no celular o badge ficava por cima do
+              "Bem-vindo ao seu painel do cliente", porque o justify-between
+              sozinho nao reserva espaco entre os dois blocos. */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0 flex-1 basis-[14rem]">
               <CardTitle className="text-2xl">
                 Olá, {customer.name?.split(' ')[0] || 'Cliente'}! 👋
               </CardTitle>
@@ -140,7 +143,7 @@ export function CustomerDashboard() {
                 Bem-vindo ao seu painel do cliente
               </CardDescription>
             </div>
-            <Badge variant="secondary" className="bg-moria-orange/10 text-moria-orange">
+            <Badge variant="secondary" className="shrink-0 bg-moria-orange/10 text-moria-orange">
               Cliente {membership.current}
             </Badge>
           </div>
@@ -276,7 +279,7 @@ export function CustomerDashboard() {
       {/* Recent Orders */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex flex-wrap items-center justify-between gap-3">
             <span className="flex items-center">
               <Package className="mr-2 h-5 w-5" />
               Pedidos Recentes

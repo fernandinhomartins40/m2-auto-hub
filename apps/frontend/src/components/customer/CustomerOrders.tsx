@@ -103,7 +103,7 @@ export function CustomerOrders() {
         {[1, 2, 3].map((i) => (
           <Card key={i}>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-4 flex-1">
                   <div className="h-5 w-5 bg-gray-200 rounded" />
                   <div className="space-y-2 flex-1">
@@ -208,7 +208,7 @@ export function CustomerOrders() {
             return (
               <Card key={order.id}>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center space-x-4">
                       <StatusIcon className="h-5 w-5 text-muted-foreground" />
                       <div>

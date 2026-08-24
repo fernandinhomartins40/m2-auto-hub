@@ -206,10 +206,14 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
     (a) => a.status === ItemStatus.ATTENTION || a.status === ItemStatus.CRITICAL
   ).length;
 
+  // max-w-3xl a partir de lg: em notebook o max-w-2xl fixo deixava metade da
+  // tela vazia e espremia o conteudo numa coluna estreita.
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+    <div className="mx-auto w-full max-w-2xl space-y-5 lg:max-w-3xl">
+      {/* flex-wrap + shrink-0 no botao: em largura apertada o titulo empurrava
+          o "Gerenciar Checklist" para cima do proprio texto. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-[16rem] flex-1">
           <h2 className="text-lg font-bold">O que você verificou?</h2>
           <p className="text-sm text-muted-foreground">
             Digite o que observou — por exemplo "freio" — e marque o estado. O que não for
@@ -218,7 +222,9 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
         </div>
         {/* Criar/desabilitar itens do checklist: vivia no fluxo antigo e
             precisa continuar ao alcance de quem monta a revisão. */}
-        <ChecklistManager onChanged={recarregarCategorias} />
+        <div className="shrink-0">
+          <ChecklistManager onChanged={recarregarCategorias} />
+        </div>
       </div>
 
       {/* Busca */}
@@ -413,7 +419,9 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
         )}
       </div>
 
-      <div className="sticky bottom-0 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-lg sm:border">
+      {/* Sem `-mx-4`: a margem negativa so ficava alinhada se o pai tivesse
+          exatamente px-4, e vazava para fora nas telas que usam outro padding. */}
+      <div className="sticky bottom-0 border-t bg-background/95 px-4 py-3 backdrop-blur sm:rounded-lg sm:border">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
             {avaliacoes.length} {avaliacoes.length === 1 ? 'item avaliado' : 'itens avaliados'}

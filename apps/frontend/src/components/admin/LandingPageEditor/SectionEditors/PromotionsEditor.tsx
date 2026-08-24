@@ -79,7 +79,7 @@ export const PromotionsEditor = ({ config, onChange }: PromotionsEditorProps) =>
 
       <Card className="bg-gradient-to-r from-moria-orange/5 to-gold-accent/5 border-moria-orange/20">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center space-x-2">
               <Eye className="h-5 w-5 text-moria-orange" />
               <CardTitle>Preview das Promoções</CardTitle>
