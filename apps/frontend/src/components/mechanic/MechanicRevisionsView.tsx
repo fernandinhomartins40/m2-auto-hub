@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RevisionCard } from '@/components/revisions/RevisionCard';
-import { RevisionEditModal } from '@/components/admin/RevisionEditModal';
+import { RevisionEditPage } from '@/components/admin/RevisionEditPage';
 import { RevisionDetailsModal } from '@/components/admin/RevisionDetailsModal';
 
 export default function MechanicRevisionsView() {
@@ -34,7 +34,8 @@ export default function MechanicRevisionsView() {
 
   const [selectedRevision, setSelectedRevision] = useState<AdminRevision | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  // Preencher o checklist vira pagina: em modal os 170+ itens ficavam cortados.
+  const [editandoRevisao, setEditandoRevisao] = useState<AdminRevision | null>(null);
 
   const fetchMyRevisions = async () => {
     try {
@@ -97,8 +98,7 @@ export default function MechanicRevisionsView() {
   };
 
   const handleEditRevision = (revision: AdminRevision) => {
-    setSelectedRevision(revision);
-    setEditModalOpen(true);
+    setEditandoRevisao(revision);
   };
 
   const handleChangeStatus = async (revisionId: string, newStatus: string) => {
@@ -142,6 +142,20 @@ export default function MechanicRevisionsView() {
   const scheduledAppointments = appointments.filter(
     (appointment) => appointment.status === 'SCHEDULED'
   );
+
+  // Editando: a pagina do checklist toma o lugar da lista.
+  if (editandoRevisao) {
+    return (
+      <RevisionEditPage
+        revision={editandoRevisao}
+        onClose={() => setEditandoRevisao(null)}
+        onSuccess={() => {
+          setEditandoRevisao(null);
+          void fetchMyRevisions();
+        }}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -392,19 +406,6 @@ export default function MechanicRevisionsView() {
         onChangeStatus={handleChangeStatus}
       />
 
-      <RevisionEditModal
-        revision={selectedRevision}
-        isOpen={editModalOpen}
-        onClose={() => {
-          setEditModalOpen(false);
-          setSelectedRevision(null);
-        }}
-        onSuccess={() => {
-          void fetchMyRevisions();
-          setEditModalOpen(false);
-          setSelectedRevision(null);
-        }}
-      />
     </div>
   );
 }

@@ -32,7 +32,7 @@ import { normalizePlate, isValidBrazilianPlate, formatPlate } from '@/utils/lice
 import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
 import { ServiceOrderModal, type ServiceOrderInitialData } from './ServiceOrderModal';
 import { ServiceOrderDetailsModal } from './ServiceOrderDetailsModal';
-import { RevisionEditModal } from './RevisionEditModal';
+import { RevisionEditPage } from './RevisionEditPage';
 import { formatCurrency as money } from '@/lib/format';
 
 interface Props {
@@ -201,7 +201,9 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      {/* Enquanto preenche o checklist, a consulta sai da frente: a pagina de
+          revisao precisa da tela inteira para nao cortar os itens. */}
+      <Dialog open={isOpen && !revEditing} onOpenChange={(o) => !o && onClose()}>
         <DialogContent className="sm:max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -456,13 +458,21 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         onChanged={refreshAfterChange}
       />
 
-      {/* Revisão: continuar */}
-      <RevisionEditModal
-        revision={revEditing}
-        isOpen={!!revEditing}
-        onClose={() => setRevEditing(null)}
-        onSuccess={refreshAfterChange}
-      />
+      {/* Revisão: continuar, em pagina de tela cheia */}
+      {revEditing && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+          <div className="mx-auto w-full max-w-5xl">
+            <RevisionEditPage
+              revision={revEditing}
+              onClose={() => setRevEditing(null)}
+              onSuccess={() => {
+                setRevEditing(null);
+                refreshAfterChange();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

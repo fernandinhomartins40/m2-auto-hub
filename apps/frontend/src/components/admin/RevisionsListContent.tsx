@@ -10,7 +10,7 @@ import adminService, { AdminRevision } from '../../api/adminService';
 import revisionService from '../../api/revisionService';
 import { RevisionDetailsModal } from './RevisionDetailsModal';
 import { MechanicAssignmentModal } from './MechanicAssignmentModal';
-import { RevisionEditModal } from './RevisionEditModal';
+import { RevisionEditPage } from './RevisionEditPage';
 import { RevisionCard } from '../revisions/RevisionCard';
 
 export function RevisionsListContent() {
@@ -25,7 +25,9 @@ export function RevisionsListContent() {
   // Modals
   const [selectedRevision, setSelectedRevision] = useState<AdminRevision | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  // O preenchimento do checklist ocupa a area toda no lugar da lista: em modal
+  // os 170+ itens ficavam cortados em telas menores.
+  const [editandoRevisao, setEditandoRevisao] = useState<AdminRevision | null>(null);
   const [mechanicModalOpen, setMechanicModalOpen] = useState(false);
   const [mechanicModalRevisionId, setMechanicModalRevisionId] = useState<string | null>(null);
   const [mechanicModalCurrentMechanicId, setMechanicModalCurrentMechanicId] = useState<
@@ -71,8 +73,7 @@ export function RevisionsListContent() {
   };
 
   const handleEditRevision = (revision: AdminRevision) => {
-    setSelectedRevision(revision);
-    setEditModalOpen(true);
+    setEditandoRevisao(revision);
   };
 
   const handleChangeStatus = async (revisionId: string, newStatus: string) => {
@@ -116,6 +117,20 @@ export function RevisionsListContent() {
       revision.mechanicName?.toLowerCase().includes(search)
     );
   });
+
+  // Editando: a pagina do checklist toma o lugar da lista.
+  if (editandoRevisao) {
+    return (
+      <RevisionEditPage
+        revision={editandoRevisao}
+        onClose={() => setEditandoRevisao(null)}
+        onSuccess={() => {
+          setEditandoRevisao(null);
+          loadRevisions();
+        }}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -244,20 +259,6 @@ export function RevisionsListContent() {
           }
         }}
         onChangeStatus={handleChangeStatus}
-      />
-
-      <RevisionEditModal
-        revision={selectedRevision}
-        isOpen={editModalOpen}
-        onClose={() => {
-          setEditModalOpen(false);
-          setSelectedRevision(null);
-        }}
-        onSuccess={() => {
-          loadRevisions();
-          setEditModalOpen(false);
-          setSelectedRevision(null);
-        }}
       />
 
       <MechanicAssignmentModal
