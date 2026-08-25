@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Loader2, FileText, Clock, CheckCircle, ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  CheckCircle,
+  Clock,
+  FileText,
+  Gauge,
+  Loader2,
+  Pencil,
+  X,
+} from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Progress } from '../ui/progress';
 import { StepChecklist, type AvaliacaoItem } from '../revisions/steps/StepChecklist';
 import { ItemStatus } from '../../types/revisions';
 import { AdminRevision } from '../../api/adminService';
@@ -34,6 +43,7 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
   const [revisionItems, setRevisionItems] = useState<AvaliacaoItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
 
   useEffect(() => {
     if (revision) {
@@ -111,11 +121,10 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
       const updatePayload: any = {
         status: backendStatus,
         checklistItems,
+        mileage,
+        generalNotes,
+        recommendations,
       };
-
-      if (mileage) updatePayload.mileage = mileage;
-      if (generalNotes) updatePayload.generalNotes = generalNotes;
-      if (recommendations) updatePayload.recommendations = recommendations;
 
       await revisionService.updateRevision(revision.id, updatePayload);
 
@@ -141,6 +150,31 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
   const total = revisionItems.length;
   const checked = revisionItems.filter((item) => item.status !== ItemStatus.NOT_CHECKED).length;
   const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+  const progressTone =
+    percentage === 100
+      ? {
+          bar: 'bg-emerald-500',
+          text: 'text-emerald-700',
+          surface: 'border-emerald-200 bg-emerald-50/95',
+        }
+      : percentage >= 70
+        ? {
+            bar: 'bg-lime-500',
+            text: 'text-lime-700',
+            surface: 'border-lime-200 bg-lime-50/95',
+          }
+        : percentage >= 35
+          ? {
+              bar: 'bg-orange-500',
+              text: 'text-orange-700',
+              surface: 'border-orange-200 bg-orange-50/95',
+            }
+          : {
+              bar: 'bg-blue-500',
+              text: 'text-blue-700',
+              surface: 'border-blue-200 bg-blue-50/95',
+            };
 
   if (!revision) return null;
 
@@ -190,7 +224,7 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
   );
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div className="min-w-0 w-full space-y-4">
       {/* Cabecalho: quem/qual veiculo, e a volta para a lista */}
       <div className="flex min-w-0 items-start gap-2">
         <Button
@@ -215,14 +249,44 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
 
       {/* Progresso + acoes, colado no topo enquanto o checklist rola */}
       {total > 0 && (
-        <div className="sticky top-0 z-10 space-y-2 border-b bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div
+          className={`sticky top-0 z-30 space-y-3 rounded-xl border px-3 py-3 shadow-sm backdrop-blur sm:px-4 ${progressTone.surface}`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-medium sm:text-sm">
-              Progresso: {checked}/{total} ({percentage}%)
-            </span>
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`grid h-9 w-9 place-items-center rounded-full bg-white shadow-sm ${progressTone.text}`}
+              >
+                {percentage === 100 ? (
+                  <Check className="h-5 w-5" />
+                ) : (
+                  <Gauge className="h-5 w-5" />
+                )}
+              </span>
+              <div>
+                <p className={`text-sm font-bold sm:text-base ${progressTone.text}`}>
+                  {percentage === 100 ? 'Revisão concluída' : `${percentage}% concluído`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {checked} de {total} itens avaliados
+                </p>
+              </div>
+            </div>
             <div className="flex w-full gap-1.5 sm:w-auto sm:gap-2">{acoes}</div>
           </div>
-          <Progress value={percentage} className="h-2 bg-gray-200 sm:h-3" />
+          <div
+            className="h-3 w-full overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5 sm:h-4"
+            role="progressbar"
+            aria-label="Progresso da revisão"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percentage}
+          >
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${progressTone.bar}`}
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
         </div>
       )}
 
@@ -237,11 +301,40 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4">
-          <Card>
-            <CardHeader className="pb-2 sm:pb-3">
-              <CardTitle className="text-sm sm:text-base">Informações da Revisão</CardTitle>
+          <Card className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 px-3 py-3 sm:px-4">
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-base">Informações da Revisão</CardTitle>
+                {!isEditingInfo && <p className="mt-0.5 text-xs text-muted-foreground">Dados gerais do atendimento</p>}
+              </div>
+              <Button
+                type="button"
+                variant={isEditingInfo ? 'ghost' : 'outline'}
+                size="sm"
+                onClick={() => setIsEditingInfo((value) => !value)}
+                className="h-8 shrink-0 text-xs"
+              >
+                {isEditingInfo ? <X className="mr-1.5 h-3.5 w-3.5" /> : <Pencil className="mr-1.5 h-3.5 w-3.5" />}
+                {isEditingInfo ? 'Fechar edição' : 'Editar dados'}
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-2 px-3 sm:space-y-3 sm:px-6">
+            {!isEditingInfo ? (
+              <CardContent className="grid gap-2 border-t bg-muted/20 px-3 py-3 sm:grid-cols-3 sm:px-4">
+                <div className="rounded-lg bg-background px-3 py-2 ring-1 ring-border">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Quilometragem</p>
+                  <p className="mt-0.5 text-sm font-semibold">{mileage ? `${mileage.toLocaleString('pt-BR')} km` : 'Não informada'}</p>
+                </div>
+                <div className="rounded-lg bg-background px-3 py-2 ring-1 ring-border">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Observações gerais</p>
+                  <p className="mt-0.5 line-clamp-2 text-sm">{generalNotes || 'Nenhuma observação'}</p>
+                </div>
+                <div className="rounded-lg bg-background px-3 py-2 ring-1 ring-border">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Recomendações</p>
+                  <p className="mt-0.5 line-clamp-2 text-sm">{recommendations || 'Nenhuma recomendação'}</p>
+                </div>
+              </CardContent>
+            ) : (
+            <CardContent className="space-y-2 border-t px-3 py-3 sm:space-y-3 sm:px-4">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="mileage" className="text-xs sm:text-sm">
@@ -284,7 +377,14 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
                   className="resize-none text-sm"
                 />
               </div>
+              <div className="flex justify-end">
+                <Button type="button" size="sm" onClick={() => setIsEditingInfo(false)} className="h-8">
+                  <Check className="mr-1.5 h-3.5 w-3.5" />
+                  Concluir edição
+                </Button>
+              </div>
             </CardContent>
+            )}
           </Card>
 
           <StepChecklist avaliacoes={revisionItems} onChange={setRevisionItems} />

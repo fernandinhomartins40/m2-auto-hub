@@ -4,9 +4,11 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
+  ChevronUp,
   Frown,
   Loader2,
   Meh,
+  MessageSquareText,
   Search,
   Smile,
   X,
@@ -98,6 +100,7 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState('');
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
+  const [avaliadosAbertos, setAvaliadosAbertos] = useState(false);
   // Um item por vez em edicao: o mecanico avalia, confirma e o card some.
   const [emEdicao, setEmEdicao] = useState<AvaliacaoItem | null>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
@@ -141,7 +144,13 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
     );
   }, [busca, todosItens]);
 
-  const avaliado = (itemId: string) => avaliacoes.find((a) => a.itemId === itemId);
+  const avaliado = (itemId: string) =>
+    avaliacoes.find((a) => a.itemId === itemId && a.status !== ItemStatus.NOT_CHECKED);
+
+  const itensAvaliados = useMemo(
+    () => avaliacoes.filter((item) => item.status !== ItemStatus.NOT_CHECKED),
+    [avaliacoes]
+  );
 
   const adicionar = (item: {
     id: string;
@@ -203,14 +212,13 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
       return nova;
     });
 
-  const comProblema = avaliacoes.filter(
+  const comProblema = itensAvaliados.filter(
     (a) => a.status === ItemStatus.ATTENTION || a.status === ItemStatus.CRITICAL
   ).length;
 
-  // max-w-3xl a partir de lg: em notebook o max-w-2xl fixo deixava metade da
-  // tela vazia e espremia o conteudo numa coluna estreita.
+  // Sem limite de largura: esta etapa agora ocupa a pagina, nao um modal.
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5 lg:max-w-3xl">
+    <div className="w-full space-y-5">
       {/* flex-wrap + shrink-0 no botao: em largura apertada o titulo empurrava
           o "Gerenciar Checklist" para cima do proprio texto. */}
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -229,39 +237,48 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
       </div>
 
       {/* Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
-        <Input
-          className="h-12 pl-10"
-          placeholder="Buscar item: freio, óleo, pneu..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          disabled={carregando}
-        />
+      <div className="rounded-2xl border-2 border-moria-orange/40 bg-moria-orange/5 p-3 shadow-sm sm:p-4">
+        <label htmlFor="revision-item-search" className="mb-2 block text-sm font-bold sm:text-base">
+          Buscar item para avaliar
+        </label>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-moria-orange" />
+          <Input
+            id="revision-item-search"
+            className="h-14 border-2 bg-background pl-12 pr-4 text-base shadow-sm focus-visible:ring-moria-orange sm:h-16 sm:text-lg"
+            placeholder="Buscar item: freio, óleo, pneu..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            disabled={carregando}
+          />
 
-        {sugestoes.length > 0 && (
-          <div className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border bg-background shadow-lg">
-            {sugestoes.map((item) => {
-              const jaTem = Boolean(avaliado(item.id));
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => adicionar(item)}
-                  className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{item.name}</span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {item.categoryName}
+          {sugestoes.length > 0 && (
+            <div className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border bg-background shadow-xl">
+              {sugestoes.map((item) => {
+                const jaTem = Boolean(avaliado(item.id));
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => adicionar(item)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{item.name}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {item.categoryName}
+                      </span>
                     </span>
-                  </span>
-                  {jaTem && <Check className="h-4 w-4 shrink-0 text-green-600" />}
-                </button>
-              );
-            })}
-          </div>
-        )}
+                    {jaTem && <Check className="h-4 w-4 shrink-0 text-green-600" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Digite o nome do componente ou da categoria para localizar rapidamente.
+        </p>
       </div>
 
       {/* Card em edição: só um por vez, some assim que o item é confirmado. */}
@@ -282,13 +299,13 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
             </Button>
           </div>
 
-          {/* Carinhas: tocar já define o estado e confirma o item. */}
+          {/* O status fica selecionado enquanto a observacao e preenchida. */}
           <div className="grid grid-cols-3 gap-2">
             {STATUS_OPCOES.map(({ valor, rotulo, Icone, ativo, leve }) => (
               <button
                 key={valor}
                 type="button"
-                onClick={() => confirmar(valor)}
+                onClick={() => setEmEdicao({ ...emEdicao, status: valor })}
                 className={cn(
                   'flex flex-col items-center gap-0.5 rounded-lg border-2 py-2 transition-colors',
                   emEdicao.status === valor ? ativo : leve
@@ -300,55 +317,118 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
             ))}
           </div>
 
-          <input
-            value={emEdicao.notes}
-            onChange={(e) => setEmEdicao({ ...emEdicao, notes: e.target.value })}
-            onKeyDown={(e) => e.key === 'Enter' && confirmar(emEdicao.status)}
-            placeholder="Observação (opcional)"
-            className="mt-2 h-9 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:border-moria-orange"
-          />
+          <div className="mt-3 rounded-lg border bg-muted/30 p-2.5">
+            <label
+              htmlFor={`item-note-${emEdicao.itemId}`}
+              className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold"
+            >
+              <MessageSquareText className="h-3.5 w-3.5 text-moria-orange" />
+              Observação do item <span className="font-normal text-muted-foreground">(opcional)</span>
+            </label>
+            <input
+              id={`item-note-${emEdicao.itemId}`}
+              value={emEdicao.notes}
+              onChange={(e) => setEmEdicao({ ...emEdicao, notes: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && confirmar(emEdicao.status)}
+              placeholder="Ex.: desgaste irregular, troca recomendada..."
+              className="h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:border-moria-orange"
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={() => confirmar(emEdicao.status)}
+            className="mt-3 h-10 w-full bg-moria-orange hover:bg-moria-orange/90"
+          >
+            <Check className="mr-2 h-4 w-4" />
+            Confirmar avaliação
+          </Button>
         </div>
       )}
 
-      {/* Confirmados: uma linha por item, para caber muitos na tela. */}
-      {avaliacoes.length > 0 && (
-        <div className="divide-y overflow-hidden rounded-lg border">
-          {avaliacoes.map((a) => {
-            const estilo = estiloDoStatus(a.status);
-            const Icone = estilo?.Icone ?? Smile;
+      {/* Confirmados: somente itens efetivamente avaliados, em painel recolhível. */}
+      {itensAvaliados.length > 0 && (
+        <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+          <button
+            type="button"
+            onClick={() => setAvaliadosAbertos((value) => !value)}
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40"
+            aria-expanded={avaliadosAbertos}
+          >
+            <span>
+              <span className="block text-sm font-bold">Itens já avaliados</span>
+              <span className="block text-xs text-muted-foreground">
+                {itensAvaliados.length} {itensAvaliados.length === 1 ? 'item' : 'itens'} ·
+                clique para {avaliadosAbertos ? 'recolher' : 'expandir'}
+              </span>
+            </span>
+            {avaliadosAbertos ? (
+              <ChevronUp className="h-5 w-5" />
+            ) : (
+              <ChevronDown className="h-5 w-5" />
+            )}
+          </button>
+          {avaliadosAbertos && (
+            <div className="divide-y border-t">
+              {itensAvaliados.map((a) => {
+                const estilo = estiloDoStatus(a.status);
+                const Icone = estilo?.Icone ?? Smile;
 
-            return (
-              <div key={a.itemId} className="flex items-center gap-2.5 px-3 py-2">
-                <span className={cn('rounded-full p-1', estilo?.ponto)}>
-                  <Icone className="h-3.5 w-3.5 text-white" />
-                </span>
-                <button
-                  type="button"
-                  onClick={() => reabrir(a)}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <span className="block truncate text-sm font-medium">{a.itemName}</span>
-                  {a.notes && (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {a.notes}
+                return (
+                  <div key={a.itemId} className="flex items-start gap-3 px-3 py-3 sm:px-4">
+                    <span className={cn('rounded-full p-1', estilo?.ponto)}>
+                      <Icone className="h-3.5 w-3.5 text-white" />
                     </span>
-                  )}
-                </button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0"
-                  onClick={() => remover(a.itemId)}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            );
-          })}
+                    <button
+                      type="button"
+                      onClick={() => reabrir(a)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="text-sm font-semibold">{a.itemName}</span>
+                        <span
+                          className={cn(
+                            'rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                            estilo?.leve
+                          )}
+                        >
+                          {estilo?.rotulo}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {a.categoryName}
+                      </span>
+                      <span
+                        className={cn(
+                          'mt-2 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-xs',
+                          a.notes
+                            ? 'bg-amber-50 text-amber-900'
+                            : 'bg-muted/50 text-muted-foreground'
+                        )}
+                      >
+                        <MessageSquareText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span>
+                          <strong className="font-semibold">Observação:</strong>{' '}
+                          {a.notes || 'Sem observação'}
+                        </span>
+                      </span>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => remover(a.itemId)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {avaliacoes.length === 0 && !emEdicao && !carregando && (
+      {itensAvaliados.length === 0 && !emEdicao && !carregando && (
         <p className="rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
           Nenhum item avaliado ainda. Use a busca acima.
         </p>
@@ -430,7 +510,7 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
       <div className="sticky bottom-0 z-10 border-t bg-background px-4 py-3 sm:rounded-lg sm:border">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
-            {avaliacoes.length} {avaliacoes.length === 1 ? 'item avaliado' : 'itens avaliados'}
+            {itensAvaliados.length} {itensAvaliados.length === 1 ? 'item avaliado' : 'itens avaliados'}
           </span>
           {comProblema > 0 && (
             <span className="flex items-center gap-1 font-medium text-amber-700">

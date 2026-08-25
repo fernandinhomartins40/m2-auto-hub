@@ -461,7 +461,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
       {/* Revisão: continuar, em pagina de tela cheia */}
       {revEditing && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
-          <div className="mx-auto w-full max-w-5xl">
+          <div className="w-full">
             <RevisionEditPage
               revision={revEditing}
               onClose={() => setRevEditing(null)}
