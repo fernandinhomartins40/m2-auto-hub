@@ -77,6 +77,11 @@ export function ServiceOrderDetailsModal({ order, isOpen, onClose, onChanged, re
             </Badge>
           </DialogTitle>
           <DialogDescription>Detalhes da ordem de serviço.</DialogDescription>
+          {order.revisionId && (
+            <Badge variant="outline" className="w-fit border-moria-orange/40 text-moria-orange">
+              Originada pela revisão #{order.revisionId.slice(0, 8)}
+            </Badge>
+          )}
         </DialogHeader>
 
         <div className="space-y-3 py-2 text-sm">

@@ -140,6 +140,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
           name: i.name,
           unitPrice: Number(i.unitPrice),
           quantity: i.quantity,
+          revisionCheckId: i.revisionCheckId,
         }))
       );
       if (order.customerId) void loadCustomerVehicles(order.customerId);

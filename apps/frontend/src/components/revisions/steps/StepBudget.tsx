@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { AlertTriangle, Check, Loader2, Package, Plus, Trash2, Wrench } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, Check, Loader2, Package, Search, Trash2, Wrench } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ItemStatus } from '@/types/revisions';
 import type { ServiceOrderItemInput } from '@/api/serviceOrderService';
+import productService, { type Product } from '@/api/productService';
 
 import type { AvaliacaoItem } from './StepChecklist';
 import { formatCurrency as dinheiro } from '@/lib/format';
@@ -39,6 +40,23 @@ export function StepBudget({
   salvando,
 }: StepBudgetProps) {
   const [novo, setNovo] = useState<Record<string, { nome: string; valor: string }>>({});
+  const [produtos, setProdutos] = useState<Product[]>([]);
+  const [buscaProduto, setBuscaProduto] = useState<Record<string, string>>({});
+  const [carregandoProdutos, setCarregandoProdutos] = useState(true);
+
+  useEffect(() => {
+    productService
+      .getProducts({ page: 1, limit: 100 })
+      .then((response) =>
+        setProdutos(
+          (response.products || []).filter(
+            (produto) => produto.status === 'ACTIVE' || produto.isActive
+          )
+        )
+      )
+      .catch(() => setProdutos([]))
+      .finally(() => setCarregandoProdutos(false));
+  }, []);
 
   const problemas = avaliacoes.filter(
     (a) => a.status === ItemStatus.ATTENTION || a.status === ItemStatus.CRITICAL
@@ -66,12 +84,31 @@ export function StepBudget({
     setNovo((atual) => ({ ...atual, [origemItemId]: { nome: '', valor: '' } }));
   };
 
+  const adicionarProduto = (origemItemId: string, produto: Product) => {
+    const preco = Number(produto.promoPrice ?? produto.salePrice) || 0;
+    onChange([
+      ...linhas,
+      {
+        origemItemId,
+        type: 'PRODUCT',
+        productId: produto.id,
+        serviceId: null,
+        name: produto.name,
+        unitPrice: preco,
+        quantity: 1,
+      },
+    ]);
+    setBuscaProduto((atual) => ({ ...atual, [origemItemId]: '' }));
+  };
+
   const remover = (indice: number) => onChange(linhas.filter((_, i) => i !== indice));
+  const atualizar = (indice: number, patch: Partial<OrcamentoLinha>) =>
+    onChange(linhas.map((linha, i) => (i === indice ? { ...linha, ...patch } : linha)));
 
   const total = linhas.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5">
+    <div className="w-full space-y-5">
       <div>
         <h2 className="text-lg font-bold">O que precisa ser feito?</h2>
         <p className="text-sm text-muted-foreground">
@@ -85,7 +122,7 @@ export function StepBudget({
           <Check className="mx-auto mb-2 h-8 w-8 text-green-600" />
           <p className="font-semibold text-green-900">Nenhum problema encontrado</p>
           <p className="text-sm text-green-800">
-            A revisão será concluída sem ordem de serviço.
+            A ordem de serviço será criada sem itens de orçamento e poderá ser complementada depois.
           </p>
         </div>
       ) : (
@@ -94,6 +131,17 @@ export function StepBudget({
             .map((l, i) => ({ l, i }))
             .filter(({ l }) => l.origemItemId === problema.itemId);
           const entrada = novo[problema.itemId] || { nome: '', valor: '' };
+          const termoProduto = (buscaProduto[problema.itemId] || '').toLowerCase().trim();
+          const produtosFiltrados = termoProduto
+            ? produtos
+                .filter(
+                  (produto) =>
+                    produto.name.toLowerCase().includes(termoProduto) ||
+                    produto.category.toLowerCase().includes(termoProduto) ||
+                    produto.sku.toLowerCase().includes(termoProduto)
+                )
+                .slice(0, 8)
+            : [];
 
           return (
             <div key={problema.itemId} className="rounded-xl border bg-card p-4">
@@ -136,7 +184,17 @@ export function StepBudget({
                         <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
                       )}
                       <span className="min-w-0 flex-1 truncate">{l.name}</span>
-                      <span className="font-medium">{dinheiro(l.unitPrice)}</span>
+                      <Input
+                        aria-label={`Valor de ${l.name}`}
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="h-8 w-28 text-right"
+                        value={l.unitPrice}
+                        onChange={(event) =>
+                          atualizar(i, { unitPrice: Number(event.target.value) || 0 })
+                        }
+                      />
                       <Button
                         variant="ghost"
                         size="icon"
@@ -150,6 +208,53 @@ export function StepBudget({
                 </div>
               )}
 
+              <div className="mb-3 rounded-lg border bg-muted/20 p-3">
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Package className="h-3.5 w-3.5" />
+                  Produto do catálogo
+                </p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder={carregandoProdutos ? 'Carregando produtos...' : 'Buscar por nome, categoria ou SKU'}
+                    value={buscaProduto[problema.itemId] || ''}
+                    onChange={(event) =>
+                      setBuscaProduto((atual) => ({
+                        ...atual,
+                        [problema.itemId]: event.target.value,
+                      }))
+                    }
+                    disabled={carregandoProdutos}
+                  />
+                </div>
+                {produtosFiltrados.length > 0 && (
+                  <div className="mt-2 divide-y overflow-hidden rounded-md border bg-background">
+                    {produtosFiltrados.map((produto) => (
+                      <button
+                        key={produto.id}
+                        type="button"
+                        onClick={() => adicionarProduto(problema.itemId, produto)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-muted"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{produto.name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            SKU {produto.sku} · estoque {produto.stock}
+                          </span>
+                        </span>
+                        <span className="shrink-0 font-semibold">
+                          {dinheiro(Number(produto.promoPrice ?? produto.salePrice) || 0)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Item manual ou mão de obra
+              </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   className="flex-1"
@@ -194,8 +299,8 @@ export function StepBudget({
                   onClick={() => adicionar(problema.itemId, 'PRODUCT')}
                   disabled={!entrada.nome.trim()}
                 >
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Peça
+                  <Package className="mr-1.5 h-3.5 w-3.5" />
+                  Peça manual
                 </Button>
               </div>
             </div>
@@ -225,10 +330,8 @@ export function StepBudget({
                 <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 Salvando...
               </>
-            ) : problemas.length > 0 ? (
-              'Concluir e gerar OS'
             ) : (
-              'Concluir revisão'
+              'Concluir e gerar OS'
             )}
           </Button>
         </div>

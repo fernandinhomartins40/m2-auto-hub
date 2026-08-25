@@ -16,9 +16,11 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { StepChecklist, type AvaliacaoItem } from '../revisions/steps/StepChecklist';
+import { StepBudget, type OrcamentoLinha } from '../revisions/steps/StepBudget';
 import { ItemStatus } from '../../types/revisions';
 import { AdminRevision } from '../../api/adminService';
 import revisionService from '../../api/revisionService';
+import serviceOrderService from '../../api/serviceOrderService';
 import { useToast } from '../../hooks/use-toast';
 
 interface RevisionEditPageProps {
@@ -44,6 +46,8 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isBudgetStep, setIsBudgetStep] = useState(false);
+  const [budgetLines, setBudgetLines] = useState<OrcamentoLinha[]>([]);
 
   useEffect(() => {
     if (revision) {
@@ -98,24 +102,27 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
     }
   };
 
-  const handleSave = async (status?: 'draft' | 'in_progress' | 'completed') => {
+  const serializeChecklist = () =>
+    revisionItems.map((item) => ({
+      categoryId: item.categoryId,
+      categoryName: item.categoryName,
+      itemId: item.itemId,
+      itemName: item.itemName,
+      status: item.status,
+      ...(item.notes ? { notes: item.notes } : {}),
+      photos: [],
+    }));
+
+  const handleSave = async (status?: 'draft' | 'in_progress') => {
     if (!revision) return;
 
     setIsSaving(true);
     try {
-      const checklistItems = revisionItems.map((item) => ({
-        categoryId: item.categoryId,
-        categoryName: item.categoryName,
-        itemId: item.itemId,
-        itemName: item.itemName,
-        status: item.status,
-        ...(item.notes ? { notes: item.notes } : {}),
-      }));
+      const checklistItems = serializeChecklist();
 
       let backendStatus = revision.status;
       if (status) {
-        backendStatus =
-          status === 'draft' ? 'DRAFT' : status === 'in_progress' ? 'IN_PROGRESS' : 'COMPLETED';
+        backendStatus = status === 'draft' ? 'DRAFT' : 'IN_PROGRESS';
       }
 
       const updatePayload: any = {
@@ -140,6 +147,70 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
         title: 'Erro ao salvar',
         description:
           error.response?.data?.message || 'Erro ao salvar revisão. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleFinish = async () => {
+    if (!revision) return;
+
+    setIsSaving(true);
+    try {
+      // Primeiro persiste o checklist inteiro. Os itens nao tocados seguem
+      // explicitamente como NOT_CHECKED e recebem seu RevisionCheck.
+      const savedRevision = await revisionService.updateRevision(revision.id, {
+        status: 'IN_PROGRESS',
+        checklistItems: serializeChecklist(),
+        mileage,
+        generalNotes,
+        recommendations,
+      });
+
+      const checkByItem = new Map(
+        (savedRevision.checks || []).map((check) => [check.itemId ?? check.itemName, check.id])
+      );
+      const evaluated = revisionItems.filter((item) => item.status !== ItemStatus.NOT_CHECKED);
+      const notEvaluated = revisionItems.length - evaluated.length;
+
+      await serviceOrderService.create({
+        customerId: revision.customerId,
+        vehicleId: revision.vehicleId,
+        customerName: revision.customer?.name || 'Cliente da revisão',
+        customerPhone: revision.customer?.phone || null,
+        vehicleLabel: `${revision.vehicle?.brand || ''} ${revision.vehicle?.model || ''}`.trim(),
+        vehiclePlate: revision.vehicle?.plate || null,
+        mileage: mileage || null,
+        assignedMechanicId: revision.assignedMechanicId || null,
+        revisionId: revision.id,
+        description: [
+          ...evaluated.map(
+            (item) =>
+              `${item.itemName} — ${item.status}${item.notes ? `: ${item.notes}` : ''}`
+          ),
+          `${notEvaluated} item(ns) não avaliado(s)`,
+        ].join('\n'),
+        items: budgetLines.map(({ origemItemId, ...line }) => ({
+          ...line,
+          revisionCheckId: checkByItem.get(origemItemId) || null,
+        })),
+      });
+
+      await revisionService.completeRevision(revision.id);
+      toast({
+        title: 'Revisão finalizada e OS criada',
+        description: `${evaluated.length} item(ns) avaliado(s) e ${notEvaluated} não avaliado(s).`,
+      });
+      onSuccess();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao finalizar revisão',
+        description:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          'Não foi possível gerar a ordem de serviço.',
         variant: 'destructive',
       });
     } finally {
@@ -209,9 +280,9 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
         <span className="sm:hidden ml-1">Andamento</span>
       </Button>
       <Button
-        onClick={() => handleSave('completed')}
+        onClick={() => setIsBudgetStep(true)}
         className="h-9 flex-1 bg-green-600 text-xs text-white hover:bg-green-700 sm:flex-none sm:text-sm"
-        disabled={percentage < 100 || isSaving || isLoading}
+        disabled={checked === 0 || isSaving || isLoading}
       >
         {isSaving ? (
           <Loader2 className="h-4 w-4 animate-spin sm:mr-1.5" />
@@ -248,7 +319,7 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
       </div>
 
       {/* Progresso + acoes, colado no topo enquanto o checklist rola */}
-      {total > 0 && (
+      {total > 0 && !isBudgetStep && (
         <div
           className={`sticky top-0 z-30 space-y-3 rounded-xl border px-3 py-3 shadow-sm backdrop-blur sm:px-4 ${progressTone.surface}`}
         >
@@ -299,6 +370,15 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
             </p>
           </div>
         </div>
+      ) : isBudgetStep ? (
+        <StepBudget
+          avaliacoes={revisionItems}
+          linhas={budgetLines}
+          onChange={setBudgetLines}
+          onBack={() => setIsBudgetStep(false)}
+          onFinish={handleFinish}
+          salvando={isSaving}
+        />
       ) : (
         <div className="space-y-3 sm:space-y-4">
           <Card className="overflow-hidden">

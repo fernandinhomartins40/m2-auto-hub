@@ -133,6 +133,26 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
     [categorias]
   );
 
+  // O checklist persistido sempre contem o catalogo inteiro. Os itens que o
+  // mecanico nao tocou ficam explicitamente como NOT_CHECKED.
+  useEffect(() => {
+    if (carregando || todosItens.length === 0) return;
+
+    const idsExistentes = new Set(avaliacoes.map((item) => item.itemId));
+    const faltantes = todosItens
+      .filter((item) => !idsExistentes.has(item.id))
+      .map((item) => ({
+        itemId: item.id,
+        itemName: item.name,
+        categoryId: item.categoryId,
+        categoryName: item.categoryName,
+        status: ItemStatus.NOT_CHECKED,
+        notes: '',
+      }));
+
+    if (faltantes.length > 0) onChange([...avaliacoes, ...faltantes]);
+  }, [avaliacoes, carregando, onChange, todosItens]);
+
   // Sem `.slice(0, 8)`: o corte em oito sugestoes escondia itens que casavam
   // com a busca e nao havia como chegar neles — "freio" sozinho ja passa de
   // oito. A lista rola em vez de truncar.
@@ -201,7 +221,13 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
   const cancelarEdicao = () => setEmEdicao(null);
 
   const remover = (itemId: string) => {
-    onChange(avaliacoes.filter((a) => a.itemId !== itemId));
+    onChange(
+      avaliacoes.map((item) =>
+        item.itemId === itemId
+          ? { ...item, status: ItemStatus.NOT_CHECKED, notes: '' }
+          : item
+      )
+    );
     setEmEdicao((atual) => (atual?.itemId === itemId ? null : atual));
   };
 

@@ -49,8 +49,8 @@ export function NewRevisionFlow({ onFinished }: NewRevisionFlowProps) {
 
     setSalvando(true);
     try {
-      // 1. A revisao guarda todos os itens avaliados; o que nao foi tocado
-      //    simplesmente nao entra e vale como NOT_CHECKED.
+      // 1. A revisao guarda o checklist inteiro; o que nao foi tocado fica
+      //    explicitamente marcado como NOT_CHECKED.
       const revisao = await revisionService.createRevision({
         customerId: alvo.customerId,
         vehicleId: alvo.vehicleId,
@@ -66,48 +66,38 @@ export function NewRevisionFlow({ onFinished }: NewRevisionFlowProps) {
         })),
       });
 
-      // 2. Havendo problemas orcados, a OS nasce ja vinculada a revisao.
-      const temProblema = avaliacoes.some(
-        (a) => a.status === ItemStatus.ATTENTION || a.status === ItemStatus.CRITICAL
+      // 2. Toda revisao concluida origina uma OS. Ela pode nascer sem linhas
+      //    financeiras e receber produtos/servicos depois.
+      const revisaoId = revisao?.id;
+
+      const checkPorItem = new Map(
+        (revisao?.checks ?? []).map((c) => [c.itemId ?? c.itemName, c.id])
       );
 
-      if (temProblema && linhas.length > 0) {
-        const revisaoId = revisao?.id;
+      await serviceOrderService.create({
+        customerId: alvo.customerId,
+        vehicleId: alvo.vehicleId,
+        customerName: alvo.customerName,
+        customerPhone: alvo.customerPhone ?? null,
+        vehicleLabel: alvo.vehicleLabel,
+        vehiclePlate: alvo.plate,
+        description: avaliacoes
+          .filter((a) => a.status !== ItemStatus.NOT_CHECKED)
+          .map((a) => `${a.itemName}${a.notes ? `: ${a.notes}` : ''}`)
+          .join('\n'),
+        items: linhas.map(({ origemItemId, ...item }) => ({
+          ...item,
+          revisionCheckId: checkPorItem.get(origemItemId) ?? null,
+        })),
+        ...(revisaoId ? { revisionId: revisaoId } : {}),
+      });
 
-        // A revisão devolve os checks já gravados; o orçamento referencia o
-        // item do checklist pelo id do catálogo, então mapeamos um para o
-        // outro para que cada peça/serviço fique ligado ao problema que resolve.
-        const checkPorItem = new Map(
-          (revisao?.checks ?? []).map((c) => [c.itemId ?? c.itemName, c.id])
-        );
+      if (revisaoId) await revisionService.completeRevision(revisaoId);
 
-        await serviceOrderService.create({
-          customerId: alvo.customerId,
-          vehicleId: alvo.vehicleId,
-          customerName: alvo.customerName,
-          customerPhone: alvo.customerPhone ?? null,
-          vehicleLabel: alvo.vehicleLabel,
-          vehiclePlate: alvo.plate,
-          description: avaliacoes
-            .filter(
-              (a) => a.status === ItemStatus.ATTENTION || a.status === ItemStatus.CRITICAL
-            )
-            .map((a) => `${a.itemName}${a.notes ? `: ${a.notes}` : ''}`)
-            .join('\n'),
-          items: linhas.map(({ origemItemId, ...item }) => ({
-            ...item,
-            revisionCheckId: checkPorItem.get(origemItemId) ?? null,
-          })),
-          ...(revisaoId ? { revisionId: revisaoId } : {}),
-        });
-
-        toast({
-          title: 'Revisão concluída',
-          description: 'Ordem de serviço criada com os itens do orçamento.',
-        });
-      } else {
-        toast({ title: 'Revisão concluída' });
-      }
+      toast({
+        title: 'Revisão concluída',
+        description: 'Ordem de serviço criada com os itens do orçamento.',
+      });
 
       reiniciar();
       onFinished?.();

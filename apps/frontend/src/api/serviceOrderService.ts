@@ -13,6 +13,7 @@ export interface ServiceOrderItem {
   unitPrice: number | string;
   quantity: number;
   subtotal: number | string;
+  revisionCheckId: string | null;
 }
 
 export interface ServiceOrder {
@@ -40,6 +41,7 @@ export interface ServiceOrder {
   updatedAt: string;
   completedAt: string | null;
   cancelledAt: string | null;
+  revisionId: string | null;
   items: ServiceOrderItem[];
   assignedMechanic?: { id: string; name: string } | null;
   customer?: { id: string; name: string; phone: string } | null;

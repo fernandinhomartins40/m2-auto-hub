@@ -191,6 +191,7 @@ export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
       name: i.name,
       unitPrice: Number(i.unitPrice),
       quantity: i.quantity,
+      revisionCheckId: i.revisionCheckId,
     }));
 
     setSaving(true);

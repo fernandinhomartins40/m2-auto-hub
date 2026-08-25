@@ -578,18 +578,29 @@ export class RevisionsService {
       throw ApiError.forbidden('You can only update your own assigned revisions');
     }
 
+    const checks = dto.checklistItems
+      ? await this.buildChecks(dto.checklistItems)
+      : undefined;
+
     return prisma.revision.update({
       where: { id },
       data: {
         ...(dto.mileage !== undefined && { mileage: dto.mileage }),
         ...(dto.status && { status: dto.status }),
-        ...(dto.checklistItems && { checklistItems: dto.checklistItems }),
+        ...(dto.checklistItems && {
+          checklistItems: dto.checklistItems,
+          checks: {
+            deleteMany: {},
+            create: checks,
+          },
+        }),
         ...(dto.generalNotes !== undefined && { generalNotes: dto.generalNotes }),
         ...(dto.recommendations !== undefined && {
           recommendations: dto.recommendations,
         }),
         updatedAt: new Date(),
       },
+      include: { checks: true },
     });
   }
 

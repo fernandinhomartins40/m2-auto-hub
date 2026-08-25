@@ -83,6 +83,17 @@ export class ServiceOrdersService {
   }
 
   async create(dto: CreateServiceOrderDto): Promise<ServiceOrder> {
+    // Uma revisao origina uma unica OS. Em uma repeticao de requisicao (por
+    // queda de rede entre criar a OS e concluir a revisao), devolve a mesma OS
+    // em vez de duplicar o orcamento.
+    if (dto.revisionId) {
+      const existingFromRevision = await prisma.serviceOrder.findFirst({
+        where: { revisionId: dto.revisionId },
+        include: itemsInclude,
+      });
+      if (existingFromRevision) return existingFromRevision;
+    }
+
     const cache = await this.resolveCache(dto);
     if (!cache.customerName) {
       throw ApiError.badRequest('Informe o cliente (cadastrado ou nome avulso).');

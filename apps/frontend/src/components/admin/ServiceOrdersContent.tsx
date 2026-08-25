@@ -234,6 +234,11 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
                       <Badge className={meta.color} variant="secondary">
                         {meta.label}
                       </Badge>
+                      {o.revisionId && (
+                        <Badge variant="outline" className="border-moria-orange/40 text-moria-orange">
+                          Revisão
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-gray-700 flex items-center gap-1 mt-1">
                       <User className="h-3.5 w-3.5 text-gray-400" /> {o.customerName}
