@@ -424,7 +424,12 @@ export function RevisionVehicleLookupDialog({
   const lookupPlate = async (plateInput: string) => {
     const normalizedPlate = normalizePlate(plateInput);
 
-    if (!isValidBrazilianPlate(normalizedPlate)) {
+    // Placas vindas da camera podem ter caracteres ambiguos mal lidos pelo
+    // OCR; aceitamos qualquer combinacao de 7 letras/numeros e deixamos o
+    // backend tentar as variacoes possiveis antes de rejeitar.
+    const isLooseCandidate = /^[A-Z0-9]{7}$/.test(normalizedPlate);
+
+    if (!isValidBrazilianPlate(normalizedPlate) && !isLooseCandidate) {
       toast({
         title: 'Placa inválida',
         description: 'Use um formato válido, como ABC-1234 ou ABC1D23.',

@@ -762,8 +762,11 @@ export class AdminService {
 
   async lookupVehicleByPlate(plate: string) {
     const possiblePlates = LicensePlateUtil.toPossibleValidPlates(plate);
+    const fuzzyPlates = LicensePlateUtil.toFuzzyValidPlates(plate).filter(
+      (candidate) => !possiblePlates.includes(candidate)
+    );
 
-    if (possiblePlates.length === 0) {
+    if (possiblePlates.length === 0 && fuzzyPlates.length === 0) {
       throw ApiError.badRequest('Placa invalida');
     }
 
@@ -801,7 +804,12 @@ export class AdminService {
 
     // Nao esta no cadastro: tenta o cache proprio de placas e, se necessario,
     // a consulta externa, para ao menos pre-preencher os dados do veiculo.
-    for (const normalizedPlate of possiblePlates) {
+    // Quando a placa veio de leitura automatica (camera/ALPR), o OCR pode ter
+    // confundido caracteres ambiguos (O/0, I/1, B/8...); as variacoes fuzzy
+    // dao uma segunda chance de encontrar o veiculo certo.
+    const lookupCandidates = [...possiblePlates, ...fuzzyPlates];
+
+    for (const normalizedPlate of lookupCandidates) {
       const technicalData = await plateLookupService.lookup(normalizedPlate);
 
       if (technicalData) {

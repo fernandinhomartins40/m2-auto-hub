@@ -115,6 +115,65 @@ export class LicensePlateUtil {
     return chars.join('');
   }
 
+  /**
+   * Gera variacoes validas de uma placa trocando caracteres ambiguos de OCR
+   * (O/0, I/1, B/8, S/5, Z/2, G/6, T/7) em cada posicao, respeitando o padrao
+   * esperado (legado ou Mercosul). Usado quando a placa veio de leitura
+   * automatica (camera/ALPR) e a consulta exata nao encontrou nada.
+   */
+  static toFuzzyValidPlates(
+    plate: string | null | undefined,
+    maxVariants = 16
+  ): string[] {
+    const normalized = this.normalize(plate);
+    if (normalized.length !== 7) {
+      return [];
+    }
+
+    const results = new Set<string>();
+    const queue: string[] = [normalized];
+
+    while (queue.length > 0 && results.size < maxVariants) {
+      const current = queue.shift() as string;
+      const chars = current.split('');
+      let expanded = false;
+
+      for (let index = 0; index < chars.length && !expanded; index += 1) {
+        const alternatives = new Set<string>([chars[index]]);
+
+        const asLetter = this.normalizeLetter(chars[index]);
+        const asDigit = this.normalizeDigit(chars[index]);
+        if (asLetter) {
+          alternatives.add(asLetter);
+        }
+        if (asDigit) {
+          alternatives.add(asDigit);
+        }
+
+        for (const alternative of alternatives) {
+          if (alternative === chars[index]) {
+            continue;
+          }
+
+          const variantChars = [...chars];
+          variantChars[index] = alternative;
+          const variant = variantChars.join('');
+
+          if (this.isValid(variant)) {
+            results.add(variant);
+          } else {
+            // Ainda nao forma uma placa valida, mas pode valer a pena
+            // expandir outras posicoes dessa variacao parcial.
+            queue.push(variant);
+          }
+          expanded = true;
+        }
+      }
+    }
+
+    return Array.from(results);
+  }
+
   private static normalizeLetter(char: string): string {
     if (/^[A-Z]$/.test(char)) {
       return char;
