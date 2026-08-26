@@ -447,7 +447,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
 
       {/* OS: criar / continuar, em pagina de tela cheia */}
       {osPage.kind === 'form' && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
           <ServiceOrderModal
             onClose={() => setOsPage({ kind: 'none' })}
             onSaved={handleOsSaved}
@@ -457,7 +457,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         </div>
       )}
       {osPage.kind === 'details' && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
           <ServiceOrderDetailsModal
             order={osPage.order}
             onClose={() => setOsPage({ kind: 'none' })}

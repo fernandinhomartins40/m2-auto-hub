@@ -212,8 +212,8 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 py-4 sm:py-6">
-      <div className="flex items-start gap-3">
+    <div className="flex min-h-full w-full flex-col bg-background">
+      <div className="mx-auto flex w-full max-w-3xl items-start gap-3 px-4 pt-4 sm:px-6 sm:pt-6">
         <Button
           variant="ghost"
           size="icon"
@@ -236,8 +236,8 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 overflow-y-auto rounded-xl border bg-card shadow-sm">
-        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3">
+      <div className="flex-1">
+        <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-4 space-y-3">
             <Tabs defaultValue="services" className="w-full">
               <div
                 className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0"
@@ -491,9 +491,9 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
               </div>
             )}
           </div>
-        </ScrollArea>
+      </div>
 
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 border-t bg-gray-50/50 flex-shrink-0">
+        <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-3xl items-center justify-between gap-2 border-t bg-background px-4 sm:px-6 py-3">
           <Button variant="outline" onClick={onClose} className="min-h-[44px] h-11 touch-manipulation">
             Voltar
           </Button>

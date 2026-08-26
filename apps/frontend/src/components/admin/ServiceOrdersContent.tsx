@@ -298,7 +298,7 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
 
       {/* Paginas de tela cheia no lugar dos antigos modais/gavetas */}
       {view.kind === 'form' && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
           <ServiceOrderModal
             onClose={() => setView({ kind: 'list' })}
             onSaved={() => {
@@ -311,7 +311,7 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
         </div>
       )}
       {view.kind === 'details' && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
           <ServiceOrderDetailsModal
             order={view.order}
             onClose={() => setView({ kind: 'list' })}
@@ -321,7 +321,7 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
         </div>
       )}
       {view.kind === 'quick' && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
           <QuickAddItemsModal
             order={view.order}
             onClose={() => setView({ kind: 'list' })}

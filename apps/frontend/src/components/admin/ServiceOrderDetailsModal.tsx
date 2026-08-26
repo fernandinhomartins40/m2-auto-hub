@@ -58,7 +58,7 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 py-4 sm:py-6">
+    <div className="flex min-h-full w-full flex-col gap-4 bg-background px-4 py-4 sm:px-6 sm:py-6">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -82,7 +82,7 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
         </Badge>
       )}
 
-      <div className="rounded-xl border bg-card p-4 space-y-3 text-sm shadow-sm">
+      <div className="mx-auto w-full max-w-3xl rounded-xl border bg-card p-4 space-y-3 text-sm shadow-sm">
           <div>
             <p className="font-medium">{order.customerName}</p>
             {order.customerPhone && <p className="text-gray-500">{order.customerPhone}</p>}
@@ -178,7 +178,7 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
           )}
         </div>
 
-      <div className="flex flex-wrap gap-2 pt-2">
+      <div className="mx-auto flex w-full max-w-3xl flex-wrap gap-2 pt-2">
         <Button variant="outline" onClick={onClose}>
           Voltar
         </Button>

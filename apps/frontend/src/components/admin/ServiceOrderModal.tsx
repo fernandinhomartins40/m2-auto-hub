@@ -457,8 +457,8 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col">
-      <div className="sticky top-0 z-10 border-b bg-background px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 flex-shrink-0">
+    <div className="flex min-h-full w-full flex-col bg-background">
+      <div className="sticky top-0 z-10 border-b bg-background px-4 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-3 sm:pb-4">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -532,8 +532,8 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
           </div>
       </div>
 
-      <ScrollArea className="flex-1 overflow-y-auto">
-        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4">
+      <div className="flex-1">
+        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-10 py-3 sm:py-4 space-y-3 sm:space-y-4">
             {/* ETAPA 1: Cliente e Veículo */}
             {step === 1 && (
               <div className="space-y-4">
@@ -1159,10 +1159,10 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
               </div>
             )}
           </div>
-      </ScrollArea>
+      </div>
 
       {/* Botões de Navegação */}
-      <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t bg-background px-4 sm:px-6 py-3 flex-shrink-0">
+      <div className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t bg-background px-4 sm:px-6 lg:px-10 py-3">
           <Button
             variant="outline"
             onClick={step === 1 ? onClose : handlePreviousStep}
