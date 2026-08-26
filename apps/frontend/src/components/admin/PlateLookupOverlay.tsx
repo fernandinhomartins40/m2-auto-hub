@@ -68,10 +68,12 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
 
   const [elapsed, setElapsed] = useState(0);
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [osModalOpen, setOsModalOpen] = useState(false);
-  const [osInitial, setOsInitial] = useState<ServiceOrderInitialData | null>(null);
-  const [osEditing, setOsEditing] = useState<ServiceOrder | null>(null);
-  const [osDetails, setOsDetails] = useState<ServiceOrder | null>(null);
+  // Paginas de tela cheia no lugar dos antigos modais de OS.
+  type OsPage =
+    | { kind: 'none' }
+    | { kind: 'form'; order: ServiceOrder | null; initialData: ServiceOrderInitialData | null }
+    | { kind: 'details'; order: ServiceOrder };
+  const [osPage, setOsPage] = useState<OsPage>({ kind: 'none' });
   const [revEditing, setRevEditing] = useState<AdminRevision | null>(null);
 
   useEffect(() => {
@@ -152,8 +154,10 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
   const pastRev = revisions.filter((r) => !isOpenRev(r.status));
 
   const startNewOs = () => {
+    let initialData: ServiceOrderInitialData | null = null;
+
     if (lookup?.found && lookup.vehicle && lookup.customer) {
-      setOsInitial({
+      initialData = {
         customerId: lookup.customer.id,
         customerName: lookup.customer.name,
         customerPhone: lookup.customer.whatsapp,
@@ -161,7 +165,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         vehicleLabel: `${lookup.vehicle.brand} ${lookup.vehicle.model} ${lookup.vehicle.year}`.trim(),
         vehiclePlate: lookup.vehicle.plate,
         mileage: lookup.vehicle.mileage ?? null,
-      });
+      };
     } else {
       // Sem cadastro, mas com dados técnicos: já identifica o veículo na OS.
       const technical = lookup?.technicalData;
@@ -169,19 +173,17 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         ? [technical.brand, technical.model, technical.year].filter(Boolean).join(' ').trim()
         : '';
 
-      setOsInitial({
+      initialData = {
         vehiclePlate: normalizePlate(plateInput),
         vehicleLabel: vehicleLabel || null,
-      });
+      };
     }
-    setOsEditing(null);
-    setOsModalOpen(true);
+
+    setOsPage({ kind: 'form', order: null, initialData });
   };
 
   const continueOs = (o: ServiceOrder) => {
-    setOsEditing(o);
-    setOsInitial(null);
-    setOsModalOpen(true);
+    setOsPage({ kind: 'form', order: o, initialData: null });
   };
 
   const refreshAfterChange = () => {
@@ -403,7 +405,7 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
                         {pastOs.map((o) => (
                           <button
                             key={o.id}
-                            onClick={() => setOsDetails(o)}
+                            onClick={() => setOsPage({ kind: 'details', order: o })}
                             className="w-full flex items-center justify-between rounded-lg border p-2 text-left hover:bg-gray-50"
                           >
                             <span className="text-sm flex items-center gap-2">
@@ -443,20 +445,26 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
       {/* Câmera / ALPR */}
       <RevisionVehicleLookupDialog isOpen={cameraOpen} onClose={() => setCameraOpen(false)} onResolved={handleCameraResolved} />
 
-      {/* OS: criar / continuar */}
-      <ServiceOrderModal
-        isOpen={osModalOpen}
-        onClose={() => setOsModalOpen(false)}
-        onSaved={handleOsSaved}
-        order={osEditing}
-        initialData={osInitial}
-      />
-      <ServiceOrderDetailsModal
-        order={osDetails}
-        isOpen={!!osDetails}
-        onClose={() => setOsDetails(null)}
-        onChanged={refreshAfterChange}
-      />
+      {/* OS: criar / continuar, em pagina de tela cheia */}
+      {osPage.kind === 'form' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+          <ServiceOrderModal
+            onClose={() => setOsPage({ kind: 'none' })}
+            onSaved={handleOsSaved}
+            order={osPage.order}
+            initialData={osPage.initialData}
+          />
+        </div>
+      )}
+      {osPage.kind === 'details' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+          <ServiceOrderDetailsModal
+            order={osPage.order}
+            onClose={() => setOsPage({ kind: 'none' })}
+            onChanged={refreshAfterChange}
+          />
+        </div>
+      )}
 
       {/* Revisão: continuar, em pagina de tela cheia */}
       {revEditing && (

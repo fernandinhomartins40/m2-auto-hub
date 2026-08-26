@@ -55,12 +55,11 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<ServiceOrder | null>(null);
-  const [detailsOrder, setDetailsOrder] = useState<ServiceOrder | null>(null);
-  const [quickAddOrder, setQuickAddOrder] = useState<ServiceOrder | null>(null);
+  // Navegacao por paginas de tela cheia (sem modais): lista -> formulario /
+  // detalhes / adicao rapida, com botao voltar em cada pagina.
+  type OsView = { kind: 'list' } | { kind: 'form'; order: ServiceOrder | null; initialData: ServiceOrderInitialData | null } | { kind: 'details'; order: ServiceOrder } | { kind: 'quick'; order: ServiceOrder };
+  const [view, setView] = useState<OsView>({ kind: 'list' });
   const [plateLookupOpen, setPlateLookupOpen] = useState(false);
-  const [initialData, setInitialData] = useState<ServiceOrderInitialData | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -113,16 +112,8 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
     }
   };
 
-  const openNew = () => {
-    setEditing(null);
-    setInitialData(null);
-    setModalOpen(true);
-  };
-  const openEdit = (o: ServiceOrder) => {
-    setEditing(o);
-    setInitialData(null);
-    setModalOpen(true);
-  };
+  const openNew = () => setView({ kind: 'form', order: null, initialData: null });
+  const openEdit = (o: ServiceOrder) => setView({ kind: 'form', order: o, initialData: null });
 
   // Criacao rapida: le a placa (camera/ALPR) e abre a OS ja preenchida
   const handlePlateResolved = (payload: {
@@ -130,17 +121,19 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
     vehicle: { id: string; brand: string; model: string; year: number; plate: string; mileage?: number };
   }) => {
     setPlateLookupOpen(false);
-    setEditing(null);
-    setInitialData({
-      customerId: payload.customer.id,
-      customerName: payload.customer.name,
-      customerPhone: payload.customer.phone,
-      vehicleId: payload.vehicle.id,
-      vehicleLabel: `${payload.vehicle.brand} ${payload.vehicle.model} ${payload.vehicle.year}`.trim(),
-      vehiclePlate: payload.vehicle.plate,
-      mileage: payload.vehicle.mileage ?? null,
+    setView({
+      kind: 'form',
+      order: null,
+      initialData: {
+        customerId: payload.customer.id,
+        customerName: payload.customer.name,
+        customerPhone: payload.customer.phone,
+        vehicleId: payload.vehicle.id,
+        vehicleLabel: `${payload.vehicle.brand} ${payload.vehicle.model} ${payload.vehicle.year}`.trim(),
+        vehiclePlate: payload.vehicle.plate,
+        mileage: payload.vehicle.mileage ?? null,
+      },
     });
-    setModalOpen(true);
   };
 
   return (
@@ -261,17 +254,17 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <Button size="sm" variant="outline" onClick={() => setDetailsOrder(o)}>
-                    <Eye className="h-4 w-4 mr-1" /> Ver
-                  </Button>
-                  {o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-moria-orange/40 text-moria-orange hover:bg-moria-orange/10 hover:text-moria-orange"
-                        onClick={() => setQuickAddOrder(o)}
-                      >
+                   <Button size="sm" variant="outline" onClick={() => setView({ kind: 'details', order: o })}>
+                     <Eye className="h-4 w-4 mr-1" /> Ver
+                   </Button>
+                   {o.status !== 'COMPLETED' && o.status !== 'CANCELLED' && (
+                     <>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         className="border-moria-orange/40 text-moria-orange hover:bg-moria-orange/10 hover:text-moria-orange"
+                         onClick={() => setView({ kind: 'quick', order: o })}
+                       >
                         <Zap className="h-4 w-4 mr-1" /> Adicionar itens
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => openEdit(o)}>
@@ -303,26 +296,43 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
         </div>
       )}
 
-      <ServiceOrderModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSaved={load}
-        order={editing}
-        initialData={initialData}
-      />
-      <ServiceOrderDetailsModal
-        order={detailsOrder}
-        isOpen={!!detailsOrder}
-        onClose={() => setDetailsOrder(null)}
-        onChanged={load}
-        restricted={restricted}
-      />
-      <QuickAddItemsModal
-        order={quickAddOrder}
-        isOpen={!!quickAddOrder}
-        onClose={() => setQuickAddOrder(null)}
-        onSaved={load}
-      />
+      {/* Paginas de tela cheia no lugar dos antigos modais/gavetas */}
+      {view.kind === 'form' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+          <ServiceOrderModal
+            onClose={() => setView({ kind: 'list' })}
+            onSaved={() => {
+              setView({ kind: 'list' });
+              load();
+            }}
+            order={view.order}
+            initialData={view.initialData}
+          />
+        </div>
+      )}
+      {view.kind === 'details' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+          <ServiceOrderDetailsModal
+            order={view.order}
+            onClose={() => setView({ kind: 'list' })}
+            onChanged={load}
+            restricted={restricted}
+          />
+        </div>
+      )}
+      {view.kind === 'quick' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background p-3 sm:p-6">
+          <QuickAddItemsModal
+            order={view.order}
+            onClose={() => setView({ kind: 'list' })}
+            onSaved={() => {
+              setView({ kind: 'list' });
+              load();
+            }}
+          />
+        </div>
+      )}
+
       <RevisionVehicleLookupDialog
         isOpen={plateLookupOpen}
         onClose={() => setPlateLookupOpen(false)}

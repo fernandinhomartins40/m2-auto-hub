@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
 import {
+  ArrowLeft,
   Loader2,
   Plus,
   Minus,
@@ -51,7 +51,7 @@ export interface ServiceOrderInitialData {
 }
 
 interface Props {
-  isOpen: boolean;
+  /** Pagina de tela cheia: montada condicionalmente pelo pai, sem "isOpen". */
   onClose: () => void;
   onSaved: () => void;
   order?: ServiceOrder | null;
@@ -77,7 +77,7 @@ interface Mechanic {
   name: string;
 }
 
-export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData }: Props) {
+export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Props) {
   const { toast } = useToast();
   const isEditing = !!order;
 
@@ -118,7 +118,6 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
     setStep(1);
     void loadCatalog();
     if (order) {
@@ -166,7 +165,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
     setProductSearch('');
     setServiceSearch('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, order, initialData]);
+  }, [order, initialData]);
 
   // Busca de clientes com debounce
   useEffect(() => {
@@ -458,13 +457,23 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
   ];
 
   return (
-    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-4xl sm:w-[calc(100vw-2rem)] md:w-[calc(100vw-4rem)] sm:max-h-[calc(100vh-3rem)] p-0 flex flex-col gap-0">
-        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-gray-50/50 flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg">
+    <div className="mx-auto flex w-full max-w-5xl flex-col">
+      <div className="sticky top-0 z-10 border-b bg-background px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="min-h-[40px] min-w-[40px] h-10 w-10 p-0 shrink-0"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Wrench className="h-5 w-5 text-moria-orange" />
             {isEditing ? `Editar OS #${order?.number}` : 'Nova Ordem de Serviço'}
-          </DialogTitle>
+          </h2>
+        </div>
 
           {/* Indicador de progresso - Responsivo */}
           <div className="mt-3">
@@ -521,10 +530,10 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
               </div>
             </div>
           </div>
-        </div>
+      </div>
 
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4">
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4">
             {/* ETAPA 1: Cliente e Veículo */}
             {step === 1 && (
               <div className="space-y-4">
@@ -1150,10 +1159,10 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
               </div>
             )}
           </div>
-        </ScrollArea>
+      </ScrollArea>
 
-        {/* Botões de Navegação */}
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 border-t bg-gray-50/50 flex-shrink-0">
+      {/* Botões de Navegação */}
+      <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t bg-background px-4 sm:px-6 py-3 flex-shrink-0">
           <Button
             variant="outline"
             onClick={step === 1 ? onClose : handlePreviousStep}
@@ -1185,8 +1194,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
               )}
             </Button>
           )}
-        </div>
-      </DialogContent>
+      </div>
 
       <CreateCustomerModal
         isOpen={createCustomerOpen}
@@ -1199,6 +1207,6 @@ export function ServiceOrderModal({ isOpen, onClose, onSaved, order, initialData
         onClose={() => setPlateLookupOpen(false)}
         onResolved={handlePlateResolved}
       />
-    </Dialog>
+    </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -7,7 +6,7 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
-import { Loader2, Plus, Minus, Trash2, Wrench, Package, Search, Zap, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Minus, Trash2, Wrench, Package, Search, Zap, AlertTriangle } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
 import serviceOrderService, {
   ServiceOrder,
@@ -18,7 +17,7 @@ import serviceService from '@/api/serviceService';
 import { formatCurrency as money } from '@/lib/format';
 
 interface Props {
-  isOpen: boolean;
+  /** Pagina de tela cheia: montada condicionalmente pelo pai, sem "isOpen". */
   onClose: () => void;
   onSaved: () => void;
   order: ServiceOrder | null;
@@ -39,7 +38,7 @@ interface CatalogService {
   basePrice?: number;
 }
 
-export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
+export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
   const { toast } = useToast();
 
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -53,13 +52,12 @@ export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
   const [newItems, setNewItems] = useState<ServiceOrderItemInput[]>([]);
 
   useEffect(() => {
-    if (!isOpen) return;
     setNewItems([]);
     setProductSearch('');
     setServiceSearch('');
     void loadCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, []);
 
   const loadCatalog = async () => {
     setLoadingCatalog(true);
@@ -202,7 +200,6 @@ export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
       });
       toast({ title: 'Itens adicionados à OS!' });
       onSaved();
-      onClose();
     } catch (err: any) {
       toast({
         title: 'Erro ao adicionar itens',
@@ -215,22 +212,32 @@ export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-2xl sm:w-[calc(100vw-2rem)] sm:max-h-[calc(100vh-3rem)] p-0 flex flex-col gap-0">
-        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-gray-50/50 flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 py-4 sm:py-6">
+      <div className="flex items-start gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="min-h-[40px] min-w-[40px] h-10 w-10 p-0 shrink-0"
+          aria-label="Voltar"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Zap className="h-5 w-5 text-moria-orange" />
             Adição rápida de itens
-          </DialogTitle>
-          <DialogDescription>
+          </h2>
+          <p className="text-sm text-muted-foreground">
             {order
               ? `OS #${order.number} · ${order.customerName}`
               : 'Adicione produtos e serviços a esta OS.'}
-          </DialogDescription>
+          </p>
         </div>
+      </div>
 
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3">
+      <ScrollArea className="flex-1 overflow-y-auto rounded-xl border bg-card shadow-sm">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-3">
             <Tabs defaultValue="services" className="w-full">
               <div
                 className="overflow-x-auto overflow-y-hidden -mx-4 sm:mx-0 px-4 sm:px-0"
@@ -488,7 +495,7 @@ export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
 
         <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 border-t bg-gray-50/50 flex-shrink-0">
           <Button variant="outline" onClick={onClose} className="min-h-[44px] h-11 touch-manipulation">
-            Cancelar
+            Voltar
           </Button>
           <Button
             onClick={handleSave}
@@ -508,7 +515,6 @@ export function QuickAddItemsModal({ isOpen, onClose, onSaved, order }: Props) {
             )}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+    </div>
   );
 }
