@@ -603,12 +603,21 @@ Os dois itens de maior economia contínua. Independem do estado da VPS.
 
 - **Feito:** `apps/backend/Dockerfile.base` removido (grep confirmou **zero** referências em
   todo o repositório — era a terceira versão de Playwright, órfã).
-- **Não feito (decisão consciente): alinhar as versões de Playwright.** A medição do código
-  mostrou que não há desalinhamento a corrigir: o backend usa `playwright` 1.59.1 sobre a
-  imagem `v1.59.1-jammy`, e o `plate-scraper` usa 1.49.1 sobre `v1.49.1-jammy`. Cada serviço
-  já está casado com sua própria base. Unificá-los obrigaria revalidar o scraper — que é um
-  navegador headful sobre Xvfb, o componente mais frágil do stack — sem economia comprovada.
-  A terceira versão, que era de fato o problema, foi a que saiu com o `Dockerfile.base`.
+- **Alinhamento de versões do Playwright — ✅ VERIFICADO, sem ação necessária.** O achado
+  original falava em *três* versões. A verificação final mostra que restam duas, e que cada
+  uma está corretamente casada com sua própria imagem base:
+
+  | Serviço | Pacote npm | Imagem base | Situação |
+  |---|---|---|---|
+  | `apps/backend` | `playwright` **1.59.1** (já fixo, sem `^`) | `mcr.microsoft.com/playwright:v1.59.1-jammy` | ✅ casado |
+  | `services/plate-scraper` | `playwright` **1.49.1** (já fixo) | `mcr.microsoft.com/playwright:v1.49.1-jammy` | ✅ casado |
+  | ~~`apps/backend/Dockerfile.base`~~ | ~~1.58.2~~ | ~~`v1.58.2-jammy`~~ | 🗑️ removido |
+
+  A terceira versão — a que de fato constituía o problema — era o `Dockerfile.base` órfão, e
+  ela saiu. Forçar backend e scraper para uma versão única obrigaria revalidar o scraper, que
+  é um navegador *headful* sobre Xvfb e o componente mais frágil do stack, **sem economia
+  comprovada**: são imagens de serviços distintos, cada uma baixada uma vez. Alinhar por
+  simetria, aqui, seria risco sem retorno.
 - **Não feito:** excluir Firefox/WebKit da imagem. Precisa de medição do tamanho real da
   imagem na VPS (Etapa 0) para saber se compensa o risco.
 
@@ -637,6 +646,42 @@ Os dois itens de maior economia contínua. Independem do estado da VPS.
 ---
 
 ## 8. Estratégia de validação
+
+### 8.0 O que já foi validado (14/09/2026) — ✅
+
+Tudo o que podia ser verificado **sem acesso à VPS** foi verificado, e passou:
+
+| Verificação | Comando | Resultado |
+|---|---|---|
+| Tipagem do backend | `npx tsc --noEmit` | ✅ exit 0, zero erros |
+| Build completo | `npm run build` | ✅ exit 0 (`prisma generate` + `tsc` + `tsc-alias`) |
+| **Lockfile instalável** | `npm ci` real, em diretório isolado | ✅ exit 0, 580 pacotes |
+| Versões do Prisma casadas | inspeção do `node_modules` resultante | ✅ `@prisma/client` 5.22.0 = CLI `prisma` 5.22.0 |
+| Sintaxe do compose | `yaml.safe_load` | ✅ 8 serviços, 8/8 com `logging`, 8/8 com `mem_limit` |
+| Sintaxe do deploy | `bash -n deploy-vps.sh` | ✅ OK |
+| Nenhuma referência órfã | `grep setupPrismaRLS` | ✅ nenhuma sobrou |
+| Policies RLS sem dependência em código | `grep current_setting\|app.current_` | ✅ nada no código |
+
+O `npm ci` isolado é a validação mais importante aqui: ela prova que o lockfile gerado é
+efetivamente instalável e produz as versões pretendidas — isto é, que a correção da causa
+do crash-loop funciona, e não apenas que o arquivo existe.
+
+### 8.1 O que **ainda não** foi validado — ⏳ depende da VPS
+
+Nada disto pôde ser feito porque o daemon Docker do servidor está travado e não houve
+autorização para mexer nele (§9, pendências 1 e 2):
+
+- Baseline de recursos (nunca existiu — é em si uma lacuna, ver abaixo)
+- 6/6 containers `healthy` com o build novo
+- Queda sustentada do *load average*
+- Tamanho real das imagens antes/depois
+- As 48 horas do critério de estabilidade
+
+**Consequência honesta:** as Etapas 1 a 5 estão validadas *como código*, não *como
+comportamento em produção*. O `npm ci` prova que a imagem vai ser construída de forma
+reprodutível; ele não prova que o backend sobe saudável nesta VPS — isso só o deploy dirá.
+
+---
 
 **Antes de qualquer alteração**, capturar baseline — hoje ela não existe, o que é em si uma lacuna:
 
