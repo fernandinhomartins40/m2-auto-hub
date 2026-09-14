@@ -5,7 +5,7 @@ Workspace reorganizado como monorepo Turbo, mantendo apenas:
 - `apps/frontend`: frontend principal da M2 em React/Vite.
 - `apps/backend`: backend herdado e isolado da base `moria-6df9f9ce`.
 - `services/alpr-service`: microservico auxiliar de leitura de placas.
-- `infra/nginx`: gateway reverso interno para o stack Docker.
+- `infra/nginx`: gateway reverso do stack de desenvolvimento (`docker-compose.yml`). Em produção o próprio container do frontend faz esse papel.
 
 ## Estrutura
 
@@ -62,4 +62,4 @@ Roteamento interno:
 - Dominios: `m2centerauto.com.br` e `www.m2centerauto.com.br`
 - Secret exigida no GitHub: `VPS_PASSWORD`
 
-O deploy sobe o stack via `docker-compose.production.yml`, publica o gateway apenas em `127.0.0.1:3092` e deixa o Nginx da VPS fazer o proxy reverso e o SSL.
+O deploy sobe o stack via `docker-compose.production.yml`, publica o container do frontend apenas em `127.0.0.1:3092` e deixa o Nginx da VPS fazer o proxy reverso e o SSL. Esse container é o único Nginx do stack em produção: serve o SPA e repassa `/api/` e `/uploads/` ao backend.

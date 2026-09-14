@@ -345,7 +345,7 @@ Registro explícito, porque a pergunta "dá para reduzir containers?" tem respos
 | `plate-scraper` (consulta de placa) | **Manter** | Usado por `plate-lookup.service.ts`; é fallback do fluxo assistido |
 | `playwright` no backend | **Manter** | Geração de PDF — `pdf-generator.service.ts:57` |
 | `postgres` | **Manter** | Banco da aplicação |
-| `frontend` + `gateway` | **Manter** | Frontend já é multi-stage exemplar: build em node-alpine, produção só nginx+estáticos |
+| `frontend` + `gateway` | **Fundidos** (14/09) | Eram dois nginx: o `gateway` só repassava o tráfego ao `frontend`. Unificados em um container — menos um serviço e menos um salto de rede por request, sem perder função. O `infra/nginx` segue em uso pelo compose de desenvolvimento |
 | `sharp` | **Manter** | 3 usos reais de processamento de imagem |
 | 20 dependências de produção do backend | **Manter** | Lista enxuta, sem gordura aparente |
 
@@ -642,6 +642,73 @@ Os dois itens de maior economia contínua. Independem do estado da VPS.
 ### Etapa 6 — Ajuste fino — ❌ **NÃO FEITA**
 
 - Healthcheck do postgres para 30s; `console.log` → logger; varredura de paginação.
+
+---
+
+## 7-b. Consolidação do stack (14/09/2026) — ✅ IMPLEMENTADA
+
+Trabalho posterior ao plano original, pedido depois que a VPS foi reiniciada e
+todos os containers foram parados: **reduzir o número de containers e o consumo,
+sem perder desempenho nem funcionalidade.**
+
+### Resultado
+
+| | Antes | Depois |
+|---|---|---|
+| Containers de execução contínua | **6** | **5** |
+| Teto de memória somado | **7,4 GB** | **3,88 GB** (−48%) |
+| Saltos de rede por request HTTP | 2 (gateway → frontend) | **1** |
+
+### O que mudou, e por quê
+
+**1. Dois nginx viraram um.** O stack tinha o `gateway` (porta pública) e o
+`frontend` (estáticos na 3000) — o primeiro existia apenas para repassar tudo ao
+segundo. Agora o container do frontend serve o SPA **e** faz o proxy de `/api/` e
+`/uploads/` ao backend. Um container a menos e um salto de rede a menos por
+request. Servir estático continua sendo trabalho do nginx, não do Node — o que
+mudou foi unir as duas camadas de nginx, não mover estáticos para o Express.
+
+**2. Postgres dimensionado para o container, não para o host.** Sem `command:`,
+o Postgres assume que os 16 GB da VPS são dele. Agora: `shared_buffers=192MB`
+(~25% do limite), `effective_cache_size=512MB`, `work_mem=8MB`,
+`max_connections=50`, autovacuum contido a 1 worker (nunca desligado) e paralelismo
+zerado — numa VPS de 4 vCPUs compartilhadas, worker paralelo é disputa, não ganho.
+`mem_limit` de 1g → 768m.
+
+**3. Pool do Prisma limitado.** Sem `connection_limit`, o Prisma abre
+`num_cpus*2+1` conexões dimensionadas pelos cores do **host**. Fixado em 10,
+coerente com o `max_connections=50` do banco.
+
+**4. Threads do ONNX contidas no ALPR.** O ONNX Runtime dimensiona seu pool pelo
+número de cores do host, não pela fatia do container. Com o backend e o Postgres
+disputando os mesmos núcleos, isso vira troca de contexto, não paralelismo.
+`OMP_NUM_THREADS=1` e afins — uma placa por vez não precisa de paralelismo interno.
+
+**5. Chrome do plate-scraper fecha por ociosidade.** O navegador ficava aberto
+para sempre após a primeira consulta, segurando centenas de MB. Agora encerra após
+`BROWSER_IDLE_MS` (5 min) e relança na próxima — custo de alguns segundos numa
+chamada que já leva dezenas. `mem_limit` 2g → 1g, `shm_size` 1gb → 512m.
+
+### Validação — com o stack no ar
+
+Não bastou validar sintaxe: o stack foi **subido de verdade** (nginx unificado +
+backend de teste na mesma rede Docker) e as rotas foram exercitadas com `curl`.
+
+| Rota | Resultado |
+|---|---|
+| `/health` | 200, servido pelo nginx |
+| `/api/health` | 200, `{"ok":true,"from":"backend"}` — proxy + rewrite |
+| `/api/revisions` | 200, `path=/revisions` — rewrite preserva o path |
+| `/uploads/sub/dir/arquivo.png` | 200, path completo preservado |
+| `/` e `/dashboard/x` | 200 `text/html` — `try_files` do SPA |
+| gzip | `Content-Encoding: gzip` ativo |
+| `/assets/*.js` | `Cache-Control: public, immutable` |
+
+**O teste integrado pegou um bug que a validação de sintaxe não pegaria:** com
+variável no `proxy_pass` (necessária para o nginx não morrer se o backend ainda
+não subiu), `proxy_pass .../uploads/;` **descartava o nome do arquivo** —
+`/uploads/foto.jpg` chegava como `/uploads/`. Todas as fotos quebrariam em
+produção. Corrigido com `$request_uri` e reconferido.
 
 ---
 

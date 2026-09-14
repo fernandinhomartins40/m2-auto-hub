@@ -16,7 +16,10 @@ x-backend-build: &backend-build
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 3001
-  DATABASE_URL: "postgresql://${POSTGRES_USER:-m2}:${POSTGRES_PASSWORD:-m2_dev_2026}@postgres:5432/${POSTGRES_DB:-m2_auto_hub}?schema=public"
+  # connection_limit: sem ele o Prisma abre num_cpus*2+1 conexoes por instancia,
+  # dimensionado pelos cores do HOST. Numa VPS compartilhada isso desperdica
+  # processos do Postgres que ficam ociosos.
+  DATABASE_URL: "postgresql://${POSTGRES_USER:-m2}:${POSTGRES_PASSWORD:-m2_dev_2026}@postgres:5432/${POSTGRES_DB:-m2_auto_hub}?schema=public&connection_limit=10&pool_timeout=20"
   JWT_SECRET: ${JWT_SECRET:-replace_me_with_at_least_32_chars_1234567890}
   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
   BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-10}
@@ -46,8 +49,37 @@ services:
     restart: unless-stopped
     # Teto de memoria por servico: sem isso um vazamento aqui consome a RAM da
     # VPS inteira e o kernel mata processos de outros projetos do servidor.
-    mem_limit: 1g
+    mem_limit: 768m
     logging: *default-logging
+    # Sem estes parametros o Postgres assume que a maquina e toda dele: ele le
+    # o total de RAM do host (16 GB), nao o limite do container. Os valores
+    # abaixo sao dimensionados para o mem_limit acima, nao para a VPS inteira.
+    command:
+      - postgres
+      # ~25% do limite do container, deixando espaco para o cache do SO.
+      - -c
+      - shared_buffers=192MB
+      # Nao aloca nada: e so uma dica para o planejador saber que ha cache.
+      - -c
+      - effective_cache_size=512MB
+      # Por operacao de ordenacao/hash. Alto demais aqui multiplica por conexao.
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=64MB
+      # Cada conexao e um processo. O backend usa pool proprio (connection_limit
+      # na DATABASE_URL), entao nao ha motivo para permitir 100 conexoes.
+      - -c
+      - max_connections=50
+      # Autovacuum nunca deve ser desligado - so contido a um worker.
+      - -c
+      - autovacuum_max_workers=1
+      - -c
+      - max_worker_processes=2
+      - -c
+      - max_parallel_workers=1
+      - -c
+      - max_parallel_workers_per_gather=0
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-m2_auto_hub}
       POSTGRES_USER: ${POSTGRES_USER:-m2}
@@ -86,9 +118,13 @@ services:
     build:
       context: ./services/plate-scraper
     restart: unless-stopped
-    shm_size: 1gb
-    # Navegador real: e o servico de maior pico de memoria do stack.
-    mem_limit: 2g
+    # O Chrome usa /dev/shm para as texturas das abas; 512m basta para uma aba
+    # por vez (o servico serializa as consultas em fila).
+    shm_size: 512m
+    # Era 2g quando o navegador ficava aberto para sempre. O server.js agora o
+    # encerra apos BROWSER_IDLE_MS sem consultas e relanca na proxima, entao o
+    # pico so acontece durante a consulta em si.
+    mem_limit: 1g
     logging: *default-logging
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
@@ -155,35 +191,17 @@ services:
         VITE_API_BASE_URL: /api
         RELEASE_VERSION: ${RELEASE_VERSION:-local}
     restart: unless-stopped
-    mem_limit: 256m
-    logging: *default-logging
-    depends_on:
-      backend:
-        condition: service_healthy
-    expose:
-      - "3000"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
-      start_period: 10s
-      interval: 10s
-      timeout: 5s
-      retries: 6
-
-  gateway:
-    image: nginx:1.27-alpine
-    restart: unless-stopped
+    # Nginx servindo arquivos estaticos tem pegada minima; 128m sobra.
     mem_limit: 128m
     logging: *default-logging
     depends_on:
-      frontend:
-        condition: service_healthy
       backend:
         condition: service_healthy
+    # Este e agora o unico ponto de entrada: o servico "gateway" foi removido
+    # porque era um segundo nginx cuja unica funcao era repassar o trafego para
+    # este. Menos um container e menos um salto de rede por request.
     ports:
       - "127.0.0.1:${DEPLOY_PORT:-3092}:80"
-    volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
       start_period: 10s

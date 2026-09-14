@@ -18,10 +18,35 @@ const SETTLE_MS = Number(process.env.SETTLE_MS || 6000);
 // Espacamento minimo entre consultas: o cache do backend ja evita repeticao,
 // e o volume real e baixo, entao nao ha motivo para bater em rajada na origem.
 const MIN_INTERVAL_MS = Number(process.env.MIN_INTERVAL_MS || 4000);
+// Um Chrome ocioso segura centenas de MB de RAM indefinidamente. Como este e o
+// caminho de fallback e o volume real e baixo, o navegador e encerrado depois
+// de um periodo sem consultas e relancado na proxima - o custo e um arranque de
+// poucos segundos numa chamada que ja leva dezenas.
+const BROWSER_IDLE_MS = Number(process.env.BROWSER_IDLE_MS || 5 * 60 * 1000);
 
 let browser = null;
 let ultimaConsulta = 0;
 let emAndamento = Promise.resolve();
+let idleTimer = null;
+
+function agendarFechamentoOcioso() {
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+  }
+
+  if (BROWSER_IDLE_MS <= 0) {
+    return;
+  }
+
+  idleTimer = setTimeout(async () => {
+    const atual = browser;
+    browser = null;
+    await atual?.close().catch(() => {});
+    console.log('navegador encerrado por ociosidade');
+  }, BROWSER_IDLE_MS);
+
+  idleTimer.unref?.();
+}
 
 async function getBrowser() {
   if (browser && browser.isConnected()) {
@@ -94,6 +119,7 @@ function enfileirar(plate) {
       return await consultar(plate);
     } finally {
       ultimaConsulta = Date.now();
+      agendarFechamentoOcioso();
     }
   });
 

@@ -95,10 +95,13 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    # A imagem do frontend passou a servir na 80 (ela e o nginx do stack de
+    # producao, que serve o SPA e faz o proxy do /api). Aqui em dev o gateway
+    # continua na frente, entao basta apontar para a porta nova.
     expose:
-      - "3000"
+      - "80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 10

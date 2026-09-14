@@ -26,4 +26,7 @@ COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/apps/frontend/dist /usr/share/nginx/html
 RUN printf '%s\n' "$RELEASE_VERSION" > /usr/share/nginx/html/.release-version
 
-EXPOSE 3000
+# Este nginx e agora a unica porta de entrada do stack: serve o SPA e faz o
+# proxy do /api e /uploads para o backend. Antes havia um segundo nginx
+# ("gateway") so para repassar o trafego para ca.
+EXPOSE 80

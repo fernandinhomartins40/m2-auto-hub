@@ -125,15 +125,14 @@ log "Starting backend"
 compose up -d --no-build --no-deps backend
 wait_healthy backend 18 5
 
+# O frontend e o unico nginx do stack: serve o SPA e faz o proxy do /api para o
+# backend. O antigo servico "gateway" era um segundo nginx que so repassava o
+# trafego para ca, e foi removido.
 log "Starting frontend"
 compose up -d --no-build --no-deps frontend
 wait_healthy frontend 15 5
 
-log "Starting gateway"
-compose up -d --no-build --no-deps gateway
-wait_healthy gateway 12 5
-
-wait_http "http://127.0.0.1:${DEPLOY_PORT}/health"     8 5 || { compose logs --no-color --tail=40 gateway  >&2; exit 1; }
+wait_http "http://127.0.0.1:${DEPLOY_PORT}/health"     8 5 || { compose logs --no-color --tail=40 frontend >&2; exit 1; }
 wait_http "http://127.0.0.1:${DEPLOY_PORT}/api/health" 8 5 || { compose logs --no-color --tail=40 backend  >&2; exit 1; }
 curl -fsS --max-time 10 -o /dev/null "http://127.0.0.1:${DEPLOY_PORT}/" || { compose logs --no-color --tail=40 frontend >&2; exit 1; }
 
