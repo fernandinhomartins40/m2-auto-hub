@@ -14,7 +14,9 @@ async function main(): Promise<void> {
     validateEnvironment();
     await connectDatabase();
     await ensureEssentialData();
-    if (process.env.SEED_DEMO_DATA !== 'false') {
+    // Dados de demonstracao sao opt-in: em producao o default de antes
+    // ('!== false') fazia o seed rodar a cada boot sem ninguem pedir.
+    if (process.env.SEED_DEMO_DATA === 'true') {
       await ensureDemoData();
     }
 

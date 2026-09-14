@@ -57,6 +57,24 @@ const envSchema = z.object({
       z.enum(['true', 'false']).optional()
     )
     .transform(value => value !== 'false'),
+
+  // Retencao de dados operacionais. Ambas as tabelas crescem sem teto hoje:
+  // notificacoes ja lidas e trilha de auditoria. Zero desliga a limpeza.
+  NOTIFICATION_RETENTION_DAYS: z
+    .preprocess(
+      value => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().optional()
+    )
+    .transform(value => (value === undefined ? 90 : Number(value)))
+    .pipe(z.number().int().min(0)),
+
+  AUDIT_LOG_RETENTION_DAYS: z
+    .preprocess(
+      value => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().optional()
+    )
+    .transform(value => (value === undefined ? 365 : Number(value)))
+    .pipe(z.number().int().min(0)),
 });
 
 const env = envSchema.parse(process.env);
@@ -102,6 +120,11 @@ export const environment = {
   marketplace: {
     encryptionKey: env.MARKETPLACE_ENC_KEY ?? env.JWT_SECRET,
     jobsEnabled: env.MARKETPLACE_JOBS_ENABLED,
+  },
+
+  retention: {
+    notificationDays: env.NOTIFICATION_RETENTION_DAYS,
+    auditLogDays: env.AUDIT_LOG_RETENTION_DAYS,
   },
 } as const;
 

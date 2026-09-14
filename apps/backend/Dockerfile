@@ -9,8 +9,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
-COPY package*.json ./
-RUN npm install --prefer-offline --no-audit --no-fund
+# O lockfile e copiado junto e o install e `npm ci`: sem ele, cada build
+# re-resolvia as dependencias do zero (19 das 20 usam `^`), e uma versao
+# publicada no npm entrava no build sem revisao. Foi assim que o backend quebrou
+# sem que uma linha do seu codigo mudasse. `npm ci` falha se o lockfile estiver
+# fora de sincronia com o package.json, o que e o comportamento desejado.
+COPY package.json package-lock.json ./
+RUN npm ci --prefer-offline --no-audit --no-fund
 
 FROM deps AS build
 COPY . .

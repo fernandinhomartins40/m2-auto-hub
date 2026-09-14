@@ -71,6 +71,22 @@ export BUILDKIT_PROGRESS=plain
 
 cd "$APP_DIR"
 
+# Um deploy que falha no meio deixa os servicos ja subidos rodando com
+# restart automatico. Como a VPS e compartilhada, um stack meio-vivo fica
+# semanas reiniciando em loop e queimando CPU de todos os projetos.
+# Derrubar o que subiu e o unico desfecho seguro: o deploy anterior ja nao
+# esta no ar de qualquer forma.
+DEPLOY_OK=0
+on_exit() {
+  local code=$?
+  if [ "$DEPLOY_OK" != "1" ]; then
+    log "DEPLOY FALHOU (exit $code) - derrubando stack parcial para nao deixar containers em loop"
+    compose down --remove-orphans >/dev/null 2>&1 || true
+  fi
+  exit "$code"
+}
+trap on_exit EXIT
+
 log "Building images"
 compose build --parallel
 
@@ -120,6 +136,8 @@ wait_healthy gateway 12 5
 wait_http "http://127.0.0.1:${DEPLOY_PORT}/health"     8 5 || { compose logs --no-color --tail=40 gateway  >&2; exit 1; }
 wait_http "http://127.0.0.1:${DEPLOY_PORT}/api/health" 8 5 || { compose logs --no-color --tail=40 backend  >&2; exit 1; }
 curl -fsS --max-time 10 -o /dev/null "http://127.0.0.1:${DEPLOY_PORT}/" || { compose logs --no-color --tail=40 frontend >&2; exit 1; }
+
+DEPLOY_OK=1
 
 ln -sfn "$APP_DIR" "$APP_ROOT/current"
 ls -dt "$APP_ROOT/releases"/*/ 2>/dev/null | tail -n +4 | xargs rm -rf 2>/dev/null || true

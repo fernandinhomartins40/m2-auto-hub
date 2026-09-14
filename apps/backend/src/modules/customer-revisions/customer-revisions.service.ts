@@ -173,17 +173,31 @@ export class CustomerRevisionsService {
     const reminders = [];
     const today = new Date();
 
+    // Uma unica consulta traz as revisoes concluidas de todos os veiculos do
+    // cliente, em vez de um findFirst por veiculo dentro do laco. Ordenadas por
+    // data decrescente, a primeira ocorrencia de cada veiculo ja e a mais
+    // recente - o mesmo resultado do findFirst anterior.
+    const completedRevisions = vehicles.length
+      ? await prisma.revision.findMany({
+          where: {
+            vehicleId: { in: vehicles.map(v => v.id) },
+            status: RevisionStatus.COMPLETED
+          },
+          orderBy: {
+            date: 'desc'
+          }
+        })
+      : [];
+
+    const lastRevisionByVehicle = new Map<string, (typeof completedRevisions)[number]>();
+    for (const revision of completedRevisions) {
+      if (revision.vehicleId && !lastRevisionByVehicle.has(revision.vehicleId)) {
+        lastRevisionByVehicle.set(revision.vehicleId, revision);
+      }
+    }
+
     for (const vehicle of vehicles) {
-      // Get last revision for this vehicle
-      const lastRevision = await prisma.revision.findFirst({
-        where: {
-          vehicleId: vehicle.id,
-          status: RevisionStatus.COMPLETED
-        },
-        orderBy: {
-          date: 'desc'
-        }
-      });
+      const lastRevision = lastRevisionByVehicle.get(vehicle.id);
 
       if (lastRevision) {
         // Calculate time since last revision

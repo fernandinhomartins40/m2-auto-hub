@@ -3,10 +3,9 @@ import { environment } from '@config/environment.js';
 import { connectDatabase, disconnectDatabase } from '@config/database.js';
 import { logger } from '@shared/utils/logger.util.js';
 import { validateEnvironment } from '@config/validate-env.js';
-import { setupPrismaRLS } from '@middlewares/prisma-rls.middleware.js';
-
 import { ensureEssentialData } from './bootstrap/essential-data.js';
 import { startMarketplaceJobs } from '@modules/marketplace/marketplace.jobs.js';
+import { startRetentionJobs, stopRetentionJobs } from './jobs/retention.jobs.js';
 
 async function bootstrap(): Promise<void> {
   try {
@@ -24,10 +23,6 @@ async function bootstrap(): Promise<void> {
     await ensureEssentialData();
     logger.info('Essential data is ready');
 
-    logger.info('Setting up Prisma RLS middleware...');
-    await setupPrismaRLS();
-    logger.info('Prisma RLS middleware initialized');
-
     logger.info('Creating Express application...');
     const app = createApp();
     logger.info('Express app created');
@@ -42,8 +37,12 @@ async function bootstrap(): Promise<void> {
     await startMarketplaceJobs();
     logger.info('Marketplace background jobs ready');
 
+    startRetentionJobs();
+
     const gracefulShutdown = async (signal: string) => {
       logger.info(`\n${signal} received, starting graceful shutdown...`);
+
+      stopRetentionJobs();
 
       server.close(async () => {
         logger.info('HTTP server closed');

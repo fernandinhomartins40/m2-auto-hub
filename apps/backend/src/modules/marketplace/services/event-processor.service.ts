@@ -6,6 +6,9 @@ import { orderImportService } from './order-import.service.js';
 /** Topicos que representam um pedido (geram importacao). */
 const ORDER_TOPICS = new Set(['orders', 'orders_v2', 'order_status_push', 'shop_order']);
 
+/** Tentativas antes de considerar o evento permanentemente falho. */
+const MAX_ATTEMPTS = 5;
+
 /**
  * Consome os MarketplaceEvent ainda nao processados.
  * Os webhooks apenas gravam o evento e respondem 200 rapido; este processador
@@ -32,14 +35,29 @@ export class EventProcessorService {
             data: { processed: true, processedAt: new Date(), error: null },
           });
         } catch (err) {
+          const attempts = event.attempts + 1;
+          const exhausted = attempts >= MAX_ATTEMPTS;
+
           logger.warn('[EventProcessor] falha ao processar evento', {
             id: event.id,
             topic: event.topic,
+            attempts,
+            exhausted,
             err: String(err),
           });
+
+          // Um evento que falha de forma permanente (pedido removido no
+          // marketplace, payload invalido) era retentado a cada 30s para
+          // sempre - 2.880 tentativas por dia, cada uma com chamada HTTP
+          // externa. Depois de MAX_ATTEMPTS ele sai da fila e fica registrado
+          // com o erro, para inspecao manual.
           await prisma.marketplaceEvent.update({
             where: { id: event.id },
-            data: { error: String(err) },
+            data: {
+              attempts,
+              error: String(err),
+              ...(exhausted ? { processed: true, processedAt: new Date() } : {}),
+            },
           });
         }
       }

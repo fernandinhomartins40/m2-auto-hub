@@ -634,6 +634,7 @@ model MarketplaceEvent {
   rawPayload  Json
   processed   Boolean             @default(false)
   processedAt DateTime?
+  attempts    Int                 @default(0) // tentativas de processamento (limite evita retry infinito)
   error       String?             @db.Text
   createdAt   DateTime            @default(now())
 
