@@ -9,6 +9,17 @@ import { UpdateVehicleModelDto } from './dto/update-vehicle-model.dto.js';
 import { CreateVehicleVariantDto } from './dto/create-vehicle-variant.dto.js';
 import { UpdateVehicleVariantDto } from './dto/update-vehicle-variant.dto.js';
 
+/**
+ * Teto defensivo das consultas de catalogo (marcas, modelos, versoes).
+ *
+ * Estas rotas carregam o resultado inteiro na memoria do Node e o serializam a
+ * cada chamada. Os volumes reais sao de dezenas a poucos milhares de linhas, bem
+ * abaixo deste limite - ele nao muda o comportamento hoje. Existe para que um
+ * cadastro que cresca sem controle nao vire uma resposta de megabytes e um pico
+ * de memoria no container.
+ */
+const CATALOG_MAX_ROWS = 5000;
+
 export class VehiclesService {
   // =========================================================================
   // VEHICLE MAKES
@@ -21,6 +32,11 @@ export class VehiclesService {
     return prisma.vehicleMake.findMany({
       where: activeOnly ? { active: true } : undefined,
       orderBy: { name: 'asc' },
+      // Teto defensivo: o catalogo e carregado inteiro na memoria do Node e
+      // serializado a cada chamada. Marcas de veiculo sao poucas dezenas, entao
+      // o limite nunca e atingido na pratica - ele existe para que um cadastro
+      // descontrolado nao vire uma resposta de megabytes.
+      take: CATALOG_MAX_ROWS,
       include: {
         _count: {
           select: { models: true },
@@ -167,6 +183,7 @@ export class VehiclesService {
         },
       },
       orderBy: { name: 'asc' },
+      take: CATALOG_MAX_ROWS,
     });
   }
 
@@ -310,6 +327,7 @@ export class VehiclesService {
         },
       },
       orderBy: { yearStart: 'desc' },
+      take: CATALOG_MAX_ROWS,
     });
   }
 
@@ -457,6 +475,8 @@ export class VehiclesService {
    * Get complete vehicle hierarchy (makes > models > variants)
    */
   async getVehicleHierarchy(): Promise<VehicleMake[]> {
+    // A hierarquia completa e a consulta mais pesada do modulo: traz marcas,
+    // modelos e versoes aninhados numa resposta so. O teto vale para cada nivel.
     return prisma.vehicleMake.findMany({
       where: { active: true },
       include: {
@@ -466,12 +486,15 @@ export class VehiclesService {
             variants: {
               where: { active: true },
               orderBy: { yearStart: 'desc' },
+              take: CATALOG_MAX_ROWS,
             },
           },
           orderBy: { name: 'asc' },
+          take: CATALOG_MAX_ROWS,
         },
       },
       orderBy: { name: 'asc' },
+      take: CATALOG_MAX_ROWS,
     });
   }
 

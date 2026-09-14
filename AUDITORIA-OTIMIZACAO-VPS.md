@@ -712,6 +712,79 @@ produção. Corrigido com `$request_uri` e reconferido.
 
 ---
 
+## 7-c. Terceira rodada — enxugando a imagem e as consultas (14/09/2026)
+
+Feita com a VPS já resetada, avaliando a aplicação pelo que ela é — sem a carga
+de terceiros distorcendo a medição.
+
+### A imagem de produção carregava 69% de peso morto
+
+`COPY --from=build /app/node_modules` copiava a árvore do estágio de **build**,
+que contém as devDependencies. A imagem de produção levava TypeScript, Jest,
+ESLint, Prettier, ts-jest e todos os `@types/*` — **435 dos 627 pacotes do
+lockfile** — sem nunca carregá-los em runtime.
+
+Agora há um estágio `prod-deps` com `npm ci --omit=dev --ignore-scripts`, e a
+imagem final copia dele. O cliente gerado do Prisma vem do estágio de build
+(um `--omit=dev` limpo não o contém).
+
+**Obstáculo resolvido:** o `migrator` roda `npx prisma migrate deploy` na mesma
+imagem, e o CLI `prisma` era devDependency — removê-lo quebraria as migrations.
+Ele foi movido para `dependencies`, que é onde de fato pertence: aqui o CLI é
+runtime de produção, não ferramenta de desenvolvimento.
+
+### Outros ajustes
+
+- **Healthchecks folgados.** O Postgres era checado a cada 5s — 17.280
+  `pg_isready` por dia para um banco que, uma vez de pé, não cai sozinho. Agora
+  30s (60s no scraper), com o `start_period` cobrindo a subida.
+- **Efêmeros contidos.** `migrator` e `bootstrap` tinham teto de 1g cada e sobem
+  junto com o Postgres; reduzidos a 512m, para não competirem com o banco no
+  pior momento.
+- **Teto defensivo no catálogo de veículos.** `getMakes`, `getModels`,
+  `getVariants` e `getVehicleHierarchy` faziam `findMany` sem limite, carregando
+  o catálogo inteiro na memória do Node a cada chamada. Adicionado
+  `take: CATALOG_MAX_ROWS` (5000) — muito acima do volume real, então **não muda
+  o comportamento hoje**; existe para que um cadastro descontrolado não vire uma
+  resposta de megabytes.
+- **`uploads` deixou de ser copiado** para a imagem: o volume monta por cima em
+  runtime; o diretório agora é criado direto no estágio de produção.
+
+### Medido, comparando as duas imagens construídas lado a lado
+
+| | Antes | Depois |
+|---|---|---|
+| Imagem do backend | 3,64 GB | **3,44 GB** (−200 MB) |
+| `node_modules` na imagem | 329 MB / 416 pastas | **165 MB / 143 pastas** (−50%) |
+| Pacotes na árvore de produção | 627 | **193** |
+
+O ganho absoluto na imagem é modesto porque **a base `playwright:v1.59.1-jammy`
+domina o total** — ela sozinha traz Chromium, Firefox e WebKit. A economia real
+está no que foi cortado da camada da aplicação, e no que deixa de ser lido,
+resolvido e mantido em disco a cada deploy.
+
+### Validado na imagem construída
+
+- `npx prisma --version` → 5.22.0 (CLI e cliente): o `migrator` segue íntegro
+- `node dist/server.js` → falha em `ZodError: DATABASE_URL` (validação de
+  ambiente), **não** em `MODULE_NOT_FOUND`: todos os módulos de runtime
+  carregam com a árvore enxuta
+- `typescript`, `jest`, `eslint`, `prettier`, `tsx` → ausentes da imagem
+- `tsc --noEmit` limpo; compose e `deploy-vps.sh` válidos
+
+### O que foi avaliado e decidido NÃO mexer
+
+- **Remover Firefox/WebKit da imagem do Playwright.** Seria a maior economia de
+  disco disponível, mas exige validar a geração de PDF com a imagem alterada. É
+  risco real sobre uma funcionalidade que o cliente usa — fica como proposta.
+- **Os outros ~100 `findMany` sem `take`.** A maioria é lookup por chave ou
+  agregação interna, onde o limite não faz sentido. Mexer em todos seria
+  invasivo e arriscado sem ganho comprovado; o catálogo foi tratado porque é
+  listagem exposta por rota.
+- **Alinhar Playwright entre backend e scraper** — ver §7-b, já analisado.
+
+---
+
 ## 8. Estratégia de validação
 
 ### 8.0 O que já foi validado (14/09/2026) — ✅

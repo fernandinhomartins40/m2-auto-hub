@@ -86,8 +86,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-m2_dev_2026}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-m2} -d ${POSTGRES_DB:-m2_auto_hub}"]
+      # 5s davam 17.280 execucoes por dia para um banco que, uma vez de pe, nao
+      # cai sozinho. O start_period cobre a subida; depois disso 30s bastam.
       start_period: 20s
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 6
     volumes:
@@ -107,7 +109,7 @@ services:
           "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"
         ]
       start_period: 20s
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 6
 
@@ -129,13 +131,15 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       start_period: 30s
-      interval: 15s
+      interval: 60s
       timeout: 10s
       retries: 6
 
   migrator:
     image: m2centerauto-backend:${RELEASE_VERSION:-local}
-    mem_limit: 1g
+    # Efemero: roda `prisma migrate deploy` e sai. Sobe junto com o Postgres,
+    # entao um teto folgado aqui competiria com o banco no pior momento.
+    mem_limit: 512m
     logging: *default-logging
     depends_on:
       postgres:
@@ -146,7 +150,8 @@ services:
 
   bootstrap:
     image: m2centerauto-backend:${RELEASE_VERSION:-local}
-    mem_limit: 1g
+    # Efemero, como o migrator.
+    mem_limit: 512m
     logging: *default-logging
     depends_on:
       postgres:
@@ -176,7 +181,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
       start_period: 20s
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 6
     volumes:
@@ -205,7 +210,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
       start_period: 10s
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 6
 
