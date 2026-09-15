@@ -1,3 +1,28 @@
+> # ⚠️ DOCUMENTO SUPERADO — leia `docs/AUDITORIA-OTIMIZACAO-VPS.md`
+>
+> Esta auditoria (14/09/2026) foi feita **sem acesso a VPS e sob throttling de CPU**. A rodada de
+> 15/09, com acesso SSH e a API do GitHub, **mediu o estado real e invalidou varias conclusoes
+> daqui**:
+>
+> | Afirmado neste documento | Medido em 15/09 |
+> |---|---|
+> | load average 293 -> 203 | **0.28** |
+> | disco 84% (162 GB de 194) | **7% (12 GB)** |
+> | backend em crash-loop ha 3 semanas | **o container nao existe** |
+> | 87 containers de 9 projetos | **11 containers de 3 projetos** |
+> | throttling de CPU a 20% | **sem throttling; steal 1,4%** |
+>
+> A VPS foi reinstalada pelo usuario. O stack `m2centerauto` **nao esta no servidor**.
+>
+> **O que continua valido:** as correcoes de codigo descritas aqui (build reprodutivel, retry
+> limitado de marketplace, remocao do middleware RLS, consolidacao 6->5 containers, tuning do
+> Postgres). Elas foram mantidas e estao listadas em "O que esta correto e NAO deve ser mexido"
+> na auditoria nova.
+>
+> **Mantido como registro historico do incidente de agosto. Nao use os numeros daqui.**
+
+---
+
 # Auditoria de Otimização — VPS e Aplicação
 
 **Projeto:** m2-auto-hub (stack `m2centerauto` na VPS)

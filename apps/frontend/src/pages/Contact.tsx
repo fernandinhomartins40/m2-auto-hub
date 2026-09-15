@@ -370,9 +370,9 @@ ${new Date().toLocaleString('pt-BR')}
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                         ) : (
-                          <Send className="mr-2 h-4 w-4" />
+                          <Send className="h-4 w-4 shrink-0" />
                         )}
                         {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
                       </Button>
@@ -384,7 +384,7 @@ ${new Date().toLocaleString('pt-BR')}
                         className="flex-1 border-green-500 text-green-600 hover:bg-green-50"
                         disabled={isSubmitting}
                       >
-                        <MessageCircle className="mr-2 h-4 w-4" />
+                        <MessageCircle className="h-4 w-4 shrink-0" />
                         WhatsApp Direto
                       </Button>
                     </div>
@@ -491,7 +491,7 @@ ${new Date().toLocaleString('pt-BR')}
                 onClick={handleWhatsAppDirect}
                 className="bg-white text-moria-orange hover:bg-gray-100 border-0 text-lg px-8 py-3"
               >
-                <MessageCircle className="mr-2 h-5 w-5" />
+                <MessageCircle className="h-5 w-5 shrink-0" />
                 Falar Agora no WhatsApp
               </Button>
             </div>

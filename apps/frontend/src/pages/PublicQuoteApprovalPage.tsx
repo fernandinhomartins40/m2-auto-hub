@@ -238,9 +238,9 @@ export default function PublicQuoteApprovalPage() {
                   onClick={() => void handleDecision("approve")}
                 >
                   {isSubmitting === "approve" ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   ) : (
-                    <ThumbsUp className="mr-2 h-4 w-4" />
+                    <ThumbsUp className="h-4 w-4 shrink-0" />
                   )}
                   Aprovar e virar pedido
                 </Button>
@@ -251,9 +251,9 @@ export default function PublicQuoteApprovalPage() {
                   onClick={() => void handleDecision("reject")}
                 >
                   {isSubmitting === "reject" ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   ) : (
-                    <ThumbsDown className="mr-2 h-4 w-4" />
+                    <ThumbsDown className="h-4 w-4 shrink-0" />
                   )}
                   Rejeitar
                 </Button>

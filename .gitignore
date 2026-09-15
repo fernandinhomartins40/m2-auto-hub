@@ -30,3 +30,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Cache do Serena (ferramenta local, nao faz parte do projeto)
+.serena/

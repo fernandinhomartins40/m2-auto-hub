@@ -63,6 +63,12 @@ jobs:
             --exclude=apps/frontend/dist \
             --exclude=apps/backend/uploads \
             --exclude=coverage \
+            `# PLANO ITEM 8: apps/mobile tem 1,3 GB de artefatos de build e nao` \
+            `# e servido pela VPS - o app e distribuido pelas lojas. Com o` \
+            `# runner hospedado pelo GitHub o checkout e limpo e o diretorio nem` \
+            `# existia; num self-hosted runner o _work persiste entre execucoes,` \
+            `# e sem esta linha o tar passaria a enviar tudo isso a cada deploy.` \
+            --exclude=apps/mobile \
             -czf - . \
           | sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
               "tar -xzf - -C '$RELEASE_DIR'"

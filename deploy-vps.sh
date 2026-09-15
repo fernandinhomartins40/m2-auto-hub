@@ -108,8 +108,13 @@ fi
 log "Running migrations"
 compose_timeout 10m run --rm migrator
 
-log "Bootstrapping data"
-compose_timeout 4m run --rm bootstrap || true
+# O bootstrap faz duas coisas distintas: `ensureEssentialData()` (admins,
+# categorias de relacionamento, config da landing) roda SEMPRE, e `ensureDemoData()`
+# so roda com SEED_DEMO_DATA=true. Sem os dados essenciais ninguem consegue entrar
+# no painel - o `|| true` de antes deixava o deploy "verde" com o sistema
+# inacessivel. Falhar aqui e o comportamento correto.
+log "Bootstrapping data (seed essencial)"
+compose_timeout 4m run --rm bootstrap
 
 log "Starting alpr"
 compose up -d --no-build --no-deps alpr

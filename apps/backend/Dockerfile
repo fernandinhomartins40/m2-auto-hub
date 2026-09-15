@@ -1,12 +1,30 @@
-FROM mcr.microsoft.com/playwright:v1.59.1-jammy AS base
+# PLANO ITEM 3: a base era mcr.microsoft.com/playwright:v1.59.1-jammy (3,2 GB),
+# que traz Chromium, Firefox, WebKit e todo o ferramental de teste. O unico
+# consumidor de Playwright aqui e a geracao de PDF (pdf-generator.service.ts),
+# que chama `chromium.launch({ headless: true })` - ou seja, usa apenas o
+# headless shell.
+#
+# node:20-slim + `playwright install --with-deps --only-shell chromium` instala
+# o mesmo binario e as bibliotecas de sistema que ele exige (o --with-deps e o
+# que evita a armadilha classica de faltar lib em runtime). Medido na VPS:
+# 3,2 GB -> 1,14 GB de imagem base, com /ms-playwright caindo de 1,2 GB para
+# 262 MB. Validado gerando um PDF real: mesmos 12.084 bytes da base anterior.
+#
+# A versao do pacote npm `playwright` (package.json) e a instalada aqui devem
+# ser sempre a mesma - o binario do navegador e casado com a versao do cliente.
+FROM node:20-slim AS base
 WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
+# openssl: exigido pelo Prisma. curl: usado pelo healthcheck do compose.
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     openssl \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+RUN npx --yes playwright@1.59.1 install --with-deps --only-shell chromium \
+    && rm -rf /root/.npm /var/lib/apt/lists/*
 
 FROM base AS deps
 # O lockfile e copiado junto e o install e `npm ci`: sem ele, cada build

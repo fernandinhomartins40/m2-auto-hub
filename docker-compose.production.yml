@@ -50,6 +50,15 @@ services:
     # Teto de memoria por servico: sem isso um vazamento aqui consome a RAM da
     # VPS inteira e o kernel mata processos de outros projetos do servidor.
     mem_limit: 768m
+    # PLANO ITEM 6: mem_limit sozinho protege um vetor de tres. Sem `cpus`, uma
+    # consulta descontrolada satura os 4 vCPUs e degrada os outros projetos do
+    # host; sem `pids_limit`, um vazamento de processos esgota a tabela de PIDs
+    # da VPS inteira, e nenhum teto de memoria impede isso.
+    # 1.5 CPU: o banco e o servico mais sensivel a latencia do stack.
+    # 200 PIDs: cada conexao e um processo (max_connections=50) + autovacuum
+    # e writer, com folga de ~4x sobre o pior caso.
+    cpus: 1.5
+    pids_limit: 200
     logging: *default-logging
     # Sem estes parametros o Postgres assume que a maquina e toda dele: ele le
     # o total de RAM do host (16 GB), nao o limite do container. Os valores
@@ -101,6 +110,11 @@ services:
       context: ./services/alpr-service
     restart: unless-stopped
     mem_limit: 1g
+    # PLANO ITEM 6. O ONNX ja esta contido a 1 thread (OMP_NUM_THREADS=1 no
+    # Dockerfile), entao 1.0 CPU e coerente com o que o processo pode usar.
+    # 100 PIDs: uvicorn com poucos workers, sem fork por requisicao.
+    cpus: 1.0
+    pids_limit: 100
     logging: *default-logging
     healthcheck:
       test:
@@ -127,6 +141,12 @@ services:
     # encerra apos BROWSER_IDLE_MS sem consultas e relanca na proxima, entao o
     # pico so acontece durante a consulta em si.
     mem_limit: 1g
+    # PLANO ITEM 6. O Chrome forka um processo por aba, renderizador, GPU e
+    # utilitario: e o servico com maior contagem de PIDs do stack, por isso 300
+    # e nao 100. 1.0 CPU porque o servico serializa as consultas em fila - uma
+    # de cada vez, nao ha paralelismo a preservar.
+    cpus: 1.0
+    pids_limit: 300
     logging: *default-logging
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
@@ -140,6 +160,10 @@ services:
     # Efemero: roda `prisma migrate deploy` e sai. Sobe junto com o Postgres,
     # entao um teto folgado aqui competiria com o banco no pior momento.
     mem_limit: 512m
+    # PLANO ITEM 6. Mesma logica do mem_limit: sobe junto com o Postgres, entao
+    # nao deve competir por CPU com o banco durante a migration.
+    cpus: 1.0
+    pids_limit: 100
     logging: *default-logging
     depends_on:
       postgres:
@@ -152,6 +176,9 @@ services:
     image: m2centerauto-backend:${RELEASE_VERSION:-local}
     # Efemero, como o migrator.
     mem_limit: 512m
+    # PLANO ITEM 6.
+    cpus: 1.0
+    pids_limit: 100
     logging: *default-logging
     depends_on:
       postgres:
@@ -168,6 +195,11 @@ services:
     # inteira sem atender ninguem. Com on-failure:5 ele desiste e fica visivel.
     restart: on-failure:5
     mem_limit: 1g
+    # PLANO ITEM 6. 1.5 CPU: e o servico que atende as requisicoes, e a geracao
+    # de PDF sobe um Chromium que forka varios processos - dai tambem os 300
+    # PIDs, o mesmo teto do plate-scraper e pela mesma razao.
+    cpus: 1.5
+    pids_limit: 300
     logging: *default-logging
     depends_on:
       postgres:
@@ -198,6 +230,11 @@ services:
     restart: unless-stopped
     # Nginx servindo arquivos estaticos tem pegada minima; 128m sobra.
     mem_limit: 128m
+    # PLANO ITEM 6. Referencia medida no proprio host: o nginx do projeto
+    # vizinho (aprenderia-nginx) usa 4,5 MiB e ~4% de CPU. 0.5 CPU e 100 PIDs
+    # sao folga larga sobre isso, mesmo servindo o SPA e fazendo o proxy.
+    cpus: 0.5
+    pids_limit: 100
     logging: *default-logging
     depends_on:
       backend:

@@ -263,7 +263,7 @@ function CustomerQuotes() {
                         className="flex-1"
                         onClick={() => handleApprove(quote.id)}
                       >
-                        <ThumbsUp className="w-4 h-4 mr-2" />
+                        <ThumbsUp className="w-4 h-4 shrink-0" />
                         Aprovar Orçamento
                       </Button>
                       <Button
@@ -271,7 +271,7 @@ function CustomerQuotes() {
                         className="flex-1"
                         onClick={() => handleReject(quote.id)}
                       >
-                        <ThumbsDown className="w-4 h-4 mr-2" />
+                        <ThumbsDown className="w-4 h-4 shrink-0" />
                         Recusar
                       </Button>
                     </div>
