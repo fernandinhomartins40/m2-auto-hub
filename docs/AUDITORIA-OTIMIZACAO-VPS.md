@@ -64,6 +64,28 @@ O documento de 14/09 descreveu um cenário que **não corresponde ao estado atua
 32976429155  success  2m1s fix: paginas de OS ocupam a tela inteira    2026-08-26
 ```
 
+> 🛑 **REFUTADO EM 15/09 — leia antes do resto desta seção.**
+>
+> A conclusão de "cota de Actions esgotada" abaixo **está errada**, e o erro foi meu.
+> Em 15/09 o run `34996070968` foi executado por um **runner hospedado do GitHub**
+> (`runner_name: GitHub Actions 1000015787`), durou **4 minutos** e executou os passos
+> normalmente — os 7 primeiros com `success`. [MEDIDO, `/actions/runs/<id>/jobs`]
+>
+> Ou seja: **nunca houve bloqueio de cota**. Os dados brutos dos 3 runs de 14/09
+> (3-4s, sem runner, log vazio) estão preservados abaixo porque foram medidos de fato,
+> mas **a inferência que tirei deles não se sustenta**. A causa real daquelas falhas
+> permanece **[NÃO MEDIDO]** — os logs vieram vazios e não há como recuperá-los.
+> Hipótese plausível e não verificada: indisponibilidade temporária na alocação.
+>
+> **Erro de método que cometi:** tratei ausência de evidência (log vazio, runner vazio)
+> como evidência de uma causa específica, e depois li `duration_ms`/`updatedAt` de um run
+> **ainda em andamento** como se fosse resultado final. A verificação correta é
+> `/actions/runs/<id>/jobs`, que traz `runner_name` e os passos com `conclusion`.
+>
+> **Consequência:** o ITEM 1 do plano foi **cancelado**; nenhum self-hosted runner será
+> registrado; o §4.2 (`_work` do runner) **permanece refutado**. O deploy concluiu com
+> sucesso em 15/09 — ver §4.0-bis.
+
 Os três últimos deploys falharam, e com uma assinatura muito específica:
 
 - `run_duration_ms: 4000`, mas **`billable.UBUNTU.total_ms: 0`** e `duration_ms: 0` para o job;
@@ -71,13 +93,38 @@ Os três últimos deploys falharam, e com uma assinatura muito específica:
 - **zero steps executados** (`.jobs[].steps == []`);
 - o arquivo de log do run vem como **ZIP vazio** (22 bytes).
 
-Um job que falha sem consumir tempo faturável, sem runner atribuído e sem executar nenhum passo **não falhou no workflow — nunca foi alocado**. O workflow em si está íntegro: o secret `VPS_PASSWORD` existe, o environment `production` não tem regra de proteção (`protection_rules: []`), e o mesmo arquivo funcionou 9 vezes seguidas até 26/08.
+~~Um job que falha sem consumir tempo faturável, sem runner atribuído e sem executar nenhum passo **não falhou no workflow — nunca foi alocado**.~~ 🛑 *(inferência refutada — ver aviso acima)* O workflow em si está íntegro: o secret `VPS_PASSWORD` existe, o environment `production` não tem regra de proteção (`protection_rules: []`), e o mesmo arquivo funcionou 9 vezes seguidas até 26/08.
 
-**Causa [ESTIMADO, confiança alta]:** o repositório é **privado** (`"private": true`, `"visibility": "private"` — [MEDIDO]). Repositório privado consome a cota de minutos pagos de GitHub Actions; repositório público não consome nada. O padrão — funcionando até 26/08, falha instantânea a partir de 14/09, sem runner — é o comportamento de **cota de Actions esgotada ou pagamento pendente na conta**.
+**Causa [ESTIMADO, confiança alta — 🛑 REFUTADA EM 15/09, ver aviso acima]:** ~~o repositório é **privado** (`"private": true`, `"visibility": "private"` — [MEDIDO]). Repositório privado consome a cota de minutos pagos de GitHub Actions; repositório público não consome nada. O padrão — funcionando até 26/08, falha instantânea a partir de 14/09, sem runner — é o comportamento de **cota de Actions esgotada ou pagamento pendente na conta**.~~ — **falso.** Havia runner hospedado disponível o tempo todo. [MEDIDO]
 
 Marco como [ESTIMADO] e não [MEDIDO] porque a API de billing que confirmaria foi movida (`HTTP 410`) e o endpoint de annotations negou acesso ao token (`HTTP 403`). **Isso se confirma em 10 segundos** em `github.com/settings/billing`. A alternativa técnica não depende dessa confirmação e está no plano.
 
-**A saída é boa e já existe na própria VPS [MEDIDO]:** há um self-hosted runner instalado e ativo em `/opt/actions-runner` (`actions.runner.fernandinhomartins40-Digiurbanlite.digiurban-vps.service`, `active running`). Ele está registrado em **outro** repositório (`Digiurbanlite`), então não atende este projeto hoje. Self-hosted runner **não consome cota**, nem em repositório privado. Registrar um runner para o m2-auto-hub destrava o deploy sem custo — com uma ressalva importante tratada na §4.
+~~**A saída é boa e já existe na própria VPS [MEDIDO]:**~~ **— desnecessário, ver refutação acima.** (O fato de existir o runner do `Digiurbanlite` no host continua [MEDIDO] e verdadeiro; o que caiu é a necessidade de usá-lo.) há um self-hosted runner instalado e ativo em `/opt/actions-runner` (`actions.runner.fernandinhomartins40-Digiurbanlite.digiurban-vps.service`, `active running`). Ele está registrado em **outro** repositório (`Digiurbanlite`), então não atende este projeto hoje. Self-hosted runner **não consome cota**, nem em repositório privado. Registrar um runner para o m2-auto-hub destrava o deploy sem custo — com uma ressalva importante tratada na §4.
+
+### §4.0-bis — Resultado real do deploy (15/09) [MEDIDO]
+
+O sistema **está em produção e funcional**. Verificação de fora da VPS e dentro dela:
+
+| Verificação | Comando | Resultado |
+|---|---|---|
+| Workflow | `/actions/runs/34996070968/jobs` | 10/10 passos `success`, 6min12s |
+| Containers | `docker ps --filter name=m2centerauto` | 5/5 `healthy` |
+| Health interno | `curl 127.0.0.1:3092/health` e `/api/health` | `200` e `200` |
+| HTTPS público | `curl https://www.m2centerauto.com.br/` | `200`, `ssl_verify_result=0` |
+| Redirect canônico | `curl http://m2centerauto.com.br/` | `301` -> `https://www.m2centerauto.com.br/` |
+| Certificado | `certbot certificates` | Let's Encrypt, válido 89 dias, cobre os 2 domínios |
+| Seed essencial | `SELECT email, role FROM admins` | 3 admins (SUPER_ADMIN/MANAGER/STAFF) |
+| Seed essencial | `SELECT COUNT(*) FROM relationship_categories` | `5` |
+| Seed essencial | `SELECT COUNT(*) FROM landing_page_config` | `1` |
+| Demo **não** semeada | `SELECT COUNT(*) FROM customers` | `0` (correto: `SEED_DEMO_DATA=false`) |
+| Senha do admin | `POST /api/auth/admin/login` com a senha gerada | **`200`** |
+| Senha insegura morta | mesmo endpoint com `Test123!` | **`401`** |
+
+As duas últimas linhas confirmam de ponta a ponta a correção de segurança: o fallback
+`Test123!` **não autentica**, e a senha gerada por `ensure_hex` (32 caracteres) autentica.
+
+**Convivência com os outros 3 projetos do host:** os 11 containers de `ultrazend`,
+`aprenderia` e `digiurban` seguem `Up`/`healthy` depois do deploy; disco em 8%. [MEDIDO]
 
 ### O que esta auditoria encontrou de novo, que a anterior não podia ver
 
@@ -239,8 +286,9 @@ push main → GitHub Actions (ubuntu-latest)
 
 Descrito em §1. **Bloqueia todo o resto**: sem deploy, nenhuma otimização chega a produção.
 
-- **Evidência [MEDIDO]:** 3 runs, `duration_ms: 0`, sem runner, sem steps, log vazio.
-- **Causa [ESTIMADO]:** cota de Actions esgotada em repositório privado.
+- ~~**Evidência [MEDIDO]:** 3 runs, `duration_ms: 0`, sem runner, sem steps, log vazio.~~
+- ~~**Causa [ESTIMADO]:** cota de Actions esgotada em repositório privado.~~
+- 🛑 **REFUTADO 15/09:** houve runner hospedado, 4 min de execução, passos rodando. Não havia cota bloqueada. A falha real do passo 8 foi `npm error code ECONNRESET` (rede transitória), resolvida com `gh run rerun --failed`. [MEDIDO]
 - **Impacto:** aplicação fora do ar; nenhuma correção de 14/09 em produção.
 
 #### 4.1 — O build de imagens roda na máquina de produção
@@ -306,7 +354,7 @@ A rodada anterior reconheceu isso ("o ideal seria rollback para a release anteri
 
 ⚠️ **CORREÇÃO da correção.** A auditoria de 14/09 **refutou** este item, e estava certa *para o contexto de então*: o runner `ubuntu-latest` faz checkout limpo, `apps/mobile/build` está no `.gitignore`, logo o diretório pesado não existe no runner. As releases medidas na VPS davam 8,1 MB cada — prova de que não havia problema.
 
-**Mas o contexto muda com a solução do §4.0.** Se o deploy migrar para **self-hosted runner** — que é a saída recomendada para a cota —, o diretório `_work` **persiste entre execuções**. Artefatos de build do Flutter passam a acumular no runner, e o tar passa a ter o que empacotar.
+~~**Mas o contexto muda com a solução do §4.0.**~~ 🛑 **Parágrafo an-ulado em 15/09:** eu ressuscitei um item corretamente refutado apoiando-me na migração para self-hosted runner — migração que **não vai acontecer**, porque a premissa da cota era falsa. Continuamos em `ubuntu-latest`, onde o checkout é limpo a cada run. **O item permanece refutado.**
 
 Ou seja: o item era inofensivo e **volta a ser real** justamente por causa da mudança que vamos fazer. Custo de prevenir: uma linha.
 
@@ -425,8 +473,8 @@ Registro explícito para evitar que a próxima rodada refaça ou desfaça:
 
 ## 8. Pendências que dependem de decisão sua
 
-1. **Confirmar a cota de Actions** (`github.com/settings/billing`) — 10 segundos, e confirma a causa do §4.0.
-2. **Escolher a saída do deploy:** self-hosted runner na VPS (grátis, mas o build volta para a máquina de produção se mal configurado) **ou** tornar o repositório público (Actions grátis, mas expõe o código) **ou** pagar a cota. Tratado no plano com recomendação.
+1. ~~**Confirmar a cota de Actions**~~ — **desnecessário**: refutado em 15/09, não havia bloqueio de cota. [MEDIDO]
+2. ~~**Escolher a saída do deploy**~~ — **não há escolha a fazer**: o deploy via `ubuntu-latest` funciona e concluiu em 15/09. [MEDIDO]
 3. **Restaurar o banco de produção** — o volume `m2centerauto-postgres-data` **não existe no servidor**. Se havia dados de clientes, eles não estão na VPS. **Preciso saber se existe backup antes de qualquer reimplantação**, porque subir o stack cria um banco vazio e isso é irreversível se o volume antigo estivesse em outro lugar.
 4. **Prazo de retenção de `AuditLog`** — segue pendente da rodada anterior (padrões conservadores já implementados: 365 e 90 dias, `0` desliga).
 

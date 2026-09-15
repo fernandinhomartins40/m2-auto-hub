@@ -189,31 +189,56 @@ docker exec <container> sh -c 'cat /sys/fs/cgroup/cpu.max /sys/fs/cgroup/memory.
 
 ---
 
-## 7. Estado da esteira de CI ⚠️
+## 7. Estado da esteira de CI ✅
 
-**O deploy automático não está funcionando.** Os três últimos runs falharam em 3-4 s, com
-`duration_ms: 0`, sem runner atribuído, sem nenhum step executado e com log vazio — a assinatura de
-um job que **nunca foi alocado**, não de um workflow com erro.
+**O deploy automático funciona.** O run `34996070968` (commit `73e771e`) concluiu os
+**10 passos com sucesso** em 6min12s e colocou o sistema no ar. [MEDIDO]
 
-Causa provável: o repositório é **privado**, o que consome cota paga de GitHub Actions. Confirme em
-`github.com/settings/billing`.
+> 🛑 **Correção de um diagnóstico errado meu.** Esta seção afirmava que o deploy
+> "não está funcionando" por **cota de Actions esgotada**, e recomendava registrar um
+> self-hosted runner. **Estava errado.** Eu li `duration_ms`/`updatedAt` de um run
+> ainda **em andamento** e tratei isso como resultado final. Consultando
+> `/actions/runs/<id>/jobs`, o que aparece é:
+>
+> ```
+> runner_name = GitHub Actions 1000015787     (runner hospedado, alocado normalmente)
+> started 17:05:16 -> completed 17:09:21      (4 minutos, não 3 segundos)
+> passos 1..7 = success ; passo 8 = failure
+> ```
+>
+> Não havia bloqueio de cota nenhum. **Não registre self-hosted runner** — o ITEM 1
+> do plano foi cancelado.
 
-Saídas possíveis (ver ITEM 1 do plano): self-hosted runner, tornar o repositório público, ou pagar
-a cota.
-
-**Fato confirmado na VPS [MEDIDO, `systemctl list-units`]:** já existe um runner self-hosted ativo
-no host, registrado para outro repositório:
+**A falha real** do passo 8 na 2ª tentativa foi de rede, no build da imagem do backend:
 
 ```
-actions.runner.fernandinhomartins40-Digiurbanlite.digiurban-vps.service   active running
+#45 [backend prod-deps 2/2] RUN npm ci --omit=dev --ignore-scripts ...
+#45 50.63 npm error code ECONNRESET
+#45 50.63 npm error network aborted
 ```
 
-Ou seja, a máquina já tem o runtime instalado — adotar essa saída para este repositório é registrar
-um segundo runner, não montar a infraestrutura do zero. **Não foi feito**, porque depende da sua
-decisão e porque concentra o build na máquina de produção (ver o aviso abaixo e o ITEM 4).
+Transitória. Resolvida com um rerun, que reaproveitou o cache do BuildKit:
 
-> ⚠️ Se escolher self-hosted runner: ele roda **na própria VPS**. Como o build hoje também acontece
-> na VPS (§5), isso concentra tudo na máquina de produção. Faça junto com o ITEM 4 do plano.
+```bash
+gh run rerun <run-id> --failed
+```
+
+**Se um deploy falhar com `ECONNRESET`/`ETIMEDOUT` no `npm ci`, a ação correta é exatamente
+essa** — não mexa no código, não é defeito do projeto.
+
+### Como diagnosticar um run que falhou (do jeito certo)
+
+```bash
+# NAO olhe so o status do run: um run em andamento engana.
+gh api repos/{owner}/{repo}/actions/runs/<run-id>/jobs   --jq '.jobs[-1] | "runner=\(.runner_name)", (.steps[] | "\(.number). \(.name) -> \(.conclusion)")'
+
+# E baixe o log de verdade para achar a causa:
+gh api repos/{owner}/{repo}/actions/runs/<run-id>/logs > run.zip && unzip -o run.zip
+```
+
+**Nota de fato [MEDIDO]:** existe um runner self-hosted no host, do `Digiurbanlite`
+(`actions.runner.fernandinhomartins40-Digiurbanlite.digiurban-vps.service   active running`).
+Isso continua verdadeiro — mas é **irrelevante para este projeto**, que usa `ubuntu-latest`.
 
 ---
 
@@ -247,10 +272,10 @@ docker image prune -a       # idem
 
 ---
 
-## 9. Checklist antes do primeiro deploy pós-reinstalação
+## 9. Checklist do primeiro deploy pós-reinstalação — **CONCLUÍDO**
 
-A VPS foi reinstalada e o stack **não está no servidor**. Estado verificado em 2026-09-15
-[MEDIDO, via SSH]:
+O deploy foi executado com sucesso em 2026-09-15 20:05 UTC (run `34996070968`, tentativa 3).
+Estado verificado após o deploy [MEDIDO, via SSH e HTTPS público]:
 
 - [x] **Banco** — não há dados a recuperar. O projeto **nunca esteve em produção**; a VPS foi
       reinstalada deliberadamente. O primeiro `up` cria um banco vazio, que é o desejado.
@@ -262,6 +287,18 @@ A VPS foi reinstalada e o stack **não está no servidor**. Estado verificado em
 - [x] **certbot 1.21.0** presente, com `/var/www/certbot` já existente — o desafio webroot funciona.
 - [x] **Disco** — 12 G de 194 G (7%).
 - [x] `MARKETPLACE_ENC_KEY` e `DEFAULT_ADMIN_PASSWORD` — agora gerados pelo `prepare-env.sh` (§2).
-- [ ] Esteira de CI resolvida (§7) — **pendente, decisão sua**
+- [x] **Esteira de CI** — não havia problema a resolver; o diagnóstico de cota estava errado (§7).
+- [x] **Stack no ar** — 5/5 containers `healthy`; `/health` e `/api/health` respondem `200`.
+- [x] **HTTPS** — certificado Let's Encrypt emitido para os 2 domínios, válido 89 dias;
+      `https://www.m2centerauto.com.br/` responde `200` com TLS válido; `http://` e o domínio
+      sem `www` redirecionam `301` para o canônico.
+- [x] **Seed essencial** — 3 admins, 5 categorias de relacionamento, 1 config de landing.
+- [x] **Seed demo não rodou** — `customers = 0`, como esperado com `SEED_DEMO_DATA=false`.
+- [x] **Senha insegura eliminada** — login com a senha gerada retorna `200`; com `Test123!`, `401`.
+- [x] **Vizinhos intactos** — os 11 containers dos outros 3 projetos seguem `healthy`; disco 8%.
 - [ ] Decidir `AUDIT_LOG_RETENTION_DAYS` (ou deixar `0` para adiar)
-- [ ] **Trocar a senha dos admins no primeiro login** (a inicial está no `.env`, §2.1)
+- [ ] ⚠️ **Trocar a senha dos admins no primeiro login** — **pendência real e ativa**.
+      A senha inicial (32 caracteres, gerada) está no `.env` da VPS:
+      `grep DEFAULT_ADMIN_PASSWORD /opt/m2centerauto/.env`
+      Login do painel: `POST /api/auth/admin/login` (campo `email`), usuário
+      `admin@m2centerauto.com.br`.

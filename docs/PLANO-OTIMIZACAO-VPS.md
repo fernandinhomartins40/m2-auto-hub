@@ -29,7 +29,7 @@ O critério de sucesso é o do prompt: **mesma capacidade funcional, menos recur
 Por **impacto ÷ risco**, respeitando dependências, na sequência recomendada da Parte 4:
 
 ```
-1. Desbloquear          → ITEM 1 (deploy não executa)
+1. ~~Desbloquear~~      → ITEM 1 CANCELADO (era diagnostico errado; deploy executa)
 2. Código, risco baixo  → ITEM 2 (gerador de .env)
 3. Build e imagem       → ITEM 3 (navegadores), ITEM 4 (build fora da produção), ITEM 5 (lockfile scraper), ITEM 8 (tar)
 4. Infraestrutura       → ITEM 6 (cpus/pids), ITEM 7 (rollback)
@@ -41,15 +41,46 @@ Por **impacto ÷ risco**, respeitando dependências, na sequência recomendada d
 
 ## CRÍTICA
 
-### ITEM 1 — Destravar o deploy (runner nunca alocado)
+### ITEM 1 — ~~Destravar o deploy (runner nunca alocado)~~ **REFUTADO / CANCELADO**
 
-- **Problema:** os 3 últimos runs falharam com `duration_ms: 0`, sem runner, sem steps, log vazio. Repositório privado → cota paga de Actions. [MEDIDO / causa ESTIMADA]
-- **Solução:** self-hosted runner na VPS, registrado para este repositório. Não consome cota mesmo em repo privado. A VPS já tem um runner funcionando (do `Digiurbanlite`), então o padrão é conhecido e comprovado neste host.
-- **⚠️ Armadilha a evitar:** self-hosted runner roda **na própria VPS**. Se o build ficar como está, ele passa a rodar em produção *por definição*. Por isso o ITEM 1 **depende do ITEM 4**: o runner constrói e publica no registry; a VPS de produção só faz `pull`. Como aqui o runner e o host de produção são a mesma máquina, a separação é lógica (build com limite de CPU próprio, fora do horário crítico) — e isso está tratado no ITEM 4.
-- **Impacto esperado:** deploy volta a executar. Sem isso, nada mais chega ao servidor. [ESTIMADO]
-- **Risco:** baixo. Reversível removendo o runner.
-- **Arquivos:** `.github/workflows/deploy-production.yml` (`runs-on`).
-- **Como testar:** `workflow_dispatch` manual e observar o job ser alocado.
+> ⚠️ **CORREÇÃO (15/09, após o deploy bem-sucedido).** Este item inteiro partia de um
+> diagnóstico **errado meu**. Eu afirmei que os runs falhavam em ~3s, "sem runner,
+> `steps=0`, log ZIP de 22 bytes", e concluí bloqueio de cota de Actions. A leitura
+> estava errada: eu consultei o `updatedAt` do run **antes** de o job ser alocado e
+> tratei um estado transitório como resultado final.
+>
+> **O que os dados realmente mostram [MEDIDO, GitHub API, run 34996070968]:**
+>
+> ```
+> job=Deploy to VPS   runner=GitHub Actions 1000015787
+> started=17:05:16    completed=17:09:21     (4 minutos, não 3 segundos)
+> passos 1..7 -> success ; passo 8 (Deploy on VPS) -> failure
+> ```
+>
+> Um runner **hospedado do GitHub foi alocado normalmente**. Não há bloqueio de cota.
+>
+> **A causa real da falha do passo 8** foi uma queda de rede transitória no build:
+>
+> ```
+> #45 [backend prod-deps 2/2] RUN npm ci --omit=dev --ignore-scripts ...
+> #45 50.63 npm error code ECONNRESET
+> #45 50.63 npm error network aborted
+> ```
+>
+> Um simples `gh run rerun --failed` (tentativa 3) concluiu **os 10 passos com
+> sucesso** e colocou o sistema no ar. [MEDIDO]
+
+- **Situação:** **não existe problema a resolver.** Não é preciso registrar runner
+  self-hosted, tornar o repositório público, nem pagar cota.
+- **Consequência para o resto do plano:** o ITEM 4 (build fora da produção) **deixa de
+  ter o ITEM 1 como justificativa**. Ele continua defensável por mérito próprio —
+  hoje o `compose build` roda na VPS compartilhada e consome CPU dos outros projetos —
+  mas passa de "obrigatório para destravar" a **otimização opcional**, e sua prioridade
+  cai. O ITEM "limpar `_work` do runner" **volta a ser refutado**, como a auditoria de
+  14/09 já havia concluído corretamente: com `ubuntu-latest` o checkout é limpo.
+- **Lição registrada:** `duration_ms`/`updatedAt` de um run **em andamento** não são
+  resultado final. A verificação correta é `/actions/runs/<id>/jobs`, que traz
+  `runner_name` e a lista de passos com `conclusion`.
 - **Como medir:** run com `duration_ms > 0` e steps executados.
 - **Como reverter:** voltar `runs-on: ubuntu-latest`.
 - **Depende de:** decisão do usuário (§Pendências) + ITEM 4.
@@ -142,7 +173,7 @@ Antes, backend e scraper usavam bases Playwright de versões diferentes e **não
 - **Como testar:** deploy completo em uma stack de teste antes da definitiva.
 - **Como medir:** `docker stats` do host durante o deploy; tempo total do run.
 - **Como reverter:** restaurar `compose build` no script (as duas versões convivem).
-- **Depende de:** ITEM 1 (decisão do runner).
+- **Depende de:** nada. (Antes dizia "ITEM 1 (decisao do runner)", mas o ITEM 1 foi refutado; este item agora e opcional e vale por merito proprio: tirar o `compose build` da VPS compartilhada.)
 
 ### ITEM 6 — Limites de CPU e PIDs em todos os serviços
 
@@ -181,9 +212,9 @@ Antes, backend e scraper usavam bases Playwright de versões diferentes e **não
 ### ITEM 8 — `--exclude=apps/mobile` no tar do deploy
 
 - **Problema:** `apps/mobile` = **1,3 GB** local e o tar não o exclui. [MEDIDO]
-- **⚠️ Nota honesta:** a auditoria de 14/09 **refutou corretamente** este item — com `ubuntu-latest`, o checkout é limpo e o diretório pesado não existe. **Mas o ITEM 1 muda isso:** no self-hosted runner o `_work` persiste entre execuções, e artefatos de build passam a acumular. O item volta a ser real por causa da nossa própria mudança.
+- **⚠️ Nota honesta (corrigida 15/09):** a auditoria de 14/09 **refutou corretamente** este item — com `ubuntu-latest` o checkout e limpo e o diretorio pesado nao existe. Eu entao escrevi que "o ITEM 1 muda isso", porque o self-hosted runner faria o `_work` persistir. **Esse raciocinio caiu junto com o ITEM 1:** nao havera self-hosted runner, entao o item **permanece refutado**. Minha "nota honesta" anterior ressuscitou um item morto com base numa premissa falsa.
 - **Solução:** uma linha no tar.
-- **Impacto esperado:** evita enviar até 1,3 GB por deploy no cenário pós-ITEM 1. [ESTIMADO]
+- **Impacto esperado:** ~~evita enviar ate 1,3 GB por deploy no cenario pos-ITEM 1~~ — **cenario nao se materializa**: o ITEM 1 foi refutado, continuamos em `ubuntu-latest` com checkout limpo. Item **refutado**, como a auditoria de 14/09 ja dizia. [MEDIDO]
 - **Risco:** nenhum — `apps/mobile` não é servido pela VPS.
 
 ### ITEM 9 — Reapertar limites com medição real (⏳ após produção estável)
@@ -228,7 +259,7 @@ Considerado e **recusado**, com justificativa. Tão importante quanto a lista do
 
 ## Pendências que dependem de você
 
-1. **Como resolver a cota de Actions (ITEM 1)** — self-hosted runner (recomendado: grátis, padrão já usado no host), repo público, ou pagar.
+1. ~~**Como resolver a cota de Actions (ITEM 1)**~~ — **questao cancelada**: nao havia bloqueio de cota. Diagnostico meu estava errado; o runner hospedado do GitHub e alocado normalmente e o deploy concluiu em 15/09. [MEDIDO]
 2. **Banco de produção** — o volume não existe no servidor. Se havia dados de clientes, **preciso saber se há backup antes de subir o stack**: o primeiro `up` cria um banco vazio. Não executarei nada que toque o banco sem essa resposta.
 3. **Prazo de retenção de `AuditLog`** — decisão de negócio; padrões conservadores já implementados.
 
@@ -276,7 +307,7 @@ Os limites do ITEM 6 estão **folgados na proporção certa**: ~8x de margem sob
 | Item | Por que |
 |---|---|
 | Consumo real de CPU/RAM do stack completo sob carga | Requer o stack no ar com usuários |
-| Tempo de deploy fim a fim | Requer a esteira de CI funcionando (ITEM 1) |
+| Tempo de deploy fim a fim | **MEDIDO**: 6min12s (19:59:14 -> 20:05:26), run 34996070968 tentativa 3, os 10 passos |
 | Tamanho do banco e maiores tabelas | Banco não existe no servidor |
 | Estabilidade em 48h | Requer deploy |
 
