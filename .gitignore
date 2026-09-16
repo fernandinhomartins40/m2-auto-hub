@@ -33,3 +33,6 @@ Thumbs.db
 
 # Cache do Serena (ferramenta local, nao faz parte do projeto)
 .serena/
+
+# Credenciais de acesso ao painel (senhas reais, nunca versionar)
+CREDENCIAIS-ACESSO.md

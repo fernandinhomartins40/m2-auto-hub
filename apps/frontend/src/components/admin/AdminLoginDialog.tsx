@@ -63,12 +63,6 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
     navigate(redirectTarget ?? result.redirectTo ?? "/store-panel", { replace: true });
   };
 
-  const handleAutoFill = (userEmail: string, userPassword: string) => {
-    setEmail(userEmail);
-    setPassword(userPassword);
-    setError("");
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-stone-100 p-4">
       <div className="w-full max-w-md space-y-4">
@@ -137,45 +131,6 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
               )}
             </Button>
           </form>
-
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center mb-3">Acesso rapido para testes:</p>
-            <div className="space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full justify-start text-xs h-9"
-                onClick={() => handleAutoFill("admin@m2centerauto.com.br", "Test123!")}
-                disabled={isSubmitting}
-              >
-                <Shield className="h-3 w-3 shrink-0" />
-                Super Admin - Senha: Test123!
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full justify-start text-xs h-9"
-                onClick={() => handleAutoFill("gerente@m2centerauto.com.br", "Test123!")}
-                disabled={isSubmitting}
-              >
-                <Shield className="h-3 w-3 shrink-0" />
-                Gerente - Senha: Test123!
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full justify-start text-xs h-9"
-                onClick={() => handleAutoFill("mecanico@m2centerauto.com.br", "Test123!")}
-                disabled={isSubmitting}
-              >
-                <Shield className="h-3 w-3 shrink-0" />
-                Mecânico - Senha: Test123!
-              </Button>
-            </div>
-          </div>
         </div>
 
         <div className="text-center">
