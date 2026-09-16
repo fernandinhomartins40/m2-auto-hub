@@ -83,12 +83,23 @@ async function consultar(plate) {
 
   try {
     const page = await ctx.newPage();
-    const resp = await page.goto(`https://placafipe.com/placa/${plate.toLowerCase()}`, {
+    // A placa vai em MAIUSCULAS: `/placa/abc1234` responde 404 e `/placa/ABC1234`
+    // responde 200 com os dados. O `.toLowerCase()` que havia aqui fazia toda
+    // consulta cair no 404 e ser reportada como bloqueio.
+    const resp = await page.goto(`https://placafipe.com/placa/${plate}`, {
       waitUntil: 'domcontentloaded',
       timeout: NAV_TIMEOUT,
     });
 
     const status = resp ? resp.status() : 0;
+
+    // 404 e a resposta normal para placa que a origem nao conhece - nao e
+    // bloqueio. Distinguir os dois importa: `not_found` e um desfecho legitimo
+    // que leva ao cadastro manual, `blocked` indica que a origem nos barrou e
+    // merece investigacao.
+    if (status === 404) {
+      return { ok: false, status, reason: 'not_found' };
+    }
 
     if (status !== 200) {
       return { ok: false, status, reason: 'blocked' };

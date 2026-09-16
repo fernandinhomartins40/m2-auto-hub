@@ -83,7 +83,12 @@ export function parsePlacaFipeText(texto: string, plate: string): ParsedPlateDat
   };
 }
 
-/** URL publica da consulta para uma placa normalizada. */
+/**
+ * URL publica da consulta para uma placa normalizada.
+ *
+ * A placa vai em MAIUSCULAS: a origem responde 404 para o caminho em
+ * minusculas e 200 para o mesmo caminho em maiusculas.
+ */
 export function buildPlacaFipeUrl(plate: string): string {
-  return `https://placafipe.com/placa/${plate.toLowerCase()}`;
+  return `https://placafipe.com/placa/${plate.toUpperCase()}`;
 }

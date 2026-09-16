@@ -205,7 +205,26 @@ export class PlacaFipeServerProvider implements PlateLookupProvider {
     }
 
     if (!response.ok) {
-      logger.warn(`Plate scraper retornou HTTP ${response.status} para ${plate}`);
+      // O scraper devolve 502 com um `reason` que distingue "a origem nao
+      // conhece esta placa" (not_found, desfecho normal) de "a origem nos
+      // barrou" (blocked, merece investigacao). Sem registrar o motivo, os
+      // dois viram a mesma linha de log e um problema real passa despercebido.
+      const detail = (await response
+        .json()
+        .catch(() => null)) as { error?: string; status?: number } | null;
+
+      const reason = detail?.error ?? 'sem motivo';
+
+      if (reason === 'not_found') {
+        logger.info(`Plate scraper: placa ${plate} nao encontrada na origem`);
+      } else {
+        logger.warn(
+          `Plate scraper retornou HTTP ${response.status} (${reason}, origem=${
+            detail?.status ?? '?'
+          }) para ${plate}`
+        );
+      }
+
       return null;
     }
 
