@@ -8,24 +8,16 @@ import { ensureRelationshipCategories } from './relationship-categories.js';
 const EMPTY_SECTION_JSON = JSON.stringify({});
 const DEFAULT_ADMIN_PASSWORD = 'Test123!';
 
+// Uma unica conta administrativa. Antes eram tres: gerente e mecanico nasciam
+// ACTIVE, com a MESMA senha do admin, e ninguem as usava — tres credenciais
+// validas para o valor de uma. Quem precisar de um perfil MANAGER ou STAFF
+// cria pelo painel, com senha propria.
 const defaultAdminSeeds = [
   {
     email: 'admin@m2centerauto.com.br',
     name: 'Administrador M2',
     role: AdminRole.SUPER_ADMIN,
     permissions: ['ALL'],
-  },
-  {
-    email: 'gerente@m2centerauto.com.br',
-    name: 'Gerente M2',
-    role: AdminRole.MANAGER,
-    permissions: ['products', 'services', 'orders', 'customers', 'revisions'],
-  },
-  {
-    email: 'mecanico@m2centerauto.com.br',
-    name: 'Mecanico M2',
-    role: AdminRole.STAFF,
-    permissions: ['revisions', 'vehicles', 'checklist'],
   },
 ] as const;
 
@@ -65,14 +57,30 @@ export async function ensureLandingPageConfig(): Promise<LandingPageConfig> {
   });
 }
 
+/**
+ * `update: {}` no upsert e deliberado: uma vez criada a conta, o deploy nao
+ * mexe mais nela, para nao reverter a senha que o operador trocou no painel.
+ *
+ * O efeito colateral e que uma senha perdida vira uma conta inacessivel — o
+ * bootstrap roda a cada deploy e nunca a corrige. Por isso existe
+ * ADMIN_PASSWORD_RESYNC: com `true`, este deploy ressincroniza a senha das
+ * contas padrao a partir de DEFAULT_ADMIN_PASSWORD. E uma chave para destravar
+ * o acesso, ligada uma vez e desligada em seguida: deixa-la ligada faria todo
+ * deploy desfazer a troca de senha feita no painel.
+ */
+function shouldResyncPassword(): boolean {
+  return process.env.ADMIN_PASSWORD_RESYNC?.trim().toLowerCase() === 'true';
+}
+
 export async function ensureDefaultAdmins(): Promise<void> {
   const hashedPassword = await HashUtil.hashPassword(getBootstrapPassword());
+  const resync = shouldResyncPassword();
 
   await prisma.$transaction(
     defaultAdminSeeds.map((admin) =>
       prisma.admin.upsert({
         where: { email: admin.email },
-        update: {},
+        update: resync ? { password: hashedPassword, status: AdminStatus.ACTIVE } : {},
         create: {
           email: admin.email,
           password: hashedPassword,
@@ -84,6 +92,13 @@ export async function ensureDefaultAdmins(): Promise<void> {
       })
     )
   );
+
+  if (resync) {
+    logger.warn(
+      'ADMIN_PASSWORD_RESYNC ativo: senha das contas padrao redefinida a partir de DEFAULT_ADMIN_PASSWORD. Desligue a flag apos entrar.',
+      { emails: defaultAdminSeeds.map((admin) => admin.email) }
+    );
+  }
 
   logger.warn('Ensured default admin accounts are available', {
     emails: defaultAdminSeeds.map((admin) => admin.email),

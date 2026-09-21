@@ -46,12 +46,24 @@ upsert_env COOKIE_DOMAIN    ".m2centerauto.com.br"
 # quem quiser semear troca para `true` no .env da VPS uma unica vez.
 ensure_env  SEED_DEMO_DATA  false
 
-# O seed essencial (ensureEssentialData) cria tres admins e roda SEMPRE, em todo
+# O seed essencial (ensureEssentialData) cria o admin e roda SEMPRE, em todo
 # deploy. A senha vem de DEFAULT_ADMIN_PASSWORD, e tanto o compose quanto
 # essential-data.ts tinham o fallback literal `Test123!` - ou seja, sem esta
-# linha o site sobe publico com tres contas SUPER_ADMIN/MANAGER/STAFF de senha
-# conhecida. `ensure_env` gera uma vez e preserva; a senha fica no .env da VPS
-# (chmod 600) e deve ser trocada no primeiro login.
+# linha o site sobe publico com uma conta SUPER_ADMIN de senha conhecida.
+# `ensure_env` gera uma vez e preserva; a senha fica no .env da VPS (chmod 600)
+# e deve ser trocada no primeiro login.
+#
+# Para ver a senha gerada:
+#   grep '^DEFAULT_ADMIN_PASSWORD=' /opt/m2centerauto/.env
+#
+# Perdeu o acesso? O bootstrap nao reescreve a senha de uma conta que ja existe
+# (`update: {}` em essential-data.ts), entao redeploy sozinho nao adianta. Para
+# destravar, defina a senha desejada aqui e ligue o resync por um deploy:
+#   sed -i 's|^DEFAULT_ADMIN_PASSWORD=.*|DEFAULT_ADMIN_PASSWORD=<nova>|' .env
+#   echo 'ADMIN_PASSWORD_RESYNC=true' >> .env
+#   docker compose up -d --force-recreate backend
+# Depois de entrar, remova a linha ADMIN_PASSWORD_RESYNC: mantida ligada, ela
+# faz todo deploy desfazer a senha trocada pelo painel.
 ensure_hex  DEFAULT_ADMIN_PASSWORD 16
 
 # MARKETPLACE_ENC_KEY e opcional no schema e cai no JWT_SECRET (environment.ts).
