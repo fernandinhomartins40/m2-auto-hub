@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Header } from "../components/Header";
 import { Marquee } from "../components/Marquee";
 import { Footer } from "../components/Footer";
+import { MAIN_CONTENT_ID, SkipToContent } from "../components/layout/SkipToContent";
 import { useStoreSettings } from "../hooks/useStoreSettings";
 import { useLandingPageConfig } from "../hooks/useLandingPageConfig";
 import { colorOrGradientToCSS } from "../components/admin/LandingPageEditor/StyleControls";
@@ -178,8 +179,12 @@ ${new Date().toLocaleString('pt-BR')}
 
   return (
     <div className="min-h-screen bg-white">
+      <SkipToContent />
       <Header />
       <Marquee />
+
+      {/* Um `main` por pagina (A-02); o Footer fica fora dele. */}
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="outline-none">
 
           {/* Hero Section */}
           <section
@@ -496,6 +501,7 @@ ${new Date().toLocaleString('pt-BR')}
               </Button>
             </div>
           </section>
+      </main>
 
           <Footer />
     </div>

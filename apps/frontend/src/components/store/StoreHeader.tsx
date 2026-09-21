@@ -20,10 +20,11 @@ export default function StoreHeader({
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-gray-200 safe-area-top">
       <div className="flex items-center justify-between h-14 px-4">
-        {/* Title */}
-        <h1 className="text-lg font-bold text-gray-900 truncate">
+        {/* Marca do painel, nao o titulo da rota: cada tela ja traz o seu h1
+            no AdminPageHeader. Manter um h1 aqui dava dois por rota (A-11). */}
+        <p className="text-lg font-bold text-gray-900 truncate">
           {title}
-        </h1>
+        </p>
 
         {/* Actions */}
         <div className="flex items-center gap-2">

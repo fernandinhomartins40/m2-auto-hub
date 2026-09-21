@@ -45,6 +45,7 @@ import { QuoteModal } from "./QuoteModal";
 import { CustomerOrdersModal } from "./CustomerOrdersModal";
 import { NotificationCenter } from "./NotificationCenter";
 import { AdminPageHeader } from "./AdminPageHeader";
+import { StatGrid } from "../layout/ResponsiveGrids";
 import { AdminPromotionsOverview } from "./AdminPromotionsOverview";
 import { AdminReportsSection } from "./AdminReportsSection";
 import { CreateOrderModal } from "./CreateOrderModal";
@@ -629,7 +630,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         description="Acompanhe os principais indicadores, alertas e atividades recentes da loja."
       />
       {/* Primeira linha - Métricas principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatGrid className="nb:gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
@@ -681,10 +682,10 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </StatGrid>
 
       {/* Segunda linha - Métricas secundárias */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatGrid className="nb:gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
@@ -740,13 +741,13 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </StatGrid>
 
       {/* Terceira linha - Resumos e atividades */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Pedidos Recentes</CardTitle>
+            <CardTitle as="h2">Pedidos Recentes</CardTitle>
             <CardDescription>Últimos 5 pedidos recebidos</CardDescription>
           </CardHeader>
           <CardContent>

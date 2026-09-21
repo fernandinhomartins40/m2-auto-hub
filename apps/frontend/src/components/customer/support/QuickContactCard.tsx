@@ -20,7 +20,9 @@ export function QuickContactCard({ title, description, icon: Icon, color, action
             <Icon className="h-6 w-6 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold">{title}</h3>
+            {/* h2: os cards de contato sao secoes de primeiro nivel logo
+                abaixo do h1 da rota; como h3 o salto era h1->h3 (A-11). */}
+            <h2 className="font-semibold">{title}</h2>
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>

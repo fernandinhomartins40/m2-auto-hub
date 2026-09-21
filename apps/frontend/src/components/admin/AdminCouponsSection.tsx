@@ -321,7 +321,8 @@ export function AdminCouponsSection({
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="mb-2 flex items-center gap-2">
-                            <h3 className="min-w-0 break-all text-base font-semibold font-mono sm:text-lg">{coupon.code}</h3>
+                            {/* h2: item logo abaixo do h1 da rota, sem nivel intermediario (A-11). */}
+                            <h2 className="min-w-0 break-all text-base font-semibold font-mono sm:text-lg">{coupon.code}</h2>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -353,7 +354,10 @@ export function AdminCouponsSection({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+                    {/* Eram 4 colunas fixas ja em 640px: com a sidebar de 288px
+                        o card caia para ~105px por coluna e "Desconto: R$ 30,00"
+                        era cortado. Agora as colunas nascem do espaco real. */}
+                    <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-4">
                       <div className="flex items-center space-x-2">
                         <Percent className="h-4 w-4 text-gray-500" />
                         <div>
@@ -388,7 +392,7 @@ export function AdminCouponsSection({
                       )}
                     </div>
 
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                       <Button
                         variant="outline"
                         size="sm"

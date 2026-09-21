@@ -27,12 +27,68 @@
   background: #f8fafc;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 2rem;
+  /* Era `2rem` fixo em qualquer largura >=768px. Com a sidebar de 288px ao
+     lado, esses 64px horizontais saiam justamente de onde havia menos espaco.
+     Agora acompanha a viewport: ~1rem no notebook apertado, 2rem a partir de
+     ~1400px. */
+  padding: clamp(1rem, 0.2rem + 1.6vw, 2rem);
 }
 
 .lojista-content > * {
   min-width: 0;
   max-width: 100%;
+}
+
+/* Rail da sidebar: estagio intermediario entre a barra inferior do celular e a
+   sidebar completa. Vale so na faixa em que a sidebar existe mas o espaco e
+   curto (768px ate 1399px). A partir de 1400px tudo volta ao normal.
+
+   E CSS puro de proposito: o componente continua sendo uma arvore de DOM so,
+   entao nao ha como o estado visual divergir do estado logico. */
+@media (min-width: 768px) and (max-width: 1399.98px) {
+  /* Titulo do topo, bloco do usuario e rodape: escondidos no rail. */
+  .sidebar-rail > div:first-child,
+  .sidebar-rail > div:last-child {
+    display: none;
+  }
+
+  /* Rotulo dos itens e o marcador redondo de "ativo". */
+  .sidebar-rail nav span,
+  .sidebar-rail nav .ml-auto {
+    display: none;
+  }
+
+  /* Cada item vira um quadrado com o icone centralizado. */
+  .sidebar-rail nav button,
+  .sidebar-rail nav a {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Sem o rotulo, o espacamento horizontal do flex nao faz mais sentido. */
+  .sidebar-rail nav button > * {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Os grupos tem borda e fundo proprios na sidebar larga; no rail isso vira
+     ruido em volta de um icone. */
+  .sidebar-rail nav > div > div {
+    border: 0;
+    background: transparent;
+    padding: 0.25rem;
+  }
+
+  /* Cabecalho de secao ("Operacao", "Catalogo"...) nao cabe em 72px. */
+  .sidebar-rail nav p {
+    display: none;
+  }
+
+  .sidebar-rail nav {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 }
 
 /* Sidebar do Lojista */
@@ -88,10 +144,15 @@
 }
 
 .metrica-numero {
-  font-size: 2rem;
+  /* Era `2rem` fixo. Um valor como "R$ 12.480,00" precisa de ~161px nesse
+     tamanho e so tem ~108px num celular de 360px, entao o texto era cortado.
+     [MEDIDO] Agora o numero acompanha a largura da tela. */
+  font-size: clamp(1.25rem, 0.85rem + 1.8vw, 2rem);
   font-weight: bold;
   color: hsl(var(--primary));
   margin-bottom: 0.5rem;
+  /* Rede de seguranca para nomes/valores muito longos. */
+  overflow-wrap: anywhere;
 }
 
 .metrica-label {

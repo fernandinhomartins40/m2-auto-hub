@@ -149,7 +149,9 @@ export function CustomerVehicles() {
                       <Car className="h-6 w-6 text-moria-orange" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">
+                      {/* h2: cada veiculo e um item logo abaixo do h1 da
+                          rota, sem nivel intermediario (A-11). */}
+                      <CardTitle as="h2" className="text-xl">
                         {vehicle.brand} {vehicle.model}
                       </CardTitle>
                       <CardDescription className="mt-2 space-y-1">

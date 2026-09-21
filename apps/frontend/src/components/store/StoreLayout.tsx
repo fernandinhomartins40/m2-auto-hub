@@ -7,6 +7,7 @@ import StoreHeader from './StoreHeader';
 import { Sidebar } from '../admin/Sidebar';
 import { MechanicSidebar } from '../mechanic/MechanicSidebar';
 import { cn } from '../../lib/utils';
+import { MAIN_CONTENT_ID, SkipToContent } from '../layout/SkipToContent';
 
 export interface NavItem {
   id: string;
@@ -81,6 +82,7 @@ export default function StoreLayout({
           isDrawerOpen && 'drawer-open'
         )}
       >
+        <SkipToContent />
         <div className="store-mobile-viewport">
           <StoreHeader
             title={variant === 'admin' ? 'M2 Center Auto' : 'M2 Oficina'}
@@ -88,9 +90,13 @@ export default function StoreLayout({
           />
 
           <div className="store-mobile-scroll">
-            <div className="min-w-0 w-full max-w-full overflow-x-hidden px-4 py-4 pb-24">
+            <main
+              id={MAIN_CONTENT_ID}
+              tabIndex={-1}
+              className="min-w-0 w-full max-w-full overflow-x-hidden px-4 py-4 pb-24 outline-none"
+            >
               {children}
-            </div>
+            </main>
           </div>
         </div>
 
@@ -121,6 +127,7 @@ export default function StoreLayout({
   // Layout Desktop (mantem o layout original)
   return (
     <div className="store-layout lojista-layout min-w-0 max-w-full">
+      <SkipToContent />
       {variant === 'mechanic' ? (
         <MechanicSidebar
           activeTab={currentTab}
@@ -133,7 +140,11 @@ export default function StoreLayout({
           onPlateLookup={onPlateLookup}
         />
       )}
-      <main className="lojista-content min-w-0 max-w-full overflow-x-hidden">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="lojista-content min-w-0 max-w-full overflow-x-hidden outline-none"
+      >
         <div className="min-w-0 w-full max-w-full">
           {children}
         </div>

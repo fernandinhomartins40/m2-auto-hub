@@ -228,13 +228,16 @@ export function AdminPromotionsSection({
                 Controle promoções e campanhas especiais
               </CardDescription>
             </div>
-            <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
+            {/* `sm:` e nao `md:`, igual ao AdminPageHeader que as outras
+                secoes usam: em `md` a sidebar entra e o espaco diminui, entao
+                e o pior momento para tentar por os botoes lado a lado. */}
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => fetchPromotions()}
                 disabled={loading}
-                className="w-full md:w-auto"
+                className="w-full sm:w-auto"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
@@ -243,7 +246,7 @@ export function AdminPromotionsSection({
                 size="sm"
                 onClick={handleOpenCreateModal}
                 disabled={createLoading}
-                className="bg-moria-orange hover:bg-moria-orange/90 w-full md:w-auto"
+                className="bg-moria-orange hover:bg-moria-orange/90 w-full sm:w-auto"
               >
                 {createLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -368,7 +371,7 @@ export function AdminPromotionsSection({
                     </div>
 
                     {/* Informações detalhadas */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                    <div className="mb-4 grid grid-cols-2 gap-3 nb:grid-cols-4">
                       <div className="flex items-start space-x-2">
                         <Percent className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">

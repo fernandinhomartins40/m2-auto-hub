@@ -65,6 +65,14 @@ export default function MechanicPanel() {
         </div>
       </div>
 
+      {/* No mobile o cabecalho acima sai por CSS (`desktop-only`, max-width
+          768px) e o header do shell passou a ser so a marca, entao a rota
+          ficava sem h1 (A-06). Este h1 nao aparece na tela — repetiria o
+          titulo ja visivel — mas da a ancora de topo para navegacao por
+          headings. O `md:hidden` casa com o mesmo limiar de 768px, para nunca
+          existirem dois h1 ao mesmo tempo. */}
+      <h1 className="sr-only md:hidden">{getPageTitle(activeTab)}</h1>
+
       <div className="lojista-fade-in">
         <MechanicContent activeTab={activeTab} />
       </div>

@@ -136,7 +136,7 @@ export function CustomerDashboard() {
               sozinho nao reserva espaco entre os dois blocos. */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0 flex-1 basis-[14rem]">
-              <CardTitle className="text-2xl">
+              <CardTitle as="h1" className="text-2xl">
                 Olá, {customer.name?.split(' ')[0] || 'Cliente'}! 👋
               </CardTitle>
               <CardDescription className="text-lg">
@@ -151,7 +151,7 @@ export function CustomerDashboard() {
       </Card>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 nb:grid-cols-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
@@ -205,7 +205,7 @@ export function CustomerDashboard() {
         {/* Membership Progress */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle as="h2" className="flex items-center">
               <Star className="mr-2 h-5 w-5 text-yellow-500" />
               Programa de Fidelidade
             </CardTitle>
@@ -245,7 +245,7 @@ export function CustomerDashboard() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
+            <CardTitle as="h2">Ações Rápidas</CardTitle>
             <CardDescription>
               Acesso direto às principais funcionalidades
             </CardDescription>
@@ -279,7 +279,7 @@ export function CustomerDashboard() {
       {/* Recent Orders */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex flex-wrap items-center justify-between gap-3">
+          <CardTitle as="h2" className="flex flex-wrap items-center justify-between gap-3">
             <span className="flex items-center">
               <Package className="mr-2 h-5 w-5" />
               Pedidos Recentes

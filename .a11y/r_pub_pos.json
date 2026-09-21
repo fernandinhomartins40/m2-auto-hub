@@ -1,0 +1,245 @@
+[
+ {
+  "id": "P1-landing",
+  "url": "/",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 28,
+    "exemplos": [
+     {
+      "alvo": ".card-glow.group.bg-secondary:nth-child(1) > .mb-3 > .bg-primary\\/10.inline-block.py-1",
+      "html": "<span class=\"inline-block bg-primary/10 text-primary text-xs font-heading font-semibold px-3 py-1 rounded-full\">Revisões",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.04 (foreground color: #166df8, background color: #04122e, font size: 9.0pt (12px), fo"
+     },
+     {
+      "alvo": ".card-glow.group.bg-secondary:nth-child(1) > .flex-col.gap-3.flex > .min-h-\\[44px\\].px-2.hover\\:underline",
+      "html": "<a href=\"https://wa.me/551199...\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex min-h-[4...\">",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.36 (foreground color: #166df8, background color: #020817, font size: 10.5pt (14px), f"
+     },
+     {
+      "alvo": ".card-glow.group.bg-secondary:nth-child(2) > .mb-3 > .bg-primary\\/10.inline-block.py-1",
+      "html": "<span class=\"inline-block bg-primary/10 text-primary text-xs font-heading font-semibold px-3 py-1 rounded-full\">Revisões",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.04 (foreground color: #166df8, background color: #04122e, font size: 9.0pt (12px), fo"
+     }
+    ]
+   },
+   {
+    "id": "link-name",
+    "impact": "serious",
+    "help": "Links must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag244",
+     "wcag412"
+    ],
+    "count": 2,
+    "exemplos": [
+     {
+      "alvo": ".w-10.hover\\:bg-primary\\/25.h-10:nth-child(1)",
+      "html": "<a href=\"https://instagram.com/m2autocenterpalmital\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"w-10 h-10 rounded-",
+      "resumo": "Fix all of the following: |   Element is in tab order and does not have accessible text"
+     },
+     {
+      "alvo": "a[href=\"https://wa.me/5542991215515\"]",
+      "html": "<a href=\"https://wa.me/5542991215515\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"w-10 h-10 rounded-full bg-primary",
+      "resumo": "Fix all of the following: |   Element is in tab order and does not have accessible text"
+     }
+    ]
+   },
+   {
+    "id": "select-name",
+    "impact": "critical",
+    "help": "Select element must have an accessible name",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": "select",
+      "html": "<select required=\"\" class=\"w-full px-4 py-3 rounded-md border border-border bg-background text-foreground font-body focu",
+      "resumo": "Fix any of the following: |   Element does not have an implicit (wrapped) <label>"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1",
+    "h2",
+    "h2",
+    "h3",
+    "h3",
+    "h3",
+    "h3",
+    "h3"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 1,
+    "footer": 1
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 10
+  }
+ },
+ {
+  "id": "P2-login-cli",
+  "url": "/customer-login/",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "button-name",
+    "impact": "critical",
+    "help": "Buttons must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": ".transition-colors",
+      "html": "<button class=\"inline-flex items-ce...\" type=\"button\" tabindex=\"-1\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     }
+    ]
+   },
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": "#radix-\\:r0\\:-trigger-register",
+      "html": "<button type=\"button\" role=\"tab\" aria-selected=\"false\" aria-controls=\"radix-:r0:-content-r...\" data-state=\"inactive\" id=",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 3.8 (foreground color: #6b7280, background color: #e2e4e9, font size: 10.5pt (14px), fo"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1",
+    "h2"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 0,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": false,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "P3-login-adm",
+  "url": "/admin-login/",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "button-name",
+    "impact": "critical",
+    "help": "Buttons must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": ".transition-colors",
+      "html": "<button class=\"inline-flex items-ce...\" type=\"button\" tabindex=\"-1\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 0,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": false,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "P7-404",
+  "url": "/rota-inexistente",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": "a",
+      "html": "<a href=\"/\" class=\"text-blue-500 hover:text-blue-700 underline\">Return to Home</a>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 3.34 (foreground color: #3b82f6, background color: #f3f4f6, font size: 12.0pt (16px), f"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 0,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": false,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ }
+]

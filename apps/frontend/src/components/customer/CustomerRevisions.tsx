@@ -524,7 +524,7 @@ export function CustomerRevisions() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-4 nb:grid-cols-4">
                       <div className="rounded-lg bg-gray-50 p-3 text-center">
                         <div className="flex items-center justify-center gap-1 text-gray-600">
                           <FileText className="h-4 w-4" />

@@ -128,28 +128,31 @@ export function MobileDrawer({
         <Separator />
 
         <nav className="min-h-0 flex-1 overflow-y-auto p-2">
-          <div className="space-y-1">
+          {/* `ul/li` para o leitor anunciar tamanho e posicao (A-16). */}
+          <ul className="m-0 list-none space-y-1 p-0">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
 
               return (
-                <button
-                  key={item.id}
-                  onClick={() => handleItemClick(item.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors touch-manipulation",
-                    isActive
-                      ? "bg-moria-orange/10 text-moria-orange font-medium"
-                      : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </button>
+                <li key={item.id}>
+                  <button
+                    onClick={() => handleItemClick(item.id)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors touch-manipulation",
+                      isActive
+                        ? "bg-moria-orange/10 text-moria-orange font-medium"
+                        : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+                    )}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </nav>
 
         <Separator />

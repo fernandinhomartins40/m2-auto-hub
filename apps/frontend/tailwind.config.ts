@@ -20,6 +20,20 @@ export default {
       },
     },
     extend: {
+      // Os breakpoints padrao do Tailwind ficam intactos. Estes dois cobrem a
+      // faixa que faltava: entre `lg` (1024) e `xl` (1280) nada mudava, e e
+      // justamente onde a sidebar de 288px deixa o conteudo apertado.
+      // `nb` = 1180px: menor largura MEDIDA em que uma grid de 4 colunas do
+      // painel para de cortar texto (ver RESPONSIVE-UX-AUDIT.md secao 3).
+      screens: {
+        nb: "1180px",
+        // A sidebar larga volta DEPOIS das grids abrirem para 4 colunas. Se as
+        // duas coisas acontecessem no mesmo pixel, o conteudo perderia 216px
+        // no exato momento em que passa a pedir mais colunas — que e o bug
+        // original deste projeto, so que deslocado. [MEDIDO]
+        "sidebar-full": "1400px",
+        "3xl": "1728px",
+      },
       fontFamily: {
         heading: ["Rajdhani", "sans-serif"],
         body: ["Inter", "sans-serif"],

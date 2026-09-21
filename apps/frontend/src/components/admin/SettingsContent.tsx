@@ -543,7 +543,7 @@ export function SettingsContent() {
 
           {/* Informações da Loja */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium border-b pb-2">Informações da Loja</h3>
+            <h2 className="text-lg font-medium border-b pb-2">Informações da Loja</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="storeName">Nome da Loja *</Label>
@@ -726,7 +726,7 @@ export function SettingsContent() {
 
           {/* Configurações de Vendas */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium border-b pb-2">Configurações de Vendas</h3>
+            <h2 className="text-lg font-medium border-b pb-2">Configurações de Vendas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="defaultMargin">Margem de Lucro Padrão (%)</Label>
@@ -794,7 +794,7 @@ export function SettingsContent() {
 
           {/* Notificações */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium border-b pb-2">Notificações</h3>
+            <h2 className="text-lg font-medium border-b pb-2">Notificações</h2>
             <div className="space-y-4">
               <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -857,7 +857,7 @@ export function SettingsContent() {
 
           {/* Integrações */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium border-b pb-2">Integrações</h3>
+            <h2 className="text-lg font-medium border-b pb-2">Integrações</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-4">

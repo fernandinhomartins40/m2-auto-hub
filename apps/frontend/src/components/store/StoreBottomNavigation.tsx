@@ -52,8 +52,10 @@ export default function StoreBottomNavigation({
         </button>
       )}
 
-      <div
-        className="grid h-16"
+      {/* `ul/li` para o leitor anunciar tamanho e posicao (A-16). O `li` usa
+          `contents` para nao entrar como faixa extra na grid de colunas. */}
+      <ul
+        className="m-0 grid h-16 list-none p-0"
         style={{ gridTemplateColumns: `repeat(${Math.max(items.length, 1)}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {
@@ -61,8 +63,8 @@ export default function StoreBottomNavigation({
           const isActive = currentTab === item.id;
 
           return (
+            <li key={item.id} className="contents">
             <button
-              key={item.id}
               type="button"
               onClick={() => handleClick(item.id)}
               className={cn(
@@ -90,9 +92,10 @@ export default function StoreBottomNavigation({
                 {item.label}
               </span>
             </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
       <div className="h-safe-area-inset-bottom bg-white" />
     </nav>

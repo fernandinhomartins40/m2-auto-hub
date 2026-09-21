@@ -1,0 +1,266 @@
+[
+ {
+  "id": "C1-inicio",
+  "url": "/customer/inicio",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "aria-progressbar-name",
+    "impact": "serious",
+    "help": "ARIA progressbar nodes must have an accessible name",
+    "wcag": [
+     "wcag2a",
+     "wcag111"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": ".bg-secondary",
+      "html": "<div aria-valuemax=\"100\" aria-valuemin=\"0\" role=\"progressbar\" data-state=\"indeterminate\" data-max=\"100\" class=\"relative ",
+      "resumo": "Fix any of the following: |   aria-label attribute does not exist or is empty"
+     }
+    ]
+   },
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 7,
+    "exemplos": [
+     {
+      "alvo": ".text-green-600.justify-center.flex > .text-lg",
+      "html": "<span class=\"text-lg font-bold\">R$&nbsp;4.500,00</span>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 3.29 (foreground color: #16a34a, background color: #ffffff, font size: 13.5pt (18px), f"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .font-medium",
+      "html": "<div class=\"font-medium\">Dashboard</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4 (foreground color: #166df8, background color: #e8f0fe, font size: 10.5pt (14px), font"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .text-xs.text-muted-foreground",
+      "html": "<div class=\"text-xs text-muted-foreground\">Visão geral da conta</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.21 (foreground color: #6b7280, background color: #e8f0fe, font size: 9.0pt (12px), fo"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h3",
+    "h3",
+    "h1",
+    "h2",
+    "h2",
+    "h2"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 1,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "C2-perfil",
+  "url": "/customer/perfil",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 5,
+    "exemplos": [
+     {
+      "alvo": ".text-green-600 > .text-lg",
+      "html": "<span class=\"text-lg font-bold\">R$&nbsp;4.500,00</span>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 3.29 (foreground color: #16a34a, background color: #ffffff, font size: 13.5pt (18px), f"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .font-medium",
+      "html": "<div class=\"font-medium\">Meu Perfil</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4 (foreground color: #166df8, background color: #e8f0fe, font size: 10.5pt (14px), font"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .text-xs.text-muted-foreground",
+      "html": "<div class=\"text-xs text-muted-foreground\">Dados pessoais e endereços</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.21 (foreground color: #6b7280, background color: #e8f0fe, font size: 9.0pt (12px), fo"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h3",
+    "h3",
+    "h1",
+    "h2"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 1,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "C5-veiculos",
+  "url": "/customer/veiculos",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 3,
+    "exemplos": [
+     {
+      "alvo": ".text-green-600 > span",
+      "html": "<span class=\"text-lg font-bold\">R$&nbsp;4.500,00</span>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 3.29 (foreground color: #16a34a, background color: #ffffff, font size: 13.5pt (18px), f"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .font-medium",
+      "html": "<div class=\"font-medium\">Meus Veículos</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4 (foreground color: #166df8, background color: #e8f0fe, font size: 10.5pt (14px), font"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .text-xs.text-muted-foreground",
+      "html": "<div class=\"text-xs text-muted-foreground\">Gerencie seus veículos</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.21 (foreground color: #6b7280, background color: #e8f0fe, font size: 9.0pt (12px), fo"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h3",
+    "h3",
+    "h1"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 1,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "C9-suporte",
+  "url": "/customer/suporte",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "button-name",
+    "impact": "critical",
+    "help": "Buttons must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 2,
+    "exemplos": [
+     {
+      "alvo": "button[aria-controls=\"radix-:r0:\"]",
+      "html": "<button type=\"button\" role=\"combobox\" aria-controls=\"radix-:r0:\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     },
+     {
+      "alvo": "button[aria-controls=\"radix-:r1:\"]",
+      "html": "<button type=\"button\" role=\"combobox\" aria-controls=\"radix-:r1:\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     }
+    ]
+   },
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 3,
+    "exemplos": [
+     {
+      "alvo": ".text-green-600 > .text-lg",
+      "html": "<span class=\"text-lg font-bold\">R$&nbsp;4.500,00</span>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 3.29 (foreground color: #16a34a, background color: #ffffff, font size: 13.5pt (18px), f"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .font-medium",
+      "html": "<div class=\"font-medium\">Suporte</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4 (foreground color: #166df8, background color: #e8f0fe, font size: 10.5pt (14px), font"
+     },
+     {
+      "alvo": ".hover\\:bg-secondary-hover > .text-left > .text-xs.text-muted-foreground",
+      "html": "<div class=\"text-xs text-muted-foreground\">Atendimento ao cliente</div>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.21 (foreground color: #6b7280, background color: #e8f0fe, font size: 9.0pt (12px), fo"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h3",
+    "h3",
+    "h1",
+    "h2",
+    "h2",
+    "h2",
+    "h2",
+    "h3"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 1,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ }
+]

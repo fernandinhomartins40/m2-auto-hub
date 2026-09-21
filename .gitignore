@@ -36,3 +36,7 @@ Thumbs.db
 
 # Credenciais de acesso ao painel (senhas reais, nunca versionar)
 CREDENCIAIS-ACESSO.md
+
+# Auditoria de acessibilidade: os scripts sao versionados, mas as sessoes
+# autenticadas (.a11y/state_*.json) guardam JWT real e nunca entram no repo.
+.a11y/state_*.json

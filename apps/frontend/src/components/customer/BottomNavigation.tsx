@@ -36,14 +36,16 @@ export function BottomNavigation({
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-bottom">
-      <div className="grid grid-cols-5 h-16">
+      {/* `ul/li` para o leitor anunciar tamanho e posicao (A-16). O `li` usa
+          `contents` para nao entrar como faixa extra na grid de 5 colunas. */}
+      <ul className="m-0 grid h-16 list-none grid-cols-5 p-0">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
 
           return (
+            <li key={item.id} className="contents">
             <button
-              key={item.id}
               onClick={() => handleClick(item.id)}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-colors touch-manipulation",
@@ -64,9 +66,10 @@ export function BottomNavigation({
                 {item.label}
               </span>
             </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
       <div className="h-safe-area-inset-bottom bg-white" />
     </nav>

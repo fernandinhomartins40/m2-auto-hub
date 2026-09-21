@@ -191,7 +191,7 @@ export function RevisionAppointmentsContent() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Solicitados</CardTitle>
+            <CardTitle as="h2" className="text-sm font-medium">Solicitados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.requested}</div>
@@ -200,7 +200,7 @@ export function RevisionAppointmentsContent() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Agendados</CardTitle>
+            <CardTitle as="h2" className="text-sm font-medium">Agendados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.scheduled}</div>
@@ -209,7 +209,7 @@ export function RevisionAppointmentsContent() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Em atendimento</CardTitle>
+            <CardTitle as="h2" className="text-sm font-medium">Em atendimento</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.inService}</div>

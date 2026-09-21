@@ -66,7 +66,7 @@ export function SupportDashboard() {
 
       {/* Estatísticas */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 nb:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -151,7 +151,7 @@ export function SupportDashboard() {
       {config && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle as="h2" className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
               Horários de Atendimento
               <Badge variant={config.status.isOnline ? 'default' : 'secondary'} className={config.status.isOnline ? 'bg-green-500' : 'bg-gray-500'}>

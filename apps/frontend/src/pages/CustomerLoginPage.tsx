@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 
 import { CustomerAuthCard } from "@/components/customer/CustomerAuthCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { MAIN_CONTENT_ID } from "@/components/layout/SkipToContent";
 import { usePwaLoginBackGuard } from "@/hooks/usePwaLoginBackGuard";
 
 export default function CustomerLoginPage() {
@@ -25,8 +26,12 @@ export default function CustomerLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4">
+    <main
+      id={MAIN_CONTENT_ID}
+      tabIndex={-1}
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4 outline-none"
+    >
       <CustomerAuthCard showInstallBanner />
-    </div>
+    </main>
   );
 }

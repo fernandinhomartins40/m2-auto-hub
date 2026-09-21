@@ -6,6 +6,7 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { MAIN_CONTENT_ID } from "@/components/layout/SkipToContent";
 import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,7 +65,11 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-stone-100 p-4">
+    <main
+      id={MAIN_CONTENT_ID}
+      tabIndex={-1}
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-stone-100 p-4 outline-none"
+    >
       <div className="w-full max-w-md space-y-4">
         {showInstallBanner ? (
           <div className="space-y-3">
@@ -137,6 +142,6 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
           <p className="text-sm text-gray-600">© 2026 M2 Center Auto</p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

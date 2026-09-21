@@ -1,0 +1,4 @@
+[{"id":"P1-landing","url":"/"},
+ {"id":"P2-login-cli","url":"/customer-login/"},
+ {"id":"P3-login-adm","url":"/admin-login/"},
+ {"id":"P7-404","url":"/rota-inexistente"}]

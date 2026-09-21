@@ -148,7 +148,7 @@ export function RevisionsListContent() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <CardTitle as="h2" className="flex items-center gap-2 text-base sm:text-lg">
             <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
             Filtros
           </CardTitle>
@@ -186,7 +186,7 @@ export function RevisionsListContent() {
       {/* Revisions List */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base sm:text-lg">
+          <CardTitle as="h2" className="text-base sm:text-lg">
             Revisões ({filteredRevisions.length})
           </CardTitle>
         </CardHeader>

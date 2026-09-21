@@ -218,7 +218,7 @@ export function AdminPromotionsOverview({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <div className="mb-4 grid grid-cols-2 gap-4 nb:grid-cols-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-gray-500" />

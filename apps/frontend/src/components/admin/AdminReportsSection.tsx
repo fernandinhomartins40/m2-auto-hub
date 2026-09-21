@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { AdminPageHeader } from "./AdminPageHeader";
+import { StatGrid } from "../layout/ResponsiveGrids";
 import type { CompleteReportData } from "@/api/reportService";
 import type { ReportExportSection } from "@/utils/reportPdf";
 import { formatCurrency as formatPrice } from '@/lib/format';
@@ -135,7 +136,7 @@ export function AdminReportsSection({
       </Card>
 
       {/* Cards de Métricas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatGrid className="nb:gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -204,7 +205,7 @@ export function AdminReportsSection({
             </div>
           </CardContent>
         </Card>
-      </div>
+      </StatGrid>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfico de Vendas por Mês */}

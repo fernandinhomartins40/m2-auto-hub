@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { BottomNavigation } from "./BottomNavigation";
 import { MobileDrawer } from "./MobileDrawer";
+import { MAIN_CONTENT_ID, SkipToContent } from "../layout/SkipToContent";
 import {
   User,
   Package,
@@ -150,13 +151,15 @@ export function CustomerLayout({
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Banner de instalação PWA - só mostra se não estiver instalado */}
 
+        <SkipToContent />
+
         {/* Header Mobile Compacto */}
-        <div className="bg-white border-b sticky top-0 z-10">
+        <header className="bg-white border-b sticky top-0 z-10">
           <div className="px-4 py-3">
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-bold text-gray-800">
+              <p className="text-lg font-bold text-gray-800">
                 M2 Cliente
-              </h1>
+              </p>
 
               <Button
                 variant="ghost"
@@ -174,10 +177,12 @@ export function CustomerLayout({
               </Button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Main Content Mobile */}
-        <div className="px-4 py-4">{children}</div>
+        <main id={MAIN_CONTENT_ID} tabIndex={-1} className="px-4 py-4 outline-none">
+          {children}
+        </main>
 
         {/* Bottom Navigation */}
         <BottomNavigation
@@ -204,13 +209,15 @@ export function CustomerLayout({
     <div className="min-h-screen bg-gray-50">
       {/* Banner de instalação PWA - só mostra se não estiver instalado */}
 
+      <SkipToContent />
+
       {/* Header com carrinho */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-800">
+            <p className="text-xl font-bold text-gray-800">
               Painel do Cliente
-            </h1>
+            </p>
 
             <Button
               variant="ghost"
@@ -228,12 +235,19 @@ export function CustomerLayout({
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* O layout mobile sai em 768px (useIsMobile), mas esta grid so
+            dividia em `lg` (1024). Entre 768 e 1024 sobrava uma coluna so: o
+            cartao de perfil e os 9 itens de menu ocupavam a tela inteira e o
+            conteudo ficava abaixo de tudo. Dividir em `md` fecha essa faixa. */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 nb:grid-cols-4">
           {/* Sidebar Desktop */}
-          <div className="lg:col-span-1">
+          {/* `aside` em vez de `div`: o cartao de perfil e o menu ficavam fora
+              de qualquer landmark, e o axe reportava cada no como `region`
+              (A-02). `aside` e a regiao correta para conteudo complementar. */}
+          <aside aria-label="Resumo da conta e menu" className="md:col-span-1">
             <div className="space-y-4">
               {/* Customer Info Card */}
               <Card>
@@ -301,32 +315,39 @@ export function CustomerLayout({
                   <CardTitle className="text-base">Menu</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <nav className="space-y-1">
-                    {menuItems.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = currentTab === item.id;
+                  <nav>
+                    {/* `ul/li` para o leitor anunciar tamanho e posicao do item
+                        (A-16); o `space-y-1` acompanha a lista, que passou a
+                        ser o filho direto do nav. */}
+                    <ul className="m-0 list-none space-y-1 p-0">
+                      {menuItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentTab === item.id;
 
-                      return (
-                        <Button
-                          key={item.id}
-                          variant={isActive ? "secondary" : "ghost"}
-                          className={`w-full justify-start h-auto p-4 ${
-                            isActive
-                              ? "bg-moria-orange/10 text-moria-orange border-r-2 border-moria-orange"
-                              : "hover:bg-moria-orange/5"
-                          }`}
-                          onClick={() => onTabChange(item.id)}
-                        >
-                          <Icon className="w-4 h-4 mr-3" />
-                          <div className="text-left">
-                            <div className="font-medium">{item.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {item.description}
-                            </div>
-                          </div>
-                        </Button>
-                      );
-                    })}
+                        return (
+                          <li key={item.id}>
+                            <Button
+                              variant={isActive ? "secondary" : "ghost"}
+                              aria-current={isActive ? "page" : undefined}
+                              className={`w-full justify-start h-auto p-4 ${
+                                isActive
+                                  ? "bg-moria-orange/10 text-moria-orange border-r-2 border-moria-orange"
+                                  : "hover:bg-moria-orange/5"
+                              }`}
+                              onClick={() => onTabChange(item.id)}
+                            >
+                              <Icon className="w-4 h-4 mr-3" />
+                              <div className="text-left">
+                                <div className="font-medium">{item.label}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {item.description}
+                                </div>
+                              </div>
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </nav>
 
                   <Separator className="my-2" />
@@ -344,10 +365,16 @@ export function CustomerLayout({
                 </CardContent>
               </Card>
             </div>
-          </div>
+          </aside>
 
           {/* Main Content Desktop */}
-          <div className="lg:col-span-3">{children}</div>
+          <main
+            id={MAIN_CONTENT_ID}
+            tabIndex={-1}
+            className="min-w-0 outline-none md:col-span-2 nb:col-span-3"
+          >
+            {children}
+          </main>
         </div>
       </div>
     </div>

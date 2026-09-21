@@ -29,11 +29,18 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
+/**
+ * `as` permite corrigir a hierarquia de headings da pagina sem mexer no visual
+ * nem migrar as centenas de cards existentes: o padrao continua `h3`, e so as
+ * rotas auditadas passam o nivel certo (A-06 h1 ausente, A-11 salto h1->h3).
+ */
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement> & {
+    as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  }
+>(({ className, as: Comp = "h3", ...props }, ref) => (
+  <Comp
     ref={ref}
     className={cn(
       "text-2xl font-semibold leading-none tracking-tight",

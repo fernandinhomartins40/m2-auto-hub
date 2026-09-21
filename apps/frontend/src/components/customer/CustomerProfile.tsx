@@ -304,7 +304,7 @@ export function CustomerProfile() {
                   prefere quebrar quando nao cabe. */}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0 flex-1 basis-[14rem]">
-                  <CardTitle className="flex items-center">
+                  <CardTitle as="h2" className="flex items-center">
                     <User className="mr-2 h-5 w-5 shrink-0" />
                     Informações Pessoais
                   </CardTitle>
@@ -454,7 +454,7 @@ export function CustomerProfile() {
         <TabsContent value="security">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle as="h2" className="flex items-center">
                 <Lock className="mr-2 h-5 w-5" />
                 Alterar Senha
               </CardTitle>
@@ -532,7 +532,7 @@ export function CustomerProfile() {
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <CardTitle className="flex items-center">
+                  <CardTitle as="h2" className="flex items-center">
                     <MapPin className="mr-2 h-5 w-5" />
                     Meus Endereços
                   </CardTitle>

@@ -10,6 +10,7 @@ import promotionService from '../api/promotionService';
 import type { AdvancedPromotion } from '../types/promotions';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency as formatPrice } from '@/lib/format';
+import { MAIN_CONTENT_ID } from '../components/layout/SkipToContent';
 
 export default function Promocoes() {
   const navigate = useNavigate();
@@ -95,7 +96,9 @@ export default function Promocoes() {
         <meta name="description" content="Confira todas as promoções ativas e economize na compra de peças e serviços automotivos" />
       </Helmet>
 
-      <div className="min-h-screen bg-gray-50">
+      {/* Um `main` por pagina (A-02). Sem navegacao antes do conteudo, esta
+          rota nao precisa de skip link. */}
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="min-h-screen bg-gray-50 outline-none">
         {/* Header da Página */}
         <div className="bg-gradient-to-r from-moria-orange to-orange-600 text-white py-12">
           <div className="container mx-auto px-4">
@@ -267,7 +270,7 @@ export default function Promocoes() {
             </div>
           </div>
         )}
-      </div>
+      </main>
     </>
   );
 }

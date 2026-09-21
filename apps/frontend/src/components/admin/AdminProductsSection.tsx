@@ -363,7 +363,9 @@ export function AdminProductsSection({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm sm:text-base md:text-lg font-semibold break-words leading-snug">{product.name}</h3>
+                            {/* h2: cada produto e um item logo abaixo do h1 da rota, sem nivel
+                                intermediario; como h3 o salto era h1->h3 (A-11). */}
+                            <h2 className="text-sm sm:text-base md:text-lg font-semibold break-words leading-snug">{product.name}</h2>
                             <p className="text-xs sm:text-sm text-gray-600 mb-1.5 line-clamp-1 sm:line-clamp-2 break-words">{product.description}</p>
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                               <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">

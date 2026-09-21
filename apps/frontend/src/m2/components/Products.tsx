@@ -154,7 +154,7 @@ const Products = () => {
                       href={whatsappLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center text-primary font-heading font-semibold text-sm hover:underline"
+                      className="inline-flex min-h-[44px] items-center justify-center px-2 py-2 text-primary font-heading font-semibold text-sm hover:underline"
                     >
                       Solicitar pelo WhatsApp
                     </a>

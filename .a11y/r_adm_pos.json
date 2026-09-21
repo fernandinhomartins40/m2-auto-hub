@@ -1,0 +1,331 @@
+[
+ {
+  "id": "A1-dashboard",
+  "url": "/store-panel/dashboard",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "button-name",
+    "impact": "critical",
+    "help": "Buttons must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 6,
+    "exemplos": [
+     {
+      "alvo": ".border-l-4.border-l-moria-orange.bg-white:nth-child(1) > .justify-between.items-start.gap-3 > .hover\\:bg-accent.hover\\:text-accent-foreground.shrink-0",
+      "html": "<button class=\"inline-flex items-ce...\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     },
+     {
+      "alvo": ".border-l-4.border-l-moria-orange.bg-white:nth-child(2) > .justify-between.items-start.gap-3 > .hover\\:bg-accent.hover\\:text-accent-foreground.shrink-0",
+      "html": "<button class=\"inline-flex items-ce...\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     },
+     {
+      "alvo": ".border-l-4.border-l-moria-orange.bg-white:nth-child(3) > .justify-between.items-start.gap-3 > .hover\\:bg-accent.hover\\:text-accent-foreground.shrink-0",
+      "html": "<button class=\"inline-flex items-ce...\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1",
+    "h2",
+    "h3",
+    "h3"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "A6-produtos",
+  "url": "/store-panel/produtos",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "button-name",
+    "impact": "critical",
+    "help": "Buttons must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": ".justify-between",
+      "html": "<button type=\"button\" role=\"combobox\" aria-controls=\"radix-:r0:\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1",
+    "h2",
+    "h2",
+    "h2",
+    "h2",
+    "h2",
+    "h2",
+    "h2"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "A9-clientes",
+  "url": "/store-panel/clientes",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 2,
+    "exemplos": [
+     {
+      "alvo": ".p-4.rounded-lg.border:nth-child(1) > .gap-4.lg\\:flex-row.lg\\:items-start > .items-start.space-x-3.min-w-0 > .min-w-0 > .text-gray-400.text-xs",
+      "html": "<p class=\"text-xs text-gray-400\">Cadastrado: 20/09/2026</p>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 2.53 (foreground color: #9ca3af, background color: #ffffff, font size: 9.0pt (12px), fo"
+     },
+     {
+      "alvo": ".p-4.rounded-lg.border:nth-child(2) > .gap-4.lg\\:flex-row.lg\\:items-start > .items-start.space-x-3.min-w-0 > .min-w-0 > .text-gray-400.text-xs",
+      "html": "<p class=\"text-xs text-gray-400\">Cadastrado: 20/09/2026</p>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 2.53 (foreground color: #9ca3af, background color: #ffffff, font size: 9.0pt (12px), fo"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "A20-usuarios",
+  "url": "/store-panel/usuarios",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "button-name",
+    "impact": "critical",
+    "help": "Buttons must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 16,
+    "exemplos": [
+     {
+      "alvo": "button[aria-controls=\"radix-:r0:\"]",
+      "html": "<button type=\"button\" role=\"combobox\" aria-controls=\"radix-:r0:\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     },
+     {
+      "alvo": "button[aria-controls=\"radix-:r1:\"]",
+      "html": "<button type=\"button\" role=\"combobox\" aria-controls=\"radix-:r1:\" aria-expanded=\"false\" aria-autocomplete=\"none\" dir=\"ltr",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     },
+     {
+      "alvo": "tr:nth-child(1) > td:nth-child(6) > .gap-2.flex > .hover\\:bg-accent.hover\\:text-accent-foreground.h-9:nth-child(2)",
+      "html": "<button class=\"inline-flex items-ce...\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "A5-revisoes",
+  "url": "/store-panel/revisoes",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "wcag": [
+     "wcag2aa",
+     "wcag143"
+    ],
+    "count": 2,
+    "exemplos": [
+     {
+      "alvo": ".border-moria-orange.bg-transparent.sm\\:flex-none:nth-child(2)",
+      "html": "<button class=\"inline-flex items-ce...\">",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.38 (foreground color: #166df8, background color: #f8fafc, font size: 10.5pt (14px), f"
+     },
+     {
+      "alvo": ".sm\\:inline",
+      "html": "<span class=\"hidden sm:inline\">Nova Revisão</span>",
+      "resumo": "Fix any of the following: |   Element has insufficient color contrast of 4.38 (foreground color: #166df8, background color: #f8fafc, font size: 10.5pt (14px), f"
+     }
+    ]
+   },
+   {
+    "id": "select-name",
+    "impact": "critical",
+    "help": "Select element must have an accessible name",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 1,
+    "exemplos": [
+     {
+      "alvo": "select",
+      "html": "<select class=\"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm\">",
+      "resumo": "Fix any of the following: |   Element does not have an implicit (wrapped) <label>"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1",
+    "h2",
+    "h2",
+    "h2"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ },
+ {
+  "id": "A19-config",
+  "url": "/store-panel/configuracoes",
+  "width": 1280,
+  "violations": [
+   {
+    "id": "button-name",
+    "impact": "critical",
+    "help": "Buttons must have discernible text",
+    "wcag": [
+     "wcag2a",
+     "wcag412"
+    ],
+    "count": 11,
+    "exemplos": [
+     {
+      "alvo": ".sm\\:flex-row.gap-2.flex-col > .sm\\:w-auto.px-4.bg-transparent",
+      "html": "<button class=\"inline-flex items-ce...\" type=\"button\" disabled=\"\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     },
+     {
+      "alvo": ".w-10.bg-transparent.border-moria-orange:nth-child(3)",
+      "html": "<button class=\"inline-flex items-ce...\" type=\"button\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     },
+     {
+      "alvo": ".w-10.bg-transparent.border-moria-orange:nth-child(4)",
+      "html": "<button class=\"inline-flex items-ce...\" type=\"button\">",
+      "resumo": "Fix any of the following: |   Element does not have inner text that is visible to screen readers"
+     }
+    ]
+   }
+  ],
+  "extra": {
+   "h1": 1,
+   "sequencia": [
+    "h1",
+    "h2",
+    "h2",
+    "h2",
+    "h2",
+    "h3",
+    "h3",
+    "h3"
+   ],
+   "saltos": [],
+   "landmarks": {
+    "main": 1,
+    "nav": 1,
+    "header": 0,
+    "footer": 0
+   },
+   "skipLink": true,
+   "langHtml": "pt-BR",
+   "divComOnClick": 0,
+   "imgSemAlt": 0,
+   "totalImg": 0
+  }
+ }
+]

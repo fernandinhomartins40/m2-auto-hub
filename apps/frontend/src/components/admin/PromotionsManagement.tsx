@@ -280,7 +280,7 @@ export function PromotionsManagement() {
             />
           </CardHeader>
           <CardContent>
-            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="mb-6 grid grid-cols-2 gap-4 nb:grid-cols-4">
               <div className="rounded-lg border bg-slate-50 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Promoções</p>
                 <p className="mt-2 text-2xl font-bold text-slate-900">{summary.total}</p>

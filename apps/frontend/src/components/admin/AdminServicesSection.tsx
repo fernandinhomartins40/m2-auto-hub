@@ -350,7 +350,8 @@ export function AdminServicesSection({
                         <Wrench className="h-6 w-6" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold">{service.name}</h3>
+                        {/* h2: item logo abaixo do h1 da rota, sem nivel intermediario (A-11). */}
+                        <h2 className="text-lg font-semibold">{service.name}</h2>
                         <p className="text-sm text-gray-600 mb-2">{service.description}</p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -379,7 +380,7 @@ export function AdminServicesSection({
                   </div>
 
                   {/* Informações detalhadas */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                  <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-4">
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-gray-500" />
                       <div>
@@ -400,7 +401,7 @@ export function AdminServicesSection({
                   </div>
 
                   {/* Ações */}
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                     <Button
                       variant="outline"
                       size="sm"

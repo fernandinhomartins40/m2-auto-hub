@@ -117,39 +117,45 @@ export default function StoreMobileDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain p-3 touch-pan-y">
-          <nav className="space-y-4">
-            {Object.entries(groupedItems).map(([section, sectionItems]) => (
-              <div key={section} className="rounded-2xl border border-gray-200 bg-gray-50/80 p-2">
-                <div className="px-2 pb-2 pt-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                    {section}
-                  </p>
-                </div>
+          <nav>
+            {/* `ul/li` para o leitor anunciar tamanho e posicao (A-16). O
+                `space-y-*` acompanha a lista porque espaca filhos diretos. */}
+            <ul className="m-0 list-none space-y-4 p-0">
+              {Object.entries(groupedItems).map(([section, sectionItems]) => (
+                <li key={section} className="rounded-2xl border border-gray-200 bg-gray-50/80 p-2">
+                  <div className="px-2 pb-2 pt-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                      {section}
+                    </p>
+                  </div>
 
-                <div className="space-y-1">
-                  {sectionItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = currentTab === item.id;
+                  <ul className="m-0 list-none space-y-1 p-0">
+                    {sectionItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentTab === item.id;
 
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleItemClick(item.id)}
-                        className={cn(
-                          'flex min-h-[44px] w-full touch-manipulation items-center gap-3 rounded-xl px-4 py-3 transition-all',
-                          isActive
-                            ? 'bg-moria-orange font-medium text-white shadow-sm'
-                            : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
-                        )}
-                      >
-                        <Icon className="h-5 w-5 flex-shrink-0" />
-                        <span className="text-sm">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+                      return (
+                        <li key={item.id}>
+                          <button
+                            onClick={() => handleItemClick(item.id)}
+                            aria-current={isActive ? 'page' : undefined}
+                            className={cn(
+                              'flex min-h-[44px] w-full touch-manipulation items-center gap-3 rounded-xl px-4 py-3 transition-all',
+                              isActive
+                                ? 'bg-moria-orange font-medium text-white shadow-sm'
+                                : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
+                            )}
+                          >
+                            <Icon className="h-5 w-5 flex-shrink-0" />
+                            <span className="text-sm">{item.label}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </li>
+              ))}
+            </ul>
           </nav>
         </div>
 

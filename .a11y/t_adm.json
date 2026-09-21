@@ -1,0 +1,6 @@
+[{"id":"A1-dashboard","url":"/store-panel/dashboard"},
+ {"id":"A6-produtos","url":"/store-panel/produtos"},
+ {"id":"A9-clientes","url":"/store-panel/clientes"},
+ {"id":"A20-usuarios","url":"/store-panel/usuarios"},
+ {"id":"A5-revisoes","url":"/store-panel/revisoes"},
+ {"id":"A19-config","url":"/store-panel/configuracoes"}]
