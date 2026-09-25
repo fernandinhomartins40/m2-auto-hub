@@ -7,6 +7,7 @@ import { AdminLoginDto } from './dto/admin-login.dto.js';
 import { CreateAdminDto } from './dto/create-admin.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { UpdateAdminProfileDto } from './dto/update-profile.dto.js';
+import { UpdateAdminDto } from './dto/update-admin.dto.js';
 import { logger } from '@shared/utils/logger.util.js';
 
 export interface AdminAuthResponse {
@@ -22,9 +23,11 @@ export class AdminAuthService {
     try {
       logger.info(`Admin login attempt: ${dto.email}`);
 
-      // Find admin by email
-      const admin = await prisma.admin.findUnique({
-        where: { email: dto.email },
+      // Busca sem diferenciar maiúsculas: a edição de usuário gravava o email
+      // como digitado, e o DTO de login sempre chega em minúsculas.
+      const admin = await prisma.admin.findFirst({
+        where: { email: { equals: dto.email, mode: 'insensitive' } },
+        orderBy: { createdAt: 'asc' },
       });
 
       if (!admin) {
@@ -63,12 +66,20 @@ export class AdminAuthService {
 
       // Generate JWT token
       logger.info('Generating JWT token...');
-      const token = JwtUtil.generateAdminToken({
-        adminId: admin.id,
-        email: admin.email,
-        role: admin.role,
-        status: admin.status,
-      });
+      // Sem "manter conectado" o token vale só um turno de trabalho: o cookie
+      // de sessão pode sobreviver ao fechar o navegador quando ele restaura
+      // abas, então o limite real precisa estar no próprio JWT.
+      const expiresIn =
+        dto.rememberMe === true ? '30d' : dto.rememberMe === false ? '12h' : undefined;
+      const token = JwtUtil.generateAdminToken(
+        {
+          adminId: admin.id,
+          email: admin.email,
+          role: admin.role,
+          status: admin.status,
+        },
+        expiresIn
+      );
 
       // Remove password from response
       const { password, ...adminWithoutPassword } = admin;
@@ -614,11 +625,7 @@ export class AdminAuthService {
   async updateAdmin(
     updaterAdminId: string,
     targetAdminId: string,
-    data: {
-      name?: string;
-      role?: AdminRole;
-      status?: AdminStatus;
-    }
+    dto: UpdateAdminDto
   ): Promise<Omit<Admin, 'password'>> {
     try {
       // Verificar permissões do atualizador
@@ -651,7 +658,35 @@ export class AdminAuthService {
         throw ApiError.forbidden('Cannot update admin with equal or higher role');
       }
 
-      // Atualizar
+      const data: {
+        name?: string;
+        email?: string;
+        role?: AdminRole;
+        status?: AdminStatus;
+        password?: string;
+      } = {};
+
+      if (dto.name !== undefined) data.name = dto.name;
+      if (dto.role !== undefined) data.role = dto.role;
+      if (dto.status !== undefined) data.status = dto.status;
+
+      if (dto.email !== undefined && dto.email !== targetAdmin.email) {
+        const existing = await prisma.admin.findFirst({
+          where: { email: dto.email, NOT: { id: targetAdminId } },
+        });
+
+        if (existing) {
+          throw ApiError.conflict('Email already in use');
+        }
+
+        data.email = dto.email;
+      }
+
+      // A senha só pode chegar ao banco como hash: o login compara via bcrypt.
+      if (dto.password) {
+        data.password = await HashUtil.hashPassword(dto.password);
+      }
+
       const updated = await prisma.admin.update({
         where: { id: targetAdminId },
         data,
@@ -660,7 +695,10 @@ export class AdminAuthService {
       const { password, ...adminWithoutPassword } = updated;
 
       logger.info(
-        `Admin ${targetAdminId} updated by ${updater.email}: ${JSON.stringify(data)}`
+        `Admin ${targetAdminId} updated by ${updater.email}: ${JSON.stringify({
+          ...data,
+          password: data.password ? '[redacted]' : undefined,
+        })}`
       );
 
       return adminWithoutPassword;

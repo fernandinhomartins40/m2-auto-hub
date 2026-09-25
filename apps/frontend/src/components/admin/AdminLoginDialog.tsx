@@ -6,6 +6,7 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MAIN_CONTENT_ID } from "@/components/layout/SkipToContent";
 import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,63 @@ import { PasswordInput } from "@/components/ui/password-input";
 
 interface AdminLoginDialogProps {
   showInstallBanner?: boolean;
+}
+
+const LOGIN_PREFS_KEY = "m2_admin_login_prefs";
+
+interface LoginPrefs {
+  saveData: boolean;
+  keepConnected: boolean;
+  email: string;
+}
+
+/**
+ * Preferências da tela de login. Só o e-mail fica no localStorage: a senha é
+ * entregue ao gerenciador de senhas do navegador, nunca gravada pela página.
+ * Qualquer falha de storage (aba privada, site data bloqueado) cai no padrão.
+ */
+function readLoginPrefs(): LoginPrefs {
+  const fallback: LoginPrefs = { saveData: false, keepConnected: false, email: "" };
+  try {
+    const raw = localStorage.getItem(LOGIN_PREFS_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as Partial<LoginPrefs>;
+    return {
+      saveData: parsed.saveData === true,
+      keepConnected: parsed.keepConnected === true,
+      email: parsed.saveData === true && typeof parsed.email === "string" ? parsed.email : "",
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function writeLoginPrefs(prefs: LoginPrefs) {
+  try {
+    localStorage.setItem(
+      LOGIN_PREFS_KEY,
+      JSON.stringify({ ...prefs, email: prefs.saveData ? prefs.email : "" })
+    );
+  } catch {
+    // Sem storage a tela continua funcionando, só não lembra as escolhas.
+  }
+}
+
+type PasswordCredentialCtor = new (data: { id: string; password: string; name?: string }) => Credential;
+
+/**
+ * Pede explicitamente ao navegador para salvar a credencial (Chrome, Edge,
+ * Opera, Samsung Internet). Firefox e Safari não têm essa API e salvam pelo
+ * próprio formulário, por isso os campos têm name/autocomplete corretos.
+ */
+async function storeBrowserCredential(email: string, password: string, name?: string) {
+  const Ctor = (window as unknown as { PasswordCredential?: PasswordCredentialCtor }).PasswordCredential;
+  if (!Ctor || !navigator.credentials?.store) return;
+  try {
+    await navigator.credentials.store(new Ctor({ id: email, password, name }));
+  } catch {
+    // O usuário pode recusar ou o navegador bloquear; o login já aconteceu.
+  }
 }
 
 function getSafeRedirect(search: string): string | null {
@@ -31,8 +89,11 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
+  const [initialPrefs] = useState(readLoginPrefs);
+  const [email, setEmail] = useState(initialPrefs.email);
   const [password, setPassword] = useState("");
+  const [saveData, setSaveData] = useState(initialPrefs.saveData);
+  const [keepConnected, setKeepConnected] = useState(initialPrefs.keepConnected);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,7 +104,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
     setError("");
     setIsSubmitting(true);
 
-    const result = await login(email, password);
+    const result = await login(email, password, keepConnected);
 
     if (!result.success) {
       setError(result.error || "Erro ao fazer login");
@@ -54,6 +115,11 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
         description: result.error || "Erro ao fazer login. Verifique suas credenciais.",
       });
       return;
+    }
+
+    writeLoginPrefs({ saveData, keepConnected, email: email.trim().toLowerCase() });
+    if (saveData) {
+      await storeBrowserCredential(email.trim().toLowerCase(), password);
     }
 
     toast({
@@ -87,7 +153,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
             <p className="text-gray-600">Faca login para acessar o painel da loja, oficina e equipe</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" method="post" action="/admin-login">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -98,6 +164,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="username"
                 type="email"
                 placeholder="admin@m2centerauto.com.br"
                 value={email}
@@ -105,7 +172,8 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 required
                 disabled={isSubmitting}
                 className="h-11"
-                autoComplete="email"
+                autoComplete="username"
+                autoFocus={!initialPrefs.email}
               />
             </div>
 
@@ -113,6 +181,9 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
               <Label htmlFor="password">Senha</Label>
               <PasswordInput
                 id="password"
+                name="password"
+                autoComplete="current-password"
+                autoFocus={Boolean(initialPrefs.email)}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -120,6 +191,44 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
                 disabled={isSubmitting}
                 className="h-11"
               />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="save-data"
+                  checked={saveData}
+                  onCheckedChange={(checked) => setSaveData(checked === true)}
+                  disabled={isSubmitting}
+                  className="mt-0.5"
+                />
+                <div className="grid gap-0.5">
+                  <Label htmlFor="save-data" className="cursor-pointer font-normal">
+                    Salvar dados de acesso
+                  </Label>
+                  <p className="text-xs text-gray-500">
+                    Lembra seu e-mail e oferece salvar a senha no navegador.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="keep-connected"
+                  checked={keepConnected}
+                  onCheckedChange={(checked) => setKeepConnected(checked === true)}
+                  disabled={isSubmitting}
+                  className="mt-0.5"
+                />
+                <div className="grid gap-0.5">
+                  <Label htmlFor="keep-connected" className="cursor-pointer font-normal">
+                    Manter conectado
+                  </Label>
+                  <p className="text-xs text-gray-500">
+                    Continua logado por 30 dias. Desmarcado, a sessão acaba ao fechar o navegador.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || isLoading}>

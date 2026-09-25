@@ -22,7 +22,11 @@ interface AdminAuthContextType {
   admin: Admin | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
+  login: (
+    email: string,
+    password: string,
+    rememberMe?: boolean
+  ) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
   hasRole: (role: string | string[]) => boolean;
@@ -110,7 +114,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     void initializeAuth();
   }, [location.pathname, state.admin, state.isAuthenticated]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe?: boolean) => {
     setState((prev) => ({ ...prev, isLoading: true }));
 
     try {
@@ -120,7 +124,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       const data = await response.json();

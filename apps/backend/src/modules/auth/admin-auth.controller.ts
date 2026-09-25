@@ -4,6 +4,7 @@ import { adminLoginSchema } from './dto/admin-login.dto.js';
 import { createAdminSchema } from './dto/create-admin.dto.js';
 import { changePasswordSchema } from './dto/change-password.dto.js';
 import { updateAdminProfileSchema } from './dto/update-profile.dto.js';
+import { updateAdminSchema } from './dto/update-admin.dto.js';
 import { logger } from '@shared/utils/logger.util.js';
 import {
   createClearCookieOptions,
@@ -33,7 +34,7 @@ export class AdminAuthController {
       logger.info('Login service completed successfully');
 
       // Set httpOnly cookie for admin
-      res.cookie('adminToken', result.token, createSessionCookieOptions());
+      res.cookie('adminToken', result.token, createSessionCookieOptions(dto.rememberMe));
 
       logger.info('Cookie set successfully, sending response');
 
@@ -308,10 +309,11 @@ export class AdminAuthController {
       }
 
       const targetAdminId = req.params.id;
+      const dto = updateAdminSchema.parse(req.body);
       const admin = await this.adminAuthService.updateAdmin(
         req.admin.adminId,
         targetAdminId,
-        req.body
+        dto
       );
 
       res.status(200).json({

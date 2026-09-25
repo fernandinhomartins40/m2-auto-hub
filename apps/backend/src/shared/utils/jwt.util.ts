@@ -30,9 +30,12 @@ export class JwtUtil {
   /**
    * Generate JWT token for admins
    */
-  static generateAdminToken(payload: AdminTokenPayload): string {
+  static generateAdminToken(
+    payload: AdminTokenPayload,
+    expiresIn: string = environment.jwt.expiresIn
+  ): string {
     return jwt.sign(payload, environment.jwt.secret, {
-      expiresIn: environment.jwt.expiresIn as jwt.SignOptions['expiresIn'],
+      expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
       issuer: 'moria-backend',
       audience: 'moria-admin',
     });

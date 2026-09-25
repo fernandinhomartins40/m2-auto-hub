@@ -58,7 +58,7 @@ export async function ensureLandingPageConfig(): Promise<LandingPageConfig> {
 }
 
 /**
- * `update: {}` no upsert e deliberado: uma vez criada a conta, o deploy nao
+ * Uma vez criada a conta, o deploy nao
  * mexe mais nela, para nao reverter a senha que o operador trocou no painel.
  *
  * O efeito colateral e que uma senha perdida vira uma conta inacessivel — o
@@ -72,41 +72,83 @@ function shouldResyncPassword(): boolean {
   return process.env.ADMIN_PASSWORD_RESYNC?.trim().toLowerCase() === 'true';
 }
 
+/**
+ * A conta padrao so e criada quando o banco nao tem nenhum SUPER_ADMIN. Antes o
+ * upsert era por email: quem trocava o email do admin no painel ganhava, no
+ * deploy seguinte, uma segunda conta SUPER_ADMIN com a senha padrao conhecida.
+ *
+ * Com ADMIN_PASSWORD_RESYNC, a senha e ressincronizada na conta padrao ou, se o
+ * email dela foi trocado, no SUPER_ADMIN mais antigo.
+ */
 export async function ensureDefaultAdmins(): Promise<void> {
   const hashedPassword = await HashUtil.hashPassword(getBootstrapPassword());
   const resync = shouldResyncPassword();
 
-  await prisma.$transaction(
-    defaultAdminSeeds.map((admin) =>
-      prisma.admin.upsert({
-        where: { email: admin.email },
-        update: resync ? { password: hashedPassword, status: AdminStatus.ACTIVE } : {},
-        create: {
-          email: admin.email,
-          password: hashedPassword,
-          name: admin.name,
-          role: admin.role,
-          status: AdminStatus.ACTIVE,
-          permissions: admin.permissions,
-        },
-      })
-    )
-  );
+  for (const seed of defaultAdminSeeds) {
+    const target =
+      (await prisma.admin.findUnique({ where: { email: seed.email } })) ??
+      (await prisma.admin.findFirst({
+        where: { role: seed.role },
+        orderBy: { createdAt: 'asc' },
+      }));
 
-  if (resync) {
-    logger.warn(
-      'ADMIN_PASSWORD_RESYNC ativo: senha das contas padrao redefinida a partir de DEFAULT_ADMIN_PASSWORD. Desligue a flag apos entrar.',
-      { emails: defaultAdminSeeds.map((admin) => admin.email) }
-    );
+    if (!target) {
+      await prisma.admin.create({
+        data: {
+          email: seed.email,
+          password: hashedPassword,
+          name: seed.name,
+          role: seed.role,
+          status: AdminStatus.ACTIVE,
+          permissions: [...seed.permissions],
+        },
+      });
+      logger.warn('Default admin account created', { email: seed.email });
+      continue;
+    }
+
+    if (resync) {
+      await prisma.admin.update({
+        where: { id: target.id },
+        data: { password: hashedPassword, status: AdminStatus.ACTIVE },
+      });
+      logger.warn(
+        'ADMIN_PASSWORD_RESYNC ativo: senha redefinida a partir de DEFAULT_ADMIN_PASSWORD. Desligue a flag apos entrar.',
+        { email: target.email }
+      );
+    }
+  }
+}
+
+const BCRYPT_HASH = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+
+/**
+ * A edicao de usuario em Configuracoes > Usuarios gravava a senha em texto puro
+ * (corrigido no mesmo commit). Essas contas ficavam inacessiveis, porque o login
+ * compara via bcrypt. Aqui a senha salva vira hash, e o usuario volta a entrar
+ * com a mesma senha que digitou. Idempotente: hashes validos sao ignorados.
+ */
+export async function hashPlaintextAdminPasswords(): Promise<void> {
+  const admins = await prisma.admin.findMany({ select: { id: true, email: true, password: true } });
+  const plaintext = admins.filter((admin) => admin.password && !BCRYPT_HASH.test(admin.password));
+
+  for (const admin of plaintext) {
+    await prisma.admin.update({
+      where: { id: admin.id },
+      data: { password: await HashUtil.hashPassword(admin.password) },
+    });
   }
 
-  logger.warn('Ensured default admin accounts are available', {
-    emails: defaultAdminSeeds.map((admin) => admin.email),
-  });
+  if (plaintext.length > 0) {
+    logger.warn('Senhas de admin em texto puro convertidas para hash', {
+      emails: plaintext.map((admin) => admin.email),
+    });
+  }
 }
 
 export async function ensureEssentialData(): Promise<void> {
   await ensureLandingPageConfig();
+  await hashPlaintextAdminPasswords();
   await ensureDefaultAdmins();
   await ensureRelationshipCategories();
 }
