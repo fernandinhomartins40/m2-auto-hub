@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect, useCallback } from 'react';
 import { faqService, FAQCategory, FAQItem, SupportConfig } from '../api/faqService';
 import { useToast } from './use-toast';
@@ -18,8 +19,8 @@ export const useFAQ = () => {
       const data = await faqService.getFAQCategories();
       setCategories(data);
       return data;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao carregar FAQ';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao carregar FAQ';
       setError(errorMsg);
       throw err;
     } finally {
@@ -40,8 +41,8 @@ export const useFAQ = () => {
       const results = await faqService.searchFAQ(query);
       setSearchResults(results);
       return results;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao buscar no FAQ';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao buscar no FAQ';
       setError(errorMsg);
       throw err;
     } finally {
@@ -72,8 +73,8 @@ export const useFAQ = () => {
         title: 'Obrigado!',
         description: 'Sua avaliação foi registrada.',
       });
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao avaliar FAQ';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao avaliar FAQ';
       toast({
         title: 'Erro',
         description: errorMsg,
@@ -101,8 +102,8 @@ export const useFAQ = () => {
       const configData = await faqService.getSupportConfig();
       setConfig(configData);
       return configData;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao carregar configurações';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao carregar configurações';
       setError(errorMsg);
       throw err;
     } finally {

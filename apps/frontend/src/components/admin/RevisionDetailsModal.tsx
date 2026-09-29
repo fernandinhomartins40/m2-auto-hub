@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState } from 'react';
 import {
   Dialog,
@@ -147,11 +148,11 @@ export function RevisionDetailsModal({
         title: 'PDF gerado',
         description: `A revisao #${revision.id.slice(0, 8)} foi exportada com sucesso.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error exporting revision PDF:', error);
       toast({
         title: 'Erro ao gerar PDF',
-        description: error.response?.data?.error || error.message || 'Tente novamente.',
+        description: getApiError(error).response?.data?.error || getApiError(error).message || 'Tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -172,7 +173,7 @@ export function RevisionDetailsModal({
 
           return isValid;
         })
-        .reduce((acc: any, item: any) => {
+        .reduce((acc: unknown, item: unknown) => {
           if (!acc[item.categoryName]) {
             acc[item.categoryName] = [];
           }
@@ -400,14 +401,14 @@ export function RevisionDetailsModal({
                   )}
                 </div>
               ) : (
-                Object.entries(groupedChecklist).map(([categoryName, items]: [string, any]) => (
+                Object.entries(groupedChecklist).map(([categoryName, items]: [string, unknown]) => (
                   <Card key={categoryName}>
                     <CardHeader>
                       <CardTitle className="text-lg">{categoryName}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {items.map((item: any, index: number) => {
+                        {items.map((item: unknown, index: number) => {
                           const StatusIcon =
                             checklistStatusConfig[item.status as keyof typeof checklistStatusConfig]
                               ?.icon || Circle;
@@ -469,7 +470,7 @@ export function RevisionDetailsModal({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {revision.transferHistory.map((transfer: any, index: number) => (
+                      {revision.transferHistory.map((transfer: unknown, index: number) => (
                         <div key={index} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
                           <ArrowRightLeft className="h-5 w-5 text-moria-orange mt-1" />
                           <div className="flex-1">

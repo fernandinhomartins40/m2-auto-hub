@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
@@ -96,12 +97,12 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
       setIsLoading(true);
       const data = await customerService.getMyQuotes();
       setQuotes(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao carregar orcamentos',
         description:
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).response?.data?.error ||
           'Nao foi possivel carregar seus orcamentos.',
         variant: 'destructive',
       });
@@ -154,12 +155,12 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
         description: result.message,
       });
       await loadQuotes();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao aprovar orcamento',
         description:
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).response?.data?.error ||
           'Nao foi possivel aprovar o orcamento.',
         variant: 'destructive',
       });
@@ -174,12 +175,12 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
         description: result.message,
       });
       await loadQuotes();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao rejeitar orcamento',
         description:
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).response?.data?.error ||
           'Nao foi possivel rejeitar o orcamento.',
         variant: 'destructive',
       });
@@ -198,12 +199,12 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
         title: 'PDF gerado',
         description: `O orcamento #${quote.id.slice(0, 8)} foi exportado com sucesso.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao exportar PDF',
         description:
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).response?.data?.error ||
           'Nao foi possivel gerar o PDF do orcamento.',
         variant: 'destructive',
       });

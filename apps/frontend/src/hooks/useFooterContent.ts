@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import cmsService, { FooterContent, UpdateFooterData } from '@/api/cmsService';
 import { handleApiError } from '@/api';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +20,7 @@ export const useFooterContent = (): UseFooterContentResult => {
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const fetchFooter = async () => {
+  const fetchFooter = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -38,7 +38,7 @@ export const useFooterContent = (): UseFooterContentResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const updateFooter = async (data: UpdateFooterData) => {
     setUpdateLoading(true);
@@ -87,8 +87,8 @@ export const useFooterContent = (): UseFooterContentResult => {
   };
 
   useEffect(() => {
-    fetchFooter();
-  }, []);
+    void fetchFooter();
+  }, [fetchFooter]);
 
   return {
     footer,

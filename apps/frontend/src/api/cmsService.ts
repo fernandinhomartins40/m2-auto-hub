@@ -174,7 +174,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: any
+      data: unknown
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -191,7 +191,7 @@ class CmsService {
     };
 
     // Atualizar config com nova mensagem
-    await apiClient.put<{ success: boolean; data: any }>(
+    await apiClient.put<{ success: boolean; data: unknown }>(
       '/landing-page/config',
       {
         marquee: {
@@ -211,7 +211,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: any
+      data: unknown
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -231,7 +231,7 @@ class CmsService {
     }
 
     // Atualizar config
-    await apiClient.put<{ success: boolean; data: any }>(
+    await apiClient.put<{ success: boolean; data: unknown }>(
       '/landing-page/config',
       {
         marquee: {
@@ -251,7 +251,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: any
+      data: unknown
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -261,7 +261,7 @@ class CmsService {
     const updatedMessages = currentMessages.filter((msg: MarqueeMessage) => msg.id !== id);
 
     // Atualizar config
-    await apiClient.put<{ success: boolean; data: any }>(
+    await apiClient.put<{ success: boolean; data: unknown }>(
       '/landing-page/config',
       {
         marquee: {
@@ -279,7 +279,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: any
+      data: unknown
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -292,7 +292,7 @@ class CmsService {
     }).filter(Boolean);
 
     // Atualizar config
-    await apiClient.put<{ success: boolean; data: any }>(
+    await apiClient.put<{ success: boolean; data: unknown }>(
       '/landing-page/config',
       {
         marquee: {

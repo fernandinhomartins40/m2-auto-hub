@@ -234,7 +234,11 @@ export function StepChecklist({ avaliacoes, onChange, onNext, onBack }: StepChec
   const alternarCategoria = (id: string) =>
     setAbertas((atual) => {
       const nova = new Set(atual);
-      nova.has(id) ? nova.delete(id) : nova.add(id);
+      if (nova.has(id)) {
+        nova.delete(id);
+      } else {
+        nova.add(id);
+      }
       return nova;
     });
 

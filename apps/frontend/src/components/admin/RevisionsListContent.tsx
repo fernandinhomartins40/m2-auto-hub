@@ -44,7 +44,7 @@ export function RevisionsListContent() {
   const loadRevisions = async () => {
     try {
       setLoading(true);
-      const params: any = { page, limit: 20 };
+      const params: unknown = { page, limit: 20 };
 
       if (statusFilter) {
         params.status = statusFilter;

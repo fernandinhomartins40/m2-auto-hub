@@ -78,7 +78,7 @@ export function CustomerSelector({ selectedCustomer, onSelectCustomer }: Custome
     customer.cpf?.includes(searchTerm)
   );
 
-  const handleCreateSuccess = (customer: any) => {
+  const handleCreateSuccess = (customer: unknown) => {
     // Transform to local format
     const newCustomer: Customer = {
       id: customer.id,

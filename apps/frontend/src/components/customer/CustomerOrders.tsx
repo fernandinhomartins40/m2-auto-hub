@@ -192,7 +192,7 @@ export function CustomerOrders() {
                 }
               </p>
               {!searchTerm && statusFilter === "all" && (
-                <Button className="mt-4" onClick={() => window.location.hash = '#pecas'}>
+                <Button className="mt-4" onClick={() => window.location.assign('/#pecas')}>
                   Ver Produtos
                 </Button>
               )}

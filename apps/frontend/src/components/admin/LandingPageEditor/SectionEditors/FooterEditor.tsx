@@ -259,7 +259,7 @@ export const FooterEditor = ({ config, onChange }: FooterEditorProps) => {
                 <Label>Plataforma</Label>
                 <select
                   value={item.platform}
-                  onChange={(e) => update({ platform: e.target.value as any })}
+                  onChange={(e) => update({ platform: e.target.value as unknown })}
                   className="w-full rounded-md border border-input bg-background px-3 py-2"
                 >
                   <option value="facebook">Facebook</option>

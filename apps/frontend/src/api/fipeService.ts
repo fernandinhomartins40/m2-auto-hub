@@ -34,7 +34,7 @@ export interface FipeVehicleDetail {
 type VehicleType = 'cars' | 'motorcycles' | 'trucks';
 
 class FipeService {
-  private cache: Map<string, any> = new Map();
+  private cache: Map<string, unknown> = new Map();
   private CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
 
   /**
@@ -148,7 +148,7 @@ class FipeService {
 
   // Métodos privados de cache
 
-  private getFromCache(key: string): any | null {
+  private getFromCache(key: string): unknown | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
@@ -161,7 +161,7 @@ class FipeService {
     return entry.data;
   }
 
-  private saveToCache(key: string, data: any): void {
+  private saveToCache(key: string, data: unknown): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),

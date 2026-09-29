@@ -56,21 +56,20 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
     setProductSearch('');
     setServiceSearch('');
     void loadCatalog();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCatalog = async () => {
     setLoadingCatalog(true);
     // Mesmos serviços públicos usados nos modais de OS/Pedidos (limit <= 100 exigido pela API)
     const [prodRes, servRes] = await Promise.all([
-      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] as any[] })),
-      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] as any[] })),
+      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] as unknown[] })),
+      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] as unknown[] })),
     ]);
 
     setProducts(
       (prodRes.products || [])
-        .filter((p: any) => p.status === 'ACTIVE' || p.isActive)
-        .map((p: any) => ({
+        .filter((p: unknown) => p.status === 'ACTIVE' || p.isActive)
+        .map((p: unknown) => ({
           id: p.id,
           name: p.name,
           category: p.category,
@@ -81,8 +80,8 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
     );
     setServices(
       (servRes.services || [])
-        .filter((s: any) => s.status === 'ACTIVE' || s.isActive)
-        .map((s: any) => ({
+        .filter((s: unknown) => s.status === 'ACTIVE' || s.isActive)
+        .map((s: unknown) => ({
           id: s.id,
           name: s.name,
           category: s.category,
@@ -200,7 +199,7 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
       });
       toast({ title: 'Itens adicionados à OS!' });
       onSaved();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: 'Erro ao adicionar itens',
         description: err?.response?.data?.error ?? err?.message,

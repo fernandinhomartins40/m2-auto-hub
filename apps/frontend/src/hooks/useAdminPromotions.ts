@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 // apps/frontend/src/hooks/useAdminPromotions.ts
 // Hook para gerenciamento de promoções no painel administrativo
 
@@ -51,8 +52,8 @@ export function useAdminPromotions(): UseAdminPromotionsReturn {
       });
 
       setPromotions(response.promotions || []);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Erro ao carregar promoções';
+    } catch (err: unknown) {
+      const errorMessage = getApiError(err).response?.data?.message || getApiError(err).message || 'Erro ao carregar promoções';
       setError(errorMessage);
       toast.error(errorMessage);
       console.error('Erro ao buscar promoções:', err);
@@ -67,13 +68,13 @@ export function useAdminPromotions(): UseAdminPromotionsReturn {
     setError(null);
 
     try {
-      await promotionService.createPromotion(promotionData as any);
+      await promotionService.createPromotion(promotionData as unknown);
       toast.success('Promoção criada com sucesso!');
 
       // Recarregar lista de promoções
       await fetchPromotions();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Erro ao criar promoção';
+    } catch (err: unknown) {
+      const errorMessage = getApiError(err).response?.data?.message || getApiError(err).message || 'Erro ao criar promoção';
       setError(errorMessage);
       toast.error(errorMessage);
       console.error('Erro ao criar promoção:', err);
@@ -94,8 +95,8 @@ export function useAdminPromotions(): UseAdminPromotionsReturn {
 
       // Recarregar lista de promoções
       await fetchPromotions();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Erro ao atualizar promoção';
+    } catch (err: unknown) {
+      const errorMessage = getApiError(err).response?.data?.message || getApiError(err).message || 'Erro ao atualizar promoção';
       setError(errorMessage);
       toast.error(errorMessage);
       console.error('Erro ao atualizar promoção:', err);
@@ -116,8 +117,8 @@ export function useAdminPromotions(): UseAdminPromotionsReturn {
 
       // Recarregar lista de promoções
       await fetchPromotions();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Erro ao remover promoção';
+    } catch (err: unknown) {
+      const errorMessage = getApiError(err).response?.data?.message || getApiError(err).message || 'Erro ao remover promoção';
       setError(errorMessage);
       toast.error(errorMessage);
       console.error('Erro ao deletar promoção:', err);
@@ -143,8 +144,8 @@ export function useAdminPromotions(): UseAdminPromotionsReturn {
 
       // Recarregar lista de promoções
       await fetchPromotions();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Erro ao alterar status da promoção';
+    } catch (err: unknown) {
+      const errorMessage = getApiError(err).response?.data?.message || getApiError(err).message || 'Erro ao alterar status da promoção';
       setError(errorMessage);
       toast.error(errorMessage);
       console.error('Erro ao alternar status:', err);

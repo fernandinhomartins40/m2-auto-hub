@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isAuthenticated: true,
           isLoading: false,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error?.response?.status === 401) {
           localStorage.removeItem(CUSTOMER_SESSION_HINT_KEY);
         }

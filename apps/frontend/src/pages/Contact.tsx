@@ -227,7 +227,7 @@ ${new Date().toLocaleString('pt-BR')}
             <div className="container mx-auto px-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {contactPageConfig.contactInfoCards?.map((info, index) => {
-                  const IconComponent = (Icons as any)[info.icon] || MapPin;
+                  const IconComponent = (Icons as unknown)[info.icon] || MapPin;
                   return (
                     <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">

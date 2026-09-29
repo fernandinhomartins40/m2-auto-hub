@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRevisions } from '../../contexts/RevisionsContext';
@@ -85,7 +86,7 @@ export function CustomerRevisions() {
       date: revision.date.toString(),
       mileage: revision.mileage,
       status: revision.status.toUpperCase() as AdminRevision['status'],
-      checklistItems: checklistItems as any[],
+      checklistItems: checklistItems as unknown[],
       generalNotes: revision.generalNotes,
       recommendations: revision.recommendations,
       createdAt: revision.createdAt.toString(),
@@ -272,11 +273,11 @@ export function CustomerRevisions() {
         title: 'Agendamento cancelado',
         description: 'Sua solicitacao foi cancelada com sucesso.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao cancelar',
         description:
-          error.response?.data?.message || 'Nao foi possivel cancelar o agendamento.',
+          getApiError(error).response?.data?.message || 'Nao foi possivel cancelar o agendamento.',
         variant: 'destructive',
       });
     }

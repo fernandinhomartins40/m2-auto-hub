@@ -49,7 +49,7 @@ export function TicketList({ onOpenTicket }: TicketListProps) {
               />
             </div>
 
-            <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+            <Select value={statusFilter} onValueChange={(value: unknown) => setStatusFilter(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -64,7 +64,7 @@ export function TicketList({ onOpenTicket }: TicketListProps) {
               </SelectContent>
             </Select>
 
-            <Select value={categoryFilter} onValueChange={(value: any) => setCategoryFilter(value)}>
+            <Select value={categoryFilter} onValueChange={(value: unknown) => setCategoryFilter(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>

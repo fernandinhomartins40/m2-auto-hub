@@ -60,7 +60,7 @@ export function ImageUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Upload para API
-  const uploadToAPI = async (file: File): Promise<any> => {
+  const uploadToAPI = async (file: File): Promise<unknown> => {
     const formData = new FormData();
     formData.append('image', file);
 
@@ -80,7 +80,7 @@ export function ImageUpload({
   };
 
   // Processar imagem na API
-  const processImageAPI = async (tempPath: string, cropData?: CropData): Promise<any> => {
+  const processImageAPI = async (tempPath: string, cropData?: CropData): Promise<unknown> => {
     const response = await fetch('/api/images/process', {
       method: 'POST',
       headers: {

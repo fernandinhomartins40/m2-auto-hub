@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useState } from 'react';
 import {
   adjustPoints,
@@ -191,10 +192,10 @@ export default function LoyaltyManagement() {
       setStats(statsData);
       setSettings(settingsData);
       setSettingsForm(settingsData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao carregar fidelidade',
-        description: error.response?.data?.error || 'Não foi possível carregar o programa de fidelidade.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível carregar o programa de fidelidade.',
         variant: 'destructive',
       });
     } finally {
@@ -207,10 +208,10 @@ export default function LoyaltyManagement() {
       const response = await getAdminRewards(page, 12);
       setRewards(response.data);
       setRewardsTotalPages(response.totalPages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao carregar recompensas',
-        description: error.response?.data?.error || 'Não foi possível carregar as recompensas.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível carregar as recompensas.',
         variant: 'destructive',
       });
     }
@@ -221,10 +222,10 @@ export default function LoyaltyManagement() {
       const response = await getCustomersWithPoints(page, 10);
       setCustomers(response.data as CustomerPointsRow[]);
       setCustomersTotalPages(response.totalPages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao carregar clientes',
-        description: error.response?.data?.error || 'Não foi possível carregar os clientes com pontos.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível carregar os clientes com pontos.',
         variant: 'destructive',
       });
     }
@@ -235,10 +236,10 @@ export default function LoyaltyManagement() {
       const response = await getAdminRedemptions(page, 10, status === 'all' ? undefined : status);
       setRedemptions(response.data);
       setRedemptionsTotalPages(response.totalPages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao carregar resgates',
-        description: error.response?.data?.error || 'Não foi possível carregar os resgates.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível carregar os resgates.',
         variant: 'destructive',
       });
     }
@@ -255,10 +256,10 @@ export default function LoyaltyManagement() {
         title: 'Programa atualizado',
         description: 'As regras do programa de fidelidade foram salvas.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao salvar configuracoes',
-        description: error.response?.data?.error || 'Não foi possível salvar as regras do programa.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível salvar as regras do programa.',
         variant: 'destructive',
       });
     } finally {
@@ -284,10 +285,10 @@ export default function LoyaltyManagement() {
         title: editingReward ? 'Recompensa atualizada' : 'Recompensa criada',
         description: 'A vitrine de resgates foi atualizada com sucesso.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao salvar recompensa',
-        description: error.response?.data?.error || 'Não foi possível salvar a recompensa.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível salvar a recompensa.',
         variant: 'destructive',
       });
     } finally {
@@ -307,10 +308,10 @@ export default function LoyaltyManagement() {
         title: 'Recompensa removida',
         description: 'A recompensa foi excluída do catálogo.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao excluir recompensa',
-        description: error.response?.data?.error || 'Não foi possível excluir a recompensa.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível excluir a recompensa.',
         variant: 'destructive',
       });
     }
@@ -338,10 +339,10 @@ export default function LoyaltyManagement() {
         title: 'Pontos ajustados',
         description: 'O saldo do cliente foi atualizado.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao ajustar pontos',
-        description: error.response?.data?.error || 'Não foi possível ajustar os pontos do cliente.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível ajustar os pontos do cliente.',
         variant: 'destructive',
       });
     } finally {
@@ -358,10 +359,10 @@ export default function LoyaltyManagement() {
         title: 'Resgate confirmado',
         description: 'O resgate foi marcado como utilizado.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao usar resgate',
-        description: error.response?.data?.error || 'Não foi possível marcar este resgate como utilizado.',
+        description: getApiError(error).response?.data?.error || 'Não foi possível marcar este resgate como utilizado.',
         variant: 'destructive',
       });
     } finally {

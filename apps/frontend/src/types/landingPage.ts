@@ -397,5 +397,5 @@ export interface EditorState {
 
 export interface EditorAction {
   type: 'UPDATE_SECTION' | 'RESET_CONFIG' | 'LOAD_CONFIG' | 'SET_SECTION' | 'SET_PREVIEW_MODE' | 'TOGGLE_PREVIEW';
-  payload?: any;
+  payload?: unknown;
 }

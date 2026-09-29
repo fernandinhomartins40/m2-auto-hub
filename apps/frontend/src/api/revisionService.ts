@@ -5,7 +5,7 @@ export interface CreateRevisionRequest {
   vehicleId: string;
   date: string;
   mileage?: number;
-  checklistItems: any[];
+  checklistItems: unknown[];
   generalNotes?: string;
   recommendations?: string;
 }
@@ -13,7 +13,7 @@ export interface CreateRevisionRequest {
 export interface UpdateRevisionRequest {
   mileage?: number;
   status?: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  checklistItems?: any[];
+  checklistItems?: unknown[];
   generalNotes?: string;
   recommendations?: string;
   assignedMechanicId?: string;
@@ -39,7 +39,7 @@ export interface RevisionResponse {
   date: string;
   mileage: number | null;
   status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  checklistItems: any;
+  checklistItems: unknown;
   /** Presente ao criar/atualizar: as linhas relacionais correspondentes. */
   checks?: RevisionCheck[];
   generalNotes: string | null;
@@ -48,7 +48,7 @@ export interface RevisionResponse {
   mechanicName: string | null;
   mechanicNotes: string | null;
   assignedAt: string | null;
-  transferHistory: any[] | null;
+  transferHistory: unknown[] | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
@@ -79,7 +79,7 @@ class RevisionService {
   /**
    * Update revision checklist partially (Admin)
    */
-  async updateRevisionChecklistPartial(id: string, checklistItems: any[]): Promise<RevisionResponse> {
+  async updateRevisionChecklistPartial(id: string, checklistItems: unknown[]): Promise<RevisionResponse> {
     const response = await apiClient.patch(`/admin/revisions/${id}/checklist`, { checklistItems });
     return response.data.data || response.data;
   }
@@ -181,7 +181,7 @@ class RevisionService {
     limit?: number;
     vehicleId?: string;
     status?: string;
-  }): Promise<{ data: RevisionResponse[]; meta?: any }> {
+  }): Promise<{ data: RevisionResponse[]; meta?: unknown }> {
     const response = await apiClient.get('/customer-revisions', { params });
     // Esta já retorna o formato correto { data: [...], meta: {...} }
     return response.data;
@@ -198,7 +198,7 @@ class RevisionService {
   /**
    * Get revisions for specific vehicle of authenticated customer
    */
-  async getCustomerRevisionsByVehicle(vehicleId: string): Promise<{ data: RevisionResponse[]; meta?: any }> {
+  async getCustomerRevisionsByVehicle(vehicleId: string): Promise<{ data: RevisionResponse[]; meta?: unknown }> {
     const response = await apiClient.get(`/customer-revisions/vehicle/${vehicleId}`);
     // Esta já retorna o formato correto { data: [...], meta: {...} }
     return response.data;
@@ -207,7 +207,7 @@ class RevisionService {
   /**
    * Get upcoming maintenance reminders for authenticated customer
    */
-  async getUpcomingReminders(): Promise<any[]> {
+  async getUpcomingReminders(): Promise<unknown[]> {
     const response = await apiClient.get('/customer-revisions/reminders/upcoming');
     return response.data.data || response.data;
   }
@@ -253,7 +253,7 @@ class RevisionService {
   async getRevisionsByMechanic(
     mechanicId: string,
     params?: { page?: number; limit?: number; status?: string }
-  ): Promise<{ data: RevisionResponse[]; meta: any }> {
+  ): Promise<{ data: RevisionResponse[]; meta: unknown }> {
     const response = await apiClient.get(`/revisions/mechanic/${mechanicId}`, { params });
     // Esta já retorna o formato correto { data: [...], meta: {...} }
     return response.data;
@@ -262,7 +262,7 @@ class RevisionService {
   /**
    * Get all mechanics workload (Admin)
    */
-  async getMechanicsWorkload(): Promise<any[]> {
+  async getMechanicsWorkload(): Promise<unknown[]> {
     const response = await apiClient.get('/revisions/mechanics/workload');
     return response.data.data;
   }

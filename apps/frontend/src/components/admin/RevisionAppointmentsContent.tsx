@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarClock,
@@ -135,11 +136,11 @@ export function RevisionAppointmentsContent() {
         title: 'Agendamento salvo',
         description: 'Data, horario e mecanico foram vinculados com sucesso.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao salvar agendamento',
         description:
-          error.response?.data?.message || 'Não foi possível salvar a programação.',
+          getApiError(error).response?.data?.message || 'Não foi possível salvar a programação.',
         variant: 'destructive',
       });
       throw error;
@@ -156,11 +157,11 @@ export function RevisionAppointmentsContent() {
         title: 'Revisao iniciada',
         description: 'O atendimento foi iniciado e a revisao foi vinculada ao agendamento.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao iniciar revisao',
         description:
-          error.response?.data?.message || 'Não foi possível iniciar a revisão agendada.',
+          getApiError(error).response?.data?.message || 'Não foi possível iniciar a revisão agendada.',
         variant: 'destructive',
       });
     }
@@ -176,11 +177,11 @@ export function RevisionAppointmentsContent() {
         title: 'Agendamento cancelado',
         description: 'O agendamento foi cancelado com sucesso.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao cancelar',
         description:
-          error.response?.data?.message || 'Não foi possível cancelar o agendamento.',
+          getApiError(error).response?.data?.message || 'Não foi possível cancelar o agendamento.',
         variant: 'destructive',
       });
     }

@@ -233,7 +233,7 @@ export default function About() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {aboutPageConfig.values?.map((value, index) => {
-                  const IconComponent = (Icons as any)[value.icon] || Shield;
+                  const IconComponent = (Icons as unknown)[value.icon] || Shield;
                   return (
                     <Card key={value.id || index} className="bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all">
                       <CardContent className="p-6 text-center">

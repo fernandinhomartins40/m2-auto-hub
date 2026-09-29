@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth, Order } from "../../contexts/AuthContext";
 import { favoriteService, couponService } from "../../api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -16,50 +16,61 @@ import {
   Star,
   TrendingUp,
   AlertCircle,
-  MessageCircle,
   ShoppingBag,
   Calendar
 } from "lucide-react";
 import { formatCurrency } from '@/lib/format';
 
-export function CustomerDashboard() {
+interface CustomerDashboardProps {
+  onTabChange: (tab: string) => void;
+  onBrowseProducts: () => void;
+}
+
+export function CustomerDashboard({ onTabChange, onBrowseProducts }: CustomerDashboardProps) {
   const { customer, getOrders } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [couponsCount, setCouponsCount] = useState(0);
+  const [loadError, setLoadError] = useState(false);
+
+  const loadDashboardData = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(false);
+
+    const [ordersResult, favoritesResult, couponsResult] = await Promise.allSettled([
+      getOrders(),
+      favoriteService.getFavoriteCount(),
+      couponService.getActiveCouponCount(),
+    ]);
+
+    let hasError = false;
+
+    if (ordersResult.status === "fulfilled" && ordersResult.value.success) {
+      setOrders((ordersResult.value.data || []).slice(0, 3));
+    } else {
+      hasError = true;
+    }
+
+    if (favoritesResult.status === "fulfilled") {
+      setFavoritesCount(favoritesResult.value);
+    } else {
+      hasError = true;
+    }
+
+    if (couponsResult.status === "fulfilled") {
+      setCouponsCount(couponsResult.value);
+    } else {
+      hasError = true;
+    }
+
+    setLoadError(hasError);
+    setIsLoading(false);
+  }, [getOrders]);
 
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        // Load orders
-        const result = await getOrders();
-        setOrders((result.data || []).slice(0, 3)); // Show only last 3 orders
-
-        // Load favorites count
-        try {
-          const favCount = await favoriteService.getFavoriteCount();
-          setFavoritesCount(favCount);
-        } catch (error) {
-          console.error('Error loading favorites count:', error);
-        }
-
-        // Load coupons count
-        try {
-          const couponCount = await couponService.getActiveCouponCount();
-          setCouponsCount(couponCount);
-        } catch (error) {
-          console.error('Error loading coupons count:', error);
-        }
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadDashboardData();
-  }, []);
+    void loadDashboardData();
+  }, [loadDashboardData]);
 
   if (!customer) return null;
 
@@ -108,26 +119,43 @@ export function CustomerDashboard() {
       description: 'Explorar produtos',
       icon: ShoppingBag,
       color: 'bg-blue-500',
-      action: () => window.location.hash = '#pecas'
+      action: onBrowseProducts
     },
     {
       title: 'Rastrear Pedido',
       description: 'Acompanhar entrega',
       icon: Truck,
       color: 'bg-green-500',
-      action: () => {} // Tab change to orders
+      action: () => onTabChange('orders')
     },
     {
-      title: 'Suporte',
-      description: 'Falar com atendente',
-      icon: MessageCircle,
+      title: 'Cuidar do Veículo',
+      description: 'Agendar ou acompanhar revisão',
+      icon: Calendar,
       color: 'bg-orange-500',
-      action: () => {} // Tab change to support
+      action: () => onTabChange('revisions')
     }
   ];
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <div
+          role="alert"
+          className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div>
+              <p className="font-medium">Algumas informações não puderam ser atualizadas</p>
+              <p className="text-sm text-amber-800">Você ainda pode usar o painel normalmente ou tentar carregar novamente.</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => void loadDashboardData()}>
+            Tentar novamente
+          </Button>
+        </div>
+      )}
       {/* Welcome Header */}
       <Card>
         <CardHeader>
@@ -150,6 +178,45 @@ export function CustomerDashboard() {
         </CardHeader>
       </Card>
 
+      <Card className="border-moria-orange/20 bg-gradient-to-br from-white to-orange-50/50">
+        <CardHeader>
+          <CardTitle as="h2">O que você quer fazer?</CardTitle>
+          <CardDescription>
+            Escolha um objetivo. Você chega à ação principal em até três passos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-3">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.title}
+                  type="button"
+                  onClick={action.action}
+                  className="group flex min-h-24 items-center gap-4 rounded-xl border bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:border-moria-orange/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moria-orange"
+                >
+                  <span className={`${action.color} rounded-xl p-3 text-white`}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-gray-900">{action.title}</span>
+                    <span className="block text-sm text-muted-foreground">{action.description}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <details className="group rounded-xl border bg-white">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 font-semibold marker:content-none sm:px-6">
+          <span>Meu resumo e benefícios</span>
+          <span className="text-sm font-normal text-muted-foreground group-open:hidden">Mostrar</span>
+          <span className="hidden text-sm font-normal text-muted-foreground group-open:inline">Ocultar</span>
+        </summary>
+        <div className="space-y-6 border-t p-4 sm:p-6">
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4 nb:grid-cols-4">
         <Card>
@@ -201,7 +268,7 @@ export function CustomerDashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Membership Progress */}
         <Card>
           <CardHeader>
@@ -242,39 +309,9 @@ export function CustomerDashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle as="h2">Ações Rápidas</CardTitle>
-            <CardDescription>
-              Acesso direto às principais funcionalidades
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {quickActions.map((action, index) => {
-                const Icon = action.icon;
-                return (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="w-full justify-start h-auto p-4"
-                    onClick={action.action}
-                  >
-                    <div className={`${action.color} p-2 rounded-lg mr-4`}>
-                      <Icon className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium">{action.title}</div>
-                      <div className="text-sm text-muted-foreground">{action.description}</div>
-                    </div>
-                  </Button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
       </div>
+        </div>
+      </details>
 
       {/* Recent Orders */}
       <Card>
@@ -284,7 +321,7 @@ export function CustomerDashboard() {
               <Package className="mr-2 h-5 w-5" />
               Pedidos Recentes
             </span>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => onTabChange('orders')}>
               Ver Todos
             </Button>
           </CardTitle>
@@ -301,7 +338,7 @@ export function CustomerDashboard() {
             <div className="text-center py-8 text-muted-foreground">
               <Package className="mx-auto h-12 w-12 text-muted-foreground/50" />
               <p className="mt-2">Nenhum pedido encontrado</p>
-              <Button variant="outline" className="mt-4">
+              <Button variant="outline" className="mt-4" onClick={onBrowseProducts}>
                 Fazer Primeiro Pedido
               </Button>
             </div>
@@ -342,7 +379,12 @@ export function CustomerDashboard() {
                       </p>
                       
                       {order.trackingCode && (
-                        <Button variant="link" size="sm" className="p-0 h-auto">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto"
+                          onClick={() => onTabChange('orders')}
+                        >
                           Rastrear: {order.trackingCode}
                         </Button>
                       )}

@@ -68,7 +68,7 @@ function LogoUploadField({
       const result = await settingsService.uploadPdfAsset(file, slot);
       onChange(result.url);
       toast.success(`Logo do ${slot === 'header' ? 'cabeçalho' : 'rodapé'} atualizado`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erro ao enviar logo do PDF', {
         description: error?.message || 'Tente novamente.',
       });

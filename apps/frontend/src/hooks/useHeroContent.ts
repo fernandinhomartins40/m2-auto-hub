@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import cmsService, { HeroSection, UpdateHeroData } from '@/api/cmsService';
 import { handleApiError } from '@/api';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +20,7 @@ export const useHeroContent = (): UseHeroContentResult => {
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const fetchHero = async () => {
+  const fetchHero = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -38,7 +38,7 @@ export const useHeroContent = (): UseHeroContentResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const updateHero = async (data: UpdateHeroData) => {
     setUpdateLoading(true);
@@ -87,8 +87,8 @@ export const useHeroContent = (): UseHeroContentResult => {
   };
 
   useEffect(() => {
-    fetchHero();
-  }, []);
+    void fetchHero();
+  }, [fetchHero]);
 
   return {
     hero,

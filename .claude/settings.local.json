@@ -14,7 +14,24 @@
       "Bash(git push *)",
       "Bash(python3 -c \"import paramiko; print\\('paramiko ok'\\)\")",
       "Bash(python3)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "WebFetch(domain:developers.mercadolivre.com.br)",
+      "WebFetch(domain:open.shopee.com)",
+      "PowerShell(cd \"c:\\\\Projetos Cursor\\\\m2-auto-hub\\\\apps\\\\backend\"; $env:DATABASE_URL=\"postgresql://u:p@h:5432/d?schema=public\"; $env:JWT_SECRET=\"x_marketplace_test_secret_at_least_32_chars_long_000\"; $env:PORT=\"3001\"; $env:NODE_ENV=\"production\"; $env:APP_BASE_URL=\"https://m2centerauto.com.br\"; $env:MARKETPLACE_ENC_KEY=\"\"; $env:MARKETPLACE_JOBS_ENABLED=\"\"; node -e \"import\\('./dist/config/environment.js'\\).then\\(m => { console.log\\('OK baseUrl=', m.environment.app.baseUrl\\); console.log\\('encKey len=', m.environment.marketplace.encryptionKey.length\\); console.log\\('jobs=', m.environment.marketplace.jobsEnabled\\); }\\).catch\\(e => { console.error\\('FAIL', e.message\\); process.exit\\(1\\); }\\)\")",
+      "Bash(python3 -c \"import reportlab; print\\(reportlab.Version\\)\")",
+      "Bash(pip show *)",
+      "Bash(python3 \"C:\\\\Users\\\\fusea\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Projetos-Cursor-m2-auto-hub\\\\4e7b1b62-c365-4448-9307-2d80481906de\\\\scratchpad\\\\gerar_catalogo.py\")",
+      "Bash(sed -i \"s/ok\\('moeda numero', formatCurrency\\(1234.5\\), 'R\\\\$ 1.234,50'\\);/ok\\('moeda numero', formatCurrency\\(1234.5\\).replace\\(String.fromCharCode\\(160\\),' '\\), 'R\\\\$ 1.234,50'\\);/\" /tmp/fmt.test.ts)",
+      "Bash(python -)",
+      "Bash(cp /tmp/fmt.test.ts ./fmt.test.ts)",
+      "Bash(npx tsx *)",
+      "Bash(cd \"c:/Projetos Cursor/m2-auto-hub\" && sed -n '/async deleteAdmin/,/^  }/p' apps/backend/src/modules/auth/admin-auth.service.ts | head -40)",
+      "Bash(cd \"c:/Projetos Cursor/m2-auto-hub\" && sed -n '/^model Admin {/,/^}/p' apps/backend/prisma/schema.prisma | grep -E \"^\\\\s+\\(assigned|audit|landing|relationship\\)\" )"
+    ],
+    "additionalDirectories": [
+      "C:\\Projetos Cursor\\m2-auto-hub\\apps\\frontend",
+      "c:\\Projetos Cursor\\m2-auto-hub\\apps\\backend\\src\\modules\\auth",
+      "c:\\Projetos Cursor\\m2-auto-hub\\apps\\backend\\prisma"
     ]
   }
 }

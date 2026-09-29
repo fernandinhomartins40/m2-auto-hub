@@ -2,7 +2,7 @@
 
 export interface ExportData {
   headers: string[];
-  rows: any[][];
+  rows: unknown[][];
   filename: string;
 }
 
@@ -87,7 +87,7 @@ export function exportToExcel(data: ExportData): void {
 /**
  * Export data to JSON format
  */
-export function exportToJSON(data: any, filename: string): void {
+export function exportToJSON(data: unknown, filename: string): void {
   const jsonContent = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonContent], { type: 'application/json' });
   downloadBlob(blob, `${filename}.json`);

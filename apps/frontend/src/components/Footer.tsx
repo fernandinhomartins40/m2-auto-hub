@@ -35,7 +35,7 @@ export function Footer() {
     config.footer;
 
   const getIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName];
+    const IconComponent = (Icons as unknown)[iconName];
     return IconComponent || Icons.Circle;
   };
 

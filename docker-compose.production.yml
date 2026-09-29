@@ -24,6 +24,7 @@ x-backend-env: &backend-env
   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
   BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-10}
   DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-Test123!}
+  ADMIN_PASSWORD_RESYNC: ${ADMIN_PASSWORD_RESYNC:-false}
   CORS_ORIGIN: "${CORS_ORIGIN:-https://www.m2centerauto.com.br,https://m2centerauto.com.br}"
   COOKIE_SECURE: ${COOKIE_SECURE:-true}
   COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}

@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useState } from 'react';
 import { Save, Loader2, Car } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -13,7 +14,7 @@ interface CreateVehicleModalProps {
   customerId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (vehicle: any) => void;
+  onSuccess: (vehicle: unknown) => void;
   initialValues?: Partial<{
     brand: string;
     model: string;
@@ -208,11 +209,11 @@ export function CreateVehicleModal({
 
       onSuccess(vehicle);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar veículo:', error);
-      const errorMessage = error.response?.data?.error
-        || error.response?.data?.message
-        || error.message
+      const errorMessage = getApiError(error).response?.data?.error
+        || getApiError(error).response?.data?.message
+        || getApiError(error).message
         || 'Erro ao criar veículo. Tente novamente.';
 
       toast({

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ClipboardCheck, ClipboardList, LogOut, User } from "lucide-react";
+import { BriefcaseBusiness, LogOut, User } from "lucide-react";
 import { MechanicContent } from "./MechanicContent";
 import { mechanicSlugFromTab, mechanicTabFromSlug } from "./mechanicNavigation";
 import StoreLayout from "../store/StoreLayout";
@@ -35,8 +35,7 @@ export default function MechanicPanel() {
   // "Minhas OS" existia na sidebar do desktop mas ficava de fora da barra
   // inferior, deixando a tela inacessivel no celular.
   const bottomNavItems = [
-    { id: "revisions", label: "Revisoes", icon: ClipboardCheck },
-    { id: "service-orders", label: "Minhas OS", icon: ClipboardList },
+    { id: "work", label: "Trabalho", icon: BriefcaseBusiness },
     { id: "settings", label: "Perfil", icon: User },
     { id: "logout", label: "Sair", icon: LogOut },
   ];
@@ -82,6 +81,7 @@ export default function MechanicPanel() {
 
 function getPageTitle(tab: string): string {
   const titles: Record<string, string> = {
+    work: "Minha Fila de Trabalho",
     revisions: "Minhas Revisoes",
     "service-orders": "Minhas Ordens de Servico",
     settings: "Perfil",
@@ -92,6 +92,7 @@ function getPageTitle(tab: string): string {
 
 function getPageDescription(tab: string): string {
   const descriptions: Record<string, string> = {
+    work: "Reúna revisões e ordens de serviço atribuídas em um único lugar",
     revisions: "Gerencie suas revisoes atribuidas e acompanhe o progresso",
     "service-orders": "Acompanhe as ordens de servico atribuidas a voce",
     settings: "Gerencie seu perfil, seguranca e preferencias",

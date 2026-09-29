@@ -81,8 +81,8 @@ class FavoriteService {
     return response.data.data.count;
   }
 
-  async getFavoriteStats(): Promise<any> {
-    const response = await apiClient.get<StandardResponse<any>>('/favorites/stats');
+  async getFavoriteStats(): Promise<unknown> {
+    const response = await apiClient.get<StandardResponse<unknown>>('/favorites/stats');
     return response.data.data;
   }
 

@@ -43,7 +43,7 @@ export default function StoreMobileDrawer({
   };
 
   const visibleItems = items.filter(
-    (item) => !item.requiresPermission || (permissions as any)[item.requiresPermission]
+    (item) => !item.requiresPermission || (permissions as unknown)[item.requiresPermission]
   );
 
   const groupedItems = visibleItems.reduce<Record<string, NavItem[]>>((acc, item) => {

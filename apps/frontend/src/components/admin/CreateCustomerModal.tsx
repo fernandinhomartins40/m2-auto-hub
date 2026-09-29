@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState } from 'react';
 import { Save, Loader2, User } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -112,11 +113,11 @@ export function CreateCustomerModal({ isOpen, onClose, onSuccess }: CreateCustom
 
       onSuccess(customer);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar cliente:', error);
-      const errorMessage = error.response?.data?.error
-        || error.response?.data?.message
-        || error.message
+      const errorMessage = getApiError(error).response?.data?.error
+        || getApiError(error).response?.data?.message
+        || getApiError(error).message
         || 'Erro ao criar cliente. Tente novamente.';
 
       toast({

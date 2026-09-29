@@ -11,7 +11,7 @@
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "test": "turbo run test --filter=@m2/frontend",
+    "test": "turbo run test",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down --remove-orphans",
     "docker:logs": "docker compose logs -f",

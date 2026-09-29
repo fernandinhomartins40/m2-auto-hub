@@ -1,5 +1,5 @@
 // src/hooks/useAdminProducts.ts
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import productService, { Product } from '@/api/productService';
 import { handleApiError } from '@/api';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +27,7 @@ export const useAdminProducts = (): UseAdminProductsResult => {
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -45,7 +45,7 @@ export const useAdminProducts = (): UseAdminProductsResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const createProduct = async (data: Partial<Product>) => {
     setCreateLoading(true);
@@ -147,8 +147,8 @@ export const useAdminProducts = (): UseAdminProductsResult => {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    void fetchProducts();
+  }, [fetchProducts]);
 
   return {
     products,

@@ -114,7 +114,7 @@ export function MarketplacesContent() {
       await marketplaceService.syncListing(id);
       toast({ title: "Anúncio sincronizado" });
       void load();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: "Erro ao sincronizar", description: err?.response?.data?.error, variant: "destructive" });
     } finally {
       setBusyId(null);

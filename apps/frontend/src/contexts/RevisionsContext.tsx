@@ -177,7 +177,7 @@ export function RevisionsProvider({ children }: { children: ReactNode }) {
       const result = await revisionService.getCustomerRevisions();
 
       // Transform backend data to match frontend types
-      const transformedRevisions: Revision[] = result.data.map((rev: any) => ({
+      const transformedRevisions: Revision[] = result.data.map((rev: unknown) => ({
         id: rev.id,
         customerId: rev.customerId,
         vehicleId: rev.vehicleId,

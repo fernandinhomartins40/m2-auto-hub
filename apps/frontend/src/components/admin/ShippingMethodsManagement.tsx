@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -33,10 +34,10 @@ export function ShippingMethodsManagement() {
       setLoading(true);
       const data = await shippingService.getAllMethods(false);
       setMethods(Array.isArray(data) ? data : []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao carregar métodos de envio",
+        description: getApiError(error).response?.data?.error || "Erro ao carregar métodos de envio",
         variant: "destructive",
       });
       setMethods([]);
@@ -107,10 +108,10 @@ export function ShippingMethodsManagement() {
 
       handleCloseDialog();
       loadMethods();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao salvar método de envio",
+        description: getApiError(error).response?.data?.error || "Erro ao salvar método de envio",
         variant: "destructive",
       });
     }
@@ -124,10 +125,10 @@ export function ShippingMethodsManagement() {
         description: `Método ${method.isActive ? 'desativado' : 'ativado'} com sucesso`,
       });
       loadMethods();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao alterar status",
+        description: getApiError(error).response?.data?.error || "Erro ao alterar status",
         variant: "destructive",
       });
     }
@@ -145,10 +146,10 @@ export function ShippingMethodsManagement() {
         description: "Método de envio excluído com sucesso",
       });
       loadMethods();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao excluir método de envio",
+        description: getApiError(error).response?.data?.error || "Erro ao excluir método de envio",
         variant: "destructive",
       });
     }
@@ -162,10 +163,10 @@ export function ShippingMethodsManagement() {
         description: "Métodos padrão criados com sucesso",
       });
       loadMethods();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao criar métodos padrão",
+        description: getApiError(error).response?.data?.error || "Erro ao criar métodos padrão",
         variant: "destructive",
       });
     }
@@ -317,7 +318,7 @@ export function ShippingMethodsManagement() {
               <Label htmlFor="type">Tipo *</Label>
               <Select
                 value={formData.type}
-                onValueChange={(value: any) => setFormData({ ...formData, type: value })}
+                onValueChange={(value: unknown) => setFormData({ ...formData, type: value })}
               >
                 <SelectTrigger>
                   <SelectValue />

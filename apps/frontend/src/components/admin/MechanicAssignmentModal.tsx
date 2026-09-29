@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -89,7 +90,7 @@ export function MechanicAssignmentModal({
       // Load mechanics with workload
       const workloadResponse = await revisionService.getMechanicsWorkload();
       setMechanics(workloadResponse);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading mechanics:', err);
       setError('Erro ao carregar mecânicos. Tente novamente.');
     } finally {
@@ -116,10 +117,10 @@ export function MechanicAssignmentModal({
 
       onSuccess?.();
       handleClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error assigning/transferring mechanic:', err);
       setError(
-        err.response?.data?.message ||
+        getApiError(err).response?.data?.message ||
           `Erro ao ${isTransfer ? 'transferir' : 'atribuir'} mecânico. Tente novamente.`
       );
     } finally {

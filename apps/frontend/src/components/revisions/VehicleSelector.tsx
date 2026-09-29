@@ -94,7 +94,7 @@ export function VehicleSelector({
     vehicle.year.toString().includes(searchTerm)
   );
 
-  const handleCreateSuccess = (vehicle: any) => {
+  const handleCreateSuccess = (vehicle: unknown) => {
     // Transform to local format
     const newVehicle: Vehicle = {
       id: vehicle.id,

@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -120,11 +121,11 @@ export function QuoteModal({ quote, isOpen, onClose, onUpdate, onOpenOrder }: Qu
       });
 
       onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar orçamento:', error);
-      const errorMessage = error.response?.data?.error
-        || error.response?.data?.message
-        || error.message
+      const errorMessage = getApiError(error).response?.data?.error
+        || getApiError(error).response?.data?.message
+        || getApiError(error).message
         || "Erro desconhecido. Tente novamente";
 
       toast({
@@ -199,14 +200,14 @@ Se preferir, posso tirar suas dúvidas por aqui.`;
       });
 
       onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao enviar link publico do orçamento:', error);
       toast({
         title: "Erro ao enviar link",
         description:
-          error.response?.data?.error ||
-          error.response?.data?.message ||
-          error.message ||
+          getApiError(error).response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).message ||
           "Não foi possível gerar o link público de aprovação.",
         variant: "destructive",
       });
@@ -246,11 +247,11 @@ Se preferir, posso tirar suas dúvidas por aqui.`;
       });
       onUpdate();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao aprovar orçamento:', error);
-      const errorMessage = error.response?.data?.error
-        || error.response?.data?.message
-        || error.message
+      const errorMessage = getApiError(error).response?.data?.error
+        || getApiError(error).response?.data?.message
+        || getApiError(error).message
         || "Erro desconhecido. Tente novamente";
 
       toast({
@@ -273,11 +274,11 @@ Se preferir, posso tirar suas dúvidas por aqui.`;
       });
       onUpdate();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao rejeitar orçamento:', error);
-      const errorMessage = error.response?.data?.error
-        || error.response?.data?.message
-        || error.message
+      const errorMessage = getApiError(error).response?.data?.error
+        || getApiError(error).response?.data?.message
+        || getApiError(error).message
         || "Erro desconhecido. Tente novamente";
 
       toast({

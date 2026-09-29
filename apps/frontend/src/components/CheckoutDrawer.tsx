@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -192,7 +193,7 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     }
   };
 
-  const generateWhatsAppMessage = (order: any): string => {
+  const generateWhatsAppMessage = (order: unknown): string => {
     const { customer, items, total, hasProducts, hasServices, quoteStatus } = order;
 
     let message = `🔧 *M2 Center Auto*\n`;
@@ -201,9 +202,9 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     message += `📞 *WhatsApp:* ${customer.phone}\n\n`;
 
     if (hasProducts) {
-      const productItems = items.filter((item: any) => item.type === 'PRODUCT');
+      const productItems = items.filter((item: unknown) => item.type === 'PRODUCT');
       message += `🛒 *PRODUTOS:*\n`;
-      productItems.forEach((item: any, index: number) => {
+      productItems.forEach((item: unknown, index: number) => {
         message += `${index + 1}. ${item.name}\n`;
         message += `   • Quantidade: ${item.quantity}x\n`;
         message += `   • Valor: ${formatPrice(item.price)}\n`;
@@ -212,9 +213,9 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     }
 
     if (hasServices) {
-      const serviceItems = items.filter((item: any) => item.type === 'SERVICE');
+      const serviceItems = items.filter((item: unknown) => item.type === 'SERVICE');
       message += `🔧 *SERVIÇOS:*\n`;
-      serviceItems.forEach((item: any, index: number) => {
+      serviceItems.forEach((item: unknown, index: number) => {
         message += `${index + 1}. ${item.name}\n`;
         message += `   • Quantidade: ${item.quantity}x\n`;
         if (item.priceQuoted) {
@@ -262,7 +263,7 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     setIsLoading(true);
 
     try {
-      let order: any;
+      let order: unknown;
 
       // CLIENTE AUTENTICADO - usar rota /orders
       if (isAuthenticated && customer) {
@@ -388,24 +389,24 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
         }, 1000);
       }, 2000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating order:', error);
       console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
+        message: getApiError(error).message,
+        response: getApiError(error).response?.data,
+        status: getApiError(error).response?.status,
       });
 
       // Mensagens de erro mais específicas
       let errorMessage = "Erro ao processar pedido. Tente novamente.";
 
-      if (error.response?.status === 400) {
-        errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos.";
-      } else if (error.response?.status === 404) {
+      if (getApiError(error).response?.status === 400) {
+        errorMessage = getApiError(error).response?.data?.message || "Dados inválidos. Verifique os campos.";
+      } else if (getApiError(error).response?.status === 404) {
         errorMessage = "Produto ou serviço não encontrado.";
-      } else if (error.response?.status === 500) {
+      } else if (getApiError(error).response?.status === 500) {
         errorMessage = "Erro no servidor. Tente novamente mais tarde.";
-      } else if (error.message === 'Network Error') {
+      } else if (getApiError(error).message === 'Network Error') {
         errorMessage = "Erro de conexão. Verifique sua internet.";
       }
 

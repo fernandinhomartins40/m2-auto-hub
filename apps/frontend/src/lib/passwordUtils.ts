@@ -14,7 +14,7 @@ export interface PasswordStrength {
   percentage: number;
 }
 
-const SPECIAL_CHARS_REGEX = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/;'`~]/;
+const SPECIAL_CHARS_REGEX = /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\/;'`~]/;
 
 export function validatePassword(password: string): PasswordRequirements {
   return {

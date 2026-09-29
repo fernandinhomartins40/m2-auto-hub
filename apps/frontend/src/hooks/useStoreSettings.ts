@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from 'react';
 import settingsService, { StoreSettings } from '@/api/settingsService';
 
@@ -48,9 +49,9 @@ export const useStoreSettings = (): UseStoreSettingsResult => {
       cacheTimestamp = Date.now();
 
       setSettings(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao carregar configurações públicas:', err);
-      setError(err.message || 'Erro ao carregar configurações');
+      setError(getApiError(err).message || 'Erro ao carregar configurações');
 
       // Fallback para valores padrão se cache estiver vazio
       if (!cachedSettings) {

@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -160,7 +161,7 @@ export function SettingsContent() {
     }
   }, [settings]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Limpa erro de validação quando o usuário edita o campo
     if (validationErrors[field]) {
@@ -433,12 +434,12 @@ export function SettingsContent() {
       toast.success('Configurações salvas com sucesso!', {
         description: 'Todas as alterações foram aplicadas.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[SettingsContent] Erro ao salvar:', error);
 
       // Tratar erros de validação do backend (Zod)
       if (error.details && Array.isArray(error.details)) {
-        const errorMessages = error.details.map((err: any) => {
+        const errorMessages = error.details.map((err: unknown) => {
           const field = err.path?.join('.') || 'campo';
           return `${field}: ${err.message}`;
         }).join('\n');
@@ -449,7 +450,7 @@ export function SettingsContent() {
         });
       } else {
         toast.error('Erro ao salvar configurações', {
-          description: error.message || 'Ocorreu um erro ao salvar. Tente novamente.',
+          description: getApiError(error).message || 'Ocorreu um erro ao salvar. Tente novamente.',
           duration: 5000,
         });
       }
@@ -468,8 +469,8 @@ export function SettingsContent() {
       await resetSettings();
       clearSettingsCache();
       toast.success('Configurações resetadas com sucesso!');
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao resetar configurações');
+    } catch (error: unknown) {
+      toast.error(getApiError(error).message || 'Erro ao resetar configurações');
     } finally {
       setIsResetting(false);
     }
@@ -513,8 +514,8 @@ export function SettingsContent() {
         toast.error(result.message || 'Falha na conexão');
         handleInputChange(flagMap[apiType], false);
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao testar conexão');
+    } catch (error: unknown) {
+      toast.error(getApiError(error).message || 'Erro ao testar conexão');
     } finally {
       setTestingApi(null);
     }

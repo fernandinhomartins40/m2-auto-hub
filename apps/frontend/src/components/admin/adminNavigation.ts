@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BriefcaseBusiness,
   ClipboardCheck,
   ClipboardList,
   FileText,
@@ -38,11 +39,8 @@ export type AdminNavItem = {
 };
 
 export const adminSidebarItems: AdminNavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, section: "Operação" },
-  { id: "orders", label: "Pedidos", icon: ShoppingBag, section: "Operação" },
-  { id: "quotes", label: "Orçamentos", icon: FileText, section: "Operação" },
-  { id: "service-orders", label: "Ordens de Serviço", icon: ClipboardList, section: "Operação" },
-  { id: "revisions", label: "Revisões", icon: ClipboardCheck, section: "Operação" },
+  { id: "dashboard", label: "Início", icon: LayoutDashboard, section: "Operação" },
+  { id: "service-center", label: "Atendimentos", icon: BriefcaseBusiness, section: "Operação" },
 
   { id: "products", label: "Produtos", icon: Package, section: "Catálogo" },
   { id: "services", label: "Serviços", icon: Wrench, section: "Catálogo" },
@@ -79,6 +77,7 @@ export const adminSidebarItems: AdminNavItem[] = [
  */
 export const adminTabSlugs: Record<string, string> = {
   dashboard: "dashboard",
+  "service-center": "atendimentos",
   orders: "pedidos",
   quotes: "orcamentos",
   "service-orders": "ordens-de-servico",
@@ -119,7 +118,7 @@ export function slugFromTab(tab: string): string {
 // onde fica o botão de Consulta por Placa.
 export const adminBottomNavItems: AdminNavItem[] = [
   { id: "dashboard", label: "Início", icon: LayoutDashboard },
-  { id: "orders", label: "Pedidos", icon: ShoppingBag },
+  { id: "service-center", label: "Atender", icon: BriefcaseBusiness },
   { id: "customers", label: "Clientes", icon: Users },
   { id: "menu", label: "Mais", icon: Menu },
 ];

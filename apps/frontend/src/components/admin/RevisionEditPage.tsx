@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from 'react';
 import {
   ArrowLeft,
@@ -79,7 +80,7 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
       // itemName e categoryName ja estao gravados no checklist; sem eles a
       // busca nao teria o que mostrar ao continuar a revisao.
       const items: AvaliacaoItem[] = Array.isArray(checklistArray)
-        ? checklistArray.map((item: any) => ({
+        ? checklistArray.map((item: unknown) => ({
             itemId: item.itemId,
             itemName: item.itemName ?? '',
             categoryId: item.categoryId ?? '',
@@ -125,7 +126,7 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
         backendStatus = status === 'draft' ? 'DRAFT' : 'IN_PROGRESS';
       }
 
-      const updatePayload: any = {
+      const updatePayload: unknown = {
         status: backendStatus,
         checklistItems,
         mileage,
@@ -141,12 +142,12 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
       });
 
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving revision:', error);
       toast({
         title: 'Erro ao salvar',
         description:
-          error.response?.data?.message || 'Erro ao salvar revisão. Tente novamente.',
+          getApiError(error).response?.data?.message || 'Erro ao salvar revisão. Tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -204,12 +205,12 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
         description: `${evaluated.length} item(ns) avaliado(s) e ${notEvaluated} não avaliado(s).`,
       });
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao finalizar revisão',
         description:
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).response?.data?.error ||
           'Não foi possível gerar a ordem de serviço.',
         variant: 'destructive',
       });

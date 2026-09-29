@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Camera,
@@ -103,7 +104,7 @@ const mapVehicle = (vehicle: AdminCustomerVehicle): RevisionLookupVehicle => ({
   mileage: vehicle.mileage ?? undefined,
 });
 
-const readNdefRecordText = (record: any): string => {
+const readNdefRecordText = (record: unknown): string => {
   const decoder = new TextDecoder(record.encoding || 'utf-8');
   const rawData = record.data;
 
@@ -474,13 +475,13 @@ export function RevisionVehicleLookupDialog({
           description: `${identificado} • ${formatPlate(result.plate)}`,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao buscar placa:', error);
       toast({
         title: 'Erro ao buscar placa',
         description:
-          error.response?.data?.error ||
-          error.response?.data?.message ||
+          getApiError(error).response?.data?.error ||
+          getApiError(error).response?.data?.message ||
           'Não foi possível localizar a placa no momento.',
         variant: 'destructive',
       });
@@ -659,13 +660,13 @@ export function RevisionVehicleLookupDialog({
       setManualPlate(recognition.plate);
       openResultStep('camera');
       await lookupPlate(recognition.plate);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro no reconhecimento da placa:', error);
       toast({
         title: 'Falha ao ler a placa',
         description:
-          error.response?.data?.error ||
-          error.response?.data?.message ||
+          getApiError(error).response?.data?.error ||
+          getApiError(error).response?.data?.message ||
           'N?o foi poss?vel processar a imagem da c?mera.',
         variant: 'destructive',
       });
@@ -687,16 +688,16 @@ export function RevisionVehicleLookupDialog({
       setNfcStatus('Aproxime a tag NFC do veículo para ler a placa.');
       setNfcScanning(true);
 
-      const NdefReaderConstructor = (window as Window & { NDEFReader?: any }).NDEFReader;
+      const NdefReaderConstructor = (window as Window & { NDEFReader?: unknown }).NDEFReader;
       const reader = new NdefReaderConstructor();
 
       reader.addEventListener('readingerror', () => {
         setNfcStatus('A tag foi detectada, mas o conteúdo não pôde ser lido.');
       });
 
-      reader.addEventListener('reading', async (event: any) => {
+      reader.addEventListener('reading', async (event: unknown) => {
         try {
-          const records = Array.from(event.message?.records || []) as any[];
+          const records = Array.from(event.message?.records || []) as unknown[];
           const payloads = records
             .map((record) => readNdefRecordText(record))
             .filter(Boolean);

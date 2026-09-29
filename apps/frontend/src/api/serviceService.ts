@@ -8,7 +8,7 @@ export interface Service {
   category: string;
   estimatedTime: string;
   basePrice?: number;
-  specifications?: Record<string, any>;
+  specifications?: Record<string, unknown>;
   isActive: boolean;
   status?: string;
   slug?: string;
@@ -18,7 +18,7 @@ export interface Service {
 
 interface RawService extends Omit<Service, 'basePrice' | 'specifications' | 'isActive'> {
   basePrice?: number | string | null;
-  specifications?: Record<string, any> | null;
+  specifications?: Record<string, unknown> | null;
 }
 
 export interface ServiceListResponse {
@@ -34,7 +34,7 @@ export interface CreateServiceDto {
   category: string;
   estimatedTime: string;
   basePrice?: number;
-  specifications?: Record<string, any>;
+  specifications?: Record<string, unknown>;
   status?: string;
 }
 
@@ -44,7 +44,7 @@ export interface UpdateServiceDto {
   category?: string;
   estimatedTime?: string;
   basePrice?: number;
-  specifications?: Record<string, any>;
+  specifications?: Record<string, unknown>;
   status?: string;
 }
 

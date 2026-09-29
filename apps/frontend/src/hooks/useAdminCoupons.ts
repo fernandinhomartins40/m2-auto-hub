@@ -1,5 +1,5 @@
 // src/hooks/useAdminCoupons.ts
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import couponService, { Coupon, CouponUpsertInput } from '@/api/couponService';
 import { handleApiError } from '@/api';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +27,7 @@ export const useAdminCoupons = (): UseAdminCouponsResult => {
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const fetchCoupons = async () => {
+  const fetchCoupons = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -53,7 +53,7 @@ export const useAdminCoupons = (): UseAdminCouponsResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const createCoupon = async (data: CouponUpsertInput) => {
     setCreateLoading(true);
@@ -150,8 +150,8 @@ export const useAdminCoupons = (): UseAdminCouponsResult => {
   };
 
   useEffect(() => {
-    fetchCoupons();
-  }, []);
+    void fetchCoupons();
+  }, [fetchCoupons]);
 
   return {
     coupons,

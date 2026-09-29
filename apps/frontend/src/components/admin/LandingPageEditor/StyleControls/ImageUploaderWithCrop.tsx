@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 /**
  * ImageUploaderWithCrop - Upload de imagens com crop integrado
  * Usa ProductImageCropper (react-image-crop) para interface consistente
@@ -111,7 +112,7 @@ export const ImageUploaderWithCrop = ({
       }
 
       return imageUrl;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[ImageUploaderWithCrop] ❌ Erro no upload:`, error);
       throw error;
     }
@@ -193,10 +194,10 @@ export const ImageUploaderWithCrop = ({
         URL.revokeObjectURL(localPreviewUrlRef.current);
         localPreviewUrlRef.current = null;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[ImageUploaderWithCrop] ❌ Upload falhou:', error);
 
-      const errorMsg = error.message || 'Erro ao fazer upload da imagem.';
+      const errorMsg = getApiError(error).message || 'Erro ao fazer upload da imagem.';
       setUploadError(errorMsg);
 
       // Restaurar preview anterior

@@ -14,6 +14,7 @@ import { CustomerProfile } from "../components/customer/CustomerProfile";
 import { CustomerQuotes } from "../components/customer/CustomerQuotes";
 import { CustomerRevisions } from "../components/customer/CustomerRevisions";
 import { CustomerVehicles } from "../components/customer/CustomerVehicles";
+import { CustomerNotifications } from "../components/customer/CustomerNotifications";
 import { SupportDashboard } from "../components/customer/support/SupportDashboard";
 import "../styles/cliente.css";
 
@@ -57,7 +58,12 @@ export default function CustomerPanel() {
   const renderTabContent = () => {
     switch (currentTab) {
       case "dashboard":
-        return <CustomerDashboard />;
+        return (
+          <CustomerDashboard
+            onTabChange={handleTabChange}
+            onBrowseProducts={() => navigate("/#pecas")}
+          />
+        );
       case "profile":
         return <CustomerProfile />;
       case "quotes":
@@ -74,8 +80,15 @@ export default function CustomerPanel() {
         return <CustomerCoupons />;
       case "support":
         return <SupportDashboard />;
+      case "notifications":
+        return <CustomerNotifications />;
       default:
-        return <CustomerDashboard />;
+        return (
+          <CustomerDashboard
+            onTabChange={handleTabChange}
+            onBrowseProducts={() => navigate("/#pecas")}
+          />
+        );
     }
   };
 

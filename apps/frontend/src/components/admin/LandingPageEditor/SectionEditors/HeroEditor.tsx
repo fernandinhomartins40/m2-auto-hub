@@ -262,7 +262,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
                 {config.features.length > 0 && (
                   <div className="mt-10 flex flex-wrap items-center justify-center gap-3 mb-8">
                     {config.features.map((feature) => {
-                      const IconComponent = (Icons as any)[feature.icon] || Icons.Circle;
+                      const IconComponent = (Icons as unknown)[feature.icon] || Icons.Circle;
                       return (
                         <span
                           key={feature.id}

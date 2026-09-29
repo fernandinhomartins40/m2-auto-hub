@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -124,8 +125,8 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         setOrders([]);
         setRevisions([]);
       }
-    } catch (err: any) {
-      // Num timeout não existe `err.response`, então a descrição vinha vazia e
+    } catch (err: unknown) {
+      // Num timeout não existe `getApiError(err).response`, então a descrição vinha vazia e
       // a falha passava despercebida.
       const description =
         err?.code === 'ECONNABORTED'

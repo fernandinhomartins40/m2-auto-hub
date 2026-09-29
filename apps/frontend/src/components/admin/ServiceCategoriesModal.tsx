@@ -88,7 +88,7 @@ export function ServiceCategoriesModal({
       setName('');
       setEditingCategory(null);
       await onSaved();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message =
         error?.response?.data?.error ||
         error?.response?.data?.message ||

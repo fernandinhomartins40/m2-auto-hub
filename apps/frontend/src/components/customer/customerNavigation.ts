@@ -14,6 +14,7 @@ export const customerTabSlugs: Record<string, string> = {
   favorites: "favoritos",
   coupons: "cupons",
   support: "suporte",
+  notifications: "notificacoes",
 };
 
 const slugToTab: Record<string, string> = Object.fromEntries(

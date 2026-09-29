@@ -19,7 +19,7 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
   const permissions = useAdminPermissions();
 
   const visibleItems = adminSidebarItems.filter(
-    (item) => !item.requiresPermission || (permissions as any)[item.requiresPermission]
+    (item) => !item.requiresPermission || (permissions as unknown)[item.requiresPermission]
   );
 
   const groupedItems = visibleItems.reduce<Record<string, typeof visibleItems>>((acc, item) => {

@@ -221,7 +221,7 @@ export function ImageCropper({
     const newCrop = { ...cropArea };
 
     switch (resizing) {
-      case 'nw-resize': // Top-left
+      case 'nw-resize': { // Top-left
         const deltaX = mouseX - dragStart.x;
         const deltaY = mouseY - dragStart.y;
         newCrop.x += deltaX;
@@ -229,6 +229,7 @@ export function ImageCropper({
         newCrop.width -= deltaX;
         newCrop.height -= deltaY;
         break;
+      }
       case 'ne-resize': // Top-right
         newCrop.width = mouseX - cropArea.x;
         newCrop.height = cropArea.height - (mouseY - dragStart.y);

@@ -1,4 +1,5 @@
-﻿import { useState, useEffect } from "react";
+import { getApiError } from "@/lib/errors";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -96,7 +97,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
   const [customerCpf, setCustomerCpf] = useState('');
 
   // Serviços
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<unknown[]>([]);
   const [selectedItems, setSelectedItems] = useState<QuoteItem[]>([]);
   const [serviceSearch, setServiceSearch] = useState('');
   const [isLoadingServices, setIsLoadingServices] = useState(false);
@@ -183,7 +184,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
     }
   };
 
-  const handleAddService = (service: any) => {
+  const handleAddService = (service: unknown) => {
     const existingItem = selectedItems.find(i => i.id === service.id);
 
     if (existingItem) {
@@ -307,7 +308,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
         }
         return true;
 
-      case 3:
+      case 3: {
         const hasEmptyPrices = selectedItems.some(item => !item.quotedPrice || item.quotedPrice <= 0);
         if (hasEmptyPrices) {
           toast({
@@ -317,9 +318,6 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
           });
           return false;
         }
-        return true;
-
-      case 4:
         if (needsAddress) {
           if (useExistingAddress) {
             if (!selectedAddressId) {
@@ -343,6 +341,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
           }
         }
         return true;
+      }
 
       default:
         return true;
@@ -361,7 +360,6 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
 
   const handleCreateQuote = async (sendToClient: boolean = false) => {
     if (!validateStep(3)) return;
-    if (needsAddress && !validateStep(4)) return;
     if (!needsAddress && !selectedAddressId && !(selectedCustomer?.addresses && selectedCustomer.addresses.length > 0)) {
       toast({
         title: "Endereço necessário",
@@ -369,15 +367,15 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
         variant: "destructive"
       });
       setNeedsAddress(true);
-      setStep(4);
+      setStep(3);
       return;
     }
 
     setIsCreating(true);
     try {
       // Preparar dados do cliente
-      let customerData: any = {};
-      let customerId: string | undefined = selectedCustomer?.id;
+      let customerData: unknown = {};
+      const customerId: string | undefined = selectedCustomer?.id;
 
       // Se não é cliente existente, criar novo
       if (!selectedCustomer) {
@@ -404,7 +402,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
               const createdAddress = await adminService.createCustomerAddress(selectedCustomer.id, address);
               quoteAddressId = createdAddress.id;
               quoteAddress = undefined;
-            } catch (addrError: any) {
+            } catch (addrError: unknown) {
               console.error('Erro ao salvar endereço:', addrError);
             }
           }
@@ -442,11 +440,11 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
 
       onSuccess();
       handleClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar orçamento:', error);
       toast({
         title: "❌ Erro ao criar orçamento",
-        description: error.response?.data?.error || error.message || "Tente novamente",
+        description: getApiError(error).response?.data?.error || getApiError(error).message || "Tente novamente",
         variant: "destructive"
       });
     } finally {
@@ -503,8 +501,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
               {[
                 { num: 1, label: 'Cliente', icon: User },
                 { num: 2, label: 'Serviços', icon: Wrench },
-                { num: 3, label: 'Preços', icon: DollarSign },
-                { num: 4, label: 'Endereço', icon: MapPin }
+                { num: 3, label: 'Finalizar', icon: DollarSign }
               ].map((item, index) => (
                 <div key={item.num} className="flex items-center flex-1">
                   <div className="flex flex-col items-center">
@@ -522,7 +519,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
                       {item.label}
                     </span>
                   </div>
-                  {index < 3 && (
+                  {index < 2 && (
                     <div className={`h-0.5 flex-1 mx-1.5 rounded ${step > item.num ? 'bg-green-500' : 'bg-gray-200'}`} />
                   )}
                 </div>
@@ -873,7 +870,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
               </div>
             )}
 
-            {/* ETAPA 3: Preços */}
+            {/* ETAPA 3: Preços, entrega e confirmação */}
             {step === 3 && (
               <div className="space-y-3">
                 <Label className="text-sm font-semibold">Precificação dos Serviços</Label>
@@ -976,8 +973,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
               </div>
             )}
 
-            {/* ETAPA 4: Endereço (Opcional) */}
-            {step === 4 && (
+            {step === 3 && (
               <div className="space-y-3">
                 <div className="flex items-center space-x-2 p-3 bg-blue-50 border border-blue-200 rounded">
                   <Checkbox
@@ -1182,7 +1178,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
               {step === 1 ? 'Cancelar' : 'Voltar'}
             </Button>
 
-            {step < 4 ? (
+            {step < 3 ? (
               <Button onClick={handleNextStep} size="sm">
                 Próximo
               </Button>

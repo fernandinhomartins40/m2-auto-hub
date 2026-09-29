@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -17,12 +18,17 @@ import {
   Clock,
   Factory,
   Truck,
+  Car,
+  Gift,
+  HeartHandshake,
   X as XIcon
 } from "lucide-react";
-import adminService, { type ProvisionalUser as AdminCustomer, type StoreOrder } from "../../api/adminService";
+import adminService, { type AdminCustomerVehicle, type ProvisionalUser as AdminCustomer, type StoreOrder } from "../../api/adminService";
 import { useToast } from "../../hooks/use-toast";
 import { OrderDetailsModal } from "./OrderDetailsModal";
 import { formatCurrency } from '@/lib/format';
+import { getAdminCustomerStats } from '../../api/loyaltyService';
+import type { LoyaltyStats } from '@moria/types';
 
 interface CustomerOrdersModalProps {
   customer: AdminCustomer | null;
@@ -33,6 +39,9 @@ interface CustomerOrdersModalProps {
 export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrdersModalProps) {
   const { toast } = useToast();
   const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [vehicles, setVehicles] = useState<AdminCustomerVehicle[]>([]);
+  const [loyalty, setLoyalty] = useState<LoyaltyStats | null>(null);
+  const [relationshipCount, setRelationshipCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
@@ -48,19 +57,30 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
 
     setIsLoading(true);
     try {
-      // Buscar todos os pedidos e filtrar pelo nome ou telefone do cliente
-      const response = await adminService.getOrders({ page: 1, limit: 100 });
+      const [response, customerVehicles] = await Promise.all([
+        adminService.getOrders({ page: 1, limit: 100 }),
+        adminService.getCustomerVehicles(customer.id),
+      ]);
       const customerOrders = response.orders.filter(
         order =>
+          order.userId === customer.id ||
           order.customerName.toLowerCase().includes(customer.name.toLowerCase()) ||
           order.customerWhatsApp.includes(customer.whatsapp)
       );
       setOrders(customerOrders);
-    } catch (error: any) {
+      setVehicles(customerVehicles);
+
+      const [loyaltyResult, relationshipResult] = await Promise.allSettled([
+        getAdminCustomerStats(customer.id),
+        adminService.getRelationshipMessages({ customerId: customer.id, page: 1, limit: 1 }),
+      ]);
+      setLoyalty(loyaltyResult.status === 'fulfilled' ? loyaltyResult.value : null);
+      setRelationshipCount(relationshipResult.status === 'fulfilled' ? relationshipResult.value.pagination.total : 0);
+    } catch (error: unknown) {
       console.error('Error loading customer orders:', error);
       toast({
         title: "❌ Erro ao carregar pedidos",
-        description: error.response?.data?.error || error.message || "Tente novamente",
+        description: getApiError(error).response?.data?.error || getApiError(error).message || "Tente novamente",
         variant: "destructive",
       });
     } finally {
@@ -70,7 +90,7 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
 
 
   const getStatusInfo = (status: string) => {
-    const statusMap: Record<string, { label: string; color: string; icon: any }> = {
+    const statusMap: Record<string, { label: string; color: string; icon: unknown }> = {
       PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
       CONFIRMED: { label: 'Confirmado', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
       IN_PRODUCTION: { label: 'Em Produção', color: 'bg-indigo-100 text-indigo-800', icon: Factory },
@@ -99,10 +119,10 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-gray-50/50 flex-shrink-0">
             <DialogTitle className="flex items-center gap-2 text-lg">
               <User className="h-5 w-5 text-moria-orange" />
-              Pedidos de {customer.name}
+              Cliente 360º — {customer.name}
             </DialogTitle>
             <DialogDescription className="text-xs mt-1">
-              Histórico completo de pedidos do cliente
+              Contato, veículos, indicadores e histórico de pedidos em um único contexto
             </DialogDescription>
           </DialogHeader>
 
@@ -136,7 +156,7 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
               </div>
 
               {/* Estatísticas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
@@ -156,6 +176,61 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
                     <CheckCircle className="h-8 w-8 text-blue-600 opacity-80" />
                   </div>
                 </div>
+                <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-orange-700 font-medium">Veículos</p>
+                      <p className="text-2xl font-bold text-orange-800">{vehicles.length}</p>
+                      <p className="text-xs text-orange-600">cadastrados</p>
+                    </div>
+                    <Car className="h-8 w-8 text-orange-600 opacity-80" />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center gap-3 rounded-lg border bg-purple-50/60 p-3">
+                  <Gift className="h-8 w-8 text-purple-600" />
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-purple-700">Fidelidade</p>
+                    {loyalty ? (
+                      <p className="font-semibold text-purple-950">{loyalty.currentPoints.toLocaleString('pt-BR')} pontos · nível {loyalty.level}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Sem movimentação disponível</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border bg-rose-50/60 p-3">
+                  <HeartHandshake className="h-8 w-8 text-rose-600" />
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-rose-700">Relacionamento</p>
+                    <p className="font-semibold text-rose-950">{relationshipCount} {relationshipCount === 1 ? 'contato registrado' : 'contatos registrados'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Car className="h-4 w-4 text-moria-orange" />
+                  Veículos ({vehicles.length})
+                </h3>
+                {vehicles.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">Nenhum veículo cadastrado</div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {vehicles.map((vehicle) => (
+                      <div key={vehicle.id} className="rounded-lg border bg-white p-3">
+                        <p className="font-medium">{vehicle.brand} {vehicle.model}</p>
+                        <p className="text-sm text-muted-foreground">{vehicle.year} · {vehicle.plate}</p>
+                        {vehicle.mileage != null && <p className="text-xs text-muted-foreground">{vehicle.mileage.toLocaleString('pt-BR')} km</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Separator />

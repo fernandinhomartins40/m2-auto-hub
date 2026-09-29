@@ -54,7 +54,7 @@ interface PromotionFormData {
 interface PromotionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (promotion: Partial<any>) => Promise<void>;
+  onSave: (promotion: Partial<unknown>) => Promise<void>;
   promotion?: AdvancedPromotion | null;
   loading?: boolean;
 }
@@ -163,7 +163,7 @@ const convertToBackendFormat = (formData: PromotionFormData) => {
   }
 
   // Construir rewards
-  const rewards: any = {
+  const rewards: unknown = {
     primary: {
       type: formData.discountType,
       value: formData.discountValue
@@ -179,7 +179,7 @@ const convertToBackendFormat = (formData: PromotionFormData) => {
   }
 
   // Construir payload
-  const payload: any = {
+  const payload: unknown = {
     name: formData.name,
     description: formData.description,
 
@@ -358,7 +358,7 @@ export function PromotionModal({ isOpen, onClose, onSave, promotion, loading = f
     setActiveTab('basic');
   }, [promotion, isOpen]);
 
-  const handleInputChange = (field: keyof PromotionFormData, value: any) => {
+  const handleInputChange = (field: keyof PromotionFormData, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));

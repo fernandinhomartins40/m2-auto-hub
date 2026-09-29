@@ -93,7 +93,7 @@ export interface AdminNotificationCenterItem {
   actionLabel: string;
   actionUrl: string;
   actionTab: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface AdminNotificationCenterSummary {
@@ -115,7 +115,7 @@ export interface AdminNotificationCenterResponse {
   notifications: AdminNotificationCenterItem[];
 }
 
-export interface AdminService {
+export interface AdminServiceRecord {
   id: string;
   name: string;
   description: string;
@@ -472,14 +472,14 @@ export interface AdminRevision {
   date: string;
   mileage: number | null;
   status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  checklistItems: any;
+  checklistItems: unknown;
   generalNotes: string | null;
   recommendations: string | null;
   assignedMechanicId: string | null;
   mechanicName: string | null;
   mechanicNotes: string | null;
   assignedAt: string | null;
-  transferHistory: any[] | null;
+  transferHistory: unknown[] | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
@@ -781,7 +781,7 @@ class AdminService {
     limit?: number;
     search?: string;
     category?: string;
-  }): Promise<{ services: AdminService[]; totalCount: number }> {
+  }): Promise<{ services: AdminServiceRecord[]; totalCount: number }> {
     const response = await apiClient.get('/admin/services', { params });
     return {
       services: response.data.data || [],
@@ -789,17 +789,17 @@ class AdminService {
     };
   }
 
-  async getServiceById(id: string): Promise<AdminService> {
+  async getServiceById(id: string): Promise<AdminServiceRecord> {
     const response = await apiClient.get(`/admin/services/${id}`);
     return response.data;
   }
 
-  async createService(data: CreateServiceRequest): Promise<AdminService> {
+  async createService(data: CreateServiceRequest): Promise<AdminServiceRecord> {
     const response = await apiClient.post('/admin/services', data);
     return response.data;
   }
 
-  async updateService(id: string, data: Partial<CreateServiceRequest>): Promise<AdminService> {
+  async updateService(id: string, data: Partial<CreateServiceRequest>): Promise<AdminServiceRecord> {
     const response = await apiClient.put(`/admin/services/${id}`, data);
     return response.data;
   }
@@ -808,7 +808,7 @@ class AdminService {
     await apiClient.delete(`/admin/services/${id}`);
   }
 
-  async toggleServiceStatus(id: string): Promise<AdminService> {
+  async toggleServiceStatus(id: string): Promise<AdminServiceRecord> {
     const response = await apiClient.patch(`/admin/services/${id}/toggle-status`);
     return response.data;
   }
@@ -958,7 +958,7 @@ class AdminService {
 
     const contentDisposition = response.headers['content-disposition'];
     const fallbackFilename = payload.filename || `cliente-${id.slice(0, 8)}.pdf`;
-    const matchedFilename = contentDisposition?.match(/filename=\"?([^\"]+)\"?/i)?.[1];
+    const matchedFilename = contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1];
     const filename = matchedFilename || fallbackFilename;
 
     const url = window.URL.createObjectURL(response.data);
@@ -979,7 +979,7 @@ class AdminService {
 
     const contentDisposition = response.headers['content-disposition'];
     const fallbackFilename = payload.filename || 'clientes.pdf';
-    const matchedFilename = contentDisposition?.match(/filename=\"?([^\"]+)\"?/i)?.[1];
+    const matchedFilename = contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1];
     const filename = matchedFilename || fallbackFilename;
 
     const url = window.URL.createObjectURL(response.data);
@@ -1054,7 +1054,7 @@ class AdminService {
     power?: string;
     city?: string;
     state?: string;
-  }): Promise<any> {
+  }): Promise<unknown> {
     const response = await apiClient.post(`/admin/customers/${customerId}/vehicles`, data);
     return response.data;
   }
@@ -1201,7 +1201,7 @@ class AdminService {
     status?: string;
     dateFrom?: string;
     dateTo?: string;
-  }): Promise<{ data: AdminRevision[]; meta: any }> {
+  }): Promise<{ data: AdminRevision[]; meta: unknown }> {
     const response = await apiClient.get('/admin/revisions', { params });
     return response.data;
   }
@@ -1238,7 +1238,7 @@ class AdminService {
 
   async updateRevision(id: string, data: {
     mechanicNotes?: string;
-    checklistItems?: any;
+    checklistItems?: unknown;
     recommendations?: string;
   }): Promise<AdminRevision> {
     const response = await apiClient.put(`/admin/revisions/${id}`, data);
@@ -1344,7 +1344,7 @@ class AdminService {
     type: string;
     title: string;
     message: string;
-    data?: any;
+    data?: unknown;
     read: boolean;
     readAt: string | null;
     createdAt: string;

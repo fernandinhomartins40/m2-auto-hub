@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
@@ -77,12 +78,12 @@ export function RequestQuoteModal({
           status: 'ACTIVE',
         });
         setServices(response.services || []);
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: 'Erro ao carregar servicos',
           description:
-            error.response?.data?.message ||
-            error.response?.data?.error ||
+            getApiError(error).response?.data?.message ||
+            getApiError(error).response?.data?.error ||
             'Nao foi possivel carregar os servicos disponiveis.',
           variant: 'destructive',
         });
@@ -196,12 +197,12 @@ export function RequestQuoteModal({
 
       onSuccess?.(quote);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao solicitar orcamento',
         description:
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).response?.data?.error ||
           'Nao foi possivel enviar sua solicitacao agora.',
         variant: 'destructive',
       });

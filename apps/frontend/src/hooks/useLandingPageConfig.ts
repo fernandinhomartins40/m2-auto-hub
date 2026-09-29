@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -19,7 +20,7 @@ const log = (message: string, data?: unknown) => {
   console.log(`[LandingPageConfig] ${new Date().toISOString()} - ${message}`, data || '');
 };
 
-const deepMerge = (target: any, source: any): any => {
+const deepMerge = (target: unknown, source: unknown): unknown => {
   if (!source) {
     return target;
   }
@@ -115,7 +116,7 @@ export interface UseLandingPageConfigResult {
   isDirty: boolean;
   isSaving: boolean;
   error: string | null;
-  updateConfig: (section: keyof LandingPageConfig, data: any) => void;
+  updateConfig: (section: keyof LandingPageConfig, data: unknown) => void;
   save: (isAutoSave?: boolean) => Promise<void>;
   reset: () => void;
   loadFromBackend: () => Promise<void>;
@@ -163,9 +164,9 @@ export const useLandingPageConfig = (): UseLandingPageConfigResult => {
         hasHero: Boolean(normalizedConfig.hero),
         hasFooter: Boolean(normalizedConfig.footer),
       });
-    } catch (err: any) {
-      log('Failed to load landing page config from backend', { error: err.message });
-      setError(err.message);
+    } catch (err: unknown) {
+      log('Failed to load landing page config from backend', { error: getApiError(err).message });
+      setError(getApiError(err).message);
 
       try {
         const cached = localStorage.getItem(STORAGE_KEY);
@@ -236,12 +237,12 @@ export const useLandingPageConfig = (): UseLandingPageConfigResult => {
         if (!isAutoSave) {
           toast.success('Configuracao salva com sucesso!');
         }
-      } catch (err: any) {
-        log('Failed to save landing page config', { error: err.message });
-        setError(err.message);
+      } catch (err: unknown) {
+        log('Failed to save landing page config', { error: getApiError(err).message });
+        setError(getApiError(err).message);
 
         if (!isAutoSave) {
-          toast.error(`Erro ao salvar: ${err.message}`);
+          toast.error(`Erro ao salvar: ${getApiError(err).message}`);
         }
       } finally {
         setIsSaving(false);
@@ -250,7 +251,7 @@ export const useLandingPageConfig = (): UseLandingPageConfigResult => {
     [config]
   );
 
-  const updateConfig = useCallback((section: keyof LandingPageConfig, data: any) => {
+  const updateConfig = useCallback((section: keyof LandingPageConfig, data: unknown) => {
     setConfig((prev) => ({
       ...prev,
       [section]: data,

@@ -105,7 +105,7 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
       else await serviceOrderService.complete(id);
       toast({ title: action === 'start' ? 'OS iniciada' : 'OS concluída' });
       await load();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Não foi possível', description: err?.response?.data?.error, variant: 'destructive' });
     } finally {
       setBusyId(null);

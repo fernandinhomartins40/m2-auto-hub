@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -109,11 +110,11 @@ function CustomerQuotes() {
       setLoading(true);
       const data = await customerService.getMyQuotes(selectedStatus);
       setQuotes(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar orçamentos:", error);
       toast({
         title: "Erro ao carregar orçamentos",
-        description: error.response?.data?.error || "Tente novamente mais tarde",
+        description: getApiError(error).response?.data?.error || "Tente novamente mais tarde",
         variant: "destructive",
       });
     } finally {
@@ -129,11 +130,11 @@ function CustomerQuotes() {
         description: result.message,
       });
       loadQuotes(); // Reload to update status
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao aprovar orçamento:", error);
       toast({
         title: "Erro ao aprovar orçamento",
-        description: error.response?.data?.error || "Tente novamente mais tarde",
+        description: getApiError(error).response?.data?.error || "Tente novamente mais tarde",
         variant: "destructive",
       });
     }
@@ -147,11 +148,11 @@ function CustomerQuotes() {
         description: result.message,
       });
       loadQuotes(); // Reload to update status
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao rejeitar orçamento:", error);
       toast({
         title: "Erro ao rejeitar orçamento",
-        description: error.response?.data?.error || "Tente novamente mais tarde",
+        description: getApiError(error).response?.data?.error || "Tente novamente mais tarde",
         variant: "destructive",
       });
     }
@@ -301,11 +302,11 @@ function CustomerOrdersTab() {
       setLoading(true);
       const data = await customerService.getMyOrders();
       setOrders(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar pedidos:", error);
       toast({
         title: "Erro ao carregar pedidos",
-        description: error.response?.data?.error || "Tente novamente mais tarde",
+        description: getApiError(error).response?.data?.error || "Tente novamente mais tarde",
         variant: "destructive",
       });
     } finally {
@@ -404,11 +405,11 @@ function CustomerNotificationsTab() {
       setLoading(true);
       const data = await customerService.getMyNotifications();
       setNotifications(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar notificações:", error);
       toast({
         title: "Erro ao carregar notificações",
-        description: error.response?.data?.error || "Tente novamente mais tarde",
+        description: getApiError(error).response?.data?.error || "Tente novamente mais tarde",
         variant: "destructive",
       });
     } finally {
@@ -420,7 +421,7 @@ function CustomerNotificationsTab() {
     try {
       await customerService.markNotificationAsRead(notificationId);
       loadNotifications(); // Reload to update status
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao marcar notificação como lida:", error);
     }
   };
@@ -432,7 +433,7 @@ function CustomerNotificationsTab() {
         title: "Notificações marcadas como lidas",
       });
       loadNotifications();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao marcar todas como lidas:", error);
     }
   };

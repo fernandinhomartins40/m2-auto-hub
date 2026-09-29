@@ -72,7 +72,7 @@ export function CustomerFavorites() {
 
   // Statistics
   const [showStats, setShowStats] = useState(false);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<unknown>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -678,7 +678,7 @@ export function CustomerFavorites() {
                 }
               </p>
               {favoriteProducts.length === 0 && (
-                <Button className="mt-4" onClick={() => window.location.hash = '#pecas'}>
+                <Button className="mt-4" onClick={() => window.location.assign('/#pecas')}>
                   Explorar Produtos
                 </Button>
               )}

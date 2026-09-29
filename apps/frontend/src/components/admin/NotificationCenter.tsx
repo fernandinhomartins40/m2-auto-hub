@@ -100,7 +100,7 @@ export function NotificationCenter({
       const response = await adminService.getNotificationCenter();
       setNotifications(response.notifications);
       setSummary(response.summary);
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       // background fail silently
     } finally {
       setLoading(false);
@@ -203,7 +203,7 @@ export function NotificationCenter({
             : item
         )
       );
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       // non-critical
     }
   };
@@ -238,7 +238,7 @@ export function NotificationCenter({
       toast({
         title: "Notificações marcadas como lidas",
       });
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       toast({
         title: "Erro ao marcar notificações",
         description: "Tente novamente mais tarde.",

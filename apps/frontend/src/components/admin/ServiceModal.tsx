@@ -17,7 +17,7 @@ interface Service {
   category: string;
   basePrice?: number;
   estimatedTime: string;
-  specifications: Record<string, any>;
+  specifications: Record<string, unknown>;
   isActive: boolean;
   status?: string;
 }
@@ -133,7 +133,7 @@ export function ServiceModal({
     return undefined;
   }, [service, isOpen]);
 
-  const handleInputChange = (field: keyof Service, value: any) => {
+  const handleInputChange = (field: keyof Service, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));

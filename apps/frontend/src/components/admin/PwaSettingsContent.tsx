@@ -235,7 +235,7 @@ export function PwaSettingsContent() {
       });
       clearSettingsCache();
       toast.success('Configurações do PWA salvas com sucesso.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erro ao salvar configurações do PWA', {
         description: error?.message || 'Tente novamente.',
       });
@@ -254,7 +254,7 @@ export function PwaSettingsContent() {
       await resetSettings();
       clearSettingsCache();
       toast.success('Configurações do PWA restauradas para o padrão.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erro ao restaurar configurações do PWA', {
         description: error?.message || 'Tente novamente.',
       });

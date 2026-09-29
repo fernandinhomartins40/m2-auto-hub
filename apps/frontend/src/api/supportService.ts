@@ -124,7 +124,7 @@ export const supportService = {
     category?: TicketCategory;
     limit?: number;
     offset?: number;
-  }): Promise<{ data: SupportTicket[]; pagination: any }> {
+  }): Promise<{ data: SupportTicket[]; pagination: unknown }> {
     const response = await apiClient.get('/support/tickets', { params: filters });
     return response.data;
   },
@@ -182,7 +182,7 @@ export const supportService = {
     assignedToId?: string;
     limit?: number;
     offset?: number;
-  }): Promise<{ data: SupportTicket[]; pagination: any }> {
+  }): Promise<{ data: SupportTicket[]; pagination: unknown }> {
     const response = await apiClient.get('/support/admin/tickets', { params: filters });
     return response.data;
   },

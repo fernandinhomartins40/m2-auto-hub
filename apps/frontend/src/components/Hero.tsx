@@ -40,7 +40,7 @@ export function Hero() {
     config.hero;
 
   const getIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName];
+    const IconComponent = (Icons as unknown)[iconName];
     return IconComponent || Icons.Circle;
   };
 
@@ -106,7 +106,7 @@ export function Hero() {
                 return (
                   <Button
                     key={button.id}
-                    variant={button.variant as any}
+                    variant={button.variant as unknown}
                     size="lg"
                     className="text-lg"
                     style={customStyle}

@@ -42,7 +42,7 @@ interface ServiceWithStatus {
   category: string;
   estimatedTime: string;
   basePrice?: number;
-  specifications?: Record<string, any>;
+  specifications?: Record<string, unknown>;
   isActive: boolean;
   status?: string;
   slug?: string;
@@ -171,7 +171,7 @@ export function AdminServicesSection({
     setEditingServiceId(null);
   };
 
-  const handleSaveService = async (serviceData: any) => {
+  const handleSaveService = async (serviceData: unknown) => {
     try {
       if (editingService && editingService.id) {
         await updateService(editingService.id, serviceData);

@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import apiClient from './apiClient';
 
 export interface ShippingMethod {
@@ -105,8 +106,8 @@ class ShippingService {
     try {
       const response = await apiClient.get(`/orders/${orderId}/tracking`);
       return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+    } catch (error: unknown) {
+      if (getApiError(error).response?.status === 404) {
         return null;
       }
       throw error;

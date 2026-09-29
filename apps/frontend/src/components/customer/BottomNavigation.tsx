@@ -19,10 +19,10 @@ export function BottomNavigation({
   onMenuClick,
 }: BottomNavigationProps) {
   const navItems: BottomNavItem[] = [
-    { id: "dashboard", label: "Inicio", icon: Home },
-    { id: "quotes", label: "Orcamentos", icon: FileText },
+    { id: "dashboard", label: "Início", icon: Home },
+    { id: "quotes", label: "Orçamentos", icon: FileText },
     { id: "orders", label: "Pedidos", icon: Package },
-    { id: "revisions", label: "Revisoes", icon: ClipboardCheck },
+    { id: "revisions", label: "Revisões", icon: ClipboardCheck },
     { id: "menu", label: "Mais", icon: Menu },
   ];
 

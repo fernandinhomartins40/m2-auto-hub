@@ -362,7 +362,7 @@ export const ContactEditor = ({ config, onChange }: ContactEditorProps) => {
             >
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {(config.contactInfoCards || []).slice(0, 4).map((info, index) => {
-                  const IconComponent = (Icons as any)[info.icon] || MapPin;
+                  const IconComponent = (Icons as unknown)[info.icon] || MapPin;
                   return (
                     <div key={index} className="bg-white p-3 rounded-lg text-center shadow-sm">
                       <div className="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center mx-auto mb-2">

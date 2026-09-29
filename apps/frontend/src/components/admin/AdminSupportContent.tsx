@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { MessageCircle, Phone, RefreshCw, Send, UserCheck, Users, Clock3, AlertCircle, Shield, ExternalLink } from "lucide-react";
 import { AdminPageHeader } from "./AdminPageHeader";
@@ -134,10 +135,10 @@ export function AdminSupportContent() {
       if (ticketsResult.data.length > 0) {
         void openTicket(ticketsResult.data[0].id);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao carregar suporte",
-        description: error.response?.data?.error || "Não foi possível carregar a central de suporte.",
+        description: getApiError(error).response?.data?.error || "Não foi possível carregar a central de suporte.",
         variant: "destructive",
       });
     } finally {
@@ -172,10 +173,10 @@ export function AdminSupportContent() {
       setLoadingTicketId(ticketId);
       const ticket = await supportService.getAdminTicketById(ticketId);
       setSelectedTicket(ticket);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao abrir ticket",
-        description: error.response?.data?.error || "Não foi possível carregar a conversa.",
+        description: getApiError(error).response?.data?.error || "Não foi possível carregar a conversa.",
         variant: "destructive",
       });
     } finally {
@@ -244,10 +245,10 @@ export function AdminSupportContent() {
         title: "Ticket atualizado",
         description: "As informações do ticket foram salvas com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao salvar ticket",
-        description: error.response?.data?.error || "Não foi possível atualizar o ticket.",
+        description: getApiError(error).response?.data?.error || "Não foi possível atualizar o ticket.",
         variant: "destructive",
       });
     } finally {
@@ -277,10 +278,10 @@ export function AdminSupportContent() {
           ? "A observação ficou registrada apenas para a equipe."
           : "O cliente já pode visualizar a resposta no painel dele.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao enviar mensagem",
-        description: error.response?.data?.error || "Não foi possível enviar a mensagem.",
+        description: getApiError(error).response?.data?.error || "Não foi possível enviar a mensagem.",
         variant: "destructive",
       });
     } finally {

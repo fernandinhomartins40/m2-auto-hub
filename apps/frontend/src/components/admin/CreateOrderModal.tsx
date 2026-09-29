@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -94,8 +95,8 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
   const [customerPhone, setCustomerPhone] = useState('');
 
   // Itens
-  const [products, setProducts] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
+  const [products, setProducts] = useState<unknown[]>([]);
+  const [services, setServices] = useState<unknown[]>([]);
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
   const [productSearch, setProductSearch] = useState('');
   const [serviceSearch, setServiceSearch] = useState('');
@@ -199,7 +200,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
     }
   };
 
-  const handleAddItem = (item: any, type: 'PRODUCT' | 'SERVICE') => {
+  const handleAddItem = (item: unknown, type: 'PRODUCT' | 'SERVICE') => {
     const existingItem = selectedItems.find(i => i.id === item.id);
 
     if (existingItem) {
@@ -352,9 +353,6 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
             return false;
           }
         }
-        return true;
-
-      case 4:
         if (!paymentMethod) {
           toast({
             title: "Forma de pagamento não selecionada",
@@ -381,7 +379,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
   };
 
   const handleCreateOrder = async () => {
-    if (!validateStep(4)) return;
+    if (!validateStep(3)) return;
 
     setIsCreating(true);
     try {
@@ -411,7 +409,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
               title: "Endereço salvo",
               description: "Endereço adicionado ao cadastro do cliente"
             });
-          } catch (addrError: any) {
+          } catch (addrError: unknown) {
             console.error('Erro ao salvar endereço:', addrError);
             // Não interrompe a criação do pedido
           }
@@ -450,11 +448,11 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
 
       onSuccess();
       handleClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar pedido:', error);
       toast({
         title: "❌ Erro ao criar pedido",
-        description: error.response?.data?.error || error.message || "Tente novamente",
+        description: getApiError(error).response?.data?.error || getApiError(error).message || "Tente novamente",
         variant: "destructive"
       });
     } finally {
@@ -526,8 +524,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
               {[
                 { num: 1, label: 'Cliente', icon: User },
                 { num: 2, label: 'Itens', icon: Package },
-                { num: 3, label: 'Endereço', icon: MapPin },
-                { num: 4, label: 'Pagamento', icon: CreditCard }
+                { num: 3, label: 'Finalizar', icon: CreditCard }
               ].map((item, index) => (
                 <div key={item.num} className="flex items-center flex-1">
                   <div className="flex flex-col items-center">
@@ -545,7 +542,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
                       {item.label}
                     </span>
                   </div>
-                  {index < 3 && (
+                  {index < 2 && (
                     <div className={`h-0.5 flex-1 mx-1.5 rounded ${step > item.num ? 'bg-green-500' : 'bg-gray-200'}`} />
                   )}
                 </div>
@@ -555,7 +552,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
             {/* Mobile: Dots + Título atual */}
             <div className="sm:hidden space-y-2">
               <div className="flex items-center justify-center gap-1.5">
-                {[1, 2, 3, 4].map((num) => (
+                {[1, 2, 3].map((num) => (
                   <div
                     key={num}
                     className={`h-2 rounded-full transition-all ${
@@ -572,11 +569,10 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
                 <p className="text-sm font-semibold text-moria-orange">
                   {step === 1 && 'Cliente'}
                   {step === 2 && 'Itens do Pedido'}
-                  {step === 3 && 'Endereço de Entrega'}
-                  {step === 4 && 'Pagamento e Confirmação'}
+                  {step === 3 && 'Entrega e Pagamento'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Etapa {step} de 4
+                  Etapa {step} de 3
                 </p>
               </div>
             </div>
@@ -1042,7 +1038,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
               </div>
             )}
 
-            {/* ETAPA 3: Endereço */}
+            {/* ETAPA 3: Entrega e pagamento */}
             {step === 3 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1221,8 +1217,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
               </div>
             )}
 
-            {/* ETAPA 4: Pagamento */}
-            {step === 4 && (
+            {step === 3 && (
               <div className="space-y-3">
                 <Label className="text-sm font-semibold">Forma de Pagamento *</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -1349,7 +1344,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
             {step === 1 ? 'Cancelar' : 'Voltar'}
           </Button>
 
-          {step < 4 ? (
+          {step < 3 ? (
             <Button onClick={handleNextStep} className="min-h-[44px] h-11 touch-manipulation">
               Próximo
             </Button>

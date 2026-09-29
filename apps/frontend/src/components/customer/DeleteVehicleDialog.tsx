@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState } from 'react';
 import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -29,11 +30,11 @@ export function DeleteVehicleDialog({ vehicle, isOpen, onClose, onSuccess }: Del
     try {
       await vehicleService.deleteVehicle(vehicle.id);
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao deletar veículo:', error);
-      const errorMessage = error.response?.data?.error
-        || error.response?.data?.message
-        || error.message
+      const errorMessage = getApiError(error).response?.data?.error
+        || getApiError(error).response?.data?.message
+        || getApiError(error).message
         || 'Erro ao remover veículo. Tente novamente.';
 
       toast({

@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -92,6 +93,7 @@ import {
 } from "@/utils/reportPdf";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency as formatPrice } from '@/lib/format';
+import { getAdminDataNeeds } from './adminDataNeeds';
 
 interface StoreOrder {
   id: string;
@@ -184,6 +186,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const [sourceFilter, setSourceFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
   const [revisionView, setRevisionView] = useState<'appointments' | 'list' | 'create'>('appointments');
+  const [serviceCenterView, setServiceCenterView] = useState<'orders' | 'quotes' | 'service-orders' | 'revisions'>('orders');
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isCreateOrderModalOpen, setIsCreateOrderModalOpen] = useState(false);
   const [isCreateQuoteModalOpen, setIsCreateQuoteModalOpen] = useState(false);
@@ -208,8 +211,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const [isLoadingReport, setIsLoadingReport] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    void loadData(activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'reports') {
@@ -225,29 +228,31 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     filterProducts();
   }, [orders, quotes, services, coupons, products, searchTerm, statusFilter, sourceFilter]);
 
-  const loadData = async () => {
+  const loadData = async (tab = activeTab) => {
     setIsLoading(true);
     try {
-      // Load data from backend APIs
+      const needs = getAdminDataNeeds(tab);
+
       const [dashboardStatsRes, ordersRes, quotesRes, servicesRes, couponsRes, productsRes, customersRes] = await Promise.all([
-        adminService.getDashboardStats().catch(() => null),
-        adminService.getOrders({ page: 1, limit: 100 }).catch(() => ({ orders: [], totalCount: 0 })),
-        adminService.getQuotes({ page: 1, limit: 100 }).catch(() => ({ quotes: [], totalCount: 0 })),
-        adminService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [], totalCount: 0 })),
-        adminService.getCoupons({ page: 1, limit: 100 }).catch(() => ({ coupons: [], totalCount: 0 })),
-        adminService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [], totalCount: 0 })),
-        adminService.getCustomers({ page: 1, limit: 100 }).catch(() => ({ customers: [], totalCount: 0 }))
+        needs.dashboard ? adminService.getDashboardStats().catch(() => null) : Promise.resolve(null),
+        needs.orders ? adminService.getOrders({ page: 1, limit: 100 }).catch(() => ({ orders: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.quotes ? adminService.getQuotes({ page: 1, limit: 100 }).catch(() => ({ quotes: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.dashboard ? adminService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.dashboard ? adminService.getCoupons({ page: 1, limit: 100 }).catch(() => ({ coupons: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.dashboard ? adminService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.customers ? adminService.getCustomers({ page: 1, limit: 100 }).catch(() => ({ customers: [], totalCount: 0 })) : Promise.resolve(null),
       ]);
 
-      setDashboardStats(dashboardStatsRes);
-      setOrders(ordersRes.orders || []);
-      setQuotes(quotesRes.quotes || []);
-      setQuotesTotalCount(quotesRes.totalCount || 0);
-      setServices(servicesRes.services || []);
-      setCoupons(couponsRes.coupons || []);
-      setProducts(productsRes.products || []);
-      setUsers(customersRes.customers || []);
-
+      if (dashboardStatsRes) setDashboardStats(dashboardStatsRes);
+      if (ordersRes) setOrders(ordersRes.orders || []);
+      if (quotesRes) {
+        setQuotes(quotesRes.quotes || []);
+        setQuotesTotalCount(quotesRes.totalCount || 0);
+      }
+      if (servicesRes) setServices(servicesRes.services || []);
+      if (couponsRes) setCoupons(couponsRes.coupons || []);
+      if (productsRes) setProducts(productsRes.products || []);
+      if (customersRes) setUsers(customersRes.customers || []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -562,6 +567,10 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
   const isPendingOrderStatus = (status: string) => ['PENDING', 'pending'].includes(status);
   const isPendingQuoteStatus = (status: string) => ['PENDING', 'ANALYZING', 'pending', 'analyzing'].includes(status);
+  const openServiceCenter = (view: typeof serviceCenterView) => {
+    setServiceCenterView(view);
+    onTabChange?.('service-center');
+  };
   const mapNotificationToTab = (actionUrl?: string, notificationType?: string) => {
     if (actionUrl?.includes('/orders')) return 'orders';
     if (actionUrl?.includes('/quotes')) return 'quotes';
@@ -626,9 +635,58 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     <div className="space-y-6">
       <AdminPageHeader
         icon={BarChart3}
-        title="Dashboard"
-        description="Acompanhe os principais indicadores, alertas e atividades recentes da loja."
+        title="Visão geral"
+        description="Comece pelas pendências e ações mais importantes da loja."
       />
+      <Card className="border-primary/20 bg-gradient-to-br from-background to-muted/40">
+        <CardHeader>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle as="h2">Central de ações</CardTitle>
+              <CardDescription>
+                Resolva pendências e inicie os atendimentos mais comuns sem procurar em outros menus.
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => setIsCreateOrderModalOpen(true)}>
+                <ShoppingCart className="h-4 w-4" />
+                Novo pedido
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setIsCreateQuoteModalOpen(true)}>
+                <FileText className="h-4 w-4" />
+                Novo orçamento
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setIsCreateCustomerModalOpen(true)}>
+                <User className="h-4 w-4" />
+                Novo cliente
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <button type="button" onClick={() => openServiceCenter('orders')} className="flex min-h-24 items-center gap-4 rounded-lg border bg-background p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <span className="rounded-full bg-blue-100 p-3 text-blue-700"><ShoppingBag className="h-5 w-5" /></span>
+              <span><span className="block text-2xl font-bold">{stats.pendingOrders}</span><span className="text-sm text-muted-foreground">pedidos aguardando ação</span></span>
+            </button>
+            <button type="button" onClick={() => openServiceCenter('quotes')} className="flex min-h-24 items-center gap-4 rounded-lg border bg-background p-4 text-left transition-colors hover:border-orange-300 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <span className="rounded-full bg-orange-100 p-3 text-orange-700"><FileText className="h-5 w-5" /></span>
+              <span><span className="block text-2xl font-bold">{stats.pendingQuotes}</span><span className="text-sm text-muted-foreground">orçamentos para acompanhar</span></span>
+            </button>
+            <button type="button" onClick={() => onTabChange?.('products')} className="flex min-h-24 items-center gap-4 rounded-lg border bg-background p-4 text-left transition-colors hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:col-span-2 xl:col-span-1">
+              <span className="rounded-full bg-red-100 p-3 text-red-700"><AlertCircle className="h-5 w-5" /></span>
+              <span><span className="block text-2xl font-bold">{stats.lowStockProducts}</span><span className="text-sm text-muted-foreground">produtos com estoque baixo</span></span>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+      <details className="group rounded-xl border bg-background">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 font-semibold marker:content-none sm:px-6">
+          <span>Indicadores e atividade da loja</span>
+          <span className="text-sm font-normal text-muted-foreground group-open:hidden">Mostrar visão completa</span>
+          <span className="hidden text-sm font-normal text-muted-foreground group-open:inline">Ocultar visão completa</span>
+        </summary>
+        <div className="space-y-6 border-t p-4 sm:p-6">
       {/* Primeira linha - Métricas principais */}
       <StatGrid className="nb:gap-6">
         <Card>
@@ -858,6 +916,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
           }
         }}
       />
+        </div>
+      </details>
     </div>
   );
 
@@ -900,10 +960,10 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       setSelectedOrder(linkedOrder);
       setIsOrderModalOpen(true);
       onTabChange?.('orders');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Pedido ainda não disponível",
-        description: error.response?.data?.error || "Não foi possível abrir o pedido convertido a partir deste orçamento.",
+        description: getApiError(error).response?.data?.error || "Não foi possível abrir o pedido convertido a partir deste orçamento.",
         variant: "destructive",
       });
     }
@@ -922,11 +982,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         title: "PDF gerado",
         description: `O orçamento #${quote.id.slice(0, 8)} foi exportado com sucesso.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error exporting quote PDF:', error);
       toast({
         title: "Erro ao gerar PDF",
-        description: error.response?.data?.error || error.message || "Tente novamente.",
+        description: getApiError(error).response?.data?.error || getApiError(error).message || "Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -1385,11 +1445,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         title: "PDF gerado",
         description: "A listagem de pedidos foi exportada com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error exporting orders PDF:", error);
       toast({
         title: "Erro ao gerar PDF",
-        description: error.response?.data?.error || error.message || "Tente novamente.",
+        description: getApiError(error).response?.data?.error || getApiError(error).message || "Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -1490,11 +1550,11 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         title: "PDF gerado",
         description: `O pedido #${order.id.slice(0, 8)} foi exportado com sucesso.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error exporting order PDF:", error);
       toast({
         title: "Erro ao gerar PDF",
-        description: error.response?.data?.error || error.message || "Tente novamente.",
+        description: getApiError(error).response?.data?.error || getApiError(error).message || "Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -1753,7 +1813,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={loadData}
+                onClick={() => void loadData()}
                 disabled={isLoading}
                 className="gap-2"
               >
@@ -1857,7 +1917,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
                     }}
                   >
                     <Eye className="h-4 w-4 mr-1" />
-                    Ver Pedidos
+                    Abrir Cliente 360º
                   </Button>
                 </div>
               </div>
@@ -2142,10 +2202,55 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     </Card>
   );
 
+  const renderRevisionsWorkspace = () => (
+    <div className="space-y-4 sm:space-y-6">
+      <AdminPageHeader
+        icon={Wrench}
+        title={revisionView === 'appointments' ? 'Agendamentos de Revisão' : revisionView === 'list' ? 'Revisões' : 'Nova Revisão'}
+        description="Gerencie agenda, execução e abertura de revisões veiculares."
+        actions={
+          <>
+            <Button variant={revisionView === 'appointments' ? 'default' : 'outline'} onClick={() => setRevisionView('appointments')} className="flex-1 sm:flex-none h-9 text-sm">Agendamentos</Button>
+            <Button variant={revisionView === 'list' ? 'default' : 'outline'} onClick={() => setRevisionView('list')} className="flex-1 sm:flex-none h-9 text-sm">Listar Revisões</Button>
+            <Button variant={revisionView === 'create' ? 'default' : 'outline'} onClick={() => setRevisionView('create')} className="flex-1 sm:flex-none h-9 text-sm">
+              <Plus className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Nova Revisão</span><span className="sm:hidden">Nova</span>
+            </Button>
+          </>
+        }
+      />
+      {revisionView === 'appointments' ? <RevisionAppointmentsContent /> : revisionView === 'list' ? <RevisionsListContent /> : <NewRevisionFlow onFinished={() => setRevisionView('list')} />}
+    </div>
+  );
+
+  const renderServiceCenter = () => (
+    <div className="space-y-6">
+      <AdminPageHeader
+        icon={ClipboardList}
+        title="Central de Atendimentos"
+        description="Acompanhe a jornada completa, do pedido e orçamento até a execução na oficina."
+      />
+      <Tabs value={serviceCenterView} onValueChange={(value) => setServiceCenterView(value as typeof serviceCenterView)}>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 lg:grid-cols-4">
+          <TabsTrigger value="orders">Pedidos</TabsTrigger>
+          <TabsTrigger value="quotes">Orçamentos</TabsTrigger>
+          <TabsTrigger value="service-orders">Ordens de serviço</TabsTrigger>
+          <TabsTrigger value="revisions">Revisões</TabsTrigger>
+        </TabsList>
+        <TabsContent value="orders" className="mt-6">{renderOrders()}</TabsContent>
+        <TabsContent value="quotes" className="mt-6">{renderQuotes()}</TabsContent>
+        <TabsContent value="service-orders" className="mt-6"><ServiceOrdersContent /></TabsContent>
+        <TabsContent value="revisions" className="mt-6">{renderRevisionsWorkspace()}</TabsContent>
+      </Tabs>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return renderDashboard();
+      case 'service-center':
+        return renderServiceCenter();
       case 'orders':
         return renderOrders();
       case 'quotes':
@@ -2181,55 +2286,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       case 'service-orders':
         return <ServiceOrdersContent />;
       case 'revisions':
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <AdminPageHeader
-              icon={Wrench}
-              title={
-                revisionView === 'appointments'
-                  ? 'Agendamentos de Revisão'
-                  : revisionView === 'list'
-                    ? 'Revisões'
-                    : 'Nova Revisão'
-              }
-              description="Gerencie agenda, execução e abertura de revisões veiculares."
-              actions={
-                <>
-                  <Button
-                    variant={revisionView === 'appointments' ? 'default' : 'outline'}
-                    onClick={() => setRevisionView('appointments')}
-                    className="flex-1 sm:flex-none h-9 text-sm"
-                  >
-                    Agendamentos
-                  </Button>
-                  <Button
-                    variant={revisionView === 'list' ? 'default' : 'outline'}
-                    onClick={() => setRevisionView('list')}
-                    className="flex-1 sm:flex-none h-9 text-sm"
-                  >
-                    Listar Revisões
-                  </Button>
-                  <Button
-                    variant={revisionView === 'create' ? 'default' : 'outline'}
-                    onClick={() => setRevisionView('create')}
-                    className="flex-1 sm:flex-none h-9 text-sm"
-                  >
-                    <Plus className="h-4 w-4 sm: shrink-0" />
-                    <span className="hidden sm:inline">Nova Revisão</span>
-                    <span className="sm:hidden">Nova</span>
-                  </Button>
-                </>
-              }
-            />
-            {revisionView === 'appointments' ? (
-              <RevisionAppointmentsContent />
-            ) : revisionView === 'list' ? (
-              <RevisionsListContent />
-            ) : (
-              <NewRevisionFlow onFinished={() => setRevisionView('list')} />
-            )}
-          </div>
-        );
+        return renderRevisionsWorkspace();
       case 'coupons':
         return renderCoupons();
       case 'promotions':

@@ -314,7 +314,7 @@ function PwaIconCropper({
       });
 
       onComplete(blob);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erro ao aplicar recorte', {
         description: error?.message || 'Tente novamente.',
       });
@@ -473,7 +473,7 @@ function PwaIconUploadCard({
       const result = await settingsService.uploadPwaAsset(file, slot);
       onUploaded(result.url);
       toast.success(`${title} atualizado`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erro ao enviar icone do PWA', {
         description: error?.message || 'Tente novamente.',
       });

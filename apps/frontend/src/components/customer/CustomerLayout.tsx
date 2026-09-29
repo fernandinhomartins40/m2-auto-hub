@@ -27,6 +27,7 @@ import {
   Car,
   ShoppingCart,
   FileText,
+  Bell,
 } from "lucide-react";
 import { formatCurrency } from '@/lib/format';
 
@@ -57,15 +58,9 @@ export function CustomerLayout({
   const menuItems = [
     {
       id: "dashboard",
-      label: "Dashboard",
+      label: "Início",
       icon: Home,
-      description: "Visão geral da conta",
-    },
-    {
-      id: "profile",
-      label: "Meu Perfil",
-      icon: User,
-      description: "Dados pessoais e endereços",
+      description: "Próximas ações",
     },
     {
       id: "orders",
@@ -108,6 +103,18 @@ export function CustomerLayout({
       label: "Suporte",
       icon: MessageCircle,
       description: "Atendimento ao cliente",
+    },
+    {
+      id: "notifications",
+      label: "Notificações",
+      icon: Bell,
+      description: "Atualizações importantes",
+    },
+    {
+      id: "profile",
+      label: "Meu Perfil",
+      icon: User,
+      description: "Dados pessoais e endereços",
     },
   ];
 
@@ -329,20 +336,15 @@ export function CustomerLayout({
                             <Button
                               variant={isActive ? "secondary" : "ghost"}
                               aria-current={isActive ? "page" : undefined}
-                              className={`w-full justify-start h-auto p-4 ${
+                            className={`h-11 w-full justify-start px-4 ${
                                 isActive
                                   ? "bg-moria-orange/10 text-moria-orange border-r-2 border-moria-orange"
                                   : "hover:bg-moria-orange/5"
                               }`}
                               onClick={() => onTabChange(item.id)}
                             >
-                              <Icon className="w-4 h-4 mr-3" />
-                              <div className="text-left">
-                                <div className="font-medium">{item.label}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {item.description}
-                                </div>
-                              </div>
+                              <Icon className="mr-3 h-4 w-4 shrink-0" />
+                              <span className="truncate font-medium">{item.label}</span>
                             </Button>
                           </li>
                         );

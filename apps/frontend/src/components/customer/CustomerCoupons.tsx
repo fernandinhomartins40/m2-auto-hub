@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 // ✅ ETAPA 2.1: Seção de Cupons Disponíveis no Painel do Cliente
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -39,10 +40,10 @@ export function CustomerCoupons() {
       const data = await couponService.getActiveCoupons();
 
       // Se retornar objeto com data, extrair array
-      const couponsArray = Array.isArray(data) ? data : (data as any).data || [];
+      const couponsArray = Array.isArray(data) ? data : (data as unknown).data || [];
       setCoupons(couponsArray);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar cupons');
+    } catch (err: unknown) {
+      setError(getApiError(err).message || 'Erro ao carregar cupons');
       toast.error('Erro ao carregar cupons disponíveis');
     } finally {
       setIsLoading(false);

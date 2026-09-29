@@ -1,5 +1,5 @@
 // src/hooks/useAdminServices.ts
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import serviceService, { Service, CreateServiceDto, UpdateServiceDto } from '@/api/serviceService';
 import { handleApiError } from '@/api';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +27,7 @@ export const useAdminServices = (): UseAdminServicesResult => {
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -45,7 +45,7 @@ export const useAdminServices = (): UseAdminServicesResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const createService = async (data: CreateServiceDto) => {
     setCreateLoading(true);
@@ -140,8 +140,8 @@ export const useAdminServices = (): UseAdminServicesResult => {
   };
 
   useEffect(() => {
-    fetchServices();
-  }, []);
+    void fetchServices();
+  }, [fetchServices]);
 
   return {
     services,

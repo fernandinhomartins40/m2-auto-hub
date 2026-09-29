@@ -195,7 +195,7 @@ export const ColorOrGradientPicker = ({
 
 // Helper function para converter ColorOrGradientValue em CSS
 export const colorOrGradientToCSS = (
-  value: ColorOrGradientValue | undefined | any,
+  value: ColorOrGradientValue | undefined | unknown,
   options?: { forText?: boolean }
 ): React.CSSProperties => {
   const isForText = options?.forText ?? false;

@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 /**
  * ImageUploader - Upload e gerenciamento de imagens (versão simplificada)
  * Adaptado do Ferraco para Moria
@@ -71,7 +72,7 @@ export const ImageUploader = ({
       const imageUrl = data.data?.url || data.url;
 
       return imageUrl;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[ImageUploader] ❌ Erro no upload:`, error);
       throw error;
     }
@@ -114,10 +115,10 @@ export const ImageUploader = ({
       });
 
       setUploadError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[ImageUploader] ❌ Upload falhou:', error);
 
-      const errorMsg = error.message || 'Erro ao fazer upload da imagem.';
+      const errorMsg = getApiError(error).message || 'Erro ao fazer upload da imagem.';
       setUploadError(errorMsg);
 
       // Restaurar preview anterior

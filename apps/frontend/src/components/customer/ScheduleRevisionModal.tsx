@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, Car, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -77,12 +78,12 @@ export function ScheduleRevisionModal({
 
       onSuccess?.(appointment);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao agendar revisao',
         description:
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          getApiError(error).response?.data?.message ||
+          getApiError(error).response?.data?.error ||
           'Nao foi possivel solicitar o agendamento.',
         variant: 'destructive',
       });

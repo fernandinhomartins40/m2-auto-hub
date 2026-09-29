@@ -1,6 +1,5 @@
-import MechanicRevisionsView from './MechanicRevisionsView';
-import MechanicServiceOrdersView from './MechanicServiceOrdersView';
 import MechanicSettingsView from './MechanicSettingsView';
+import MechanicWorkQueue from './MechanicWorkQueue';
 
 interface MechanicContentProps {
   activeTab: string;
@@ -8,13 +7,15 @@ interface MechanicContentProps {
 
 export function MechanicContent({ activeTab }: MechanicContentProps) {
   switch (activeTab) {
+    case 'work':
+      return <MechanicWorkQueue />;
     case 'revisions':
-      return <MechanicRevisionsView />;
+      return <MechanicWorkQueue initialView="revisions" />;
     case 'service-orders':
-      return <MechanicServiceOrdersView />;
+      return <MechanicWorkQueue initialView="service-orders" />;
     case 'settings':
       return <MechanicSettingsView />;
     default:
-      return <MechanicRevisionsView />;
+      return <MechanicWorkQueue />;
   }
 }

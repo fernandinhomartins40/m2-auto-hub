@@ -3,7 +3,7 @@ import { LandingPageConfig } from '@/types/landingPage';
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
-const deepMerge = (target: any, source: any): any => {
+const deepMerge = (target: unknown, source: unknown): unknown => {
   if (!source) {
     return target;
   }

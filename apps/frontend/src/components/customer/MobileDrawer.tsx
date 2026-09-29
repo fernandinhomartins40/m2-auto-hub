@@ -1,4 +1,4 @@
-import { X, User, Car, Heart, Gift, MessageCircle, LogOut } from "lucide-react";
+import { X, User, Car, Heart, Gift, MessageCircle, LogOut, Bell } from "lucide-react";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -53,10 +53,11 @@ export function MobileDrawer({
 
   const menuItems = [
     { id: "profile", label: "Meu Perfil", icon: User },
-    { id: "vehicles", label: "Meus Veiculos", icon: Car },
+    { id: "vehicles", label: "Meus Veículos", icon: Car },
     { id: "favorites", label: "Favoritos", icon: Heart },
     { id: "coupons", label: "Cupons", icon: Gift },
     { id: "support", label: "Suporte", icon: MessageCircle },
+    { id: "notifications", label: "Notificações", icon: Bell },
   ];
 
   const handleItemClick = (itemId: string) => {
@@ -89,7 +90,7 @@ export function MobileDrawer({
         )}
         role="dialog"
         aria-modal="true"
-        aria-label="Menu de navegacao"
+        aria-label="Menu de navegação"
       >
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">Menu</h2>

@@ -168,12 +168,12 @@ export function PromotionsManagement() {
     setEditingPromotion(null);
   };
 
-  const handleSavePromotion = async (promotionData: Partial<any>) => {
+  const handleSavePromotion = async (promotionData: Partial<unknown>) => {
     try {
       if (editingPromotion) {
         await updatePromotion(editingPromotion.id, promotionData);
       } else {
-        await createPromotion(promotionData as any);
+        await createPromotion(promotionData as unknown);
       }
       handleCloseModal();
     } catch (error) {

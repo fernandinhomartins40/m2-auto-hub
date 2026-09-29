@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, Clock, Loader2, ThumbsDown, ThumbsUp, Wrench } from "lucide-react";
@@ -32,10 +33,10 @@ export default function PublicQuoteApprovalPage() {
         setIsLoading(true);
         const payload = await customerService.getPublicQuoteByToken(token);
         setData(payload);
-      } catch (fetchError: any) {
+      } catch (fetchError: unknown) {
         setError(
-          fetchError.response?.data?.error ||
-            fetchError.message ||
+          getApiError(fetchError).response?.data?.error ||
+            getApiError(fetchError).message ||
             "Nao foi possivel carregar o orcamento."
         );
       } finally {
@@ -70,10 +71,10 @@ export default function PublicQuoteApprovalPage() {
           approvalExpired: false,
         });
       }
-    } catch (submitError: any) {
+    } catch (submitError: unknown) {
       setError(
-        submitError.response?.data?.error ||
-          submitError.message ||
+        getApiError(submitError).response?.data?.error ||
+          getApiError(submitError).message ||
           "Nao foi possivel registrar sua decisao."
       );
     } finally {

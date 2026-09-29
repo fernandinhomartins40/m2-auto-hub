@@ -66,7 +66,7 @@ class PromotionService {
     limit?: number;
     active?: boolean;
   }): Promise<PromotionListResponse> {
-    const response = await apiClient.get<{ success: boolean; data: AdvancedPromotion[]; meta: any }>('/promotions', { params: filter });
+    const response = await apiClient.get<{ success: boolean; data: AdvancedPromotion[]; meta: unknown }>('/promotions', { params: filter });
     // Backend retorna { success, data: [...], meta: {...} }
     return {
       promotions: response.data.data,

@@ -5,6 +5,7 @@
  * slug é só o que aparece na barra de endereços.
  */
 export const mechanicTabSlugs: Record<string, string> = {
+  work: "trabalho",
   revisions: "revisoes",
   "service-orders": "ordens-de-servico",
   settings: "perfil",
@@ -16,11 +17,11 @@ const slugToTab: Record<string, string> = Object.fromEntries(
 
 /** Slug da URL para o id interno da aba. `revisions` quando não reconhecido. */
 export function mechanicTabFromSlug(slug: string | undefined): string {
-  if (!slug) return "revisions";
-  return slugToTab[slug] ?? "revisions";
+  if (!slug) return "work";
+  return slugToTab[slug] ?? "work";
 }
 
 /** Id interno da aba para o slug da URL. */
 export function mechanicSlugFromTab(tab: string): string {
-  return mechanicTabSlugs[tab] ?? "revisoes";
+  return mechanicTabSlugs[tab] ?? "trabalho";
 }

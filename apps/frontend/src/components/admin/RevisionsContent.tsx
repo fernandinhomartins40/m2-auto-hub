@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState } from 'react';
 import { AlertCircle, FileText, Loader2, Save, ScanLine } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -60,7 +61,7 @@ export function RevisionsContent() {
       );
       const itemData = categoryData?.items.find((categoryItem) => categoryItem.id === item.itemId);
 
-      const checkItem: any = {
+      const checkItem: unknown = {
         categoryId: categoryData?.id || '',
         categoryName: categoryData?.name || '',
         itemId: item.itemId,
@@ -93,7 +94,7 @@ export function RevisionsContent() {
     setIsLoading(true);
 
     try {
-      const payload: any = {
+      const payload: unknown = {
         customerId: customer.id,
         vehicleId: vehicle.id,
         date: new Date().toISOString(),
@@ -111,10 +112,10 @@ export function RevisionsContent() {
         title: 'Revisão criada',
         description: 'Revisão criada com sucesso. Preencha o checklist.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erro ao criar revisão',
-        description: error.response?.data?.message || 'Erro ao criar revisão. Tente novamente.',
+        description: getApiError(error).response?.data?.message || 'Erro ao criar revisão. Tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -230,7 +231,7 @@ export function RevisionsContent() {
       const backendStatus =
         status === 'draft' ? 'DRAFT' : status === 'in_progress' ? 'IN_PROGRESS' : 'COMPLETED';
 
-      const updatePayload: any = {
+      const updatePayload: unknown = {
         status: backendStatus,
         checklistItems: serializeChecklistItems(revisionItems),
       };
@@ -266,11 +267,11 @@ export function RevisionsContent() {
         setRevisionItems([]);
         setCurrentRevisionId(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar revisão:', error);
       toast({
         title: 'Erro ao salvar',
-        description: error.response?.data?.message || 'Erro ao salvar revisão. Tente novamente.',
+        description: getApiError(error).response?.data?.message || 'Erro ao salvar revisão. Tente novamente.',
         variant: 'destructive',
       });
     } finally {

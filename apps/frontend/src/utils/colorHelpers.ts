@@ -131,7 +131,7 @@ export const convertTailwindToHex = (tailwindClass: string): string => {
  * @param value - Valor a validar
  * @returns true se válido
  */
-export const isValidColorOrGradient = (value: any): value is ColorOrGradientValue => {
+export const isValidColorOrGradient = (value: unknown): value is ColorOrGradientValue => {
   // Validação 1: deve ser objeto
   if (!value || typeof value !== 'object') {
     return false;
@@ -181,7 +181,7 @@ export const isValidColorOrGradient = (value: any): value is ColorOrGradientValu
  * @param colorString - String de cor (ex: "text-blue-600" ou "#2563eb")
  * @returns ColorOrGradientValue completo
  */
-export const stringToColorOrGradient = (colorString: string | ColorOrGradientValue | any): ColorOrGradientValue => {
+export const stringToColorOrGradient = (colorString: string | ColorOrGradientValue | unknown): ColorOrGradientValue => {
   // Se for null ou undefined, retornar fallback
   if (colorString === null || colorString === undefined) {
     return {
@@ -233,7 +233,7 @@ export const stringToColorOrGradient = (colorString: string | ColorOrGradientVal
  * @param color - Cor no formato antigo (string) ou novo (ColorOrGradientValue)
  * @returns ColorOrGradientValue
  */
-export const migrateColorField = (color: any): ColorOrGradientValue => {
+export const migrateColorField = (color: unknown): ColorOrGradientValue => {
   // Se já é ColorOrGradientValue válido, retornar
   if (isValidColorOrGradient(color)) {
     return color;
@@ -248,7 +248,7 @@ export const migrateColorField = (color: any): ColorOrGradientValue => {
  * @param items - Array de objetos com campo color
  * @returns Array com cores migradas
  */
-export const migrateColorArray = <T extends { color?: any }>(items: T[]): T[] => {
+export const migrateColorArray = <T extends { color?: unknown }>(items: T[]): T[] => {
   if (!items || !Array.isArray(items)) {
     return [];
   }
@@ -277,7 +277,7 @@ export const migrateColorArray = <T extends { color?: any }>(items: T[]): T[] =>
  * @param value - Valor a sanitizar
  * @returns ColorOrGradientValue válido ou null
  */
-export const sanitizeColorValue = (value: any): ColorOrGradientValue | null => {
+export const sanitizeColorValue = (value: unknown): ColorOrGradientValue | null => {
   // Se for null ou undefined, retornar null
   if (value === null || value === undefined) {
     return null;

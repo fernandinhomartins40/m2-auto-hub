@@ -16,7 +16,7 @@ export interface Offer {
   stock: number;
   minStock: number;
   images: string[];
-  specifications?: Record<string, any>;
+  specifications?: Record<string, unknown>;
   status: string;
   offerType: OfferType;
   offerStartDate: string;

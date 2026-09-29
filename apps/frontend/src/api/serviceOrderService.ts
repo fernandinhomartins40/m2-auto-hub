@@ -97,7 +97,7 @@ function unwrap<T>(payload: { data: T }): T {
 }
 
 export const serviceOrderService = {
-  async list(params?: ServiceOrderListParams): Promise<{ data: ServiceOrder[]; meta: any }> {
+  async list(params?: ServiceOrderListParams): Promise<{ data: ServiceOrder[]; meta: unknown }> {
     const res = await apiClient.get('/service-orders', { params });
     return { data: res.data.data, meta: res.data.meta };
   },

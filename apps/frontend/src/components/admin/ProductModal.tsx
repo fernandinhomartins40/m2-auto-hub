@@ -157,10 +157,10 @@ export function ProductModal({
         specifications: product.specifications || {},
         vehicle_compatibility: product.vehicleCompatibility || [],
         // Ofertas
-        offer_type: (product as any).offerType || null,
-        offer_start_date: (product as any).offerStartDate ? toLocalDateTimeInputValue(new Date((product as any).offerStartDate)) : '',
-        offer_end_date: (product as any).offerEndDate ? toLocalDateTimeInputValue(new Date((product as any).offerEndDate)) : '',
-        offer_badge: (product as any).offerBadge || ''
+        offer_type: (product as unknown).offerType || null,
+        offer_start_date: (product as unknown).offerStartDate ? toLocalDateTimeInputValue(new Date((product as unknown).offerStartDate)) : '',
+        offer_end_date: (product as unknown).offerEndDate ? toLocalDateTimeInputValue(new Date((product as unknown).offerEndDate)) : '',
+        offer_badge: (product as unknown).offerBadge || ''
       });
 
       // Converter imagens existentes para ProductImage para preview
@@ -238,7 +238,7 @@ export function ProductModal({
     };
   };
 
-  const handleInputChange = (field: keyof ProductFormData, value: any) => {
+  const handleInputChange = (field: keyof ProductFormData, value: unknown) => {
     // Se mudou o tipo de oferta, aplicar smart defaults nas datas
     if (field === 'offer_type') {
       if (value && value !== 'NONE') {

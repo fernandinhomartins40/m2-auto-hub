@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useEffect, useState } from "react";
 import {
   AlertCircle,
@@ -209,11 +210,11 @@ export function OrderDetailsModal({
       });
 
       onUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating order status:", error);
       toast({
         title: "Erro ao atualizar status",
-        description: error.response?.data?.error || error.message || "Tente novamente.",
+        description: getApiError(error).response?.data?.error || getApiError(error).message || "Tente novamente.",
         variant: "destructive",
       });
     } finally {

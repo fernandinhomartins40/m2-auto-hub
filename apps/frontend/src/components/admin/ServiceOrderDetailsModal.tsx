@@ -45,7 +45,7 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
       await fn();
       toast({ title: okMsg });
       onChanged();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Não foi possível', description: err?.response?.data?.error, variant: 'destructive' });
     } finally {
       setBusy(false);

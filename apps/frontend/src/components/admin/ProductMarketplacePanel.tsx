@@ -73,7 +73,7 @@ export function ProductMarketplacePanel({ productId, productName }: Props) {
     try {
       const data = await marketplaceService.suggestCategories(slug, q);
       setSuggestions((s) => ({ ...s, [slug]: data }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: "Erro ao buscar categorias", description: err?.response?.data?.error, variant: "destructive" });
     } finally {
       setSearching(null);
@@ -88,7 +88,7 @@ export function ProductMarketplacePanel({ productId, productName }: Props) {
       await marketplaceService.publish(productId, [slug], category ? { categoryId: category.id } : undefined);
       toast({ title: "Produto publicado!" });
       await load();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Falha ao publicar",
         description: err?.response?.data?.error ?? err?.message,

@@ -164,7 +164,6 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
     setShowResults(false);
     setProductSearch('');
     setServiceSearch('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, initialData]);
 
   // Busca de clientes com debounce
@@ -193,14 +192,14 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
     // Usa os mesmos serviços públicos do modal de Pedidos (productService/serviceService),
     // que comprovadamente retornam os itens ativos. Mecânicos vêm do fluxo de revisões.
     const [prodRes, servRes, mechRes] = await Promise.all([
-      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] as any[] })),
-      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] as any[] })),
+      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] as unknown[] })),
+      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] as unknown[] })),
       revisionService.getMechanicsWorkload().catch(() => []),
     ]);
 
     const activeProducts = (prodRes.products || [])
-      .filter((p: any) => p.status === 'ACTIVE' || p.isActive)
-      .map((p: any) => ({
+      .filter((p: unknown) => p.status === 'ACTIVE' || p.isActive)
+      .map((p: unknown) => ({
         id: p.id,
         name: p.name,
         category: p.category,
@@ -210,8 +209,8 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
       })) as CatalogProduct[];
 
     const activeServices = (servRes.services || [])
-      .filter((s: any) => s.status === 'ACTIVE' || s.isActive)
-      .map((s: any) => ({
+      .filter((s: unknown) => s.status === 'ACTIVE' || s.isActive)
+      .map((s: unknown) => ({
         id: s.id,
         name: s.name,
         category: s.category,
@@ -439,7 +438,7 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
       }
       onSaved();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: 'Erro ao salvar',
         description: err?.response?.data?.error ?? err?.message,

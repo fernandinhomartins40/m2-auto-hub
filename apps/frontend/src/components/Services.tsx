@@ -19,7 +19,7 @@ import { colorOrGradientToCSS } from './admin/LandingPageEditor/StyleControls';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 
-const categoryIcons: Record<string, any> = {
+const categoryIcons: Record<string, unknown> = {
   'Manutenção Preventiva': Wrench,
   Motor: Wrench,
   Freios: Disc,
@@ -86,7 +86,7 @@ export function Services() {
     : config.about.subtitle;
 
   const getTrustIndicatorIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName];
+    const IconComponent = (Icons as unknown)[iconName];
     return IconComponent || Wrench;
   };
 

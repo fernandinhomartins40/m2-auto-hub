@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useEffect } from 'react';
 import { Save, Loader2, Car } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -140,11 +141,11 @@ export function EditVehicleModalCustomer({ vehicle, isOpen, onClose, onSuccess }
       });
 
       onSuccess(updatedVehicle);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao atualizar veículo:', error);
-      const errorMessage = error.response?.data?.error
-        || error.response?.data?.message
-        || error.message
+      const errorMessage = getApiError(error).response?.data?.error
+        || getApiError(error).response?.data?.message
+        || getApiError(error).message
         || 'Erro ao atualizar veículo. Tente novamente.';
 
       toast({

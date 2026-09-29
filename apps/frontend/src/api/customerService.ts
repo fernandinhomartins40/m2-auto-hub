@@ -82,7 +82,7 @@ export interface CustomerOrder {
   discountAmount?: number;
   paymentMethod?: string;
   items: CustomerOrderItem[];
-  address?: any;
+  address?: unknown;
   createdAt: string;
   updatedAt: string;
 }
@@ -106,7 +106,7 @@ export interface CustomerNotification {
     | 'ORDER_CREATED';
   title: string;
   message: string;
-  data?: any;
+  data?: unknown;
   read: boolean;
   readAt: string | null;
   createdAt: string;

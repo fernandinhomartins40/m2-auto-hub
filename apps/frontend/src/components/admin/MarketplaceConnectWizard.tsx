@@ -90,7 +90,7 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
       toast({ title: "Credenciais salvas" });
       onUpdated();
       setStep(2);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Erro ao salvar",
         description: err?.response?.data?.error ?? err?.message,
@@ -107,7 +107,7 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
       const url = await marketplaceService.authorize(provider);
       // Abre o consentimento OAuth do marketplace; ao voltar, o callback redireciona para o painel.
       window.location.href = url;
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Não foi possível iniciar a autorização",
         description: err?.response?.data?.error ?? err?.message,
@@ -127,7 +127,7 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
       });
       onUpdated();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Falha no teste",
         description: err?.response?.data?.error ?? err?.message,

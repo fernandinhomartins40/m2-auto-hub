@@ -1,3 +1,4 @@
+import { getApiError } from "@/lib/errors";
 import { useState, useCallback } from 'react';
 import { supportService, SupportTicket, CreateTicketDto, CreateMessageDto, RateTicketDto, TicketStatus, TicketCategory, SupportStats } from '../api/supportService';
 import { useToast } from './use-toast';
@@ -23,8 +24,8 @@ export const useSupport = () => {
       const result = await supportService.getCustomerTickets(filters);
       setTickets(result.data);
       return result;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao carregar tickets';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao carregar tickets';
       setError(errorMsg);
       // Não mostrar toast se for silent (chamada automática)
       if (!options?.silent) {
@@ -48,8 +49,8 @@ export const useSupport = () => {
       const ticket = await supportService.getTicketById(ticketId);
       setCurrentTicket(ticket);
       return ticket;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao carregar ticket';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao carregar ticket';
       setError(errorMsg);
       toast({
         title: 'Erro',
@@ -74,8 +75,8 @@ export const useSupport = () => {
         description: 'Ticket criado com sucesso! Nossa equipe responderá em breve.',
       });
       return ticket;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao criar ticket';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao criar ticket';
       setError(errorMsg);
       toast({
         title: 'Erro',
@@ -108,8 +109,8 @@ export const useSupport = () => {
         description: 'Mensagem enviada com sucesso!',
       });
       return message;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao enviar mensagem';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao enviar mensagem';
       setError(errorMsg);
       toast({
         title: 'Erro',
@@ -137,8 +138,8 @@ export const useSupport = () => {
         description: 'Ticket reaberto com sucesso!',
       });
       return ticket;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao reabrir ticket';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao reabrir ticket';
       setError(errorMsg);
       toast({
         title: 'Erro',
@@ -166,8 +167,8 @@ export const useSupport = () => {
         description: 'Ticket fechado com sucesso!',
       });
       return ticket;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao fechar ticket';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao fechar ticket';
       setError(errorMsg);
       toast({
         title: 'Erro',
@@ -195,8 +196,8 @@ export const useSupport = () => {
         description: 'Obrigado pela sua avaliação!',
       });
       return ticket;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao avaliar ticket';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao avaliar ticket';
       setError(errorMsg);
       toast({
         title: 'Erro',
@@ -217,8 +218,8 @@ export const useSupport = () => {
       const statsData = await supportService.getStats();
       setStats(statsData);
       return statsData;
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Erro ao carregar estatísticas';
+    } catch (err: unknown) {
+      const errorMsg = getApiError(err).response?.data?.error || 'Erro ao carregar estatísticas';
       setError(errorMsg);
       // Não mostrar toast se for silent (chamada automática)
       if (!options?.silent) {
