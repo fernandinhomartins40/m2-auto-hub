@@ -73,6 +73,7 @@ As capacidades são amplas, mas a navegação atual está organizada principalme
 | UX-09 | P1 | Menu do cliente expõe 10 páginas e separa jornadas contínuas | Consolidar em Compras, Meu veículo, Benefícios, Ajuda e Conta | painel do cliente | Médio | testes de rotas, fluxos e responsividade | DONE |
 | UX-10 | P1 | Páginas e formulários apresentam cards, textos e campos no mesmo nível | Aplicar shell comum, revelação progressiva e formulário em três passos quando adequado | componentes e formulários dos painéis | Médio | testes de interação, acessibilidade e visual | DONE |
 | UX-11 | P2 | Navegação e padrões de página divergem entre os três painéis | Unificar taxonomia, tabs locais e estados de página preservando permissões | layouts compartilhados | Médio | testes por perfil e build | DONE |
+| INFRA-01 | P1 | O deploy enviava todo o código e compilava quatro imagens na VPS de produção | Criar um job GitHub Actions por imagem, publicar no GHCR e deixar a VPS somente baixar e executar os artefatos | workflow, Compose e script de deploy | Médio | validação YAML, `compose config`, `bash -n` e execução do workflow | DONE |
 | DOC-01 | P2 | Evidências e limites precisam refletir o estado final | Atualizar este plano e criar relatório final | `docs/` | Baixo | Revisão final | DONE |
 
 ## Ordem de implementação

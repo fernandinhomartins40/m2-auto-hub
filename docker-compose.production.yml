@@ -7,12 +7,6 @@ x-logging: &default-logging
     max-size: "10m"
     max-file: "3"
 
-x-backend-build: &backend-build
-  context: ./apps/backend
-  target: production
-  args:
-    RELEASE_VERSION: ${RELEASE_VERSION:-local}
-
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 3001
@@ -106,9 +100,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   alpr:
-    image: m2centerauto-alpr:${RELEASE_VERSION:-local}
-    build:
-      context: ./services/alpr-service
+    image: ${IMAGE_PREFIX:-m2centerauto}-alpr:${IMAGE_TAG:-local}
     restart: unless-stopped
     mem_limit: 1g
     # PLANO ITEM 6. O ONNX ja esta contido a 1 thread (OMP_NUM_THREADS=1 no
@@ -131,9 +123,7 @@ services:
   # Consulta de placa em navegador real (headful sobre Xvfb). E o fallback do
   # fluxo assistido, quando o navegador do atendente nao resolve.
   plate-scraper:
-    image: m2centerauto-plate-scraper:${RELEASE_VERSION:-local}
-    build:
-      context: ./services/plate-scraper
+    image: ${IMAGE_PREFIX:-m2centerauto}-plate-scraper:${IMAGE_TAG:-local}
     restart: unless-stopped
     # O Chrome usa /dev/shm para as texturas das abas; 512m basta para uma aba
     # por vez (o servico serializa as consultas em fila).
@@ -157,7 +147,7 @@ services:
       retries: 6
 
   migrator:
-    image: m2centerauto-backend:${RELEASE_VERSION:-local}
+    image: ${IMAGE_PREFIX:-m2centerauto}-backend:${IMAGE_TAG:-local}
     # Efemero: roda `prisma migrate deploy` e sai. Sobe junto com o Postgres,
     # entao um teto folgado aqui competiria com o banco no pior momento.
     mem_limit: 512m
@@ -174,7 +164,7 @@ services:
     restart: "no"
 
   bootstrap:
-    image: m2centerauto-backend:${RELEASE_VERSION:-local}
+    image: ${IMAGE_PREFIX:-m2centerauto}-backend:${IMAGE_TAG:-local}
     # Efemero, como o migrator.
     mem_limit: 512m
     # PLANO ITEM 6.
@@ -189,8 +179,7 @@ services:
     restart: "no"
 
   backend:
-    image: m2centerauto-backend:${RELEASE_VERSION:-local}
-    build: *backend-build
+    image: ${IMAGE_PREFIX:-m2centerauto}-backend:${IMAGE_TAG:-local}
     # Um servico que falhou 5 vezes seguidas nao se cura na sexta: com
     # unless-stopped o Docker o relanca para sempre, queimando CPU da VPS
     # inteira sem atender ninguem. Com on-failure:5 ele desiste e fica visivel.
@@ -221,13 +210,7 @@ services:
       - uploads_data:/app/uploads
 
   frontend:
-    image: m2centerauto-frontend:${RELEASE_VERSION:-local}
-    build:
-      context: .
-      dockerfile: apps/frontend/Dockerfile
-      args:
-        VITE_API_BASE_URL: /api
-        RELEASE_VERSION: ${RELEASE_VERSION:-local}
+    image: ${IMAGE_PREFIX:-m2centerauto}-frontend:${IMAGE_TAG:-local}
     restart: unless-stopped
     # Nginx servindo arquivos estaticos tem pegada minima; 128m sobra.
     mem_limit: 128m

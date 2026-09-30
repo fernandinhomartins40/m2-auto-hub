@@ -62,12 +62,10 @@ docker volume create m2centerauto-uploads >/dev/null 2>&1 || true
 
 cp "$ROOT_ENV" "$ENV_FILE"
 printf 'RELEASE_VERSION=%s\n' "$RELEASE" >> "$ENV_FILE"
+printf 'IMAGE_PREFIX=%s\n' "${IMAGE_PREFIX:-m2centerauto}" >> "$ENV_FILE"
+printf 'IMAGE_TAG=%s\n' "${IMAGE_TAG:-local}" >> "$ENV_FILE"
 chmod 600 "$ENV_FILE"
 set -a; . "$ENV_FILE"; set +a
-
-export DOCKER_BUILDKIT=1
-export COMPOSE_DOCKER_CLI_BUILD=1
-export BUILDKIT_PROGRESS=plain
 
 cd "$APP_DIR"
 
@@ -87,8 +85,8 @@ on_exit() {
 }
 trap on_exit EXIT
 
-log "Building images"
-compose build --parallel
+log "Pulling images built by GitHub Actions"
+compose_timeout 15m pull backend frontend alpr plate-scraper
 
 log "Starting postgres"
 compose up -d --no-build --no-deps postgres

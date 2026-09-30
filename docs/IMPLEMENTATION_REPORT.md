@@ -97,3 +97,12 @@ O e-mail transacional de suporte permanece bloqueado pela ausência de provedor 
 - A aba administrativa de equipe continua condicionada a `canManageAdmins`; a consolidação não ampliou permissões.
 - Informações secundárias do cartão do cliente ficaram sob revelação progressiva, reduzindo densidade sem excluir dados.
 - O teste de consolidação passou com 5/5 cenários e o build de produção passou com 3.682 módulos. O painel lojista permaneceu dividido em chunks, com o chunk principal em 351,38 kB.
+
+## Pipeline de build e deploy
+
+- Backend, frontend, ALPR e plate-scraper agora possuem jobs de build independentes e paralelos no GitHub Actions.
+- Cada job publica uma imagem imutável no GitHub Container Registry usando o SHA completo do commit como tag e cache próprio do BuildKit.
+- O deploy só é liberado após os quatro builds concluírem com sucesso.
+- A VPS não recebe mais o código-fonte e não executa `docker compose build`; recebe somente os manifestos operacionais, autentica no GHCR, baixa as imagens prontas e executa migrations, bootstrap e containers.
+- Migrator, bootstrap e backend utilizam exatamente a mesma imagem/tag, impedindo divergência entre schema, inicialização e aplicação.
+- `docker compose config` confirmou todas as referências versionadas e `bash -n` validou os scripts do deploy.
