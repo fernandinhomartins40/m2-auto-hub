@@ -29,7 +29,7 @@ export default function CustomerLoginPage() {
     <main
       id={MAIN_CONTENT_ID}
       tabIndex={-1}
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 p-4 outline-none"
+      className="liquid-login min-h-screen flex items-center justify-center p-4 outline-none"
     >
       <CustomerAuthCard showInstallBanner />
     </main>

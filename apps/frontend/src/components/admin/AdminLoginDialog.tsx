@@ -134,7 +134,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
     <main
       id={MAIN_CONTENT_ID}
       tabIndex={-1}
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-stone-100 p-4 outline-none"
+      className="liquid-login min-h-screen flex items-center justify-center p-4 outline-none"
     >
       <div className="w-full max-w-md space-y-4">
         {showInstallBanner ? (
@@ -144,7 +144,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
           </div>
         ) : null}
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+        <div className="liquid-login-card rounded-[1.75rem] p-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-moria-orange/10 rounded-full mb-4">
               <Shield className="w-8 h-8 text-moria-orange" />

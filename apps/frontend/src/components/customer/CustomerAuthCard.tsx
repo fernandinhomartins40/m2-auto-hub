@@ -124,7 +124,7 @@ export function CustomerAuthCard({
     <div className="w-full max-w-md space-y-4">
       {showInstallBanner && <PwaInstallBanner appType="customer" />}
 
-      <Card className="border-none shadow-2xl">
+      <Card className="liquid-login-card overflow-hidden rounded-[1.75rem] border-0">
         <CardHeader className="text-center pb-4">
           {/* Titulo da rota `/customer-login/`, que nao tinha h1 (A-06). */}
           <CardTitle as="h1" className="text-2xl">Area do Cliente M2</CardTitle>
@@ -144,7 +144,7 @@ export function CustomerAuthCard({
           </div>
 
           <TabsContent value="login" className="mt-0">
-            <Card className="border-none shadow-none">
+            <Card className="border-none bg-transparent shadow-none">
               <CardHeader className="px-6 pt-2 pb-4">
                 <CardTitle as="h2" className="text-lg">Fazer Login</CardTitle>
                 <CardDescription>Entre com seu telefone e senha</CardDescription>
@@ -200,7 +200,7 @@ export function CustomerAuthCard({
           </TabsContent>
 
           <TabsContent value="register" className="mt-0">
-            <Card className="border-none shadow-none">
+            <Card className="border-none bg-transparent shadow-none">
               <CardHeader className="px-6 pt-2 pb-4">
                 <CardTitle as="h2" className="text-lg">Criar Conta</CardTitle>
                 <CardDescription>Cadastre-se para acompanhar seus pedidos e muito mais</CardDescription>
