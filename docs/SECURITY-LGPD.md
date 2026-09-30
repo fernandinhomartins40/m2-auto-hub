@@ -26,6 +26,8 @@ As rotinas atuais removem notificações após `NOTIFICATION_RETENTION_DAYS` (pa
 
 Publicar um canal autenticável para confirmação, acesso, correção, portabilidade, informação, oposição, revogação e eliminação quando aplicável. Cada solicitação deve ter protocolo, identidade validada proporcionalmente ao risco, prazo, decisão, fundamento, responsável e trilha de atendimento. Nunca enviar exportações pessoais por canal não autenticado.
 
+A aplicação agora oferece exportação autenticada em JSON, abertura de solicitações no perfil e fila administrativa em **Segurança e LGPD**. O prazo interno inicial é de 15 dias. Configure `PRIVACY_CONTACT_EMAIL` com o canal real do encarregado ou responsável antes do deploy.
+
 Antes de eliminar ou anonimizar, verificar retenções legais e vínculos transacionais. Revogação de consentimento não implica apagar dados mantidos sob outra base legal válida.
 
 ## Incidentes
@@ -36,10 +38,12 @@ Antes de eliminar ou anonimizar, verificar retenções legais e vínculos transa
 4. Manter o registro do incidente por pelo menos 5 anos, inclusive quando não houver comunicação.
 5. Corrigir a causa, rotacionar credenciais, testar restauração e registrar lições aprendidas.
 
+Incidentes podem ser registrados e acompanhados no painel administrativo por usuários com papel `ADMIN` ou superior. O registro técnico não decide sozinho a obrigação de comunicação; a avaliação deve ser documentada no campo de risco.
+
 ## Checklist de operação
 
 - Rotacionar imediatamente qualquer segredo que já tenha sido exposto e manter segredos fora do Git.
-- Executar `npm audit --omit=dev`, testes e build em cada entrega; adicionar análise de código e segredo no CI.
+- Executar `npm audit --omit=dev`, testes e build em cada entrega. O workflow `security.yml` automatiza auditoria de dependências, CodeQL e busca de segredos.
 - Revisar trimestralmente acessos administrativos e integrações; revogar contas inativas imediatamente.
 - Testar restauração de backup e resposta a incidente ao menos semestralmente.
 - Formalizar contratos com operadores (hospedagem, e-mail, pagamentos e marketplaces), inclusive suboperadores e transferência internacional.
@@ -47,6 +51,6 @@ Antes de eliminar ou anonimizar, verificar retenções legais e vínculos transa
 
 ## Riscos residuais conhecidos
 
-- `react-router-dom` 6 possui advisory moderado sem correção compatível na linha 6; a atualização segura exige migração testada para a linha 7. Não construir destinos de navegação a partir de entrada não confiável até a migração.
+- Dependências de produção estavam sem advisories conhecidos na última validação local. O monitoramento contínuo permanece necessário porque novas vulnerabilidades podem ser publicadas.
 - Conformidade depende de processos externos ao código: bases legais, transparência, contratos, atendimento de titulares, gestão de fornecedores e decisões de retenção ainda exigem validação organizacional e jurídica.
 - Testes de intrusão, varredura de contêiner/infraestrutura e revisão das regras do provedor devem complementar esta auditoria de código.

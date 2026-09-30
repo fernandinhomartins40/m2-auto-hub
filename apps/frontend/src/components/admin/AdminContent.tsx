@@ -98,6 +98,7 @@ const AdminServicesSection = lazy(() => import("./AdminServicesSection").then((m
 const AdminCouponsSection = lazy(() => import("./AdminCouponsSection").then((module) => ({ default: module.AdminCouponsSection })));
 const MarketplacesContent = lazy(() => import("./MarketplacesContent").then((module) => ({ default: module.MarketplacesContent })));
 const ServiceOrdersContent = lazy(() => import("./ServiceOrdersContent").then((module) => ({ default: module.ServiceOrdersContent })));
+const PrivacyGovernanceContent = lazy(() => import("./PrivacyGovernanceContent"));
 const LandingPageContent = lazy(() => import("./LandingPageContent").then((module) => ({ default: module.LandingPageContent })));
 
 interface Service {
@@ -155,6 +156,7 @@ const adminWorkspaces = [
   { label: 'Configurações', tabs: [
     { id: 'settings', label: 'Loja' }, { id: 'account', label: 'Minha conta' },
     { id: 'pwa-settings', label: 'Aplicativo PWA' }, { id: 'users', label: 'Equipe' },
+    { id: 'privacy-governance', label: 'Segurança e LGPD' },
   ] },
 ] as const;
 
@@ -2311,6 +2313,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         return <SettingsContent />;
       case 'account':
         return <AdminAccountContent />;
+      case 'privacy-governance':
+        return <PrivacyGovernanceContent />;
       default:
         return renderDashboard();
     }

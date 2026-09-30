@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      production-security:
+        dependency-type: production
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker
+    directory: /apps/backend
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker
+    directory: /apps/frontend
+    schedule:
+      interval: monthly

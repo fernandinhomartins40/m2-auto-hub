@@ -25,12 +25,15 @@ import {
   Mail,
   CreditCard,
   Calendar,
-  Lock
+  Lock,
+  ShieldCheck,
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { PasswordInput } from "../ui/password-input";
 import { isPasswordStrong } from "@/lib/passwordUtils";
 import { readApiError } from "@/lib/apiError";
+import { privacyService, type PrivacyRequestType } from "@/api/privacyService";
 
 const emptyAddressForm: AddressPayload = {
   type: 'HOME',
@@ -79,8 +82,22 @@ export function CustomerProfile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [privacyLoading, setPrivacyLoading] = useState<PrivacyRequestType | null>(null);
 
   if (!customer) return null;
+
+  const requestPrivacyRight = async (type: PrivacyRequestType) => {
+    setPrivacyLoading(type);
+    try {
+      await privacyService.createRequest({ type });
+      toast.success('Solicitação registrada. Acompanhe o retorno pelos canais cadastrados.');
+    } catch (error) {
+      const message = (error as { response?: { data?: { error?: string } } }).response?.data?.error;
+      toast.error(message || 'Não foi possível registrar a solicitação.');
+    } finally {
+      setPrivacyLoading(null);
+    }
+  };
 
   const emailChanged =
     profileForm.email.trim().toLowerCase() !== (customer?.email || '').toLowerCase();
@@ -620,6 +637,20 @@ export function CustomerProfile() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Privacidade e seus dados</CardTitle>
+          <CardDescription>Exporte seus dados ou exerça direitos previstos na LGPD. Solicitações podem exigir confirmação de identidade.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button variant="outline" asChild><a href={privacyService.exportUrl} download><Download className="h-4 w-4" /> Baixar meus dados</a></Button>
+          <Button variant="outline" disabled={privacyLoading !== null} onClick={() => void requestPrivacyRight('CORRECTION')}>Solicitar correção</Button>
+          <Button variant="outline" disabled={privacyLoading !== null} onClick={() => void requestPrivacyRight('REVOCATION')}>Revogar consentimento</Button>
+          <Button variant="destructive" disabled={privacyLoading !== null} onClick={() => void requestPrivacyRight('DELETION')}>Solicitar eliminação</Button>
+          <Button variant="link" asChild><a href="/privacidade">Ler aviso de privacidade</a></Button>
+        </CardContent>
+      </Card>
 
       <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
         <DialogContent className="sm:max-w-md">

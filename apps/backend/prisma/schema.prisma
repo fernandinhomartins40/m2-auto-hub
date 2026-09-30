@@ -192,6 +192,46 @@ enum TicketCategory {
   OTHER
 }
 
+enum PrivacyRequestType {
+  CONFIRMATION
+  ACCESS
+  CORRECTION
+  PORTABILITY
+  DELETION
+  REVOCATION
+  INFORMATION
+  OPPOSITION
+}
+
+enum PrivacyRequestStatus {
+  OPEN
+  IDENTITY_CHECK
+  IN_REVIEW
+  COMPLETED
+  REJECTED
+}
+
+enum ConsentPurpose {
+  ESSENTIAL
+  ANALYTICS
+  MARKETING
+}
+
+enum SecurityIncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SecurityIncidentStatus {
+  OPEN
+  CONTAINED
+  INVESTIGATING
+  REMEDIATED
+  CLOSED
+}
+
 // ============================================================================
 // MODELS - FASE 1
 // ============================================================================
@@ -219,6 +259,8 @@ model Admin {
   assignedTickets  SupportTicket[]
   landingPageConfigHistory LandingPageConfigHistory[]
   relationshipMessages RelationshipMessage[]
+  privacyRequests PrivacyRequest[] @relation("PrivacyRequestReviewer")
+  reportedSecurityIncidents SecurityIncident[] @relation("SecurityIncidentReporter")
 
   @@index([email])
   @@index([role])
@@ -274,6 +316,8 @@ model Customer {
   loyaltyTransactions LoyaltyTransaction[]
   loyaltyRedemptions  LoyaltyRedemption[]
   relationshipMessages RelationshipMessage[]
+  privacyRequests PrivacyRequest[]
+  consentRecords ConsentRecord[]
 
   @@index([email])
   @@index([cpf])
@@ -281,6 +325,73 @@ model Customer {
   @@index([level])
   @@index([createdAt])
   @@map("customers")
+}
+
+model PrivacyRequest {
+  id                 String               @id @default(uuid())
+  customerId         String
+  type               PrivacyRequestType
+  status             PrivacyRequestStatus @default(OPEN)
+  details            String?              @db.Text
+  response           String?              @db.Text
+  identityVerifiedAt DateTime?
+  dueAt              DateTime
+  completedAt        DateTime?
+  reviewedById       String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  reviewedBy Admin?   @relation("PrivacyRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+  @@index([status, dueAt])
+  @@map("privacy_requests")
+}
+
+model ConsentRecord {
+  id          String         @id @default(uuid())
+  customerId  String?
+  subjectKey  String
+  purpose     ConsentPurpose
+  policyVersion String
+  granted     Boolean
+  source      String
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime       @default(now())
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([subjectKey, purpose, createdAt])
+  @@index([customerId, createdAt])
+  @@map("consent_records")
+}
+
+model SecurityIncident {
+  id                    String                   @id @default(uuid())
+  title                 String
+  description           String                   @db.Text
+  severity              SecurityIncidentSeverity
+  status                SecurityIncidentStatus   @default(OPEN)
+  detectedAt            DateTime
+  affectedDataCategories Json?
+  estimatedSubjects     Int?
+  riskAssessment        String?                  @db.Text
+  containmentActions    String?                  @db.Text
+  notificationRequired  Boolean?
+  notifiedAnpdAt        DateTime?
+  notifiedSubjectsAt    DateTime?
+  closedAt              DateTime?
+  reportedById          String?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  reportedBy Admin? @relation("SecurityIncidentReporter", fields: [reportedById], references: [id], onDelete: SetNull)
+
+  @@index([status, severity])
+  @@index([detectedAt])
+  @@map("security_incidents")
 }
 
 model Address {

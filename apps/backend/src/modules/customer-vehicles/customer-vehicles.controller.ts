@@ -19,7 +19,6 @@ export class CustomerVehiclesController {
     try {
       console.log('[CustomerVehiclesController] getVehicles called');
       console.log('[CustomerVehiclesController] req.user:', req.user);
-      console.log('[CustomerVehiclesController] req.cookies:', req.cookies);
       console.log('[CustomerVehiclesController] req.headers.authorization:', req.headers.authorization);
 
       if (!req.user || !req.user.customerId) {

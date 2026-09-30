@@ -21,6 +21,7 @@ x-backend-env: &backend-env
   ADMIN_PASSWORD_RESYNC: ${ADMIN_PASSWORD_RESYNC:-false}
   CORS_ORIGIN: "${CORS_ORIGIN:-https://www.m2centerauto.com.br,https://m2centerauto.com.br}"
   COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  PRIVACY_CONTACT_EMAIL: ${PRIVACY_CONTACT_EMAIL:-admin@m2centerauto.com.br}
   COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-lax}
   COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
   ALPR_SERVICE_URL: http://alpr:8000

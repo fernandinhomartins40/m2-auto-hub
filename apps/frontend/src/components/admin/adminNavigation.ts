@@ -6,6 +6,7 @@ import {
   Package,
   Percent,
   Settings,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 
@@ -36,7 +37,8 @@ export const adminSidebarItems: AdminNavItem[] = [
   { id: "promotions", label: "Vendas", icon: Percent, section: "Marketing", activeTabs: ["promotions", "coupons", "landing-page"] },
 
   { id: "reports", label: "Relatórios", icon: BarChart3, section: "Gestão" },
-  { id: "settings", label: "Configurações", icon: Settings, section: "Gestão", activeTabs: ["settings", "account", "pwa-settings", "users"] },
+  { id: "settings", label: "Configurações", icon: Settings, section: "Gestão", activeTabs: ["settings", "account", "pwa-settings", "users", "privacy-governance"] },
+  { id: "privacy-governance", label: "Segurança e LGPD", icon: ShieldCheck, section: "Gestão" },
 ];
 
 /**
@@ -68,6 +70,7 @@ export const adminTabSlugs: Record<string, string> = {
   "pwa-settings": "pwa",
   settings: "configuracoes",
   users: "usuarios",
+  "privacy-governance": "seguranca-lgpd",
 };
 
 const slugToTab: Record<string, string> = Object.fromEntries(

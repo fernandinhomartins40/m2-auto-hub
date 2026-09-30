@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { CookiePreferences } from "./components/privacy/CookiePreferences";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
@@ -22,6 +23,7 @@ const PwaAdminInstallPage = lazy(() => import("./pages/PwaAdminInstallPage"));
 const PwaEntryPage = lazy(() => import("./pages/PwaEntryPage"));
 const PublicQuoteApprovalPage = lazy(() => import("./pages/PublicQuoteApprovalPage"));
 const StorePanel = lazy(() => import("./pages/StorePanel"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
 const queryClient = new QueryClient();
 
@@ -44,6 +46,7 @@ const App = () => (
                       <TooltipProvider>
                         <Toaster />
                         <Sonner />
+                        <CookiePreferences />
                         <Suspense fallback={<div className="flex min-h-screen items-center justify-center" role="status">Carregando aplicação...</div>}>
                         <Routes>
                           <Route path="/" element={<Index />} />
@@ -56,6 +59,7 @@ const App = () => (
                           <Route path="/customer/:tab" element={<CustomerPanel />} />
                           <Route path="/my-account" element={<Navigate to="/customer/notificacoes" replace />} />
                           <Route path="/quote-approval/:token" element={<PublicQuoteApprovalPage />} />
+                          <Route path="/privacidade" element={<PrivacyPolicy />} />
                           {/* Cada seção do painel tem a própria URL, para o voltar
                               do navegador funcionar e o link ser compartilhável. */}
                           <Route path="/store-panel" element={<Navigate to="/store-panel/dashboard" replace />} />

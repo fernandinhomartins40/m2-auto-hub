@@ -47,6 +47,10 @@ export function validateEnvironment(): void {
       errors.push('Senha administrativa padrao nao pode ser usada em production');
     }
 
+    if (!process.env.PRIVACY_CONTACT_EMAIL || !/^\S+@\S+\.\S+$/.test(process.env.PRIVACY_CONTACT_EMAIL)) {
+      warnings.push('PRIVACY_CONTACT_EMAIL nao esta configurado com um email valido');
+    }
+
     if (process.env.LOG_LEVEL === 'debug') {
       warnings.push('LOG_LEVEL esta em debug em production');
     }
