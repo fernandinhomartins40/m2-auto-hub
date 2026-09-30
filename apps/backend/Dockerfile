@@ -12,7 +12,7 @@
 #
 # A versao do pacote npm `playwright` (package.json) e a instalada aqui devem
 # ser sempre a mesma - o binario do navegador e casado com a versao do cliente.
-FROM node:20-slim AS base
+FROM node:26-slim AS base
 WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
