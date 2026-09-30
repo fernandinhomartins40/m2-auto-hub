@@ -52,7 +52,7 @@ export default function PublicQuoteApprovalPage() {
 
     try {
       setIsSubmitting(decision);
-      const response =
+      const response: { id: string; status: string; orderStatus?: string; message: string } =
         decision === "approve"
           ? await customerService.approvePublicQuote(token)
           : await customerService.rejectPublicQuote(token);

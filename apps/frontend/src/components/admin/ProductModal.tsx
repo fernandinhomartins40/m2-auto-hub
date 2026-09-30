@@ -242,7 +242,8 @@ export function ProductModal({
     // Se mudou o tipo de oferta, aplicar smart defaults nas datas
     if (field === 'offer_type') {
       if (value && value !== 'NONE') {
-        const { startDate, endDate } = getDefaultOfferDates(value as 'DIA' | 'SEMANA' | 'MES');
+        const offerType = value as 'DIA' | 'SEMANA' | 'MES';
+        const { startDate, endDate } = getDefaultOfferDates(offerType);
 
         setFormData(prev => {
           const currentEndDate = prev.offer_end_date ? new Date(prev.offer_end_date) : null;
@@ -251,14 +252,14 @@ export function ProductModal({
             !Number.isNaN(currentEndDate.getTime()) &&
             currentEndDate.getTime() <= Date.now();
           const shouldResetWindow =
-            prev.offer_type !== value ||
+            prev.offer_type !== offerType ||
             !prev.offer_start_date ||
             !prev.offer_end_date ||
             hasExpiredWindow;
 
           return {
             ...prev,
-            [field]: value,
+            offer_type: offerType,
             offer_start_date: shouldResetWindow ? startDate : prev.offer_start_date,
             offer_end_date: shouldResetWindow ? endDate : prev.offer_end_date
           };

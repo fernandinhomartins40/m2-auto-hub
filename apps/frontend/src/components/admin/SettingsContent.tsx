@@ -436,10 +436,11 @@ export function SettingsContent() {
       });
     } catch (error: unknown) {
       console.error('[SettingsContent] Erro ao salvar:', error);
+      const apiError = getApiError(error);
 
       // Tratar erros de validação do backend (Zod)
-      if (error.details && Array.isArray(error.details)) {
-        const errorMessages = error.details.map((err: unknown) => {
+      if (apiError.details && Array.isArray(apiError.details)) {
+        const errorMessages = apiError.details.map((err) => {
           const field = err.path?.join('.') || 'campo';
           return `${field}: ${err.message}`;
         }).join('\n');

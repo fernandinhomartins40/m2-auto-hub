@@ -94,7 +94,7 @@ export function VehicleSelector({
     vehicle.year.toString().includes(searchTerm)
   );
 
-  const handleCreateSuccess = (vehicle: unknown) => {
+  const handleCreateSuccess = (vehicle: import('@/api/adminService').AdminCustomerVehicle) => {
     // Transform to local format
     const newVehicle: Vehicle = {
       id: vehicle.id,
@@ -103,7 +103,7 @@ export function VehicleSelector({
       year: vehicle.year,
       plate: vehicle.plate,
       color: vehicle.color,
-      mileage: vehicle.mileage
+      mileage: vehicle.mileage ?? undefined
     };
 
     // Select the newly created vehicle

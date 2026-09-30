@@ -15,6 +15,12 @@ export interface FavoriteListResponse {
   limit: number;
 }
 
+export interface FavoriteStats {
+  totalFavorites: number;
+  favoritesByCategory: Record<string, number>;
+  recentlyAdded?: Favorite[];
+}
+
 interface StandardResponse<T> {
   success: boolean;
   data: T;
@@ -81,8 +87,8 @@ class FavoriteService {
     return response.data.data.count;
   }
 
-  async getFavoriteStats(): Promise<unknown> {
-    const response = await apiClient.get<StandardResponse<unknown>>('/favorites/stats');
+  async getFavoriteStats(): Promise<FavoriteStats> {
+    const response = await apiClient.get<StandardResponse<FavoriteStats>>('/favorites/stats');
     return response.data.data;
   }
 

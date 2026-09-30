@@ -15,6 +15,7 @@ import { ChecklistManager } from '../revisions/ChecklistManager';
 import { useRevisions } from '../../contexts/RevisionsContext';
 import { Customer, ItemStatus, RevisionChecklistItem, Vehicle } from '../../types/revisions';
 import revisionService from '../../api/revisionService';
+import type { CreateRevisionRequest, UpdateRevisionRequest, RevisionChecklistItem as ApiRevisionChecklistItem } from '../../api/revisionService';
 import { useToast } from '../../hooks/use-toast';
 
 export function RevisionsContent() {
@@ -61,7 +62,7 @@ export function RevisionsContent() {
       );
       const itemData = categoryData?.items.find((categoryItem) => categoryItem.id === item.itemId);
 
-      const checkItem: unknown = {
+      const checkItem: ApiRevisionChecklistItem & { photos?: string[] } = {
         categoryId: categoryData?.id || '',
         categoryName: categoryData?.name || '',
         itemId: item.itemId,
@@ -94,7 +95,7 @@ export function RevisionsContent() {
     setIsLoading(true);
 
     try {
-      const payload: unknown = {
+      const payload: CreateRevisionRequest = {
         customerId: customer.id,
         vehicleId: vehicle.id,
         date: new Date().toISOString(),
@@ -231,7 +232,7 @@ export function RevisionsContent() {
       const backendStatus =
         status === 'draft' ? 'DRAFT' : status === 'in_progress' ? 'IN_PROGRESS' : 'COMPLETED';
 
-      const updatePayload: unknown = {
+      const updatePayload: UpdateRevisionRequest = {
         status: backendStatus,
         checklistItems: serializeChecklistItems(revisionItems),
       };

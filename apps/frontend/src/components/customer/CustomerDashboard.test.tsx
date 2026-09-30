@@ -25,7 +25,7 @@ describe("CustomerDashboard", () => {
         createdAt: "2026-01-01T00:00:00.000Z",
       },
       getOrders,
-    } as ReturnType<typeof useAuth>);
+    } as unknown as ReturnType<typeof useAuth>);
     getOrders.mockResolvedValue({ success: true, data: [] });
     vi.mocked(favoriteService.getFavoriteCount).mockResolvedValue(2);
     vi.mocked(couponService.getActiveCouponCount).mockResolvedValue(3);

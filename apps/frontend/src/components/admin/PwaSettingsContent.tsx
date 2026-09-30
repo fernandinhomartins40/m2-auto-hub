@@ -8,14 +8,21 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Separator } from '../ui/separator';
 import { PwaSettingsSection, type PwaField } from './settings/PwaSettingsSection';
+import { getErrorMessage } from '@/lib/errors';
 
-const defaultProfileConfig = {
+type PwaProfileConfig = {
+  name: string; shortName: string; description: string; themeColor: string; backgroundColor: string;
+  display: 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser';
+  icon192Url: string; icon512Url: string; desktopIconUrl: string; appleTouchIconUrl: string; maskableIconUrl: string;
+};
+
+const defaultProfileConfig: PwaProfileConfig = {
   name: '',
   shortName: '',
   description: '',
   themeColor: '#0f172a',
   backgroundColor: '#0f172a',
-  display: 'standalone' as const,
+  display: 'standalone',
   icon192Url: '',
   icon512Url: '',
   desktopIconUrl: '',
@@ -237,7 +244,7 @@ export function PwaSettingsContent() {
       toast.success('Configurações do PWA salvas com sucesso.');
     } catch (error: unknown) {
       toast.error('Erro ao salvar configurações do PWA', {
-        description: error?.message || 'Tente novamente.',
+        description: getErrorMessage(error, 'Tente novamente.'),
       });
     } finally {
       setIsSaving(false);
@@ -256,7 +263,7 @@ export function PwaSettingsContent() {
       toast.success('Configurações do PWA restauradas para o padrão.');
     } catch (error: unknown) {
       toast.error('Erro ao restaurar configurações do PWA', {
-        description: error?.message || 'Tente novamente.',
+        description: getErrorMessage(error, 'Tente novamente.'),
       });
     } finally {
       setIsResetting(false);

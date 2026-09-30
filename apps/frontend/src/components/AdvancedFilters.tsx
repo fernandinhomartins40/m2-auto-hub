@@ -139,7 +139,7 @@ export function AdvancedFilters({
   const priceRange = useMemo(() => {
     if (!products.length) return { min: 0, max: 1000 };
 
-    const prices = products.map(p => p.salePrice || p.price || 0).filter(p => p > 0);
+    const prices = products.map(p => p.salePrice || 0).filter(p => p > 0);
     if (!prices.length) return { min: 0, max: 1000 };
 
     return {
@@ -389,7 +389,7 @@ export function AdvancedFilters({
           <div key={filter.key} className="space-y-2">
             <Label className="text-sm">{filter.name}</Label>
             <Select
-              value={filters.specifications?.find(s => s.key === filter.key)?.value || ''}
+              value={String(filters.specifications?.find(s => s.key === filter.key)?.value ?? '')}
               onValueChange={(value) => {
                 if (value) {
                   removeSpecificationFilter(
@@ -408,8 +408,8 @@ export function AdvancedFilters({
               </SelectTrigger>
               <SelectContent>
                 {filter.values.map(value => (
-                  <SelectItem key={value} value={value}>
-                    {value}
+                  <SelectItem key={String(value)} value={String(value)}>
+                    {String(value)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -424,7 +424,7 @@ export function AdvancedFilters({
             <ScrollArea className="h-20">
               <div className="space-y-1">
                 {filter.values.map(value => (
-                  <div key={value} className="flex items-center space-x-2">
+                  <div key={String(value)} className="flex items-center space-x-2">
                     <Checkbox
                       id={`${filter.key}-${value}`}
                       checked={
@@ -465,8 +465,8 @@ export function AdvancedFilters({
                         }
                       }}
                     />
-                    <Label htmlFor={`${filter.key}-${value}`} className="text-xs">
-                      {value}
+                    <Label htmlFor={`${filter.key}-${String(value)}`} className="text-xs">
+                      {String(value)}
                     </Label>
                   </div>
                 ))}

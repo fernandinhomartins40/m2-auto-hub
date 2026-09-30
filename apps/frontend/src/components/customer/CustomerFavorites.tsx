@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Product } from "../../api/productService";
+import type { FavoriteStats } from "../../api/favoriteService";
 import {
   Select,
   SelectContent,
@@ -72,7 +73,7 @@ export function CustomerFavorites() {
 
   // Statistics
   const [showStats, setShowStats] = useState(false);
-  const [stats, setStats] = useState<unknown>(null);
+  const [stats, setStats] = useState<FavoriteStats | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {

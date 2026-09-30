@@ -9,6 +9,7 @@ import { ServiceOrderModal, type ServiceOrderInitialData } from './ServiceOrderM
 import { ServiceOrderDetailsModal } from './ServiceOrderDetailsModal';
 import { QuickAddItemsModal } from './QuickAddItemsModal';
 import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
+import { getErrorMessage } from '@/lib/errors';
 import {
   ClipboardList,
   Plus,
@@ -106,7 +107,7 @@ export function ServiceOrdersContent({ mechanicId, restricted = false }: Props) 
       toast({ title: action === 'start' ? 'OS iniciada' : 'OS concluída' });
       await load();
     } catch (err: unknown) {
-      toast({ title: 'Não foi possível', description: err?.response?.data?.error, variant: 'destructive' });
+      toast({ title: 'Não foi possível', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setBusyId(null);
     }

@@ -1,6 +1,7 @@
 // src/api/orderService.ts
 import apiClient from './apiClient';
-import { Order, OrderItem } from '@/contexts/AuthContext';
+import { Order } from '@/contexts/AuthContext';
+export type { Order } from '@/contexts/AuthContext';
 import type { GuestOrderResponse } from './guestOrderService';
 
 export interface CreateOrderRequest {

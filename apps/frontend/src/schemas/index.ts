@@ -197,17 +197,17 @@ export const CreateOrderSchema = OrderSchema.omit({
   updatedAt: true,
   address: true, // Será preenchido pelo backend
 }).extend({
-  items: z.array(OrderItemSchema.omit({ id: true, orderId: true })),
+  items: z.array(OrderItemSchema.innerType().omit({ id: true, orderId: true })),
 });
 
-export const CreateCouponSchema = CouponSchema.omit({
+export const CreateCouponSchema = CouponSchema.innerType().omit({
   id: true,
   createdAt: true,
   updatedAt: true,
   usedCount: true,
 });
 
-export const CreatePromotionSchema = PromotionSchema.omit({
+export const CreatePromotionSchema = PromotionSchema.innerType().omit({
   id: true,
   createdAt: true,
   updatedAt: true,

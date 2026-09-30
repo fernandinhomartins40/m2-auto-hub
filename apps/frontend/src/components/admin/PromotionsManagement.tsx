@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { usePromotions } from "../../hooks/usePromotions";
 import { AdminPageHeader } from "./AdminPageHeader";
-import { PromotionModal } from "./PromotionModal";
+import { PromotionModal, type PromotionPayload } from "./PromotionModal";
 import type { AdvancedPromotion } from "../../types/promotions";
 
 function formatPrice(value: number) {
@@ -168,12 +168,12 @@ export function PromotionsManagement() {
     setEditingPromotion(null);
   };
 
-  const handleSavePromotion = async (promotionData: Partial<unknown>) => {
+  const handleSavePromotion = async (promotionData: PromotionPayload) => {
     try {
       if (editingPromotion) {
         await updatePromotion(editingPromotion.id, promotionData);
       } else {
-        await createPromotion(promotionData as unknown);
+        await createPromotion(promotionData);
       }
       handleCloseModal();
     } catch (error) {

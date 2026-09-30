@@ -15,6 +15,7 @@ import {
   type CategorySuggestion,
 } from "@/api/marketplaceService";
 import { useToast } from "../ui/use-toast";
+import { getErrorMessage } from "@/lib/errors";
 
 interface Props {
   productId?: string;
@@ -74,7 +75,7 @@ export function ProductMarketplacePanel({ productId, productName }: Props) {
       const data = await marketplaceService.suggestCategories(slug, q);
       setSuggestions((s) => ({ ...s, [slug]: data }));
     } catch (err: unknown) {
-      toast({ title: "Erro ao buscar categorias", description: err?.response?.data?.error, variant: "destructive" });
+      toast({ title: "Erro ao buscar categorias", description: getErrorMessage(err), variant: "destructive" });
     } finally {
       setSearching(null);
     }
@@ -91,7 +92,7 @@ export function ProductMarketplacePanel({ productId, productName }: Props) {
     } catch (err: unknown) {
       toast({
         title: "Falha ao publicar",
-        description: err?.response?.data?.error ?? err?.message,
+        description: getErrorMessage(err),
         variant: "destructive",
       });
     } finally {

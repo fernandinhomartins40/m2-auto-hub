@@ -23,6 +23,7 @@ import {
   HeartHandshake,
   X as XIcon
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import adminService, { type AdminCustomerVehicle, type ProvisionalUser as AdminCustomer, type StoreOrder } from "../../api/adminService";
 import { useToast } from "../../hooks/use-toast";
 import { OrderDetailsModal } from "./OrderDetailsModal";
@@ -90,7 +91,7 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
 
 
   const getStatusInfo = (status: string) => {
-    const statusMap: Record<string, { label: string; color: string; icon: unknown }> = {
+    const statusMap: Record<string, { label: string; color: string; icon: LucideIcon }> = {
       PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
       CONFIRMED: { label: 'Confirmado', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
       IN_PRODUCTION: { label: 'Em Produção', color: 'bg-indigo-100 text-indigo-800', icon: Factory },

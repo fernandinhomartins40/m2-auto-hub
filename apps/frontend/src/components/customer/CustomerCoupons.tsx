@@ -39,9 +39,7 @@ export function CustomerCoupons() {
     try {
       const data = await couponService.getActiveCoupons();
 
-      // Se retornar objeto com data, extrair array
-      const couponsArray = Array.isArray(data) ? data : (data as unknown).data || [];
-      setCoupons(couponsArray);
+      setCoupons(data);
     } catch (err: unknown) {
       setError(getApiError(err).message || 'Erro ao carregar cupons');
       toast.error('Erro ao carregar cupons disponíveis');

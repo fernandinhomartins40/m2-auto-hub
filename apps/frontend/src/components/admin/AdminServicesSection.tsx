@@ -20,7 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAdminServices } from '../../hooks/useAdminServices.js';
-import serviceService, { type ServiceCategoryResponse } from '@/api/serviceService';
+import serviceService, { type CreateServiceDto, type ServiceCategoryResponse } from '@/api/serviceService';
 import { ServiceModal } from './ServiceModal';
 import { ServiceCategoriesModal } from './ServiceCategoriesModal';
 import {
@@ -171,7 +171,7 @@ export function AdminServicesSection({
     setEditingServiceId(null);
   };
 
-  const handleSaveService = async (serviceData: unknown) => {
+  const handleSaveService = async (serviceData: CreateServiceDto) => {
     try {
       if (editingService && editingService.id) {
         await updateService(editingService.id, serviceData);

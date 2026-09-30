@@ -318,7 +318,7 @@ export function ShippingMethodsManagement() {
               <Label htmlFor="type">Tipo *</Label>
               <Select
                 value={formData.type}
-                onValueChange={(value: unknown) => setFormData({ ...formData, type: value })}
+                onValueChange={(value) => setFormData({ ...formData, type: value as ShippingMethod['type'] })}
               >
                 <SelectTrigger>
                   <SelectValue />

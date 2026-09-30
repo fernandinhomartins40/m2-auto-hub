@@ -106,7 +106,7 @@ export function Hero() {
                 return (
                   <Button
                     key={button.id}
-                    variant={button.variant as unknown}
+                    variant={button.variant}
                     size="lg"
                     className="text-lg"
                     style={customStyle}

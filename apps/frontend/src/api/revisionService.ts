@@ -1,11 +1,20 @@
 import apiClient from './apiClient';
 
+export interface RevisionChecklistItem {
+  itemId?: string;
+  itemName?: string;
+  categoryId?: string;
+  categoryName?: string;
+  status: 'NOT_CHECKED' | 'OK' | 'ATTENTION' | 'CRITICAL' | 'NOT_APPLICABLE';
+  notes?: string;
+}
+
 export interface CreateRevisionRequest {
   customerId: string;
   vehicleId: string;
   date: string;
   mileage?: number;
-  checklistItems: unknown[];
+  checklistItems: RevisionChecklistItem[];
   generalNotes?: string;
   recommendations?: string;
 }
@@ -13,7 +22,7 @@ export interface CreateRevisionRequest {
 export interface UpdateRevisionRequest {
   mileage?: number;
   status?: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  checklistItems?: unknown[];
+  checklistItems?: RevisionChecklistItem[];
   generalNotes?: string;
   recommendations?: string;
   assignedMechanicId?: string;
@@ -39,7 +48,7 @@ export interface RevisionResponse {
   date: string;
   mileage: number | null;
   status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  checklistItems: unknown;
+  checklistItems: RevisionChecklistItem[];
   /** Presente ao criar/atualizar: as linhas relacionais correspondentes. */
   checks?: RevisionCheck[];
   generalNotes: string | null;
@@ -52,6 +61,19 @@ export interface RevisionResponse {
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
+}
+
+export interface MechanicWorkload {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  workload?: {
+    total: number;
+    active: number;
+    byStatus: { draft: number; inProgress: number; completed: number; cancelled: number };
+  };
 }
 
 export interface ExportRevisionPdfPayload {
@@ -79,7 +101,7 @@ class RevisionService {
   /**
    * Update revision checklist partially (Admin)
    */
-  async updateRevisionChecklistPartial(id: string, checklistItems: unknown[]): Promise<RevisionResponse> {
+  async updateRevisionChecklistPartial(id: string, checklistItems: RevisionChecklistItem[]): Promise<RevisionResponse> {
     const response = await apiClient.patch(`/admin/revisions/${id}/checklist`, { checklistItems });
     return response.data.data || response.data;
   }
@@ -262,7 +284,7 @@ class RevisionService {
   /**
    * Get all mechanics workload (Admin)
    */
-  async getMechanicsWorkload(): Promise<unknown[]> {
+  async getMechanicsWorkload(): Promise<MechanicWorkload[]> {
     const response = await apiClient.get('/revisions/mechanics/workload');
     return response.data.data;
   }

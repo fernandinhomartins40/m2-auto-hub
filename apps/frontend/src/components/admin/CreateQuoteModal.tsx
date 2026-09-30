@@ -374,7 +374,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
     setIsCreating(true);
     try {
       // Preparar dados do cliente
-      let customerData: unknown = {};
+      let customerData: { name: string; email: string; phone: string; cpf?: string } | undefined;
       const customerId: string | undefined = selectedCustomer?.id;
 
       // Se não é cliente existente, criar novo

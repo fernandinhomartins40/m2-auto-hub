@@ -67,20 +67,12 @@ export function RevisionEditPage({ revision, onClose, onSuccess }: RevisionEditP
       setGeneralNotes(fullRevision.generalNotes || '');
       setRecommendations(fullRevision.recommendations || '');
 
-      // O checklist pode vir como array ou embrulhado em um objeto.
-      let checklistArray = fullRevision.checklistItems;
-      if (checklistArray && typeof checklistArray === 'object' && !Array.isArray(checklistArray)) {
-        if ('data' in checklistArray) {
-          checklistArray = checklistArray.data;
-        } else if ('items' in checklistArray) {
-          checklistArray = checklistArray.items;
-        }
-      }
+      const checklistArray = fullRevision.checklistItems;
 
       // itemName e categoryName ja estao gravados no checklist; sem eles a
       // busca nao teria o que mostrar ao continuar a revisao.
       const items: AvaliacaoItem[] = Array.isArray(checklistArray)
-        ? checklistArray.map((item: unknown) => ({
+        ? checklistArray.map((item) => ({
             itemId: item.itemId,
             itemName: item.itemName ?? '',
             categoryId: item.categoryId ?? '',

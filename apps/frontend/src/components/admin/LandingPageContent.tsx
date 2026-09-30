@@ -83,8 +83,8 @@ export function LandingPageContent() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onchange = (e: unknown) => {
-      const file = e.target.files[0];
+    input.onchange = (event) => {
+      const file = (event.currentTarget as HTMLInputElement).files?.[0];
       if (!file) return;
 
       const reader = new FileReader();

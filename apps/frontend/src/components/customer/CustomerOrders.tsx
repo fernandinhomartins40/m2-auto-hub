@@ -359,19 +359,19 @@ export function CustomerOrders() {
                                     <CheckCircle className="h-4 w-4 text-green-600" />
                                     <span className="text-sm">Pedido confirmado</span>
                                   </div>
-                                  {selectedOrder.status !== 'pending' && (
+                                  {selectedOrder.status !== 'PENDING' && (
                                     <div className="flex items-center space-x-3">
                                       <Package className="h-4 w-4 text-orange-600" />
                                       <span className="text-sm">Pedido sendo preparado</span>
                                     </div>
                                   )}
-                                  {['shipped', 'delivered'].includes(selectedOrder.status) && (
+                                  {['SHIPPED', 'DELIVERED'].includes(selectedOrder.status) && (
                                     <div className="flex items-center space-x-3">
                                       <Truck className="h-4 w-4 text-purple-600" />
                                       <span className="text-sm">Pedido enviado</span>
                                     </div>
                                   )}
-                                  {selectedOrder.status === 'delivered' && (
+                                  {selectedOrder.status === 'DELIVERED' && (
                                     <div className="flex items-center space-x-3">
                                       <CheckCircle className="h-4 w-4 text-green-600" />
                                       <span className="text-sm">Pedido entregue</span>

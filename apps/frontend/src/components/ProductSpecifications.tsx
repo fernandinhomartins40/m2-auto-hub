@@ -130,6 +130,7 @@ export function ProductSpecifications({
     <div className="space-y-4">
       {categories.map(categoryId => {
         const categoryInfo = getCategoryInfo(categoryId);
+        const categoryDescription = 'description' in categoryInfo ? categoryInfo.description : undefined;
         const specs = groupedSpecs[categoryId];
         const Icon = CATEGORY_ICONS[categoryId] || Settings;
 
@@ -175,9 +176,9 @@ export function ProductSpecifications({
                   <ChevronDown className="h-5 w-5" />
                 }
               </CardTitle>
-              {categoryInfo.description && (
+              {categoryDescription && (
                 <p className="text-sm text-muted-foreground">
-                  {categoryInfo.description}
+                  {categoryDescription}
                 </p>
               )}
             </CardHeader>

@@ -11,6 +11,7 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 import { useLandingPageConfig } from '../hooks/useLandingPageConfig';
 import { useServices } from '../hooks/useServices';
@@ -19,7 +20,7 @@ import { colorOrGradientToCSS } from './admin/LandingPageEditor/StyleControls';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 
-const categoryIcons: Record<string, unknown> = {
+const categoryIcons: Record<string, LucideIcon> = {
   'Manutenção Preventiva': Wrench,
   Motor: Wrench,
   Freios: Disc,
@@ -61,7 +62,6 @@ export function Services() {
       id: service.id,
       name: service.title,
       price: service.price || 0,
-      quantity: 1,
       category: service.category,
       type: 'service',
       description: service.description,
@@ -86,7 +86,7 @@ export function Services() {
     : config.about.subtitle;
 
   const getTrustIndicatorIcon = (iconName: string) => {
-    const IconComponent = (Icons as unknown)[iconName];
+    const IconComponent = (Icons as Record<string, unknown>)[iconName] as LucideIcon | undefined;
     return IconComponent || Wrench;
   };
 

@@ -126,12 +126,13 @@ export function PlateLookupOverlay({ isOpen, onClose }: Props) {
         setRevisions([]);
       }
     } catch (err: unknown) {
+      const apiError = getApiError(err);
       // Num timeout não existe `getApiError(err).response`, então a descrição vinha vazia e
       // a falha passava despercebida.
       const description =
-        err?.code === 'ECONNABORTED'
+        apiError.code === 'ECONNABORTED'
           ? 'A consulta demorou mais que o esperado. Tente novamente ou cadastre o veículo manualmente.'
-          : err?.response?.data?.error || 'Não foi possível consultar a placa agora.';
+          : apiError.response?.data?.error || 'Não foi possível consultar a placa agora.';
 
       toast({ title: 'Erro na consulta', description, variant: 'destructive' });
       setLookup(null);

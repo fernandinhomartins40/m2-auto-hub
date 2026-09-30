@@ -9,6 +9,7 @@ import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AlertCircle, Loader2, Wrench, DollarSign, Clock, Settings } from 'lucide-react';
+import type { CreateServiceDto } from '@/api/serviceService';
 
 interface Service {
   id?: string;
@@ -17,7 +18,7 @@ interface Service {
   category: string;
   basePrice?: number;
   estimatedTime: string;
-  specifications: Record<string, unknown>;
+  specifications?: Record<string, unknown>;
   isActive: boolean;
   status?: string;
 }
@@ -25,7 +26,7 @@ interface Service {
 interface ServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (service: Partial<Service>) => Promise<void>;
+  onSave: (service: CreateServiceDto) => Promise<void>;
   service?: Service | null;
   loading?: boolean;
   categories?: string[];
@@ -169,15 +170,15 @@ export function ServiceModal({
     }
 
     try {
-      const dataToSave: Partial<Service> & { status: 'ACTIVE' | 'INACTIVE' } = {
-        ...formData,
+      const dataToSave: CreateServiceDto = {
+        name: formData.name?.trim() || '',
+        category: formData.category || '',
+        specifications: formData.specifications,
         status: formData.isActive ? 'ACTIVE' : 'INACTIVE',
         description: formData.description?.trim() || '',
         estimatedTime: formData.estimatedTime?.trim() || DEFAULT_ESTIMATED_TIME,
         basePrice: normalizeBasePrice(formData.basePrice),
       };
-
-      delete dataToSave.isActive;
 
       await onSave(dataToSave);
       onClose();

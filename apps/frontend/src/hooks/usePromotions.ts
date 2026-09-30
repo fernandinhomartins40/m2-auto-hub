@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import promotionService from '@/api/promotionService';
+import promotionService, { type PromotionCreateRequest } from '@/api/promotionService';
 import {
   AdvancedPromotion,
   PromotionApplicationResult,
@@ -42,7 +42,7 @@ export interface UsePromotionsResult {
   totalSavings: number;
 
   // Ações básicas
-  createPromotion: (promotion: Omit<AdvancedPromotion, 'id' | 'createdAt' | 'updatedAt'>) => Promise<AdvancedPromotion>;
+  createPromotion: (promotion: PromotionCreateRequest) => Promise<AdvancedPromotion>;
   updatePromotion: (id: string, promotion: Partial<AdvancedPromotion>) => Promise<AdvancedPromotion>;
   deletePromotion: (id: string) => Promise<void>;
   duplicatePromotion: (id: string, newName: string) => Promise<AdvancedPromotion>;

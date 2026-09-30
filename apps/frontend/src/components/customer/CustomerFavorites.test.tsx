@@ -51,7 +51,7 @@ describe("CustomerFavorites", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true } as ReturnType<typeof useAuth>);
-    vi.mocked(useCart).mockReturnValue({ addItem: vi.fn(), openCart: vi.fn() } as ReturnType<typeof useCart>);
+    vi.mocked(useCart).mockReturnValue({ addItem: vi.fn(), openCart: vi.fn() } as unknown as ReturnType<typeof useCart>);
     vi.mocked(useFavoritesContext).mockReturnValue(favoritesContext());
     vi.mocked(favoriteService.getFavoriteStats).mockResolvedValue({ totalFavorites: 2, favoritesByCategory: {}, recentlyAdded: [] });
     vi.mocked(productService.getProductsByIds).mockResolvedValue(products as never);

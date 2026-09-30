@@ -25,6 +25,7 @@ import {
   type MarketplaceProviderSlug,
 } from "@/api/marketplaceService";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/errors";
 
 const PROVIDER_META: Record<
   "MERCADO_LIVRE" | "SHOPEE",
@@ -115,7 +116,7 @@ export function MarketplacesContent() {
       toast({ title: "Anúncio sincronizado" });
       void load();
     } catch (err: unknown) {
-      toast({ title: "Erro ao sincronizar", description: err?.response?.data?.error, variant: "destructive" });
+      toast({ title: "Erro ao sincronizar", description: getErrorMessage(err), variant: "destructive" });
     } finally {
       setBusyId(null);
     }

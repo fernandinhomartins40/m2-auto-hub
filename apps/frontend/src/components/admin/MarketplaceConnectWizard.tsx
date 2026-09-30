@@ -29,6 +29,7 @@ import {
   type ReadinessItem,
 } from "@/api/marketplaceService";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/errors";
 
 interface Props {
   isOpen: boolean;
@@ -93,7 +94,7 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
     } catch (err: unknown) {
       toast({
         title: "Erro ao salvar",
-        description: err?.response?.data?.error ?? err?.message,
+        description: getErrorMessage(err),
         variant: "destructive",
       });
     } finally {
@@ -110,7 +111,7 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
     } catch (err: unknown) {
       toast({
         title: "Não foi possível iniciar a autorização",
-        description: err?.response?.data?.error ?? err?.message,
+        description: getErrorMessage(err),
         variant: "destructive",
       });
       setAuthorizing(false);
@@ -130,7 +131,7 @@ export function MarketplaceConnectWizard({ isOpen, onClose, provider, connection
     } catch (err: unknown) {
       toast({
         title: "Falha no teste",
-        description: err?.response?.data?.error ?? err?.message,
+        description: getErrorMessage(err),
         variant: "destructive",
       });
     } finally {

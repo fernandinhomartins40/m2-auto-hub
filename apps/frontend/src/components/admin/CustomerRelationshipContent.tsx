@@ -101,12 +101,8 @@ function metricLabelFor(category: RelationshipCategoryResult, customer: Customer
         : `${customer.daysSinceLastInteraction ?? 0} dias do atendimento`;
     case "vip":
       return `${customer.daysSinceLastInteraction ?? 0} dias sem retorno`;
-    default: {
-      const sortBy = category.sortBy as keyof CustomerRelationshipInsight;
-      const value = customer[sortBy];
-      if (typeof value === "number") return `${value}`;
+    default:
       return category.name;
-    }
   }
 }
 

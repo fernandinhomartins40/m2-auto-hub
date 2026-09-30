@@ -54,6 +54,7 @@ import { CreateOrderModal } from "./CreateOrderModal";
 import { CreateQuoteModal } from "./CreateQuoteModal";
 import { CreateCustomerModal } from "./CreateCustomerModal";
 import adminService, {
+  type StoreOrder,
   type ProvisionalUser as AdminCustomer,
   type Quote as AdminQuote,
 } from "@/api/adminService";
@@ -97,27 +98,6 @@ const AdminCouponsSection = lazy(() => import("./AdminCouponsSection").then((mod
 const MarketplacesContent = lazy(() => import("./MarketplacesContent").then((module) => ({ default: module.MarketplacesContent })));
 const ServiceOrdersContent = lazy(() => import("./ServiceOrdersContent").then((module) => ({ default: module.ServiceOrdersContent })));
 const LandingPageContent = lazy(() => import("./LandingPageContent").then((module) => ({ default: module.LandingPageContent })));
-
-interface StoreOrder {
-  id: string;
-  userId: string;
-  customerName: string;
-  customerWhatsApp: string;
-  items: Array<{
-    id: string;
-    name: string;
-    quantity: number;
-    price: number;
-    type?: string;
-  }>;
-  total: number;
-  hasProducts: boolean;
-  hasServices: boolean;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  source: string;
-}
 
 interface Service {
   id: string;

@@ -7,14 +7,14 @@ import { Label } from '../ui/label';
 import { Dialog, DialogTitle } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
 import { ResponsiveDialogContent, ResponsiveDialogHeader } from '../ui/responsive-dialog';
-import adminService from '../../api/adminService';
+import adminService, { type AdminCustomerVehicle } from '../../api/adminService';
 import { useToast } from '../../hooks/use-toast';
 
 interface CreateVehicleModalProps {
   customerId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (vehicle: unknown) => void;
+  onSuccess: (vehicle: AdminCustomerVehicle) => void;
   initialValues?: Partial<{
     brand: string;
     model: string;

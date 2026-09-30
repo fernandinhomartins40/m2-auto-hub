@@ -8,6 +8,7 @@ import {
   handleApiError
 } from "@/api";
 import type { AddressPayload } from "@/api/addressService";
+import { getApiError } from "@/lib/errors";
 import type { Customer, Address, Order, OrderItem, RegisterRequest } from "@moria/types";
 
 export type { Customer, Address, Order, OrderItem } from "@moria/types";
@@ -120,10 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
         });
       } catch (error: unknown) {
-        if (error?.response?.status === 401) {
+        const apiError = getApiError(error);
+        if (apiError.response?.status === 401) {
           localStorage.removeItem(CUSTOMER_SESSION_HINT_KEY);
         }
-        if (error?.response?.status !== 401) {
+        if (apiError.response?.status !== 401) {
           console.error('Error initializing customer auth:', error);
         }
         setState(prev => ({ ...prev, isLoading: false }));

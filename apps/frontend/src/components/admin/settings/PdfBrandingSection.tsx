@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
 
 type PdfBrandingField =
   | 'pdfHeaderLogoUrl'
@@ -70,7 +71,7 @@ function LogoUploadField({
       toast.success(`Logo do ${slot === 'header' ? 'cabeçalho' : 'rodapé'} atualizado`);
     } catch (error: unknown) {
       toast.error('Erro ao enviar logo do PDF', {
-        description: error?.message || 'Tente novamente.',
+        description: getErrorMessage(error, 'Tente novamente.'),
       });
     } finally {
       setIsUploading(false);

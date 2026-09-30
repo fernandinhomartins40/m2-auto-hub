@@ -1,5 +1,6 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import { getErrorMessage } from '@/lib/errors';
 import 'react-image-crop/dist/ReactCrop.css';
 import {
   Check,
@@ -316,7 +317,7 @@ function PwaIconCropper({
       onComplete(blob);
     } catch (error: unknown) {
       toast.error('Erro ao aplicar recorte', {
-        description: error?.message || 'Tente novamente.',
+        description: getErrorMessage(error, 'Tente novamente.'),
       });
     } finally {
       setIsSubmitting(false);
@@ -475,7 +476,7 @@ function PwaIconUploadCard({
       toast.success(`${title} atualizado`);
     } catch (error: unknown) {
       toast.error('Erro ao enviar icone do PWA', {
-        description: error?.message || 'Tente novamente.',
+        description: getErrorMessage(error, 'Tente novamente.'),
       });
     } finally {
       setIsUploading(false);

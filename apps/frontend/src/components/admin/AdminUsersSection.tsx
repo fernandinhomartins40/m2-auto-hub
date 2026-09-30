@@ -19,7 +19,7 @@ interface AdminUser {
   role: 'STAFF' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN';
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 const ROLE_LABELS = {

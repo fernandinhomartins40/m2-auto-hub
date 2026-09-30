@@ -1,6 +1,7 @@
 export interface ApiErrorDetails {
   message?: string;
   code?: string;
+  details?: Array<{ path?: Array<string | number>; message?: string }>;
   response?: {
     status?: number;
     data?: {

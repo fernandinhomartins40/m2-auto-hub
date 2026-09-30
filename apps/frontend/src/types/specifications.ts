@@ -386,6 +386,6 @@ export type SpecificationFilterOperator = 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'l
 export interface SpecificationFilterCondition {
   key: string;
   operator: SpecificationFilterOperator;
-  value: SpecificationPrimitiveValue | SpecificationRangeValue;
+  value?: SpecificationPrimitiveValue | SpecificationRangeValue;
   values?: SpecificationPrimitiveValue[];
 }

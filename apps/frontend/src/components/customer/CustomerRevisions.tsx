@@ -86,7 +86,7 @@ export function CustomerRevisions() {
       date: revision.date.toString(),
       mileage: revision.mileage,
       status: revision.status.toUpperCase() as AdminRevision['status'],
-      checklistItems: checklistItems as unknown[],
+      checklistItems: checklistItems.filter((item): item is NonNullable<typeof item> => item !== null),
       generalNotes: revision.generalNotes,
       recommendations: revision.recommendations,
       createdAt: revision.createdAt.toString(),

@@ -1065,9 +1065,9 @@ class AdminService {
     power?: string;
     city?: string;
     state?: string;
-  }): Promise<unknown> {
+  }): Promise<AdminCustomerVehicle> {
     const response = await apiClient.post(`/admin/customers/${customerId}/vehicles`, data);
-    return response.data;
+    return response.data?.data ?? response.data;
   }
 
   async getCustomerRelationshipInsights(params?: {
@@ -1212,7 +1212,7 @@ class AdminService {
     status?: string;
     dateFrom?: string;
     dateTo?: string;
-  }): Promise<{ data: AdminRevision[]; meta: unknown }> {
+  }): Promise<{ data: AdminRevision[]; meta: { page: number; limit: number; totalCount: number; totalPages: number } }> {
     const response = await apiClient.get('/admin/revisions', { params });
     return response.data;
   }
@@ -1293,9 +1293,10 @@ class AdminService {
       id: string;
       email: string;
       name: string;
-      role: string;
-      status: string;
+      role: 'STAFF' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN';
+      status: 'ACTIVE' | 'INACTIVE';
       createdAt: string;
+      updatedAt?: string;
       lastLoginAt?: string;
     }>;
     meta: {

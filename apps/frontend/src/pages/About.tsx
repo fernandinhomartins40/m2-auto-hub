@@ -25,6 +25,8 @@ export default function About() {
   // Usar configurações do Landing Page Editor ou fallback para defaults
   const aboutPageConfig: LandingPageConfig['aboutPage'] = landingPageConfig?.aboutPage || {
     enabled: true,
+    sectionImage: { url: '', alt: 'Equipe trabalhando na oficina', objectFit: 'cover' },
+    decorativeSquare: { enabled: true, size: 96, borderWidth: 4, borderRadius: 12, borderColor: '#2563eb', backgroundColor: '#ffffff', backgroundOpacity: 100, offsetX: -16, offsetY: -16 },
     heroBadge: "Sobre Nós",
     heroTitle: "Mais de",
     heroHighlight: "15 Anos",

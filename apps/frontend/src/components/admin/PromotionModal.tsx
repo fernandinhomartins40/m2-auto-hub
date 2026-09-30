@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AlertCircle, Loader2, TrendingUp, Percent, Calendar, Settings, X, CheckCircle2, Package, Tag, Check } from 'lucide-react';
 import apiClient from '../../api/apiClient';
+import type { PromotionCreateRequest } from '../../api/promotionService';
 import productService, { Product } from '../../api/productService';
 import type { AdvancedPromotion, PromotionRewards } from '../../types/promotions';
 import { toast } from 'sonner';
@@ -59,7 +60,7 @@ interface PromotionModalProps {
   loading?: boolean;
 }
 
-type PromotionPayload = Partial<AdvancedPromotion> & {
+export type PromotionPayload = PromotionCreateRequest & Pick<AdvancedPromotion, 'target' | 'trigger' | 'isActive' | 'shortDescription' | 'badgeText'> & {
   startDate: string;
   endDate: string;
 };

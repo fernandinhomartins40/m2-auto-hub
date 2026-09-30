@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { orderService, handleApiError } from '@/api';
 import { Order } from '@/api/orderService';
+import type { GuestOrderResponse } from '@/api/guestOrderService';
 
 interface CreateOrderData {
   customerId: string;
@@ -31,7 +32,7 @@ interface UseOrdersResult {
     status?: string;
   }) => Promise<void>;
   getOrderById: (id: string) => Promise<Order | null>;
-  createOrder: (data: CreateOrderData) => Promise<Order | null>;
+  createOrder: (data: CreateOrderData) => Promise<GuestOrderResponse | null>;
   updateOrderStatus: (orderId: string, status: string) => Promise<Order | null>;
   cancelOrder: (orderId: string) => Promise<Order | null>;
 }
@@ -54,10 +55,10 @@ export const useOrders = (): UseOrdersResult => {
     
     try {
       const response = await orderService.getOrders(params);
-      setOrders(response.orders);
-      setTotalCount(response.totalCount);
-      setPage(response.page);
-      setLimit(response.limit);
+      setOrders(response.data);
+      setTotalCount(response.meta.totalCount);
+      setPage(response.meta.page);
+      setLimit(response.meta.limit);
     } catch (err) {
       const apiError = handleApiError(err);
       setError(apiError.message);
@@ -82,7 +83,7 @@ export const useOrders = (): UseOrdersResult => {
     }
   };
 
-  const createOrder = async (data: CreateOrderData): Promise<Order | null> => {
+  const createOrder = async (data: CreateOrderData): Promise<GuestOrderResponse | null> => {
     setLoading(true);
     setError(null);
     

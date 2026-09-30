@@ -29,7 +29,7 @@ const deepMerge = <T>(target: T, source: unknown): T => {
   }
 
   if (!target) {
-    return source;
+    return source as T;
   }
 
   if (!isRecord(target) || !isRecord(source)) {

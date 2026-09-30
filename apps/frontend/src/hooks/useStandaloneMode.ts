@@ -13,7 +13,7 @@ export function useStandaloneMode() {
     const standaloneQuery = window.matchMedia('(display-mode: standalone)');
 
     // Detectar iOS standalone (adicionar à home screen)
-    const isIOSStandaloneMode = (window.navigator as unknown).standalone === true;
+    const isIOSStandaloneMode = (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
     // Detectar Android standalone
     const isAndroidStandalone = standaloneQuery.matches;

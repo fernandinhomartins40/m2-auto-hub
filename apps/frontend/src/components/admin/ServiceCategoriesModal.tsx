@@ -3,6 +3,7 @@ import { Loader2, Pencil, Plus, Save, Tag, Wrench, X } from 'lucide-react';
 
 import serviceService, { type ServiceCategoryResponse } from '@/api/serviceService';
 import { useToast } from '@/hooks/use-toast';
+import { getApiError } from '@/lib/errors';
 
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -90,9 +91,9 @@ export function ServiceCategoriesModal({
       await onSaved();
     } catch (error: unknown) {
       const message =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
+        getApiError(error).response?.data?.error ||
+        getApiError(error).response?.data?.message ||
+        getApiError(error).message ||
         'Não foi possível salvar a categoria.';
 
       toast({

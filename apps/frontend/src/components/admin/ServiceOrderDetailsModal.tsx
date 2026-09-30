@@ -8,6 +8,7 @@ import serviceOrderService, { ServiceOrder, ServiceOrderStatus } from '@/api/ser
 import revisionService from '@/api/revisionService';
 import { useToast } from '../ui/use-toast';
 import { formatCurrency as money } from '@/lib/format';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   /** Pagina de tela cheia: montada condicionalmente pelo pai, sem "isOpen". */
@@ -32,7 +33,7 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
 
   useEffect(() => {
     if (!restricted) {
-      revisionService.getMechanicsWorkload().then(setMechanics).catch(() => undefined);
+      revisionService.getMechanicsWorkload().then((items) => setMechanics(items.map(({ id, name }) => ({ id, name })))).catch(() => undefined);
     }
   }, [restricted]);
 
@@ -46,7 +47,7 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
       toast({ title: okMsg });
       onChanged();
     } catch (err: unknown) {
-      toast({ title: 'Não foi possível', description: err?.response?.data?.error, variant: 'destructive' });
+      toast({ title: 'Não foi possível', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
       setBusy(false);
     }

@@ -3,7 +3,7 @@ import { getApiError } from "@/lib/errors";
 // Hook para gerenciamento de promoções no painel administrativo
 
 import { useState, useEffect, useCallback } from 'react';
-import promotionService from '@/api/promotionService';
+import promotionService, { type PromotionCreateRequest } from '@/api/promotionService';
 import type { AdvancedPromotion } from '@/types/promotions';
 import { toast } from 'sonner';
 
@@ -22,7 +22,7 @@ export interface UseAdminPromotionsReturn {
 
   // Funções CRUD
   fetchPromotions: () => Promise<void>;
-  createPromotion: (promotionData: Partial<AdvancedPromotion>) => Promise<void>;
+  createPromotion: (promotionData: PromotionCreateRequest) => Promise<void>;
   updatePromotion: (id: string, promotionData: Partial<AdvancedPromotion>) => Promise<void>;
   deletePromotion: (id: string) => Promise<void>;
 
@@ -63,12 +63,12 @@ export function useAdminPromotions(): UseAdminPromotionsReturn {
   }, []);
 
   // Criar nova promoção
-  const createPromotion = useCallback(async (promotionData: Partial<AdvancedPromotion>) => {
+  const createPromotion = useCallback(async (promotionData: PromotionCreateRequest) => {
     setCreateLoading(true);
     setError(null);
 
     try {
-      await promotionService.createPromotion(promotionData as unknown);
+      await promotionService.createPromotion(promotionData);
       toast.success('Promoção criada com sucesso!');
 
       // Recarregar lista de promoções

@@ -162,7 +162,7 @@ function OfferGroup({
 }: {
   title: string;
   subtitle: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  icon: import('lucide-react').LucideIcon;
   offers: StorefrontOffer[];
   whatsappNumber?: string;
   countdown?: { hours: string; minutes: string; seconds: string };
