@@ -36,6 +36,12 @@ export interface PromotionListResponse {
   limit: number;
 }
 
+interface PromotionListMeta {
+  totalCount?: number;
+  page?: number;
+  limit?: number;
+}
+
 export interface PromotionCreateRequest {
   name: string;
   description: string;
@@ -66,7 +72,7 @@ class PromotionService {
     limit?: number;
     active?: boolean;
   }): Promise<PromotionListResponse> {
-    const response = await apiClient.get<{ success: boolean; data: AdvancedPromotion[]; meta: unknown }>('/promotions', { params: filter });
+    const response = await apiClient.get<{ success: boolean; data: AdvancedPromotion[]; meta: PromotionListMeta }>('/promotions', { params: filter });
     // Backend retorna { success, data: [...], meta: {...} }
     return {
       promotions: response.data.data,

@@ -2,6 +2,9 @@ import type { CompleteReportData } from "@/api/reportsService";
 import type { ExportData } from "@/utils/exportUtils";
 
 export interface ReportPdfStats {
+  totalRevenue: number;
+  totalOrders: number;
+  averageTicket: number;
   totalProducts: number;
   activeProducts: number;
   lowStockProducts: number;

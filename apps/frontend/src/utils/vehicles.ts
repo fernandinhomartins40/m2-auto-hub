@@ -13,6 +13,8 @@ import {
   VehicleSegment
 } from '@/types/vehicles';
 
+export type { VehicleCompatibilityFilter } from '@/types/vehicles';
+
 /**
  * Parse compatibilidade de veículos de JSON string
  */
@@ -331,7 +333,6 @@ function generateCompatibilitySuggestions(
  */
 export interface ProductWithCompatibility {
   vehicleCompatibility?: string;
-  [key: string]: unknown;
 }
 
 /**

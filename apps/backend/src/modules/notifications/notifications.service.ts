@@ -30,6 +30,7 @@ export interface AdminNotificationCenterItem {
     | 'customer'
     | 'promotion'
     | 'coupon'
+    | 'support'
     | 'system';
   backendType?: NotificationType | string;
   title: string;
@@ -758,6 +759,20 @@ export class NotificationsService {
         actionLabel: 'Abrir pedidos',
         actionUrl: '/orders',
         actionTab: 'orders',
+      },
+      SUPPORT_TICKET_CREATED: {
+        type: 'support',
+        priority: 'high',
+        actionLabel: 'Abrir suporte',
+        actionUrl: '/support',
+        actionTab: 'support',
+      },
+      SUPPORT_TICKET_MESSAGE: {
+        type: 'support',
+        priority: 'high',
+        actionLabel: 'Abrir suporte',
+        actionUrl: '/support',
+        actionTab: 'support',
       },
     };
 

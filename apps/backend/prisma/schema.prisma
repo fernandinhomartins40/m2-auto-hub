@@ -155,6 +155,8 @@ enum NotificationType {
   QUOTE_REJECTED
   ORDER_STATUS_UPDATED
   ORDER_CREATED
+  SUPPORT_TICKET_CREATED
+  SUPPORT_TICKET_MESSAGE
 }
 
 enum NotificationRecipientType {

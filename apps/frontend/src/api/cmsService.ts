@@ -84,6 +84,14 @@ export interface UpdateFooterData {
   footerLinks?: Record<string, string>;
 }
 
+interface LandingPageConfig {
+  marquee?: {
+    messages?: MarqueeMessage[];
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 // ============================================================================
 // SERVICE CLASS
 // ============================================================================
@@ -174,7 +182,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: unknown
+      data: LandingPageConfig
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -191,7 +199,7 @@ class CmsService {
     };
 
     // Atualizar config com nova mensagem
-    await apiClient.put<{ success: boolean; data: unknown }>(
+    await apiClient.put<{ success: boolean; data: LandingPageConfig }>(
       '/landing-page/config',
       {
         marquee: {
@@ -211,7 +219,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: unknown
+      data: LandingPageConfig
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -231,7 +239,7 @@ class CmsService {
     }
 
     // Atualizar config
-    await apiClient.put<{ success: boolean; data: unknown }>(
+    await apiClient.put<{ success: boolean; data: LandingPageConfig }>(
       '/landing-page/config',
       {
         marquee: {
@@ -251,7 +259,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: unknown
+      data: LandingPageConfig
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -261,7 +269,7 @@ class CmsService {
     const updatedMessages = currentMessages.filter((msg: MarqueeMessage) => msg.id !== id);
 
     // Atualizar config
-    await apiClient.put<{ success: boolean; data: unknown }>(
+    await apiClient.put<{ success: boolean; data: LandingPageConfig }>(
       '/landing-page/config',
       {
         marquee: {
@@ -279,7 +287,7 @@ class CmsService {
     // Buscar config atual
     const configResponse = await apiClient.get<{
       success: boolean;
-      data: unknown
+      data: LandingPageConfig
     }>('/landing-page/config');
 
     const currentConfig = configResponse.data.data;
@@ -292,7 +300,7 @@ class CmsService {
     }).filter(Boolean);
 
     // Atualizar config
-    await apiClient.put<{ success: boolean; data: unknown }>(
+    await apiClient.put<{ success: boolean; data: LandingPageConfig }>(
       '/landing-page/config',
       {
         marquee: {

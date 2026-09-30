@@ -60,7 +60,7 @@ export default function StoreBottomNavigation({
       >
         {items.map((item) => {
           const Icon = item.icon;
-          const isActive = currentTab === item.id;
+          const isActive = item.id === currentTab || item.activeTabs?.includes(currentTab);
 
           return (
             <li key={item.id} className="contents">

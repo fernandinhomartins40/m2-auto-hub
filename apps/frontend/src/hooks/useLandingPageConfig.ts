@@ -20,7 +20,10 @@ const log = (message: string, data?: unknown) => {
   console.log(`[LandingPageConfig] ${new Date().toISOString()} - ${message}`, data || '');
 };
 
-const deepMerge = (target: unknown, source: unknown): unknown => {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const deepMerge = <T>(target: T, source: unknown): T => {
   if (!source) {
     return target;
   }
@@ -29,7 +32,11 @@ const deepMerge = (target: unknown, source: unknown): unknown => {
     return source;
   }
 
-  const output = { ...target };
+  if (!isRecord(target) || !isRecord(source)) {
+    return source as T;
+  }
+
+  const output: Record<string, unknown> = { ...target };
 
   for (const key in source) {
     if (source[key] === null || source[key] === undefined) {
@@ -56,7 +63,7 @@ const deepMerge = (target: unknown, source: unknown): unknown => {
     }
   }
 
-  return output;
+  return output as T;
 };
 
 const migrateConfigColors = (config: LandingPageConfig): LandingPageConfig => {

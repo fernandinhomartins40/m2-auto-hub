@@ -8,7 +8,8 @@ import { CustomerCoupons } from "../components/customer/CustomerCoupons";
 import { CustomerDashboard } from "../components/customer/CustomerDashboard";
 import { CustomerFavorites } from "../components/customer/CustomerFavorites";
 import { CustomerLayout } from "../components/customer/CustomerLayout";
-import { customerSlugFromTab, customerTabFromSlug } from "../components/customer/customerNavigation";
+import { customerSlugFromTab, customerTabFromSlug, customerWorkspaces } from "../components/customer/customerNavigation";
+import { Button } from "../components/ui/button";
 import { CustomerOrders } from "../components/customer/CustomerOrders";
 import { CustomerProfile } from "../components/customer/CustomerProfile";
 import { CustomerQuotes } from "../components/customer/CustomerQuotes";
@@ -26,6 +27,9 @@ export default function CustomerPanel() {
   // A URL e a fonte de verdade da aba: o voltar do celular funciona e o
   // cliente pode recarregar sem perder a tela em que estava.
   const currentTab = customerTabFromSlug(tabSlug);
+  const activeWorkspace = customerWorkspaces.find((workspace) =>
+    workspace.tabs.some((tab) => tab.id === currentTab)
+  );
 
   const handleTabChange = useCallback(
     (tab: string) => {
@@ -95,6 +99,28 @@ export default function CustomerPanel() {
   return (
     <>
       <CustomerLayout currentTab={currentTab} onTabChange={handleTabChange}>
+        {activeWorkspace ? (
+          <nav
+            aria-label={`Seções de ${activeWorkspace.label}`}
+            className="mb-4 overflow-x-auto rounded-xl border bg-white p-1 shadow-sm"
+          >
+            <div className="flex min-w-max gap-1">
+              {activeWorkspace.tabs.map((tab) => (
+                <Button
+                  key={tab.id}
+                  type="button"
+                  size="sm"
+                  variant={currentTab === tab.id ? "default" : "ghost"}
+                  aria-current={currentTab === tab.id ? "page" : undefined}
+                  className="min-h-10 whitespace-nowrap"
+                  onClick={() => handleTabChange(tab.id)}
+                >
+                  {tab.label}
+                </Button>
+              ))}
+            </div>
+          </nav>
+        ) : null}
         {renderTabContent()}
       </CustomerLayout>
 

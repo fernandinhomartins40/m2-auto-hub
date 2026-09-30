@@ -54,12 +54,18 @@ interface FilterableProduct {
   name: string;
   category?: string;
   subcategory?: string;
+  description?: string;
+  supplier?: string;
+  brand?: string;
+  stock?: number;
+  rating?: number;
+  createdAt?: string;
+  views?: number;
   price?: number;
   salePrice?: number;
   promoPrice?: number;
   specifications?: string;
   vehicleCompatibility?: string;
-  [key: string]: unknown;
 }
 
 export interface UseAdvancedFiltersOptions {
@@ -416,10 +422,10 @@ export function useAdvancedFilters(
         try {
           // Tentar fazer parse como JSON primeiro
           const parsed = JSON.parse(value);
-          filters[key as keyof FilterState] = parsed as FilterState[keyof FilterState];
+          Object.assign(filters, { [key]: parsed });
         } catch {
           // Se falhar, usar como string
-          filters[key as keyof FilterState] = value as FilterState[keyof FilterState];
+          Object.assign(filters, { [key]: value });
         }
       });
 

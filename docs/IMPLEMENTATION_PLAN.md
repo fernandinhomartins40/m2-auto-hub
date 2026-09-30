@@ -65,8 +65,14 @@ As capacidades são amplas, mas a navegação atual está organizada principalme
 | TD-01 | P1 | Frontend acumulava 278 erros de lint, principalmente `any` explícito e tratamento inseguro de falhas | Normalizar erros desconhecidos, substituir `any`, corrigir colisões e falhas sintáticas | APIs, hooks, componentes e utilitários do frontend | Médio | Lint completo, build e testes | DONE |
 | TD-02 | P1 | 54 efeitos possuem dependências incompletas e podem usar closures antigas | Estabilizar callbacks e corrigir dependências por fluxo | hooks, contextos e componentes React | Médio | Lint com zero avisos, build e testes | DOING |
 | TD-03 | P1 | Backend possuía script Jest, mas nenhuma configuração ou teste | Configurar Jest/ESM e iniciar cobertura dos contratos fundamentais | backend, scripts raiz | Baixo | Jest backend e teste raiz | DONE |
-| TD-04 | P1 | Frontend compila via Vite sem gate TypeScript e possui contratos divergentes | Corrigir contratos e adicionar typecheck obrigatório | frontend | Alto | `tsc -b` | TODO |
-| TD-05 | P2 | Chunk sob demanda do lojista permanece com cerca de 1,87 MB | Dividir módulos administrativos internos sob demanda | painel lojista | Médio | Build e inspeção dos chunks | TODO |
+| TD-04 | P1 | Frontend compila via Vite sem gate TypeScript e possui contratos divergentes | Corrigir contratos e adicionar typecheck obrigatório | frontend | Alto | `tsc -b` | DOING |
+| TD-05 | P2 | Chunk sob demanda do lojista permanece com cerca de 1,87 MB | Dividir módulos administrativos internos sob demanda | painel lojista | Médio | Build e inspeção dos chunks | DONE |
+| SUP-01 | P1 | Chamados e respostas não avisavam a equipe e o SLA era sempre zero | Persistir notificações internas, direcionar ao responsável e calcular a primeira resposta real | suporte, notificações e Prisma | Médio | Prisma generate, build e lint backend | DONE |
+| SUP-02 | P2 | Confirmações por e-mail possuem TODO sem transporte configurado | Integrar envio após escolha de provedor, domínio e credenciais | suporte e infraestrutura externa | Médio | Integração do provedor | BLOCKED |
+| UX-08 | P1 | Sidebar lojista expõe 16 módulos técnicos como destinos primários | Consolidar em 7 objetivos com subabas e compatibilidade das rotas antigas | navegação e painéis do lojista | Médio | testes de rotas, teclado, mobile e build | DONE |
+| UX-09 | P1 | Menu do cliente expõe 10 páginas e separa jornadas contínuas | Consolidar em Compras, Meu veículo, Benefícios, Ajuda e Conta | painel do cliente | Médio | testes de rotas, fluxos e responsividade | DONE |
+| UX-10 | P1 | Páginas e formulários apresentam cards, textos e campos no mesmo nível | Aplicar shell comum, revelação progressiva e formulário em três passos quando adequado | componentes e formulários dos painéis | Médio | testes de interação, acessibilidade e visual | DONE |
+| UX-11 | P2 | Navegação e padrões de página divergem entre os três painéis | Unificar taxonomia, tabs locais e estados de página preservando permissões | layouts compartilhados | Médio | testes por perfil e build | DONE |
 | DOC-01 | P2 | Evidências e limites precisam refletir o estado final | Atualizar este plano e criar relatório final | `docs/` | Baixo | Revisão final | DONE |
 
 ## Ordem de implementação

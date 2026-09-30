@@ -53,6 +53,7 @@ export interface QuoteItem {
   quantity: number;
   price?: number | null;
   quotedPrice?: number | null;
+  description?: string | null;
 }
 
 export interface ExportQuotePdfPayload {
@@ -472,14 +473,24 @@ export interface AdminRevision {
   date: string;
   mileage: number | null;
   status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  checklistItems: unknown;
+  checklistItems: Array<{
+    categoryName: string;
+    itemName: string;
+    status: 'NOT_CHECKED' | 'OK' | 'ATTENTION' | 'CRITICAL' | 'NOT_APPLICABLE';
+    notes?: string | null;
+  }>;
   generalNotes: string | null;
   recommendations: string | null;
   assignedMechanicId: string | null;
   mechanicName: string | null;
   mechanicNotes: string | null;
   assignedAt: string | null;
-  transferHistory: unknown[] | null;
+  transferHistory: Array<{
+    fromName: string;
+    toName: string;
+    transferredAt: string;
+    reason?: string | null;
+  }> | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;

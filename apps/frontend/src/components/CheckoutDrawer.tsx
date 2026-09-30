@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import type { CartItem, Address } from "@moria/types";
 import guestOrderService from "../api/guestOrderService";
+import type { GuestOrderResponse } from "../api/guestOrderService";
 import orderService from "../api/orderService";
 import addressService from "../api/addressService";
 import { CouponInput } from "./CouponInput";
@@ -193,7 +194,7 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     }
   };
 
-  const generateWhatsAppMessage = (order: unknown): string => {
+  const generateWhatsAppMessage = (order: GuestOrderResponse): string => {
     const { customer, items, total, hasProducts, hasServices, quoteStatus } = order;
 
     let message = `🔧 *M2 Center Auto*\n`;
@@ -202,9 +203,9 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     message += `📞 *WhatsApp:* ${customer.phone}\n\n`;
 
     if (hasProducts) {
-      const productItems = items.filter((item: unknown) => item.type === 'PRODUCT');
+      const productItems = items.filter((item) => item.type === 'PRODUCT');
       message += `🛒 *PRODUTOS:*\n`;
-      productItems.forEach((item: unknown, index: number) => {
+      productItems.forEach((item, index) => {
         message += `${index + 1}. ${item.name}\n`;
         message += `   • Quantidade: ${item.quantity}x\n`;
         message += `   • Valor: ${formatPrice(item.price)}\n`;
@@ -213,9 +214,9 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     }
 
     if (hasServices) {
-      const serviceItems = items.filter((item: unknown) => item.type === 'SERVICE');
+      const serviceItems = items.filter((item) => item.type === 'SERVICE');
       message += `🔧 *SERVIÇOS:*\n`;
-      serviceItems.forEach((item: unknown, index: number) => {
+      serviceItems.forEach((item, index) => {
         message += `${index + 1}. ${item.name}\n`;
         message += `   • Quantidade: ${item.quantity}x\n`;
         if (item.priceQuoted) {
@@ -263,7 +264,7 @@ export function CheckoutDrawer({ open, onOpenChange }: CheckoutDrawerProps) {
     setIsLoading(true);
 
     try {
-      let order: unknown;
+      let order: GuestOrderResponse;
 
       // CLIENTE AUTENTICADO - usar rota /orders
       if (isAuthenticated && customer) {

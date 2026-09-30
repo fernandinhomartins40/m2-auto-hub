@@ -15,6 +15,7 @@ import serviceOrderService, {
 import productService from '@/api/productService';
 import serviceService from '@/api/serviceService';
 import { formatCurrency as money } from '@/lib/format';
+import { getApiError } from '@/lib/errors';
 
 interface Props {
   /** Pagina de tela cheia: montada condicionalmente pelo pai, sem "isOpen". */
@@ -62,14 +63,14 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
     setLoadingCatalog(true);
     // Mesmos serviços públicos usados nos modais de OS/Pedidos (limit <= 100 exigido pela API)
     const [prodRes, servRes] = await Promise.all([
-      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] as unknown[] })),
-      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] as unknown[] })),
+      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] })),
+      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] })),
     ]);
 
     setProducts(
       (prodRes.products || [])
-        .filter((p: unknown) => p.status === 'ACTIVE' || p.isActive)
-        .map((p: unknown) => ({
+        .filter((p) => p.status === 'ACTIVE' || p.isActive)
+        .map((p) => ({
           id: p.id,
           name: p.name,
           category: p.category,
@@ -80,8 +81,8 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
     );
     setServices(
       (servRes.services || [])
-        .filter((s: unknown) => s.status === 'ACTIVE' || s.isActive)
-        .map((s: unknown) => ({
+        .filter((s) => s.status === 'ACTIVE' || s.isActive)
+        .map((s) => ({
           id: s.id,
           name: s.name,
           category: s.category,
@@ -200,9 +201,10 @@ export function QuickAddItemsModal({ onClose, onSaved, order }: Props) {
       toast({ title: 'Itens adicionados à OS!' });
       onSaved();
     } catch (err: unknown) {
+      const apiError = getApiError(err);
       toast({
         title: 'Erro ao adicionar itens',
-        description: err?.response?.data?.error ?? err?.message,
+        description: apiError.message,
         variant: 'destructive',
       });
     } finally {

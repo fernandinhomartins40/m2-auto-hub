@@ -99,7 +99,7 @@ export const useFavoriteNotifications = () => {
 
   const trackProduct = useCallback(async (productId: string) => {
     try {
-      const product = await productService.getProductById(productId);
+      const { data: product } = await productService.getProductById(productId);
       const tracked: TrackedProduct = {
         productId,
         lastPrice: product.promoPrice || product.salePrice,
@@ -129,7 +129,7 @@ export const useFavoriteNotifications = () => {
         const tracked = trackedProducts.get(productId);
 
         try {
-          const product = await productService.getProductById(productId);
+          const { data: product } = await productService.getProductById(productId);
           const currentPrice = product.promoPrice || product.salePrice;
           const isInStock = product.isActive && product.stock > 0;
 

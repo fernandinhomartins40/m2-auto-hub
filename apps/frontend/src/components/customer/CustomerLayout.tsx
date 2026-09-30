@@ -30,6 +30,7 @@ import {
   Bell,
 } from "lucide-react";
 import { formatCurrency } from '@/lib/format';
+import { customerPrimaryNavigation, isCustomerNavigationActive } from './customerNavigation';
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -55,7 +56,7 @@ export function CustomerLayout({
   // Detectar se deve usar layout mobile: standalone mode OU tela pequena
   const useMobileLayout = isStandalone || isMobile;
 
-  const menuItems = [
+  const legacyMenuItems = [
     {
       id: "dashboard",
       label: "Início",
@@ -117,6 +118,10 @@ export function CustomerLayout({
       description: "Dados pessoais e endereços",
     },
   ];
+  const menuItems = customerPrimaryNavigation.map((navigation) => {
+    const legacy = legacyMenuItems.find((item) => item.id === navigation.id)!;
+    return { ...legacy, label: navigation.label };
+  });
 
   const getInitials = (name?: string) => {
     if (!name) return "CL";
@@ -280,7 +285,12 @@ export function CustomerLayout({
                 </CardHeader>
 
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4 text-center">
+                  <details className="group">
+                    <summary className="cursor-pointer list-none rounded-md py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground">
+                      <span className="group-open:hidden">Ver resumo da conta</span>
+                      <span className="hidden group-open:inline">Ocultar resumo da conta</span>
+                    </summary>
+                    <div className="grid grid-cols-2 gap-4 pt-3 text-center">
                     <div>
                       <div className="flex items-center justify-center text-moria-orange">
                         <ShoppingBag className="w-4 h-4 mr-1" />
@@ -301,18 +311,19 @@ export function CustomerLayout({
                         Gasto Total
                       </p>
                     </div>
-                  </div>
+                    </div>
 
-                  <Separator className="my-4" />
+                    <Separator className="my-4" />
 
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Cliente desde{" "}
-                    {new Date(customer.createdAt).toLocaleDateString("pt-BR", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Cliente desde{" "}
+                      {new Date(customer.createdAt).toLocaleDateString("pt-BR", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </div>
+                  </details>
                 </CardContent>
               </Card>
 
@@ -329,7 +340,7 @@ export function CustomerLayout({
                     <ul className="m-0 list-none space-y-1 p-0">
                       {menuItems.map((item) => {
                         const Icon = item.icon;
-                        const isActive = currentTab === item.id;
+                        const isActive = isCustomerNavigationActive(item.id, currentTab);
 
                         return (
                           <li key={item.id}>

@@ -1,12 +1,20 @@
 // src/api/orderService.ts
 import apiClient from './apiClient';
 import { Order, OrderItem } from '@/contexts/AuthContext';
+import type { GuestOrderResponse } from './guestOrderService';
 
 export interface CreateOrderRequest {
-  items: Omit<OrderItem, 'id'>[];
+  items: Array<{
+    productId?: string;
+    serviceId?: string;
+    type: 'PRODUCT' | 'SERVICE';
+    quantity: number;
+  }>;
   addressId: string;
   paymentMethod: string;
   couponCode?: string;
+  source?: 'WEB';
+  appliedPromotions?: string[];
 }
 
 export interface OrderListResponse {
@@ -39,8 +47,8 @@ export interface OrderTrackingResponse {
 }
 
 class OrderService {
-  async createOrder(data: CreateOrderRequest): Promise<Order> {
-    const response = await apiClient.post<{ success: boolean; data: Order }>('/orders', data);
+  async createOrder(data: CreateOrderRequest): Promise<GuestOrderResponse> {
+    const response = await apiClient.post<{ success: boolean; data: GuestOrderResponse }>('/orders', data);
     return response.data.data;
   }
 

@@ -27,7 +27,7 @@ export const getLoyaltyStats = async (): Promise<LoyaltyStats> => {
     `${API_URL}/loyalty/stats`,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -44,7 +44,7 @@ export const getPointTransactions = async (
       params: { page, limit },
     }
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -61,7 +61,7 @@ export const getAvailableRewards = async (
       params: { page, limit },
     }
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -73,7 +73,7 @@ export const redeemReward = async (rewardId: string): Promise<RedeemedReward> =>
     { rewardId },
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -90,7 +90,7 @@ export const getRedeemedRewards = async (
       params: { page, limit },
     }
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -100,7 +100,7 @@ export const getLoyaltySettings = async (): Promise<LoyaltySettings> => {
   const response = await axios.get<ApiResponse<LoyaltySettings>>(
     `${API_URL}/loyalty/settings`
   );
-  return response.data;
+  return response.data.data;
 };
 
 // ===== ADMIN ENDPOINTS =====
@@ -113,7 +113,7 @@ export const getAdminLoyaltyStats = async (): Promise<AdminLoyaltyStats> => {
     `${API_URL}/admin/loyalty/stats`,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -124,7 +124,7 @@ export const getAdminLoyaltySettings = async (): Promise<LoyaltySettings> => {
     `${API_URL}/admin/loyalty/settings`,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -138,7 +138,7 @@ export const updateLoyaltySettings = async (
     settings,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -160,7 +160,7 @@ export const getAdminRewards = async (
       params: { page, limit, ...filters },
     }
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -174,7 +174,7 @@ export const createReward = async (
     reward,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -189,7 +189,7 @@ export const updateReward = async (
     reward,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -240,7 +240,7 @@ export const getAdminCustomerStats = async (
     `${API_URL}/admin/loyalty/customers/${customerId}/stats`,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -258,7 +258,7 @@ export const getAdminCustomerTransactions = async (
       params: { page, limit },
     }
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -275,7 +275,7 @@ export const adjustPoints = async (data: {
     data,
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -289,7 +289,7 @@ export const markRewardAsUsed = async (
     {},
     axiosConfig
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -307,5 +307,5 @@ export const getAdminRedemptions = async (
       params: { page, limit, status },
     }
   );
-  return response.data;
+  return response.data.data;
 };

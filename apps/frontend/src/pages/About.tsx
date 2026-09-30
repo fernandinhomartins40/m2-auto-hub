@@ -17,12 +17,13 @@ import {
   Star,
   Loader2
 } from "lucide-react";
+import type { LandingPageConfig } from "../types/landingPage";
 
 export default function About() {
   const { config: landingPageConfig, loading: configLoading } = useLandingPageConfig();
 
   // Usar configurações do Landing Page Editor ou fallback para defaults
-  const aboutPageConfig = landingPageConfig?.aboutPage || {
+  const aboutPageConfig: LandingPageConfig['aboutPage'] = landingPageConfig?.aboutPage || {
     enabled: true,
     heroBadge: "Sobre Nós",
     heroTitle: "Mais de",

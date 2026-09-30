@@ -92,9 +92,9 @@ export function AdminPromotionsSection({
           case 'inactive':
             return !promotion.isActive;
           case 'scheduled':
-            return promotion.isActive && promotion.startsAt && new Date(promotion.startsAt) > new Date();
+            return promotion.isActive && promotion.schedule?.startDate && new Date(promotion.schedule.startDate) > new Date();
           case 'expired':
-            return promotion.endsAt && new Date(promotion.endsAt) <= new Date();
+            return promotion.schedule?.endDate && new Date(promotion.schedule.endDate) <= new Date();
           default:
             return true;
         }
@@ -351,7 +351,7 @@ export function AdminPromotionsSection({
                               {getPromotionTypeLabel(promotion.type)}
                             </Badge>
                             <Badge variant="secondary" className="text-xs">
-                              {promotion.discountType === 'percentage' ? 'Percentual' : 'Valor fixo'}
+                              {promotion.rewards.primary.type === 'PERCENTAGE' ? 'Percentual' : 'Valor fixo'}
                             </Badge>
                           </div>
                         </div>
@@ -386,7 +386,7 @@ export function AdminPromotionsSection({
                         <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
                           <span className="text-sm text-gray-600">Início: </span>
-                          <span className="font-medium text-sm">{formatDate(promotion.startsAt)}</span>
+                          <span className="font-medium text-sm">{formatDate(promotion.schedule.startDate)}</span>
                         </div>
                       </div>
 
@@ -394,15 +394,15 @@ export function AdminPromotionsSection({
                         <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
                           <span className="text-sm text-gray-600">Fim: </span>
-                          <span className="font-medium text-sm">{formatDate(promotion.endsAt)}</span>
+                          <span className="font-medium text-sm">{formatDate(promotion.schedule.endDate)}</span>
                         </div>
                       </div>
 
-                      {promotion.maxDiscount && (
+                      {promotion.rewards.primary.maxAmount && (
                         <div className="flex items-start space-x-2">
                           <div className="min-w-0">
                             <span className="text-sm text-gray-600">Máx: </span>
-                            <span className="font-medium text-sm">{formatPrice(promotion.maxDiscount)}</span>
+                            <span className="font-medium text-sm">{formatPrice(promotion.rewards.primary.maxAmount)}</span>
                           </div>
                         </div>
                       )}

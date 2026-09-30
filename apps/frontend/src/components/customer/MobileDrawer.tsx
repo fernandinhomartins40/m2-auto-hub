@@ -4,6 +4,7 @@ import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
+import { isCustomerNavigationActive } from './customerNavigation';
 
 interface MobileDrawerProps {
   open: boolean;
@@ -52,12 +53,8 @@ export function MobileDrawer({
   const membership = getMembershipLevel(customer.totalSpent);
 
   const menuItems = [
-    { id: "profile", label: "Meu Perfil", icon: User },
-    { id: "vehicles", label: "Meus Veículos", icon: Car },
-    { id: "favorites", label: "Favoritos", icon: Heart },
-    { id: "coupons", label: "Cupons", icon: Gift },
-    { id: "support", label: "Suporte", icon: MessageCircle },
-    { id: "notifications", label: "Notificações", icon: Bell },
+    { id: "favorites", label: "Benefícios", icon: Gift },
+    { id: "profile", label: "Conta", icon: User },
   ];
 
   const handleItemClick = (itemId: string) => {
@@ -133,7 +130,7 @@ export function MobileDrawer({
           <ul className="m-0 list-none space-y-1 p-0">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = currentTab === item.id;
+              const isActive = isCustomerNavigationActive(item.id, currentTab);
 
               return (
                 <li key={item.id}>

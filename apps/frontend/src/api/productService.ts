@@ -26,6 +26,10 @@ export interface Product {
   isActive?: boolean;  // Mantido para compatibilidade
   createdAt: string;
   updatedAt: string;
+  offerType?: 'DIA' | 'SEMANA' | 'MES' | null;
+  offerStartDate?: string | null;
+  offerEndDate?: string | null;
+  offerBadge?: string | null;
 }
 
 export interface PaginatedResponse<T> {

@@ -34,7 +34,7 @@ export interface FipeVehicleDetail {
 type VehicleType = 'cars' | 'motorcycles' | 'trucks';
 
 class FipeService {
-  private cache: Map<string, unknown> = new Map();
+  private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
   private CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
 
   /**
@@ -43,14 +43,14 @@ class FipeService {
   async getBrands(vehicleType: VehicleType = 'cars'): Promise<FipeBrand[]> {
     const cacheKey = `brands-${vehicleType}`;
 
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<FipeBrand[]>(cacheKey);
     if (cached) return cached;
 
     try {
       const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/brands`);
       if (!response.ok) throw new Error('Erro ao buscar marcas');
 
-      const data = await response.json();
+      const data = await response.json() as FipeBrand[];
       this.saveToCache(cacheKey, data);
       return data;
     } catch (error) {
@@ -65,14 +65,14 @@ class FipeService {
   async getModels(brandCode: string, vehicleType: VehicleType = 'cars'): Promise<FipeModel[]> {
     const cacheKey = `models-${vehicleType}-${brandCode}`;
 
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<FipeModel[]>(cacheKey);
     if (cached) return cached;
 
     try {
       const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/brands/${brandCode}/models`);
       if (!response.ok) throw new Error('Erro ao buscar modelos');
 
-      const data = await response.json();
+      const data = await response.json() as FipeModel[];
       this.saveToCache(cacheKey, data);
       return data;
     } catch (error) {
@@ -91,7 +91,7 @@ class FipeService {
   ): Promise<FipeYear[]> {
     const cacheKey = `years-${vehicleType}-${brandCode}-${modelCode}`;
 
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<FipeYear[]>(cacheKey);
     if (cached) return cached;
 
     try {
@@ -100,7 +100,7 @@ class FipeService {
       );
       if (!response.ok) throw new Error('Erro ao buscar anos');
 
-      const data = await response.json();
+      const data = await response.json() as FipeYear[];
       this.saveToCache(cacheKey, data);
       return data;
     } catch (error) {
@@ -124,7 +124,7 @@ class FipeService {
       );
       if (!response.ok) throw new Error('Erro ao buscar detalhes do veículo');
 
-      return await response.json();
+      return await response.json() as FipeVehicleDetail;
     } catch (error) {
       console.error('Erro ao buscar detalhes FIPE:', error);
       throw error;
@@ -148,7 +148,7 @@ class FipeService {
 
   // Métodos privados de cache
 
-  private getFromCache(key: string): unknown | null {
+  private getFromCache<T>(key: string): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
@@ -158,7 +158,7 @@ class FipeService {
       return null;
     }
 
-    return entry.data;
+    return entry.data as T;
   }
 
   private saveToCache(key: string, data: unknown): void {

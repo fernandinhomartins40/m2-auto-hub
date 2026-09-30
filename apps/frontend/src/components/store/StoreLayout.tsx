@@ -15,6 +15,7 @@ export interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   requiresPermission?: string;
   section?: string;
+  activeTabs?: string[];
 }
 
 interface StoreLayoutProps {

@@ -11,6 +11,8 @@ import {
   SPECIFICATION_CATEGORIES
 } from '@/types/specifications';
 
+export type { SpecificationFilter, SpecificationFilterCondition } from '@/types/specifications';
+
 /**
  * Parse especificações de JSON string para objeto
  */
@@ -263,7 +265,6 @@ export function validateSpecificationValue(
  */
 interface ProductWithSpecs {
   specifications?: string;
-  [key: string]: unknown;
 }
 
 export function filterProductsBySpecifications<T extends ProductWithSpecs>(

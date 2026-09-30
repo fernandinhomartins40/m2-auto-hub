@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Separator } from "../ui/separator";
 import { AdminPageHeader } from "./AdminPageHeader";
 import { StatGrid } from "../layout/ResponsiveGrids";
-import type { CompleteReportData } from "@/api/reportService";
-import type { ReportExportSection } from "@/utils/reportPdf";
+import type { CompleteReportData } from "@/api/reportsService";
+import type { ReportExportSection, ReportPdfStats } from "@/utils/reportPdf";
 import { formatCurrency as formatPrice } from '@/lib/format';
 
 interface AdminReportsSectionProps {
@@ -17,9 +17,9 @@ interface AdminReportsSectionProps {
   orders: Array<{ status: string }>;
   services: unknown[];
   /** Metricas basicas, usadas como fallback enquanto o relatorio nao carrega. */
-  stats: { totalRevenue: number; totalOrders: number; averageTicket: number };
+  stats: ReportPdfStats;
   onExportPdf: (section: ReportExportSection) => void;
-  onExportSpreadsheet: (section: ReportExportSection) => void;
+  onExportSpreadsheet: (format: 'csv' | 'excel', section: ReportExportSection) => void;
 }
 
 /**

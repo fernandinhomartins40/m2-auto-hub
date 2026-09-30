@@ -97,7 +97,7 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
               <ul className="m-0 flex w-full list-none gap-1 p-0 md:flex-col md:gap-1">
                 {items.map((item) => {
                   const IconComponent = item.icon;
-                  const isActive = activeTab === item.id;
+                  const isActive = item.id === activeTab || item.activeTabs?.includes(activeTab);
 
                   return (
                     <li key={item.id} className="contents">

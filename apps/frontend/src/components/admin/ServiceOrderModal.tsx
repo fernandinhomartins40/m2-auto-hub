@@ -38,6 +38,7 @@ import revisionService from '@/api/revisionService';
 import { CreateCustomerModal } from './CreateCustomerModal';
 import { RevisionVehicleLookupDialog } from '../revisions/RevisionVehicleLookupDialog';
 import { formatCurrency as money } from '@/lib/format';
+import { getApiError } from '@/lib/errors';
 
 /** Dados iniciais para pré-preencher a OS (ex.: vindos da leitura de placa). */
 export interface ServiceOrderInitialData {
@@ -192,14 +193,14 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
     // Usa os mesmos serviços públicos do modal de Pedidos (productService/serviceService),
     // que comprovadamente retornam os itens ativos. Mecânicos vêm do fluxo de revisões.
     const [prodRes, servRes, mechRes] = await Promise.all([
-      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] as unknown[] })),
-      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] as unknown[] })),
+      productService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [] })),
+      serviceService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [] })),
       revisionService.getMechanicsWorkload().catch(() => []),
     ]);
 
     const activeProducts = (prodRes.products || [])
-      .filter((p: unknown) => p.status === 'ACTIVE' || p.isActive)
-      .map((p: unknown) => ({
+      .filter((p) => p.status === 'ACTIVE' || p.isActive)
+      .map((p) => ({
         id: p.id,
         name: p.name,
         category: p.category,
@@ -209,8 +210,8 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
       })) as CatalogProduct[];
 
     const activeServices = (servRes.services || [])
-      .filter((s: unknown) => s.status === 'ACTIVE' || s.isActive)
-      .map((s: unknown) => ({
+      .filter((s) => s.status === 'ACTIVE' || s.isActive)
+      .map((s) => ({
         id: s.id,
         name: s.name,
         category: s.category,
@@ -439,9 +440,10 @@ export function ServiceOrderModal({ onClose, onSaved, order, initialData }: Prop
       onSaved();
       onClose();
     } catch (err: unknown) {
+      const apiError = getApiError(err);
       toast({
         title: 'Erro ao salvar',
-        description: err?.response?.data?.error ?? err?.message,
+        description: apiError.message,
         variant: 'destructive',
       });
     } finally {

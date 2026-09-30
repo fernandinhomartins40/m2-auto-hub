@@ -1,6 +1,6 @@
 // src/api/authService.ts
 import apiClient from './apiClient';
-import type { Customer, RegisterRequest } from '@moria/types';
+import type { Customer, LoginRequest, RegisterRequest } from '@moria/types';
 
 export type RegisterData = RegisterRequest;
 export type { LoginRequest, LoginResponse, RegisterResponse } from '@moria/types';

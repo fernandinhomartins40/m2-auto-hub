@@ -1,5 +1,5 @@
 import { getApiError } from "@/lib/errors";
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -35,7 +35,8 @@ import {
   Box,
   Download,
   BarChart3,
-  FileText
+  FileText,
+  ClipboardList
 } from "lucide-react";
 import { NewRevisionFlow } from "../revisions/NewRevisionFlow";
 import { RevisionsListContent } from "./RevisionsListContent";
@@ -52,20 +53,6 @@ import { AdminReportsSection } from "./AdminReportsSection";
 import { CreateOrderModal } from "./CreateOrderModal";
 import { CreateQuoteModal } from "./CreateQuoteModal";
 import { CreateCustomerModal } from "./CreateCustomerModal";
-import AdminUsersSection from "./AdminUsersSection";
-import { PromotionsManagement } from "./PromotionsManagement";
-import { PwaSettingsContent } from "./PwaSettingsContent";
-import { SettingsContent } from "./SettingsContent";
-import { AdminAccountContent } from "./AdminAccountContent";
-import { CustomerRelationshipContent } from "./CustomerRelationshipContent";
-import { AdminSupportContent } from "./AdminSupportContent";
-import LoyaltyManagement from "./LoyaltyManagement";
-import { AdminProductsSection } from "./AdminProductsSection";
-import { AdminServicesSection } from "./AdminServicesSection";
-import { AdminCouponsSection } from "./AdminCouponsSection";
-import { MarketplacesContent } from "./MarketplacesContent";
-import { ServiceOrdersContent } from "./ServiceOrdersContent";
-import { LandingPageContent } from "./LandingPageContent";
 import adminService, {
   type ProvisionalUser as AdminCustomer,
   type Quote as AdminQuote,
@@ -94,6 +81,22 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency as formatPrice } from '@/lib/format';
 import { getAdminDataNeeds } from './adminDataNeeds';
+import { useAdminPermissions } from '@/hooks/useAdminPermissions';
+
+const AdminUsersSection = lazy(() => import("./AdminUsersSection"));
+const LoyaltyManagement = lazy(() => import("./LoyaltyManagement"));
+const PromotionsManagement = lazy(() => import("./PromotionsManagement").then((module) => ({ default: module.PromotionsManagement })));
+const PwaSettingsContent = lazy(() => import("./PwaSettingsContent").then((module) => ({ default: module.PwaSettingsContent })));
+const SettingsContent = lazy(() => import("./SettingsContent").then((module) => ({ default: module.SettingsContent })));
+const AdminAccountContent = lazy(() => import("./AdminAccountContent").then((module) => ({ default: module.AdminAccountContent })));
+const CustomerRelationshipContent = lazy(() => import("./CustomerRelationshipContent").then((module) => ({ default: module.CustomerRelationshipContent })));
+const AdminSupportContent = lazy(() => import("./AdminSupportContent").then((module) => ({ default: module.AdminSupportContent })));
+const AdminProductsSection = lazy(() => import("./AdminProductsSection").then((module) => ({ default: module.AdminProductsSection })));
+const AdminServicesSection = lazy(() => import("./AdminServicesSection").then((module) => ({ default: module.AdminServicesSection })));
+const AdminCouponsSection = lazy(() => import("./AdminCouponsSection").then((module) => ({ default: module.AdminCouponsSection })));
+const MarketplacesContent = lazy(() => import("./MarketplacesContent").then((module) => ({ default: module.MarketplacesContent })));
+const ServiceOrdersContent = lazy(() => import("./ServiceOrdersContent").then((module) => ({ default: module.ServiceOrdersContent })));
+const LandingPageContent = lazy(() => import("./LandingPageContent").then((module) => ({ default: module.LandingPageContent })));
 
 interface StoreOrder {
   id: string;
@@ -112,6 +115,7 @@ interface StoreOrder {
   hasServices: boolean;
   status: string;
   createdAt: string;
+  updatedAt: string;
   source: string;
 }
 
@@ -154,6 +158,25 @@ interface AdminContentProps {
   onTabChange?: (tab: string) => void;
 }
 
+const adminWorkspaces = [
+  { label: 'Catálogo', tabs: [
+    { id: 'products', label: 'Produtos' }, { id: 'services', label: 'Serviços' },
+    { id: 'marketplaces', label: 'Marketplaces' },
+  ] },
+  { label: 'Clientes', tabs: [
+    { id: 'customers', label: 'Clientes' }, { id: 'relationship', label: 'Relacionamento' },
+    { id: 'support', label: 'Suporte' }, { id: 'loyalty', label: 'Fidelidade' },
+  ] },
+  { label: 'Vendas', tabs: [
+    { id: 'promotions', label: 'Promoções' }, { id: 'coupons', label: 'Cupons' },
+    { id: 'landing-page', label: 'Vitrine' },
+  ] },
+  { label: 'Configurações', tabs: [
+    { id: 'settings', label: 'Loja' }, { id: 'account', label: 'Minha conta' },
+    { id: 'pwa-settings', label: 'Aplicativo PWA' }, { id: 'users', label: 'Equipe' },
+  ] },
+] as const;
+
 interface DashboardStats {
   totalOrders: number;
   totalRevenue: number;
@@ -168,6 +191,10 @@ interface DashboardStats {
 
 export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const { toast } = useToast();
+  const permissions = useAdminPermissions();
+  const activeWorkspace = adminWorkspaces.find((workspace) =>
+    workspace.tabs.some((tab) => tab.id === activeTab)
+  );
   const [orders, setOrders] = useState<StoreOrder[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [quotesTotalCount, setQuotesTotalCount] = useState(0);
@@ -204,7 +231,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const [exportingCustomerId, setExportingCustomerId] = useState<string | null>(null);
   const [isExportingCustomersPdf, setIsExportingCustomersPdf] = useState(false);
   const [exportingQuoteId, setExportingQuoteId] = useState<string | null>(null);
-  const [exportingReportPdfKey, setExportingReportPdfKey] = useState<string | null>(null);
+  const [exportingReportPdfKey, setExportingReportPdfKey] = useState<ReportExportSection | null>(null);
 
   // Reports states
   const [reportData, setReportData] = useState<CompleteReportData | null>(null);
@@ -2309,8 +2336,29 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   };
 
   return (
-    <>
+    <Suspense fallback={<div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">Carregando módulo...</div>}>
       <div className="min-w-0 w-full max-w-full overflow-x-hidden">
+        {activeWorkspace && onTabChange ? (
+          <nav aria-label={`Seções de ${activeWorkspace.label}`} className="mb-4 overflow-x-auto rounded-xl border bg-white p-1 shadow-sm">
+            <div className="flex min-w-max gap-1">
+              {activeWorkspace.tabs
+                .filter((tab) => tab.id !== 'users' || permissions.canManageAdmins)
+                .map((tab) => (
+                <Button
+                  key={tab.id}
+                  type="button"
+                  size="sm"
+                  variant={activeTab === tab.id ? 'default' : 'ghost'}
+                  aria-current={activeTab === tab.id ? 'page' : undefined}
+                  onClick={() => onTabChange(tab.id)}
+                  className="min-h-10 whitespace-nowrap"
+                >
+                  {tab.label}
+                </Button>
+              ))}
+            </div>
+          </nav>
+        ) : null}
         {renderContent()}
       </div>
       <ProductModal
@@ -2375,6 +2423,6 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
           setSelectedCustomer(null);
         }}
       />
-    </>
+    </Suspense>
   );
 }

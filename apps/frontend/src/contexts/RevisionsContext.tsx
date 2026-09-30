@@ -11,7 +11,7 @@ import {
 import checklistService, {
   type ChecklistCategory as ApiChecklistCategory
 } from '../api/checklistService';
-import revisionService from '../api/revisionService';
+import revisionService, { type RevisionResponse } from '../api/revisionService';
 import { useAuth } from './AuthContext';
 import { useAdminAuth } from './AdminAuthContext';
 
@@ -177,7 +177,9 @@ export function RevisionsProvider({ children }: { children: ReactNode }) {
       const result = await revisionService.getCustomerRevisions();
 
       // Transform backend data to match frontend types
-      const transformedRevisions: Revision[] = result.data.map((rev: unknown) => ({
+      const transformedRevisions: Revision[] = result.data.map((rev: RevisionResponse & {
+        vehicle?: { id: string; brand: string; model: string; year: number; plate: string; color?: string };
+      }) => ({
         id: rev.id,
         customerId: rev.customerId,
         vehicleId: rev.vehicleId,

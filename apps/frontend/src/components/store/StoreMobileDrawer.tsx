@@ -132,7 +132,7 @@ export default function StoreMobileDrawer({
                   <ul className="m-0 list-none space-y-1 p-0">
                     {sectionItems.map((item) => {
                       const Icon = item.icon;
-                      const isActive = currentTab === item.id;
+                      const isActive = item.id === currentTab || item.activeTabs?.includes(currentTab);
 
                       return (
                         <li key={item.id}>

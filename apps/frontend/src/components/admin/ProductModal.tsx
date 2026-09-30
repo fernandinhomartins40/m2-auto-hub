@@ -157,10 +157,10 @@ export function ProductModal({
         specifications: product.specifications || {},
         vehicle_compatibility: product.vehicleCompatibility || [],
         // Ofertas
-        offer_type: (product as unknown).offerType || null,
-        offer_start_date: (product as unknown).offerStartDate ? toLocalDateTimeInputValue(new Date((product as unknown).offerStartDate)) : '',
-        offer_end_date: (product as unknown).offerEndDate ? toLocalDateTimeInputValue(new Date((product as unknown).offerEndDate)) : '',
-        offer_badge: (product as unknown).offerBadge || ''
+        offer_type: product.offerType || null,
+        offer_start_date: product.offerStartDate ? toLocalDateTimeInputValue(new Date(product.offerStartDate)) : '',
+        offer_end_date: product.offerEndDate ? toLocalDateTimeInputValue(new Date(product.offerEndDate)) : '',
+        offer_badge: product.offerBadge || ''
       });
 
       // Converter imagens existentes para ProductImage para preview
@@ -325,7 +325,7 @@ export function ProductModal({
     }
 
     // Validações de ofertas
-    if (formData.offer_type && formData.offer_type !== 'NONE') {
+    if (formData.offer_type) {
       // Datas são obrigatórias quando há tipo de oferta
       if (!formData.offer_start_date) {
         newErrors.offer_start_date = 'Data de início é obrigatória para ofertas';

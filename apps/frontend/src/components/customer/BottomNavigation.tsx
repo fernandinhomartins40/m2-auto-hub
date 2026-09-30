@@ -1,5 +1,6 @@
-import { Home, Package, FileText, ClipboardCheck, Menu } from "lucide-react";
+import { Home, Package, Car, MessageCircle, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isCustomerNavigationActive } from './customerNavigation';
 
 export interface BottomNavItem {
   id: string;
@@ -20,9 +21,9 @@ export function BottomNavigation({
 }: BottomNavigationProps) {
   const navItems: BottomNavItem[] = [
     { id: "dashboard", label: "Início", icon: Home },
-    { id: "quotes", label: "Orçamentos", icon: FileText },
-    { id: "orders", label: "Pedidos", icon: Package },
-    { id: "revisions", label: "Revisões", icon: ClipboardCheck },
+    { id: "orders", label: "Compras", icon: Package },
+    { id: "vehicles", label: "Veículo", icon: Car },
+    { id: "support", label: "Ajuda", icon: MessageCircle },
     { id: "menu", label: "Mais", icon: Menu },
   ];
 
@@ -41,7 +42,7 @@ export function BottomNavigation({
       <ul className="m-0 grid h-16 list-none grid-cols-5 p-0">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentTab === item.id;
+          const isActive = item.id !== 'menu' && isCustomerNavigationActive(item.id, currentTab);
 
           return (
             <li key={item.id} className="contents">

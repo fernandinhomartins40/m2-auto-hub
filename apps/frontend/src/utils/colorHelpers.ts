@@ -5,6 +5,17 @@
 
 import { ColorOrGradientValue } from '@/types/landingPage';
 
+interface LegacyColorValue {
+  type?: unknown;
+  solid?: unknown;
+  gradient?: {
+    type?: unknown;
+    colors?: unknown;
+    angle?: unknown;
+    direction?: unknown;
+  };
+}
+
 /**
  * Mapa completo de cores Tailwind → Hex
  * Baseado no Tailwind CSS v3.x
@@ -136,36 +147,37 @@ export const isValidColorOrGradient = (value: unknown): value is ColorOrGradient
   if (!value || typeof value !== 'object') {
     return false;
   }
+  const candidate = value as LegacyColorValue;
 
   // Validação 2: deve ter propriedade 'type'
-  if (!('type' in value) || typeof value.type !== 'string') {
+  if (typeof candidate.type !== 'string') {
     return false;
   }
 
   // Validação 3: tipo 'solid'
-  if (value.type === 'solid') {
-    return typeof value.solid === 'string' && value.solid.length > 0;
+  if (candidate.type === 'solid') {
+    return typeof candidate.solid === 'string' && candidate.solid.length > 0;
   }
 
   // Validação 4: tipo 'gradient'
-  if (value.type === 'gradient') {
+  if (candidate.type === 'gradient') {
     // Gradiente deve ter objeto gradient
-    if (!value.gradient || typeof value.gradient !== 'object' || value.gradient === null) {
+    if (!candidate.gradient || typeof candidate.gradient !== 'object') {
       return false;
     }
 
     // Gradiente deve ter colors como array com elementos
     // Proteção extra: verificar se gradient existe E se colors existe
-    if (!value.gradient.colors || !Array.isArray(value.gradient.colors)) {
+    if (!candidate.gradient.colors || !Array.isArray(candidate.gradient.colors)) {
       return false;
     }
 
-    if (value.gradient.colors.length === 0) {
+    if (candidate.gradient.colors.length === 0) {
       return false;
     }
 
     // Gradiente deve ter type válido
-    if (!value.gradient.type || (value.gradient.type !== 'linear' && value.gradient.type !== 'radial')) {
+    if (!candidate.gradient.type || (candidate.gradient.type !== 'linear' && candidate.gradient.type !== 'radial')) {
       return false;
     }
 
@@ -192,18 +204,19 @@ export const stringToColorOrGradient = (colorString: string | ColorOrGradientVal
 
   // Se já for ColorOrGradientValue válido, retornar
   if (typeof colorString === 'object' && colorString !== null && 'type' in colorString) {
+    const candidate = colorString as LegacyColorValue;
     // Validar se é um ColorOrGradientValue válido
     if (isValidColorOrGradient(colorString)) {
       return colorString;
     }
     // Se não for válido, tentar recuperar
-    if (colorString.type === 'solid' && !colorString.solid) {
+    if (candidate.type === 'solid' && !candidate.solid) {
       return {
         type: 'solid',
         solid: '#2563eb',
       };
     }
-    if (colorString.type === 'gradient' && (!colorString.gradient || !colorString.gradient.colors)) {
+    if (candidate.type === 'gradient' && (!candidate.gradient || !candidate.gradient.colors)) {
       return {
         type: 'solid',
         solid: '#2563eb',
@@ -290,36 +303,37 @@ export const sanitizeColorValue = (value: unknown): ColorOrGradientValue | null 
 
   // Se for objeto, validar estrutura
   if (typeof value === 'object' && value !== null) {
+    const candidate = value as LegacyColorValue;
     // Verificar se tem type
-    if (!value.type) {
+    if (!candidate.type) {
       return null;
     }
 
     // Tipo solid
-    if (value.type === 'solid') {
-      if (typeof value.solid === 'string' && value.solid.length > 0) {
+    if (candidate.type === 'solid') {
+      if (typeof candidate.solid === 'string' && candidate.solid.length > 0) {
         return {
           type: 'solid',
-          solid: value.solid,
+          solid: candidate.solid,
         };
       }
       return null;
     }
 
     // Tipo gradient
-    if (value.type === 'gradient') {
+    if (candidate.type === 'gradient') {
       // Verificar se gradient existe e é objeto válido
-      if (!value.gradient || typeof value.gradient !== 'object' || value.gradient === null) {
+      if (!candidate.gradient || typeof candidate.gradient !== 'object') {
         return null;
       }
 
       // Verificar se tem colors
-      if (!value.gradient.colors || !Array.isArray(value.gradient.colors) || value.gradient.colors.length === 0) {
+      if (!candidate.gradient.colors || !Array.isArray(candidate.gradient.colors) || candidate.gradient.colors.length === 0) {
         return null;
       }
 
       // Verificar tipo do gradiente
-      const gradientType = value.gradient.type;
+      const gradientType = candidate.gradient.type;
       if (gradientType !== 'linear' && gradientType !== 'radial') {
         return null;
       }
@@ -329,9 +343,9 @@ export const sanitizeColorValue = (value: unknown): ColorOrGradientValue | null 
         type: 'gradient',
         gradient: {
           type: gradientType,
-          colors: value.gradient.colors,
-          angle: value.gradient.angle,
-          direction: value.gradient.direction,
+          colors: candidate.gradient.colors.filter((color): color is string => typeof color === 'string'),
+          angle: typeof candidate.gradient.angle === 'number' ? candidate.gradient.angle : undefined,
+          direction: typeof candidate.gradient.direction === 'string' ? candidate.gradient.direction : undefined,
         },
       };
     }

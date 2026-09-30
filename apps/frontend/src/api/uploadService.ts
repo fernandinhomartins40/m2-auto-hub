@@ -15,7 +15,7 @@ class UploadService {
     const response = await apiClient.post<UploadImagesResponse>('/uploads/images', {
       images,
     });
-    return response.data.urls;
+    return response.data.data.urls;
   }
 
   /**

@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import adminService from "../../api/adminService";
-import serviceService from "../../api/serviceService";
+import serviceService, { type Service } from "../../api/serviceService";
 import { formatCurrency } from '@/lib/format';
 
 interface CreateQuoteModalProps {
@@ -97,7 +97,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
   const [customerCpf, setCustomerCpf] = useState('');
 
   // Serviços
-  const [services, setServices] = useState<unknown[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [selectedItems, setSelectedItems] = useState<QuoteItem[]>([]);
   const [serviceSearch, setServiceSearch] = useState('');
   const [isLoadingServices, setIsLoadingServices] = useState(false);
@@ -184,7 +184,7 @@ export function CreateQuoteModal({ isOpen, onClose, onSuccess }: CreateQuoteModa
     }
   };
 
-  const handleAddService = (service: unknown) => {
+  const handleAddService = (service: Service) => {
     const existingItem = selectedItems.find(i => i.id === service.id);
 
     if (existingItem) {

@@ -27,8 +27,8 @@ import {
 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import adminService from "../../api/adminService";
-import productService from "../../api/productService";
-import serviceService from "../../api/serviceService";
+import productService, { type Product } from "../../api/productService";
+import serviceService, { type Service } from "../../api/serviceService";
 import { formatCurrency } from '@/lib/format';
 
 interface CreateOrderModalProps {
@@ -95,8 +95,8 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
   const [customerPhone, setCustomerPhone] = useState('');
 
   // Itens
-  const [products, setProducts] = useState<unknown[]>([]);
-  const [services, setServices] = useState<unknown[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
   const [productSearch, setProductSearch] = useState('');
   const [serviceSearch, setServiceSearch] = useState('');
@@ -200,7 +200,7 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
     }
   };
 
-  const handleAddItem = (item: unknown, type: 'PRODUCT' | 'SERVICE') => {
+  const handleAddItem = (item: Product | Service, type: 'PRODUCT' | 'SERVICE') => {
     const existingItem = selectedItems.find(i => i.id === item.id);
 
     if (existingItem) {
@@ -216,9 +216,11 @@ export function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModa
       id: item.id,
       name: item.name,
       type,
-      price: type === 'PRODUCT' ? Number(item.promoPrice || item.salePrice) : Number(item.basePrice || 0),
+      price: type === 'PRODUCT'
+        ? Number((item as Product).promoPrice || (item as Product).salePrice)
+        : Number((item as Service).basePrice || 0),
       quantity: 1,
-      stock: type === 'PRODUCT' ? item.stock : undefined
+      stock: type === 'PRODUCT' ? (item as Product).stock : undefined
     };
 
     setSelectedItems([...selectedItems, newItem]);

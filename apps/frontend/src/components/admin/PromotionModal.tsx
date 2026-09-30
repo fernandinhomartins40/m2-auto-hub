@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AlertCircle, Loader2, TrendingUp, Percent, Calendar, Settings, X, CheckCircle2, Package, Tag, Check } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import productService, { Product } from '../../api/productService';
-import type { AdvancedPromotion } from '../../types/promotions';
+import type { AdvancedPromotion, PromotionRewards } from '../../types/promotions';
 import { toast } from 'sonner';
 
 // Interface para dados do formulário (simplificada e alinhada com backend)
@@ -54,10 +54,15 @@ interface PromotionFormData {
 interface PromotionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (promotion: Partial<unknown>) => Promise<void>;
+  onSave: (promotion: PromotionPayload) => Promise<void>;
   promotion?: AdvancedPromotion | null;
   loading?: boolean;
 }
+
+type PromotionPayload = Partial<AdvancedPromotion> & {
+  startDate: string;
+  endDate: string;
+};
 
 // Função de conversão: AdvancedPromotion (Backend) → PromotionFormData (Form)
 const isValidDate = (value: string | Date | null | undefined): boolean => {
@@ -163,7 +168,7 @@ const convertToBackendFormat = (formData: PromotionFormData) => {
   }
 
   // Construir rewards
-  const rewards: unknown = {
+  const rewards: PromotionRewards = {
     primary: {
       type: formData.discountType,
       value: formData.discountValue
@@ -179,7 +184,7 @@ const convertToBackendFormat = (formData: PromotionFormData) => {
   }
 
   // Construir payload
-  const payload: unknown = {
+  const payload: PromotionPayload = {
     name: formData.name,
     description: formData.description,
 

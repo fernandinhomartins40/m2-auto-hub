@@ -173,7 +173,7 @@ export function RevisionDetailsModal({
 
           return isValid;
         })
-        .reduce((acc: unknown, item: unknown) => {
+        .reduce<Record<string, AdminRevision['checklistItems']>>((acc, item) => {
           if (!acc[item.categoryName]) {
             acc[item.categoryName] = [];
           }
@@ -401,14 +401,14 @@ export function RevisionDetailsModal({
                   )}
                 </div>
               ) : (
-                Object.entries(groupedChecklist).map(([categoryName, items]: [string, unknown]) => (
+                Object.entries(groupedChecklist).map(([categoryName, items]) => (
                   <Card key={categoryName}>
                     <CardHeader>
                       <CardTitle className="text-lg">{categoryName}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {items.map((item: unknown, index: number) => {
+                        {items.map((item, index) => {
                           const StatusIcon =
                             checklistStatusConfig[item.status as keyof typeof checklistStatusConfig]
                               ?.icon || Circle;
@@ -470,7 +470,7 @@ export function RevisionDetailsModal({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {revision.transferHistory.map((transfer: unknown, index: number) => (
+                      {revision.transferHistory.map((transfer, index) => (
                         <div key={index} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
                           <ArrowRightLeft className="h-5 w-5 text-moria-orange mt-1" />
                           <div className="flex-1">

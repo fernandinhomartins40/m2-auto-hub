@@ -49,7 +49,7 @@ Na terceira rodada, a mesma estratégia foi aplicada à densidade: ações essen
 
 ## Backend e banco
 
-Nenhuma mudança foi necessária. As melhorias reutilizam APIs, dados, autenticação e permissões existentes. Não foram criadas migrations, mocks de produção ou persistência paralela.
+O suporte agora persiste notificações para todos os administradores quando um chamado é aberto e direciona novas respostas ao responsável quando o chamado está atribuído. O SLA médio usa o intervalo entre a primeira mensagem do cliente e a primeira resposta pública de um administrador. Uma migration aditiva inclui os tipos `SUPPORT_TICKET_CREATED` e `SUPPORT_TICKET_MESSAGE`; não foram criados mocks nem persistência paralela.
 
 ## Segurança
 
@@ -57,7 +57,7 @@ Autenticação e autorização existentes foram preservadas. A nova tela de noti
 
 ## Performance e infraestrutura
 
-Nenhuma dependência ou serviço foi adicionado. O carregamento por rota reduziu o chunk inicial de aproximadamente 2,98 MB / 715 kB gzip para 433 kB / 140 kB gzip. O painel lojista ainda forma um chunk sob demanda grande (aprox. 1,87 MB / 415 kB gzip), portanto continua sendo o próximo alvo de divisão interna.
+Nenhuma dependência ou serviço foi adicionado. O carregamento por rota reduziu o chunk inicial para 433 kB / 140 kB gzip. A divisão interna por módulo reduziu o chunk do painel lojista de aproximadamente **1,87 MB / 415 kB gzip** para **349 kB / 88 kB gzip**.
 
 ## Testes executados
 
@@ -72,7 +72,7 @@ Nenhuma dependência ou serviço foi adicionado. O carregamento por rota reduziu
 
 ## Itens bloqueados
 
-Não houve bloqueio para o conjunto implementado. A validação visual autenticada com dados reais não foi executada porque o repositório não fornece sessão de teste pronta nem autoriza criar/alterar credenciais; build e testes de interação cobriram os comportamentos modificados.
+O e-mail transacional de suporte permanece bloqueado pela ausência de provedor escolhido, domínio remetente validado e credenciais. Os mesmos eventos já geram notificações internas persistidas. A validação visual autenticada com dados reais não foi executada porque o repositório não fornece sessão de teste pronta nem autoriza criar/alterar credenciais; build e testes de interação cobriram os comportamentos modificados.
 
 ## Riscos restantes
 
@@ -88,3 +88,12 @@ Não houve bloqueio para o conjunto implementado. A validação visual autentica
 3. Adicionar ordenação cruzada por prioridade/agendamento à fila do mecânico quando a regra operacional de prioridade estiver definida no backend.
 4. Dividir internamente o chunk do painel lojista por módulo; a separação entre painéis já foi concluída.
 5. Recuperar o lint em lotes pequenos e transformá-lo gradualmente em gate de regressão.
+
+## Consolidação final de navegação e densidade
+
+- O menu principal do lojista foi reduzido de 16 módulos para 7 objetivos: Início, Atendimentos, Catálogo, Clientes, Vendas, Relatórios e Configurações. As funções especializadas continuam disponíveis em abas locais e todas as URLs antigas permanecem válidas.
+- O painel do cliente passou de 10 destinos concorrentes para 6 áreas: Início, Compras, Meu veículo, Benefícios, Ajuda e Conta. Pedidos/orçamentos, veículos/revisões, favoritos/cupons e perfil/notificações agora aparecem como jornadas contínuas.
+- Desktop, drawer e barra inferior compartilham a mesma regra de item ativo. Isso evita que uma subtela pareça estar fora da área escolhida.
+- A aba administrativa de equipe continua condicionada a `canManageAdmins`; a consolidação não ampliou permissões.
+- Informações secundárias do cartão do cliente ficaram sob revelação progressiva, reduzindo densidade sem excluir dados.
+- O teste de consolidação passou com 5/5 cenários e o build de produção passou com 3.682 módulos. O painel lojista permaneceu dividido em chunks, com o chunk principal em 351,38 kB.

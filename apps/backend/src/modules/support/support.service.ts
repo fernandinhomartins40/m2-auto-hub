@@ -4,6 +4,7 @@ import { CreateMessageDto } from './dto/create-message.dto.js';
 import { RateTicketDto } from './dto/rate-ticket.dto.js';
 import { UpdateTicketDto, TicketStatus } from './dto/update-ticket.dto.js';
 import { ApiError } from '@shared/utils/error.util.js';
+import notificationsService from '@modules/notifications/notifications.service.js';
 
 export class SupportService {
   /**
@@ -43,6 +44,13 @@ export class SupportService {
 
     // TODO: Enviar notificação para admins
     // TODO: Enviar email de confirmação
+
+    await this.notifyAdminsSafely(
+      'SUPPORT_TICKET_CREATED',
+      'Novo chamado de suporte',
+      `${ticket.customer.name} abriu o chamado "${ticket.subject}".`,
+      { ticketId: ticket.id, customerId }
+    );
 
     return ticket;
   }
@@ -196,6 +204,17 @@ export class SupportService {
 
     // TODO: Notificar admin responsável
     // TODO: Enviar email
+
+    if (ticket.assignedToId) {
+      await this.notifyAdminSafely(ticket.assignedToId, ticketId, customerId);
+    } else {
+      await this.notifyAdminsSafely(
+        'SUPPORT_TICKET_MESSAGE',
+        'Nova mensagem em chamado',
+        `O cliente respondeu ao chamado "${ticket.subject}".`,
+        { ticketId, customerId }
+      );
+    }
 
     return message;
   }
@@ -575,7 +594,7 @@ export class SupportService {
         where: { assignedToId: null, status: { in: ['OPEN', 'IN_PROGRESS'] } },
       }),
       // TODO: Calcular tempo médio de resposta
-      Promise.resolve(0),
+      this.calculateAverageFirstResponseHours(),
       prisma.supportTicket.groupBy({
         by: ['category'],
         _count: true,
@@ -594,5 +613,67 @@ export class SupportService {
       byCategory,
       byPriority,
     };
+  }
+
+  private async calculateAverageFirstResponseHours(): Promise<number> {
+    const tickets = await prisma.supportTicket.findMany({
+      where: { messages: { some: { senderType: 'admin', isInternal: false } } },
+      select: {
+        messages: {
+          where: { isInternal: false, senderType: { in: ['customer', 'admin'] } },
+          orderBy: { createdAt: 'asc' },
+          select: { senderType: true, createdAt: true },
+        },
+      },
+    });
+
+    const responseTimes = tickets.flatMap(({ messages }) => {
+      const firstCustomerMessage = messages.find(({ senderType }) => senderType === 'customer');
+      if (!firstCustomerMessage) return [];
+      const firstAdminResponse = messages.find(
+        ({ senderType, createdAt }) =>
+          senderType === 'admin' && createdAt > firstCustomerMessage.createdAt
+      );
+      return firstAdminResponse
+        ? [firstAdminResponse.createdAt.getTime() - firstCustomerMessage.createdAt.getTime()]
+        : [];
+    });
+
+    if (responseTimes.length === 0) return 0;
+    const averageMilliseconds =
+      responseTimes.reduce((total, duration) => total + duration, 0) / responseTimes.length;
+    return Math.round((averageMilliseconds / 3_600_000) * 10) / 10;
+  }
+
+  private async notifyAdminsSafely(
+    type: 'SUPPORT_TICKET_CREATED' | 'SUPPORT_TICKET_MESSAGE',
+    title: string,
+    message: string,
+    data: { ticketId: string; customerId: string }
+  ): Promise<void> {
+    try {
+      await notificationsService.notifyAllAdmins(type, title, message, data);
+    } catch (error) {
+      console.error('Falha ao criar notificação de suporte para administradores:', error);
+    }
+  }
+
+  private async notifyAdminSafely(
+    adminId: string,
+    ticketId: string,
+    customerId: string
+  ): Promise<void> {
+    try {
+      await notificationsService.createNotification({
+        recipientType: 'ADMIN',
+        recipientId: adminId,
+        type: 'SUPPORT_TICKET_MESSAGE',
+        title: 'Nova mensagem em chamado atribuído',
+        message: 'O cliente enviou uma nova mensagem em um chamado sob sua responsabilidade.',
+        data: { ticketId, customerId },
+      });
+    } catch (error) {
+      console.error('Falha ao criar notificação de suporte para o responsável:', error);
+    }
   }
 }
