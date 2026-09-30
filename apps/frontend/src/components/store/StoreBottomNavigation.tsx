@@ -37,7 +37,7 @@ export default function StoreBottomNavigation({
 
   return (
     <nav
-      className="store-bottom-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-bottom"
+      className="store-bottom-nav fixed bottom-0 left-0 right-0 border-t border-white/80 bg-white/90 shadow-[0_-12px_30px_-24px_rgba(15,23,42,.55)] backdrop-blur-xl safe-area-bottom"
       style={{ zIndex: 45 }}
     >
       {/* Botão central destacado: Consulta por Placa */}

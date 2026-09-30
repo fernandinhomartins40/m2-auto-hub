@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BriefcaseBusiness, LogOut, User } from "lucide-react";
 import { MechanicContent } from "./MechanicContent";
+import { PanelPageHeader } from "../layout/PanelPageHeader";
 import { mechanicSlugFromTab, mechanicTabFromSlug } from "./mechanicNavigation";
 import StoreLayout from "../store/StoreLayout";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
@@ -53,16 +54,12 @@ export default function MechanicPanel() {
       variant="mechanic"
       onLogout={logout}
     >
-      <div className="lojista-header desktop-only">
-        <div>
-          <h1 className="lojista-title">
-            {getPageTitle(activeTab)}
-          </h1>
-          <p className="lojista-subtitle">
-            {getPageDescription(activeTab)}
-          </p>
-        </div>
-      </div>
+      <PanelPageHeader
+        icon={BriefcaseBusiness}
+        title={getPageTitle(activeTab)}
+        description={getPageDescription(activeTab)}
+        className="desktop-only mb-5"
+      />
 
       {/* No mobile o cabecalho acima sai por CSS (`desktop-only`, max-width
           768px) e o header do shell passou a ser so a marca, entao a rota

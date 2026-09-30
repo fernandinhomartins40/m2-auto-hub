@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from '@/lib/format';
 import { customerPrimaryNavigation, isCustomerNavigationActive } from './customerNavigation';
+import { PanelBrand } from '../layout/PanelBrand';
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -160,18 +161,16 @@ export function CustomerLayout({
   // MOBILE LAYOUT
   if (useMobileLayout) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="panel-shell min-h-screen pb-20">
         {/* Banner de instalação PWA - só mostra se não estiver instalado */}
 
         <SkipToContent />
 
         {/* Header Mobile Compacto */}
-        <header className="bg-white border-b sticky top-0 z-10">
+        <header className="sticky top-0 z-10 border-b border-white/70 bg-white/85 shadow-sm backdrop-blur-xl">
           <div className="px-4 py-3">
             <div className="flex items-center justify-between">
-              <p className="text-lg font-bold text-gray-800">
-                M2 Cliente
-              </p>
+              <PanelBrand eyebrow="Sua garagem" title="M2 Cliente" className="[&_p:last-child]:!text-slate-900" />
 
               <Button
                 variant="ghost"
@@ -192,7 +191,7 @@ export function CustomerLayout({
         </header>
 
         {/* Main Content Mobile */}
-        <main id={MAIN_CONTENT_ID} tabIndex={-1} className="px-4 py-4 outline-none">
+        <main id={MAIN_CONTENT_ID} tabIndex={-1} className="panel-content px-4 py-5 outline-none">
           {children}
         </main>
 
@@ -218,18 +217,16 @@ export function CustomerLayout({
 
   // DESKTOP LAYOUT (Original)
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="panel-shell min-h-screen">
       {/* Banner de instalação PWA - só mostra se não estiver instalado */}
 
       <SkipToContent />
 
       {/* Header com carrinho */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-white/70 bg-white/80 shadow-sm backdrop-blur-xl">
+        <div className="panel-content px-6 py-3">
           <div className="flex items-center justify-between">
-            <p className="text-xl font-bold text-gray-800">
-              Painel do Cliente
-            </p>
+            <PanelBrand eyebrow="M2 Center Auto" title="Painel do Cliente" className="[&_p:last-child]:!text-slate-900" />
 
             <Button
               variant="ghost"
@@ -249,12 +246,12 @@ export function CustomerLayout({
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="panel-content px-4 py-6 lg:px-6 lg:py-8">
         {/* O layout mobile sai em 768px (useIsMobile), mas esta grid so
             dividia em `lg` (1024). Entre 768 e 1024 sobrava uma coluna so: o
             cartao de perfil e os 9 itens de menu ocupavam a tela inteira e o
             conteudo ficava abaixo de tudo. Dividir em `md` fecha essa faixa. */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 nb:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[264px_minmax(0,1fr)] lg:gap-7">
           {/* Sidebar Desktop */}
           {/* `aside` em vez de `div`: o cartao de perfil e o menu ficavam fora
               de qualquer landmark, e o axe reportava cada no como `region`
@@ -262,9 +259,9 @@ export function CustomerLayout({
           <aside aria-label="Resumo da conta e menu" className="md:col-span-1">
             <div className="space-y-4">
               {/* Customer Info Card */}
-              <Card>
-                <CardHeader className="text-center pb-4">
-                  <Avatar className="mx-auto w-20 h-20">
+              <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/85 shadow-sm">
+                <CardHeader className="bg-gradient-to-br from-slate-950 to-slate-800 pb-4 text-center text-white">
+                  <Avatar className="mx-auto h-16 w-16 ring-4 ring-white/10">
                     <AvatarImage src="" />
                     <AvatarFallback className="bg-moria-orange text-white text-xl font-bold">
                       {getInitials(customer.name)}
@@ -272,7 +269,7 @@ export function CustomerLayout({
                   </Avatar>
                   <div className="space-y-2">
                     <CardTitle className="text-lg">{customer.name}</CardTitle>
-                    <CardDescription className="text-sm">
+                    <CardDescription className="text-sm text-slate-300">
                       {customer.email}
                     </CardDescription>
                     <Badge
@@ -328,9 +325,9 @@ export function CustomerLayout({
               </Card>
 
               {/* Navigation Menu */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Menu</CardTitle>
+              <Card className="rounded-2xl border-white/80 bg-white/85 shadow-sm">
+                <CardHeader className="px-4 pb-2 pt-4">
+                  <CardTitle className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Navegação</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <nav>
@@ -347,10 +344,10 @@ export function CustomerLayout({
                             <Button
                               variant={isActive ? "secondary" : "ghost"}
                               aria-current={isActive ? "page" : undefined}
-                            className={`h-11 w-full justify-start px-4 ${
+                            className={`h-11 w-full justify-start rounded-xl px-4 ${
                                 isActive
-                                  ? "bg-moria-orange/10 text-moria-orange border-r-2 border-moria-orange"
-                                  : "hover:bg-moria-orange/5"
+                                  ? "bg-slate-950 text-white shadow-sm hover:bg-slate-900 hover:text-white"
+                                  : "text-slate-600 hover:bg-primary/10 hover:text-primary"
                               }`}
                               onClick={() => onTabChange(item.id)}
                             >
@@ -384,7 +381,7 @@ export function CustomerLayout({
           <main
             id={MAIN_CONTENT_ID}
             tabIndex={-1}
-            className="min-w-0 outline-none md:col-span-2 nb:col-span-3"
+            className="min-w-0 outline-none"
           >
             {children}
           </main>

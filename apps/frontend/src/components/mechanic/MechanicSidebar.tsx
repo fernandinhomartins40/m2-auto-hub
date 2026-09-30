@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ClipboardCheck,
-  ClipboardList,
+  BriefcaseBusiness,
   Home,
   LogOut,
   Menu,
@@ -13,6 +12,7 @@ import {
 import { Button } from "../ui/button";
 import { cn } from "../../lib/utils";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { PanelBrand } from "../layout/PanelBrand";
 
 interface MechanicSidebarProps {
   activeTab: string;
@@ -20,8 +20,7 @@ interface MechanicSidebarProps {
 }
 
 const menuItems = [
-  { id: "revisions", label: "Minhas Revisoes", icon: ClipboardCheck },
-  { id: "service-orders", label: "Minhas OS", icon: ClipboardList },
+  { id: "work", label: "Minha fila", icon: BriefcaseBusiness },
   { id: "settings", label: "Perfil", icon: Settings },
 ];
 
@@ -32,28 +31,14 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
   return (
     <div
       className={cn(
-        "bg-moria-black text-white transition-all duration-300 flex flex-col h-screen",
+        "panel-sidebar text-white transition-all duration-300 flex flex-col h-screen",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
-      <div className="p-4 border-b border-gray-700">
+      <div className="border-b border-white/10 p-4">
         <div className="flex items-center justify-between">
           <div className={cn("flex items-center space-x-3", isCollapsed && "justify-center")}>
-            {!isCollapsed ? (
-              <>
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-sm font-black tracking-[0.22em] text-white shadow-lg">
-                  M2
-                </div>
-                <div>
-                  <h2 className="font-bold text-lg">Painel Oficina</h2>
-                  <p className="text-xs uppercase tracking-[0.26em] text-gray-400">M2 Center Auto</p>
-                </div>
-              </>
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-sm font-black tracking-[0.22em] text-white shadow-lg">
-                M2
-              </div>
-            )}
+            <PanelBrand eyebrow="M2 Center Auto" title="Painel Oficina" compact={isCollapsed} />
           </div>
 
           <Button
@@ -68,7 +53,7 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
       </div>
 
       {!isCollapsed && admin && (
-        <div className="p-4 border-b border-gray-700">
+        <div className="border-b border-white/10 p-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-moria-orange rounded-full flex items-center justify-center">
               <User className="h-5 w-5 text-white" />
@@ -104,8 +89,8 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
                   className={cn(
                     "w-full flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 text-left",
                     isActive
-                      ? "bg-moria-orange text-white shadow-lg"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white",
+                      ? "bg-primary text-white shadow-lg shadow-primary/20"
+                      : "text-slate-300 hover:bg-white/10 hover:text-white",
                     isCollapsed && "justify-center px-2"
                   )}
                 >
@@ -119,7 +104,7 @@ export function MechanicSidebar({ activeTab, onTabChange }: MechanicSidebarProps
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-gray-700 space-y-2">
+      <div className="space-y-2 border-t border-white/10 p-4">
         <Link to="/">
           <Button
             variant="ghost"

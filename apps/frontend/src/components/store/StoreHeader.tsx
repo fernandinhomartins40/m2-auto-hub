@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bell, Settings } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { PanelBrand } from '../layout/PanelBrand';
 
 interface StoreHeaderProps {
   title: string;
@@ -18,13 +19,11 @@ export default function StoreHeader({
   onSettingsClick,
 }: StoreHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-gray-200 safe-area-top">
+    <header className="sticky top-0 z-30 border-b border-white/70 bg-white/85 shadow-sm backdrop-blur-xl safe-area-top">
       <div className="flex items-center justify-between h-14 px-4">
         {/* Marca do painel, nao o titulo da rota: cada tela ja traz o seu h1
             no AdminPageHeader. Manter um h1 aqui dava dois por rota (A-11). */}
-        <p className="text-lg font-bold text-gray-900 truncate">
-          {title}
-        </p>
+        <PanelBrand eyebrow={variant === 'admin' ? 'Gestao' : 'Oficina'} title={title} />
 
         {/* Actions */}
         <div className="flex items-center gap-2">

@@ -9,7 +9,7 @@ import { CustomerDashboard } from "../components/customer/CustomerDashboard";
 import { CustomerFavorites } from "../components/customer/CustomerFavorites";
 import { CustomerLayout } from "../components/customer/CustomerLayout";
 import { customerSlugFromTab, customerTabFromSlug, customerWorkspaces } from "../components/customer/customerNavigation";
-import { Button } from "../components/ui/button";
+import { PanelWorkspaceTabs } from "../components/layout/PanelWorkspaceTabs";
 import { CustomerOrders } from "../components/customer/CustomerOrders";
 import { CustomerProfile } from "../components/customer/CustomerProfile";
 import { CustomerQuotes } from "../components/customer/CustomerQuotes";
@@ -100,26 +100,12 @@ export default function CustomerPanel() {
     <>
       <CustomerLayout currentTab={currentTab} onTabChange={handleTabChange}>
         {activeWorkspace ? (
-          <nav
-            aria-label={`Seções de ${activeWorkspace.label}`}
-            className="mb-4 overflow-x-auto rounded-xl border bg-white p-1 shadow-sm"
-          >
-            <div className="flex min-w-max gap-1">
-              {activeWorkspace.tabs.map((tab) => (
-                <Button
-                  key={tab.id}
-                  type="button"
-                  size="sm"
-                  variant={currentTab === tab.id ? "default" : "ghost"}
-                  aria-current={currentTab === tab.id ? "page" : undefined}
-                  className="min-h-10 whitespace-nowrap"
-                  onClick={() => handleTabChange(tab.id)}
-                >
-                  {tab.label}
-                </Button>
-              ))}
-            </div>
-          </nav>
+          <PanelWorkspaceTabs
+            label={`Seções de ${activeWorkspace.label}`}
+            tabs={activeWorkspace.tabs}
+            activeTab={currentTab}
+            onTabChange={handleTabChange}
+          />
         ) : null}
         {renderTabContent()}
       </CustomerLayout>

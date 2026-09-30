@@ -106,3 +106,14 @@ O e-mail transacional de suporte permanece bloqueado pela ausência de provedor 
 - A VPS não recebe mais o código-fonte e não executa `docker compose build`; recebe somente os manifestos operacionais, autentica no GHCR, baixa as imagens prontas e executa migrations, bootstrap e containers.
 - Migrator, bootstrap e backend utilizam exatamente a mesma imagem/tag, impedindo divergência entre schema, inicialização e aplicação.
 - `docker compose config` confirmou todas as referências versionadas e `bash -n` validou os scripts do deploy.
+
+## Sistema visual unificado dos painéis
+
+- Admin, oficina e cliente agora compartilham canvas, largura de conteúdo, superfícies, sombra, raio, marca, cabeçalho de rota e subnavegação contextual.
+- A identidade mantém azul vivo como acento sobre base grafite e superfícies claras; gradientes aparecem como detalhe de profundidade, sem criar novos blocos decorativos.
+- Sidebars administrativas e da oficina passaram a usar o mesmo tratamento visual, estados ativos e cartão de marca. A oficina expõe “Minha fila” como destino único e mantém Revisões/OS dentro do fluxo consolidado já existente.
+- O painel do cliente ganhou navegação lateral mais compacta, resumo de perfil com contraste controlado e grid de conteúdo mais amplo em notebook e desktop.
+- Headers e barras inferiores móveis usam superfícies translúcidas, área de toque preservada e conteúdo limitado pela mesma largura dos desktops.
+- `PanelBrand`, `PanelPageHeader` e `PanelWorkspaceTabs` substituem implementações fragmentadas. `AdminPageHeader` permanece como alias compatível, evitando migração arriscada das páginas existentes.
+- Build de produção passou com 3.685 módulos; a suíte existente passou com 14/14 testes e o novo teste de subnavegação passou com 1/1 cenário.
+- O typecheck confirmou que nenhum erro novo pertence aos arquivos do redesign. O gate ainda falha por 44 contratos preexistentes em editor de landing page, filtros, validação e utilitários, registrados em `TD-04`.

@@ -79,7 +79,7 @@ export default function StoreLayout({
     return (
       <div
         className={cn(
-          'store-layout store-mobile-layout mobile relative isolate max-w-full overflow-x-hidden bg-gray-50',
+          'panel-shell store-layout store-mobile-layout mobile relative isolate max-w-full overflow-x-hidden',
           isDrawerOpen && 'drawer-open'
         )}
       >
@@ -94,7 +94,7 @@ export default function StoreLayout({
             <main
               id={MAIN_CONTENT_ID}
               tabIndex={-1}
-              className="min-w-0 w-full max-w-full overflow-x-hidden px-4 py-4 pb-24 outline-none"
+              className="panel-content min-w-0 w-full max-w-full overflow-x-hidden px-4 py-5 pb-24 outline-none"
             >
               {children}
             </main>
@@ -127,7 +127,7 @@ export default function StoreLayout({
 
   // Layout Desktop (mantem o layout original)
   return (
-    <div className="store-layout lojista-layout min-w-0 max-w-full">
+    <div className="panel-shell store-layout lojista-layout min-w-0 max-w-full">
       <SkipToContent />
       {variant === 'mechanic' ? (
         <MechanicSidebar
@@ -146,7 +146,7 @@ export default function StoreLayout({
         tabIndex={-1}
         className="lojista-content min-w-0 max-w-full overflow-x-hidden outline-none"
       >
-        <div className="min-w-0 w-full max-w-full">
+        <div className="panel-content min-w-0 w-full max-w-full">
           {children}
         </div>
       </main>

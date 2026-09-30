@@ -83,6 +83,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency as formatPrice } from '@/lib/format';
 import { getAdminDataNeeds } from './adminDataNeeds';
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
+import { PanelWorkspaceTabs } from '../layout/PanelWorkspaceTabs';
 
 const AdminUsersSection = lazy(() => import("./AdminUsersSection"));
 const LoyaltyManagement = lazy(() => import("./LoyaltyManagement"));
@@ -2319,25 +2320,12 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     <Suspense fallback={<div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">Carregando módulo...</div>}>
       <div className="min-w-0 w-full max-w-full overflow-x-hidden">
         {activeWorkspace && onTabChange ? (
-          <nav aria-label={`Seções de ${activeWorkspace.label}`} className="mb-4 overflow-x-auto rounded-xl border bg-white p-1 shadow-sm">
-            <div className="flex min-w-max gap-1">
-              {activeWorkspace.tabs
-                .filter((tab) => tab.id !== 'users' || permissions.canManageAdmins)
-                .map((tab) => (
-                <Button
-                  key={tab.id}
-                  type="button"
-                  size="sm"
-                  variant={activeTab === tab.id ? 'default' : 'ghost'}
-                  aria-current={activeTab === tab.id ? 'page' : undefined}
-                  onClick={() => onTabChange(tab.id)}
-                  className="min-h-10 whitespace-nowrap"
-                >
-                  {tab.label}
-                </Button>
-              ))}
-            </div>
-          </nav>
+          <PanelWorkspaceTabs
+            label={`Seções de ${activeWorkspace.label}`}
+            tabs={activeWorkspace.tabs.filter((tab) => tab.id !== 'users' || permissions.canManageAdmins)}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
         ) : null}
         {renderContent()}
       </div>

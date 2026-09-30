@@ -7,6 +7,7 @@ import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { adminSidebarItems } from "./adminNavigation";
+import { PanelBrand } from "../layout/PanelBrand";
 
 interface SidebarProps {
   activeTab: string;
@@ -45,12 +46,9 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
        colunas: devolver 216px para a sidebar no mesmo pixel em que o conteudo
        passa a pedir mais colunas reproduzia o bug original mais para a
        direita. [MEDIDO] Medicoes em RESPONSIVE-UX-AUDIT.md secao 3. */
-    <div className="sidebar-rail bg-moria-black fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-gray-700 text-white md:relative md:h-screen md:w-[72px] md:border-t-0 sidebar-full:w-72">
-      <div className="hidden border-b border-gray-700 px-5 py-5 md:block">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gray-400">
-          Gestão da Loja
-        </p>
-        <h2 className="mt-2 text-lg font-bold leading-tight text-white">Painel do Lojista</h2>
+    <div className="panel-sidebar sidebar-rail fixed bottom-0 left-0 right-0 z-50 flex flex-col border-t border-white/10 text-white md:relative md:h-screen md:w-[72px] md:border-t-0 sidebar-full:w-72">
+      <div className="hidden border-b border-white/10 px-5 py-5 md:block">
+        <PanelBrand eyebrow="Gestão da loja" title="Painel do Lojista" />
       </div>
 
       {/* Tres coisas sao obrigatorias juntas para a lista rolar no desktop:
@@ -86,7 +84,7 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
           {Object.entries(groupedItems).map(([section, items]) => (
             <li
               key={section}
-              className="md:rounded-2xl md:border md:border-gray-800 md:bg-gray-900/35 md:p-2"
+              className="md:rounded-2xl md:border md:border-white/5 md:bg-white/[0.035] md:p-2"
             >
               <div className="mb-2 hidden px-2 pt-1 md:block">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
@@ -113,8 +111,8 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
                         className={cn(
                           "flex min-w-[64px] flex-col items-center justify-center space-y-1 rounded-xl px-2 py-2 text-center transition-all duration-200 md:min-w-0 md:flex-row md:justify-start md:space-x-3 md:space-y-0 md:px-3 md:py-3 md:text-left",
                           isActive
-                            ? "bg-moria-orange text-white shadow-lg shadow-orange-500/15"
-                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
                         )}
                       >
                         <IconComponent className="h-5 w-5 flex-shrink-0" />
@@ -132,7 +130,7 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
         </ul>
       </nav>
 
-      <div className="hidden space-y-2 border-t border-gray-700 p-4 md:block">
+      <div className="hidden space-y-2 border-t border-white/10 p-4 md:block">
         {admin ? (
           <button
             type="button"
