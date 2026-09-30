@@ -67,7 +67,7 @@ export default function StoreMobileDrawer({
     <>
       <div
         className={cn(
-          'absolute inset-0 z-40 bg-black/50 transition-opacity duration-300',
+          'liquid-overlay absolute inset-0 z-40 transition-opacity duration-300',
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={onClose}
@@ -76,7 +76,7 @@ export default function StoreMobileDrawer({
 
       <div
         className={cn(
-          'drawer-content absolute right-0 top-0 z-50 flex h-full w-80 max-w-[85vw] flex-col bg-white shadow-2xl',
+          'liquid-drawer drawer-content absolute right-0 top-0 z-50 flex h-full w-80 max-w-[85vw] flex-col',
           'transition-transform duration-300 ease-out',
           open ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
         )}
@@ -86,14 +86,14 @@ export default function StoreMobileDrawer({
         onPointerDown={(event) => event.stopPropagation()}
         aria-label="Menu de navegação"
       >
-        <div className="flex items-center justify-between border-b border-gray-200 p-4">
+        <div className="liquid-modal-header flex items-center justify-between border-b p-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Navegação</h2>
             <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Painel do Lojista</p>
           </div>
           <button
             onClick={onClose}
-            className="touch-manipulation rounded-lg p-2 transition-colors hover:bg-gray-100"
+            className="liquid-close touch-manipulation p-2"
             aria-label="Fechar menu"
           >
             <X className="h-5 w-5 text-gray-500" />
@@ -172,7 +172,7 @@ export default function StoreMobileDrawer({
           </button>
         </div>
 
-        <div className="h-safe-area-inset-bottom bg-white" />
+        <div className="h-safe-area-inset-bottom" />
       </div>
     </>
   );

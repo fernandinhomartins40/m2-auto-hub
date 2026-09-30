@@ -25,7 +25,7 @@ export function PanelWorkspaceTabs({
   className,
 }: PanelWorkspaceTabsProps) {
   return (
-    <nav aria-label={label} className={cn("panel-workspace-tabs", className)}>
+    <nav aria-label={label} className={cn("panel-workspace-tabs app-tabs-list", className)}>
       <div className="flex min-w-max items-center gap-1">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -35,7 +35,7 @@ export function PanelWorkspaceTabs({
               key={tab.id}
               type="button"
               aria-current={isActive ? "page" : undefined}
-              className={cn("panel-workspace-tab", isActive && "is-active")}
+              className={cn("panel-workspace-tab app-tab-trigger", isActive && "is-active")}
               onClick={() => onTabChange(tab.id)}
             >
               {tab.icon}

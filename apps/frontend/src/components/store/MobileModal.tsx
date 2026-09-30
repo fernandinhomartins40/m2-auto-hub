@@ -47,7 +47,7 @@ export default function MobileModal({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 z-50 animate-fade-in"
+        className="liquid-overlay fixed inset-0 z-50 animate-fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -55,7 +55,7 @@ export default function MobileModal({
       {/* Modal */}
       <div
         className={cn(
-          'fixed z-50 bg-white',
+          'liquid-modal fixed z-50',
           shouldBeFullScreen
             ? // Full Screen (Mobile ou forçado)
               'inset-0 flex flex-col'
@@ -71,7 +71,7 @@ export default function MobileModal({
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0 safe-area-top">
+          <div className="liquid-modal-header flex items-center justify-between px-4 py-3 border-b flex-shrink-0 safe-area-top">
             <h2
               id="modal-title"
               className="text-lg font-semibold text-gray-900"
@@ -80,7 +80,7 @@ export default function MobileModal({
             </h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors touch-manipulation"
+              className="liquid-close p-2 touch-manipulation"
               aria-label="Fechar"
             >
               <X className="w-5 h-5 text-gray-500" />
@@ -105,7 +105,7 @@ export default function MobileModal({
 
         {/* Safe area for iOS */}
         {isMobile && (
-          <div className="h-safe-area-inset-bottom bg-white flex-shrink-0" />
+          <div className="h-safe-area-inset-bottom flex-shrink-0" />
         )}
       </div>
     </>

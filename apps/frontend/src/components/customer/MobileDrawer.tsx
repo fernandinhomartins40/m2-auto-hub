@@ -71,7 +71,7 @@ export function MobileDrawer({
     <>
       <div
         className={cn(
-          "fixed inset-0 bg-black/50 z-40 transition-opacity duration-300",
+          "liquid-overlay fixed inset-0 z-40 transition-opacity duration-300",
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -82,18 +82,18 @@ export function MobileDrawer({
         className={cn(
           // `flex flex-col` e necessario para o `flex-1` da <nav> valer: sem
           // isso a lista crescia alem da tela e o menu nao rolava.
-          "fixed top-0 right-0 flex h-full w-80 max-w-[85vw] flex-col bg-white shadow-2xl z-50 transition-transform duration-300 ease-out",
+          "liquid-drawer fixed top-0 right-0 flex h-full w-80 max-w-[85vw] flex-col z-50 transition-transform duration-300 ease-out",
           open ? "translate-x-0" : "translate-x-full"
         )}
         role="dialog"
         aria-modal="true"
         aria-label="Menu de navegação"
       >
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="liquid-modal-header flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">Menu</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="liquid-close p-2"
             aria-label="Fechar menu"
           >
             <X className="w-5 h-5" />
