@@ -46,9 +46,9 @@
    E CSS puro de proposito: o componente continua sendo uma arvore de DOM so,
    entao nao ha como o estado visual divergir do estado logico. */
 @media (min-width: 768px) and (max-width: 1399.98px) {
-  /* Titulo do topo, bloco do usuario e rodape: escondidos no rail. */
-  .sidebar-rail > div:first-child,
-  .sidebar-rail > div:last-child {
+  /* O titulo nao cabe no rail. O rodape continua visivel porque concentra
+     conta, retorno ao site e, principalmente, a saida da sessao. */
+  .sidebar-rail > div:first-child {
     display: none;
   }
 

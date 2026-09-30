@@ -130,18 +130,20 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
         </ul>
       </nav>
 
-      <div className="hidden space-y-2 border-t border-white/10 p-4 md:block">
+      <div className="hidden space-y-2 border-t border-white/10 p-2 md:block sidebar-full:p-4">
         {admin ? (
           <button
             type="button"
             onClick={() => onTabChange("account")}
-            className="mb-4 w-full rounded-xl border border-gray-700 bg-gray-800/40 p-3 text-left transition-colors hover:border-moria-orange/40 hover:bg-gray-800"
+            aria-label="Abrir minha conta"
+            title="Minha conta"
+            className="mb-2 flex w-full items-center justify-center rounded-xl border border-gray-700 bg-gray-800/40 p-2 text-left transition-colors hover:border-moria-orange/40 hover:bg-gray-800 sidebar-full:mb-4 sidebar-full:justify-start sidebar-full:p-3"
           >
-            <div className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-moria-orange">
+            <div className="flex min-w-0 items-center sidebar-full:space-x-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-moria-orange">
                 <User className="h-5 w-5 text-white" />
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="hidden min-w-0 flex-1 sidebar-full:block">
                 <p className="truncate text-sm font-medium text-white">{admin.name}</p>
                 <p className="truncate text-xs text-gray-400">{admin.role.replace(/_/g, " ")}</p>
               </div>
@@ -149,20 +151,22 @@ export function Sidebar({ activeTab, onTabChange, onPlateLookup }: SidebarProps)
           </button>
         ) : null}
 
-        <Link to="/">
-          <Button variant="ghost" className="w-full justify-start text-gray-300 hover:bg-gray-700 hover:text-white">
+        <Link to="/" className="block" aria-label="Voltar ao site" title="Voltar ao site">
+          <Button variant="ghost" className="w-full justify-center px-2 text-gray-300 hover:bg-gray-700 hover:text-white sidebar-full:justify-start">
             <Home className="h-5 w-5 flex-shrink-0" />
-            <span className="ml-3">Voltar ao Site</span>
+            <span className="ml-3 hidden sidebar-full:inline">Voltar ao Site</span>
           </Button>
         </Link>
 
         <Button
           variant="ghost"
-          className="w-full justify-start text-gray-300 hover:bg-primary/10 hover:text-primary"
+          aria-label="Sair da conta"
+          title="Sair da conta"
+          className="w-full justify-center px-2 text-gray-300 hover:bg-primary/10 hover:text-primary sidebar-full:justify-start"
           onClick={logout}
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
-          <span className="ml-3">Sair</span>
+          <span className="ml-3 hidden sidebar-full:inline">Sair</span>
         </Button>
       </div>
     </div>
