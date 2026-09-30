@@ -19,7 +19,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 WORKDIR /repo/apps/frontend
 RUN npm run build
 
-FROM nginx:1.27-alpine AS production
+FROM nginx:1.31-alpine AS production
 ARG RELEASE_VERSION=local
 
 COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
