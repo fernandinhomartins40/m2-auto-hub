@@ -1,5 +1,6 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request } from 'express';
+import crypto from 'node:crypto';
 
 /**
  * Rate limiting middleware for authentication endpoints
@@ -13,10 +14,12 @@ export const loginLimiter = rateLimit({
   message: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   // Use IP + email for more granular control
   keyGenerator: (req: Request) => {
-    const email = req.body?.email || 'unknown';
-    return `${req.ip}-${email}`;
+    const identifier = String(req.body?.email || req.body?.identifier || '').trim().toLowerCase();
+    const identifierHash = crypto.createHash('sha256').update(identifier).digest('hex').slice(0, 16);
+    return `${ipKeyGenerator(req.ip || 'unknown')}-${identifierHash}`;
   },
 });
 

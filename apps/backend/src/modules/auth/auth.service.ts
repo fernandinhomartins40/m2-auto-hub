@@ -64,7 +64,7 @@ export class AuthService {
       ? dto.identifier.toLowerCase().trim()
       : PhoneUtil.normalize(dto.identifier);
 
-    logger.info(`Login attempt - isEmail: ${isEmail}, original: ${dto.identifier}, searchValue: ${searchValue}`);
+    logger.info('Customer login attempt', { identifierType: isEmail ? 'email' : 'phone' });
 
     const customer = isEmail
       ? await prisma.customer.findFirst({
@@ -73,18 +73,16 @@ export class AuthService {
       : await this.findCustomerByPhone(dto.identifier);
 
     if (!customer) {
-      logger.info(`Customer not found with ${isEmail ? 'email' : 'phone'}: ${searchValue}`);
+      logger.info('Customer login rejected: account not found');
       throw ApiError.unauthorized('Invalid phone/email or password');
     }
-
-    logger.info(`Customer found: ${customer.email}, phone: ${customer.phone}`);
 
     if (customer.status === CustomerStatus.BLOCKED) {
       throw ApiError.forbidden('Your account has been blocked');
     }
 
     if (!customer.password) {
-      logger.warn(`Customer login failed - no password configured: ${customer.email}`);
+      logger.warn('Customer login rejected: password not configured');
       throw ApiError.unauthorized('Invalid phone/email or password');
     }
 
@@ -111,7 +109,7 @@ export class AuthService {
 
     const { password, ...customerWithoutPassword } = customer;
 
-    logger.info(`Customer logged in: ${customer.email}`);
+    logger.info('Customer logged in', { customerId: customer.id });
 
     return {
       token,

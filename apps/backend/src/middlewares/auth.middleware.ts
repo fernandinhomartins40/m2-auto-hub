@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { JwtUtil, TokenPayload } from '@shared/utils/jwt.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { CustomerStatus } from '@prisma/client';
+import { prisma } from '@config/database.js';
 
 // Extend Express Request type
 declare global {
@@ -16,7 +17,7 @@ export class AuthMiddleware {
   /**
    * Verify JWT token and attach user to request
    */
-  static authenticate(req: Request, res: Response, next: NextFunction): void {
+  static async authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       // Try to get token from cookie first, then fallback to Authorization header
       let token = req.cookies?.authToken;
@@ -41,7 +42,15 @@ export class AuthMiddleware {
           throw ApiError.unauthorized('Invalid token structure - missing customerId');
         }
 
-        req.user = payload;
+        const customer = await prisma.customer.findUnique({
+          where: { id: payload.customerId },
+          select: { email: true, level: true, status: true },
+        });
+        if (!customer || customer.status !== CustomerStatus.ACTIVE) {
+          throw ApiError.unauthorized('Conta inexistente ou inativa');
+        }
+
+        req.user = { ...payload, ...customer };
         next();
       } catch (error) {
         // Don't log error - token verification failures are expected for invalid/expired tokens

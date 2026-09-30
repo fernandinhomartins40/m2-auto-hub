@@ -28,7 +28,23 @@ export function validateEnvironment(): void {
     }
 
     if (!process.env.CORS_ORIGIN) {
-      warnings.push('CORS_ORIGIN nao esta definida em production');
+      errors.push('CORS_ORIGIN deve ser definida explicitamente em production');
+    } else if (process.env.CORS_ORIGIN.split(',').some(origin => origin.trim() === '*')) {
+      errors.push('CORS_ORIGIN nao pode conter wildcard em production');
+    }
+
+    if (process.env.COOKIE_SECURE !== 'true') {
+      errors.push('COOKIE_SECURE deve ser true em production');
+    }
+
+    if (!process.env.MARKETPLACE_ENC_KEY || process.env.MARKETPLACE_ENC_KEY.length < 32) {
+      errors.push('MARKETPLACE_ENC_KEY propria com pelo menos 32 caracteres e obrigatoria em production');
+    }
+
+    if (!process.env.DEFAULT_ADMIN_PASSWORD || process.env.DEFAULT_ADMIN_PASSWORD.length < 12) {
+      errors.push('DEFAULT_ADMIN_PASSWORD com pelo menos 12 caracteres e obrigatoria em production');
+    } else if (process.env.DEFAULT_ADMIN_PASSWORD === 'Test123!') {
+      errors.push('Senha administrativa padrao nao pode ser usada em production');
     }
 
     if (process.env.LOG_LEVEL === 'debug') {

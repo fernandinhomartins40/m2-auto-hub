@@ -41,9 +41,7 @@ export class AuditLogMiddleware {
               };
 
               // Adicionar resposta se disponível
-              if (body?.data) {
-                changes.response = sanitizeBody(body.data);
-              }
+              changes.responseStatus = res.statusCode;
 
               // Criar registro de audit log
               await prisma.auditLog.create({
@@ -96,10 +94,14 @@ export class AuditLogMiddleware {
 /**
  * Remove dados sensíveis antes de logar
  */
-function sanitizeBody(body: any): any {
+function sanitizeBody(body: unknown, depth = 0): unknown {
   if (!body) return null;
 
-  const sanitized = { ...body };
+  if (depth > 6) return null;
+  if (Array.isArray(body)) return body.slice(0, 50).map(item => sanitizeBody(item, depth + 1));
+  if (typeof body !== 'object') return body;
+
+  const sanitized: Record<string, unknown> = { ...body };
 
   // Remover campos sensíveis
   const sensitiveFields = [
@@ -107,13 +109,18 @@ function sanitizeBody(body: any): any {
     'token',
     'secret',
     'apiKey',
+    'authorization',
+    'cookie',
+    'cpf',
     'creditCard',
     'cvv',
   ];
 
-  for (const field of sensitiveFields) {
-    if (sanitized[field]) {
+  for (const [field, value] of Object.entries(sanitized)) {
+    if (sensitiveFields.some(sensitive => field.toLowerCase().includes(sensitive.toLowerCase()))) {
       sanitized[field] = '[REDACTED]';
+    } else {
+      sanitized[field] = sanitizeBody(value, depth + 1);
     }
   }
 
@@ -124,10 +131,6 @@ function sanitizeBody(body: any): any {
  * Extrai IP real do cliente considerando proxies
  */
 function getClientIp(req: Request): string {
-  return (
-    (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-    (req.headers['x-real-ip'] as string) ||
-    req.socket.remoteAddress ||
-    'unknown'
-  );
+  // Express calcula req.ip respeitando apenas a cadeia de proxies configurada.
+  return req.ip || req.socket.remoteAddress || 'unknown';
 }

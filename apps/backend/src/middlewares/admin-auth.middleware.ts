@@ -3,6 +3,7 @@ import { JwtUtil, AdminTokenPayload } from '@shared/utils/jwt.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { AdminStatus, AdminRole } from '@prisma/client';
 import { runWithRLSContext } from './prisma-rls.middleware.js';
+import { prisma } from '@config/database.js';
 
 // Extend Express Request type
 declare global {
@@ -17,7 +18,7 @@ export class AdminAuthMiddleware {
   /**
    * Verify JWT token and attach admin to request
    */
-  static authenticate(req: Request, res: Response, next: NextFunction): void {
+  static async authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       // Try to get token from cookie first, then fallback to Authorization header
       let token = req.cookies?.adminToken;
@@ -35,8 +36,15 @@ export class AdminAuthMiddleware {
 
       try {
         const payload = JwtUtil.verifyAdminToken(token);
-        req.admin = payload;
-        runWithRLSContext(payload.adminId, payload.role, next);
+        const admin = await prisma.admin.findUnique({
+          where: { id: payload.adminId },
+          select: { email: true, role: true, status: true },
+        });
+        if (!admin || admin.status !== AdminStatus.ACTIVE) {
+          throw ApiError.unauthorized('Conta administrativa inexistente ou inativa');
+        }
+        req.admin = { ...payload, ...admin };
+        runWithRLSContext(payload.adminId, admin.role, next);
       } catch (error) {
         throw ApiError.unauthorized('Invalid or expired token');
       }

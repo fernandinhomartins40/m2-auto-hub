@@ -7,6 +7,7 @@ import path from 'path';
 import 'express-async-errors';
 import { corsOptions } from '@config/cors.js';
 import { ErrorMiddleware } from '@middlewares/error.middleware.js';
+import { enforceTrustedOrigin } from '@middlewares/csrf.middleware.js';
 import { logger } from '@shared/utils/logger.util.js';
 import authRoutes from '@modules/auth/auth.routes.js';
 import addressesRoutes from '@modules/addresses/addresses.routes.js';
@@ -41,26 +42,36 @@ export function createApp(): Express {
   app.set('trust proxy', 1);
 
   app.use(helmet({
-    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   }));
 
   app.use(cors(corsOptions));
   app.use(cookieParser());
+  app.use(enforceTrustedOrigin);
   app.use(
     express.json({
-      limit: '10mb',
+      limit: '2mb',
       // Preserva o corpo cru para validar a assinatura HMAC dos webhooks (Shopee)
       verify: (req, _res, buf) => {
         (req as Request & { rawBody?: string }).rawBody = buf.toString('utf8');
       },
     })
   );
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '2mb' }));
   app.use(compression());
 
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+    dotfiles: 'deny',
+    fallthrough: false,
+    immutable: true,
+    maxAge: '30d',
+    setHeaders: res => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'none'; sandbox");
+    },
+  }));
 
   app.use((req, _res, next) => {
     logger.info(`${req.method} ${req.path}`, {

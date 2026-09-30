@@ -13,11 +13,11 @@ x-backend-env: &backend-env
   # connection_limit: sem ele o Prisma abre num_cpus*2+1 conexoes por instancia,
   # dimensionado pelos cores do HOST. Numa VPS compartilhada isso desperdica
   # processos do Postgres que ficam ociosos.
-  DATABASE_URL: "postgresql://${POSTGRES_USER:-m2}:${POSTGRES_PASSWORD:-m2_dev_2026}@postgres:5432/${POSTGRES_DB:-m2_auto_hub}?schema=public&connection_limit=10&pool_timeout=20"
-  JWT_SECRET: ${JWT_SECRET:-replace_me_with_at_least_32_chars_1234567890}
+  DATABASE_URL: "postgresql://${POSTGRES_USER:-m2}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD forte e obrigatoria em producao}@postgres:5432/${POSTGRES_DB:-m2_auto_hub}?schema=public&connection_limit=10&pool_timeout=20"
+  JWT_SECRET: ${JWT_SECRET:?JWT_SECRET forte e obrigatorio em producao}
   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
   BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-10}
-  DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-Test123!}
+  DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?DEFAULT_ADMIN_PASSWORD forte e obrigatoria no bootstrap}
   ADMIN_PASSWORD_RESYNC: ${ADMIN_PASSWORD_RESYNC:-false}
   CORS_ORIGIN: "${CORS_ORIGIN:-https://www.m2centerauto.com.br,https://m2centerauto.com.br}"
   COOKIE_SECURE: ${COOKIE_SECURE:-true}
@@ -35,7 +35,7 @@ x-backend-env: &backend-env
   # URL publica HTTPS usada para montar redirect/callback de OAuth e webhooks dos marketplaces
   APP_BASE_URL: ${APP_BASE_URL:-https://m2centerauto.com.br}
   # Chave de criptografia (AES-256-GCM) dos segredos de marketplace. Definir um valor forte em producao.
-  MARKETPLACE_ENC_KEY: ${MARKETPLACE_ENC_KEY:-}
+  MARKETPLACE_ENC_KEY: ${MARKETPLACE_ENC_KEY:?MARKETPLACE_ENC_KEY propria e obrigatoria em producao}
   MARKETPLACE_JOBS_ENABLED: ${MARKETPLACE_JOBS_ENABLED:-true}
 
 services:
@@ -87,7 +87,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-m2_auto_hub}
       POSTGRES_USER: ${POSTGRES_USER:-m2}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-m2_dev_2026}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD forte e obrigatoria em producao}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-m2} -d ${POSTGRES_DB:-m2_auto_hub}"]
       # 5s davam 17.280 execucoes por dia para um banco que, uma vez de pe, nao
