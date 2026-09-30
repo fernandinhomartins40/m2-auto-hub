@@ -21,6 +21,8 @@ import { DeleteVehicleDialog } from './DeleteVehicleDialog';
 import { ScheduleRevisionModal } from './ScheduleRevisionModal';
 import vehicleService, { CustomerVehicle } from '../../api/vehicleService';
 import { useToast } from '../../hooks/use-toast';
+import { PanelPageHeader } from '../layout/PanelPageHeader';
+import { PanelPage } from '../layout/PanelPage';
 
 export function CustomerVehicles() {
   const { customer } = useAuth();
@@ -94,20 +96,14 @@ export function CustomerVehicles() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Meus Veiculos</h1>
-          <p className="text-muted-foreground">Gerencie seus veiculos cadastrados</p>
-        </div>
-        <Button
+    <PanelPage>
+      <PanelPageHeader icon={Car} title="Meus veículos" description="Gerencie seus veículos cadastrados" actions={<Button
           onClick={() => setIsCreateModalOpen(true)}
           className="bg-moria-orange hover:bg-moria-orange/90"
         >
           <Plus className="h-4 w-4 shrink-0" />
           Cadastrar Veiculo
-        </Button>
-      </div>
+        </Button>} />
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
@@ -273,6 +269,6 @@ export function CustomerVehicles() {
         vehicle={schedulingVehicle}
         onClose={() => setSchedulingVehicle(null)}
       />
-    </div>
+    </PanelPage>
   );
 }

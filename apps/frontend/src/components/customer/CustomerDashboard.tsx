@@ -20,6 +20,7 @@ import {
   Calendar
 } from "lucide-react";
 import { formatCurrency } from '@/lib/format';
+import { PanelPageHeader } from '../layout/PanelPageHeader';
 
 interface CustomerDashboardProps {
   onTabChange: (tab: string) => void;
@@ -156,27 +157,14 @@ export function CustomerDashboard({ onTabChange, onBrowseProducts }: CustomerDas
           </Button>
         </div>
       )}
-      {/* Welcome Header */}
-      <Card>
-        <CardHeader>
-          {/* flex-wrap + gap + min-w-0: no celular o badge ficava por cima do
-              "Bem-vindo ao seu painel do cliente", porque o justify-between
-              sozinho nao reserva espaco entre os dois blocos. */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0 flex-1 basis-[14rem]">
-              <CardTitle as="h1" className="text-2xl">
-                Olá, {customer.name?.split(' ')[0] || 'Cliente'}! 👋
-              </CardTitle>
-              <CardDescription className="text-lg">
-                Bem-vindo ao seu painel do cliente
-              </CardDescription>
-            </div>
-            <Badge variant="secondary" className="shrink-0 bg-moria-orange/10 text-moria-orange">
+      <PanelPageHeader
+        icon={ShoppingBag}
+        title={`Olá, ${customer.name?.split(' ')[0] || 'Cliente'}!`}
+        description="Bem-vindo ao seu painel do cliente"
+        badge={<Badge variant="secondary" className="shrink-0 bg-moria-orange/10 text-moria-orange">
               Cliente {membership.current}
-            </Badge>
-          </div>
-        </CardHeader>
-      </Card>
+            </Badge>}
+      />
 
       <Card className="border-moria-orange/20 bg-gradient-to-br from-white to-orange-50/50">
         <CardHeader>

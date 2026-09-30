@@ -43,6 +43,8 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { formatCurrency as formatPrice } from '@/lib/format';
+import { PanelPageHeader } from '../layout/PanelPageHeader';
+import { PanelPage } from '../layout/PanelPage';
 
 interface FavoriteProductData extends Product {
   favoriteId: string;
@@ -413,11 +415,8 @@ export function CustomerFavorites() {
 
   if (loading || loadingProducts) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Meus Favoritos</h1>
-          <p className="text-muted-foreground">Produtos que você salvou para depois</p>
-        </div>
+      <PanelPage>
+        <PanelPageHeader icon={Heart} title="Meus favoritos" description="Produtos que você salvou para depois" />
 
         {/* Loading Header Actions */}
         <div className="flex items-center justify-between">
@@ -459,20 +458,13 @@ export function CustomerFavorites() {
         <div className="text-center">
           <Skeleton className="h-4 w-48 mx-auto" />
         </div>
-      </div>
+      </PanelPage>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Meus Favoritos</h1>
-          <p className="text-muted-foreground">Produtos que você salvou para depois</p>
-        </div>
-
-        <div className="flex gap-2">
+    <PanelPage>
+      <PanelPageHeader icon={Heart} title="Meus favoritos" description="Produtos que você salvou para depois" actions={<div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -506,8 +498,7 @@ export function CustomerFavorites() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-        </div>
-      </div>
+        </div>} />
 
       {/* Statistics */}
       {showStats && stats && (
@@ -819,6 +810,6 @@ export function CustomerFavorites() {
           </div>
         </>
       )}
-    </div>
+    </PanelPage>
   );
 }

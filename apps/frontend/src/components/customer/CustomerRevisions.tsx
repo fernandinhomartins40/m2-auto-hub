@@ -30,6 +30,8 @@ import revisionAppointmentService, {
   RevisionAppointment,
 } from '@/api/revisionAppointmentService';
 import { useToast } from '@/hooks/use-toast';
+import { PanelPageHeader } from '../layout/PanelPageHeader';
+import { PanelPage } from '../layout/PanelPage';
 
 const appointmentStatusConfig = {
   REQUESTED: { label: 'Solicitado', className: 'bg-amber-100 text-amber-800' },
@@ -288,13 +290,8 @@ export function CustomerRevisions() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Minhas Revisoes</h1>
-        <p className="text-muted-foreground">
-          Acompanhe seus agendamentos, historico de revisoes e alertas importantes
-        </p>
-      </div>
+    <PanelPage>
+      <PanelPageHeader icon={ClipboardCheck} title="Minhas revisões" description="Acompanhe seus agendamentos, histórico de revisões e alertas importantes" />
 
       {alerts.length > 0 && (
         <div className="space-y-3">
@@ -648,6 +645,6 @@ export function CustomerRevisions() {
           setSelectedRevision(null);
         }}
       />
-    </div>
+    </PanelPage>
   );
 }

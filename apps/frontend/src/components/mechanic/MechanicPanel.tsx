@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { BriefcaseBusiness, LogOut, User } from "lucide-react";
 import { MechanicContent } from "./MechanicContent";
 import { PanelPageHeader } from "../layout/PanelPageHeader";
+import { PanelPage } from "../layout/PanelPage";
 import { mechanicSlugFromTab, mechanicTabFromSlug } from "./mechanicNavigation";
 import StoreLayout from "../store/StoreLayout";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
@@ -54,12 +55,13 @@ export default function MechanicPanel() {
       variant="mechanic"
       onLogout={logout}
     >
-      <PanelPageHeader
-        icon={BriefcaseBusiness}
-        title={getPageTitle(activeTab)}
-        description={getPageDescription(activeTab)}
-        className="desktop-only mb-5"
-      />
+      <PanelPage>
+        <PanelPageHeader
+          icon={BriefcaseBusiness}
+          title={getPageTitle(activeTab)}
+          description={getPageDescription(activeTab)}
+          className="desktop-only mb-5"
+        />
 
       {/* No mobile o cabecalho acima sai por CSS (`desktop-only`, max-width
           768px) e o header do shell passou a ser so a marca, entao a rota
@@ -67,11 +69,12 @@ export default function MechanicPanel() {
           titulo ja visivel — mas da a ancora de topo para navegacao por
           headings. O `md:hidden` casa com o mesmo limiar de 768px, para nunca
           existirem dois h1 ao mesmo tempo. */}
-      <h1 className="sr-only md:hidden">{getPageTitle(activeTab)}</h1>
+        <h1 className="sr-only md:hidden">{getPageTitle(activeTab)}</h1>
 
-      <div className="lojista-fade-in">
-        <MechanicContent activeTab={activeTab} />
-      </div>
+        <div className="lojista-fade-in">
+          <MechanicContent activeTab={activeTab} />
+        </div>
+      </PanelPage>
     </StoreLayout>
   );
 }

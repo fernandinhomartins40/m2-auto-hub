@@ -25,6 +25,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Input } from '../ui/input';
 import { RequestQuoteModal } from './RequestQuoteModal';
 import { formatCurrency } from '@/lib/format';
+import { PanelPageHeader } from '../layout/PanelPageHeader';
+import { PanelPage } from '../layout/PanelPage';
 
 interface CustomerQuotesProps {
   onNavigateToProfile?: () => void;
@@ -218,15 +220,8 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Meus Orcamentos</h1>
-          <p className="text-muted-foreground">
-            Solicite, acompanhe e aprove os orcamentos enviados pela loja.
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <PanelPage>
+      <PanelPageHeader icon={FileText} title="Meus orçamentos" description="Solicite, acompanhe e aprove os orçamentos enviados pela loja." actions={<div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => void loadQuotes()}>
             <RefreshCw className="h-4 w-4 shrink-0" />
             Atualizar
@@ -238,8 +233,7 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
             <Wrench className="h-4 w-4 shrink-0" />
             Solicitar orcamento
           </Button>
-        </div>
-      </div>
+        </div>} />
 
       <div className="grid grid-cols-2 gap-4 nb:grid-cols-4">
         <Card>
@@ -516,6 +510,6 @@ export function CustomerQuotes({ onNavigateToProfile }: CustomerQuotesProps) {
           setQuotes((previous) => [quote, ...previous.filter((item) => item.id !== quote.id)]);
         }}
       />
-    </div>
+    </PanelPage>
   );
 }

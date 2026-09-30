@@ -24,6 +24,8 @@ import {
   RefreshCw
 } from "lucide-react";
 import { formatCurrency } from '@/lib/format';
+import { PanelPageHeader } from '../layout/PanelPageHeader';
+import { PanelPage } from '../layout/PanelPage';
 
 export function CustomerOrders() {
   const { getOrders } = useAuth();
@@ -130,17 +132,11 @@ export function CustomerOrders() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Meus Pedidos</h1>
-          <p className="text-muted-foreground">Acompanhe o status dos seus pedidos</p>
-        </div>
-        <Button onClick={loadOrders} variant="outline">
+    <PanelPage>
+      <PanelPageHeader icon={Package} title="Meus pedidos" description="Acompanhe o status dos seus pedidos" actions={<Button onClick={loadOrders} variant="outline">
           <RefreshCw className="h-4 w-4 shrink-0" />
           Atualizar
-        </Button>
-      </div>
+        </Button>} />
 
       {/* Filters */}
       <Card>
@@ -412,6 +408,6 @@ export function CustomerOrders() {
           })}
         </div>
       )}
-    </div>
+    </PanelPage>
   );
 }

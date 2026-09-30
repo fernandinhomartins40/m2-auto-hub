@@ -6,7 +6,6 @@ import {
   Package,
   Percent,
   Settings,
-  ShieldCheck,
   Users,
 } from "lucide-react";
 
@@ -38,7 +37,6 @@ export const adminSidebarItems: AdminNavItem[] = [
 
   { id: "reports", label: "Relatórios", icon: BarChart3, section: "Gestão" },
   { id: "settings", label: "Configurações", icon: Settings, section: "Gestão", activeTabs: ["settings", "account", "pwa-settings", "users", "privacy-governance"] },
-  { id: "privacy-governance", label: "Segurança e LGPD", icon: ShieldCheck, section: "Gestão" },
 ];
 
 /**

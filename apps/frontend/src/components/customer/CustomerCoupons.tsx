@@ -21,6 +21,8 @@ import { toast } from 'sonner';
 import couponService from '@/api/couponService';
 import type { Coupon } from '@/api/couponService';
 import { formatCurrency as formatPrice } from '@/lib/format';
+import { PanelPageHeader } from '../layout/PanelPageHeader';
+import { PanelPage } from '../layout/PanelPage';
 
 export function CustomerCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -129,26 +131,13 @@ export function CustomerCoupons() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-moria-orange" />
-              Cupons Disponíveis
-            </CardTitle>
-            <CardDescription>
-              Aproveite descontos especiais nas suas compras
-            </CardDescription>
-          </div>
-          {coupons.length > 0 && (
+    <PanelPage>
+      <PanelPageHeader icon={Gift} title="Cupons disponíveis" description="Aproveite descontos especiais nas suas compras" badge={coupons.length > 0 ? (
             <Badge variant="secondary" className="bg-moria-orange text-white">
               {coupons.length} {coupons.length === 1 ? 'cupom' : 'cupons'}
             </Badge>
-          )}
-        </div>
-      </CardHeader>
-
+          ) : undefined} />
+      <Card>
       <CardContent>
         {/* Busca */}
         {coupons.length > 3 && (
@@ -320,6 +309,7 @@ export function CustomerCoupons() {
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </PanelPage>
   );
 }

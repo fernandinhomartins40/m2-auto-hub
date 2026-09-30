@@ -22,6 +22,8 @@ import { TicketList } from './TicketList';
 import { FAQSection } from './FAQSection';
 import { QuickContactCard } from './QuickContactCard';
 import { TicketDetails } from './TicketDetails';
+import { PanelPageHeader } from '../../layout/PanelPageHeader';
+import { PanelPage } from '../../layout/PanelPage';
 
 export function SupportDashboard() {
   const { stats, loadStats, currentTicket, loadTicket } = useSupport();
@@ -51,18 +53,11 @@ export function SupportDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Suporte ao Cliente</h1>
-          <p className="text-muted-foreground">Como podemos te ajudar hoje?</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)} className="bg-moria-orange hover:bg-moria-orange/90">
+    <PanelPage>
+      <PanelPageHeader icon={MessageCircle} title="Suporte ao cliente" description="Como podemos ajudar hoje?" actions={<Button onClick={() => setShowCreateModal(true)} className="bg-moria-orange hover:bg-moria-orange/90">
           <Plus className="h-4 w-4 shrink-0" />
           Novo Ticket
-        </Button>
-      </div>
+        </Button>} />
 
       {/* Estatísticas */}
       {stats && (
@@ -221,6 +216,6 @@ export function SupportDashboard() {
           ticket={currentTicket}
         />
       )}
-    </div>
+    </PanelPage>
   );
 }

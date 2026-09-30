@@ -84,6 +84,7 @@ import { formatCurrency as formatPrice } from '@/lib/format';
 import { getAdminDataNeeds } from './adminDataNeeds';
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
 import { PanelWorkspaceTabs } from '../layout/PanelWorkspaceTabs';
+import { PanelPage } from '../layout/PanelPage';
 
 const AdminUsersSection = lazy(() => import("./AdminUsersSection"));
 const LoyaltyManagement = lazy(() => import("./LoyaltyManagement"));
@@ -2322,7 +2323,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
   return (
     <Suspense fallback={<div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">Carregando módulo...</div>}>
-      <div className="min-w-0 w-full max-w-full overflow-x-hidden">
+      <PanelPage className="min-w-0 overflow-x-hidden">
         {activeWorkspace && onTabChange ? (
           <PanelWorkspaceTabs
             label={`Seções de ${activeWorkspace.label}`}
@@ -2332,7 +2333,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
           />
         ) : null}
         {renderContent()}
-      </div>
+      </PanelPage>
       <ProductModal
         isOpen={isProductModalOpen}
         onClose={handleCloseProductModal}

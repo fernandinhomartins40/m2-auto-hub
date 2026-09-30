@@ -34,6 +34,8 @@ import { PasswordInput } from "../ui/password-input";
 import { isPasswordStrong } from "@/lib/passwordUtils";
 import { readApiError } from "@/lib/apiError";
 import { privacyService, type PrivacyRequestType } from "@/api/privacyService";
+import { PanelPageHeader } from "../layout/PanelPageHeader";
+import { PanelPage } from "../layout/PanelPage";
 
 const emptyAddressForm: AddressPayload = {
   type: 'HOME',
@@ -295,13 +297,8 @@ export function CustomerProfile() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Meu Perfil</h1>
-          <p className="text-muted-foreground">Gerencie suas informações pessoais e endereços</p>
-        </div>
-      </div>
+    <PanelPage>
+      <PanelPageHeader icon={User} title="Meu perfil" description="Gerencie suas informações pessoais, segurança, endereços e privacidade" />
 
       <Tabs defaultValue="personal" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
@@ -788,6 +785,6 @@ export function CustomerProfile() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </PanelPage>
   );
 }

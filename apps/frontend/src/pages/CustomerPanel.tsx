@@ -17,6 +17,7 @@ import { CustomerRevisions } from "../components/customer/CustomerRevisions";
 import { CustomerVehicles } from "../components/customer/CustomerVehicles";
 import { CustomerNotifications } from "../components/customer/CustomerNotifications";
 import { SupportDashboard } from "../components/customer/support/SupportDashboard";
+import { PanelPage } from "../components/layout/PanelPage";
 import "../styles/cliente.css";
 
 export default function CustomerPanel() {
@@ -99,15 +100,17 @@ export default function CustomerPanel() {
   return (
     <>
       <CustomerLayout currentTab={currentTab} onTabChange={handleTabChange}>
-        {activeWorkspace ? (
-          <PanelWorkspaceTabs
-            label={`Seções de ${activeWorkspace.label}`}
-            tabs={activeWorkspace.tabs}
-            activeTab={currentTab}
-            onTabChange={handleTabChange}
-          />
-        ) : null}
-        {renderTabContent()}
+        <PanelPage>
+          {activeWorkspace ? (
+            <PanelWorkspaceTabs
+              label={`Seções de ${activeWorkspace.label}`}
+              tabs={activeWorkspace.tabs}
+              activeTab={currentTab}
+              onTabChange={handleTabChange}
+            />
+          ) : null}
+          {renderTabContent()}
+        </PanelPage>
       </CustomerLayout>
 
       <CartDrawer />

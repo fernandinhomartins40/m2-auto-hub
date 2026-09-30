@@ -5,6 +5,8 @@ import customerService, { type CustomerNotification } from "../../api/customerSe
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../../hooks/use-toast";
+import { PanelPageHeader } from "../layout/PanelPageHeader";
+import { PanelPage } from "../layout/PanelPage";
 
 export function CustomerNotifications() {
   const { toast } = useToast();
@@ -52,23 +54,15 @@ export function CustomerNotifications() {
   const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Notificações</h1>
-          <p className="text-muted-foreground">
-            {unreadCount > 0
+    <PanelPage>
+      <PanelPageHeader icon={Bell} title="Notificações" description={unreadCount > 0
               ? `${unreadCount} ${unreadCount === 1 ? "atualização não lida" : "atualizações não lidas"}`
-              : "Você está em dia com suas atualizações"}
-          </p>
-        </div>
-        {unreadCount > 0 && (
+              : "Você está em dia com suas atualizações"} actions={unreadCount > 0 ? (
           <Button variant="outline" onClick={() => void handleMarkAllAsRead()}>
             <CheckCheck className="h-4 w-4" />
             Marcar todas como lidas
           </Button>
-        )}
-      </div>
+        ) : undefined} />
 
       {loading ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">Carregando notificações...</CardContent></Card>
@@ -97,6 +91,6 @@ export function CustomerNotifications() {
           ))}
         </div>
       )}
-    </div>
+    </PanelPage>
   );
 }
