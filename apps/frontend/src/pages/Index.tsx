@@ -22,8 +22,8 @@ const Index = () => (
     <main id={MAIN_CONTENT_ID} tabIndex={-1} className="landing-shell outline-none">
       <Hero />
       <Highlights />
-      <About />
       <Services />
+      <About />
       <Products />
       <Promotions />
       <Testimonials />
