@@ -20,7 +20,7 @@ const Products = () => {
   }
 
   return (
-    <section id="produtos" className="py-20 section-light">
+    <section id="produtos" className="border-y border-blue-100 bg-gradient-to-br from-blue-50 via-slate-50 to-white py-20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
@@ -39,7 +39,7 @@ const Products = () => {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-10">
           {products.map((product) => {
             const ProductIcon = resolveProductIcon(product.category, product.name);
             const imageUrl = toAssetUrl(product.images?.[0]);
@@ -72,7 +72,7 @@ const Products = () => {
             return (
               <div
                 key={product.id}
-                className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                className="group overflow-hidden rounded-xl border border-blue-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
               >
                 <div className="aspect-[4/3] border-b border-slate-200 bg-slate-50">
                   {imageUrl ? (

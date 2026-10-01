@@ -19,7 +19,7 @@ const Index = () => (
     <Navbar />
     {/* Um unico `main` por pagina: sem ele a landing deixava 132 nos fora de
         regiao nomeada (A-02) e o skip link nao tinha destino (A-05). */}
-    <main id={MAIN_CONTENT_ID} tabIndex={-1} className="outline-none">
+    <main id={MAIN_CONTENT_ID} tabIndex={-1} className="landing-shell outline-none">
       <Hero />
       <Highlights />
       <About />

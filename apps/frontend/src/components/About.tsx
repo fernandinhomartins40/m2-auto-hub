@@ -66,34 +66,34 @@ const About = () => {
   };
 
   return (
-    <section id="sobre" className="py-20 section-light">
+    <section id="sobre" className="bg-white py-20">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
-              {titlePrefix} <span className="text-primary">{titleHighlight}</span>
+        <div className="grid overflow-hidden rounded-2xl bg-primary shadow-2xl shadow-blue-950/10 md:grid-cols-2">
+          <div className="order-2 p-8 text-white md:order-2 md:p-12 lg:p-16">
+            <div className="mb-6 h-1 w-14 rounded-full bg-white/80" />
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-4">
+              {titlePrefix} <span className="text-white">{titleHighlight}</span>
             </h2>
-            <div className="w-20 h-1 bg-primary rounded-full mb-6" />
-            <p className="text-muted-foreground leading-relaxed text-lg">{description}</p>
+            <p className="text-white/80 leading-relaxed text-lg">{description}</p>
 
             {stats.length ? (
               <div className="grid grid-cols-2 gap-4 mt-8">
                 {stats.map((stat) => (
-                  <div key={stat.id} className="rounded-lg border border-primary/15 bg-secondary p-4">
-                    <div className="text-xl font-heading font-bold text-primary">
+                  <div key={stat.id} className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                    <div className="text-xl font-heading font-bold text-white">
                       {stat.number}
                     </div>
-                    <div className="text-sm text-secondary-foreground/70">{stat.label}</div>
+                    <div className="text-sm text-white/70">{stat.label}</div>
                   </div>
                 ))}
               </div>
             ) : null}
           </div>
-          <div className="relative">
+          <div className="relative order-1 min-h-80 md:order-1">
             <img
               src={sectionImage}
               alt={sectionImageAlt}
-              className="rounded-lg w-full h-80 blue-shadow"
+              className="absolute inset-0 h-full w-full"
               style={{ objectFit: sectionImageFit }}
             />
             {decorativeSquare.enabled ? (

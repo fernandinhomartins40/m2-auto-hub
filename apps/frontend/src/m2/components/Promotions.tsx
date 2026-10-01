@@ -339,9 +339,9 @@ const Promotions = () => {
   return (
     <section
       id="promocoes"
-      className="py-20"
+      className="relative overflow-hidden py-20"
       style={{
-        background: "linear-gradient(135deg, hsl(215 50% 23%), hsl(222 84% 5%))",
+        background: "radial-gradient(circle at 75% 20%, hsl(217 91% 28%), transparent 35%), linear-gradient(135deg, hsl(222 84% 8%), hsl(215 55% 15%))",
       }}
     >
       <div className="container mx-auto px-4">

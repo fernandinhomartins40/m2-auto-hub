@@ -22,10 +22,10 @@ const Services = () => {
   }
 
   return (
-    <section id="servicos" className="py-20 section-dark">
+    <section id="servicos" className="bg-slate-50 py-20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary-foreground mb-2">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-slate-950 mb-2">
             {section?.title ? (
               section.title
             ) : (
@@ -35,7 +35,7 @@ const Services = () => {
             )}
           </h2>
           <div className="w-20 h-1 bg-primary rounded-full mx-auto mb-4" />
-          <p className="text-secondary-foreground/60 max-w-2xl mx-auto">
+          <p className="text-slate-600 max-w-2xl mx-auto">
             {section?.subtitle ||
               "Atendimento tecnico especializado para mecanica leve, pesada e diesel."}
           </p>
@@ -53,7 +53,7 @@ const Services = () => {
             return (
               <div
                 key={service.id}
-                className="bg-secondary border border-primary/20 rounded-lg p-6 card-glow group"
+                className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
               >
                 <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-4 group-hover:bg-primary/25 transition-colors">
                   <ServiceIcon className="text-primary" size={24} />
@@ -63,13 +63,13 @@ const Services = () => {
                     {service.category}
                   </span>
                 </div>
-                <h3 className="font-heading font-bold text-xl text-secondary-foreground mb-2">
+                <h3 className="font-heading font-bold text-xl text-slate-950 mb-2">
                   {service.name}
                 </h3>
-                <p className="text-secondary-foreground/60 mb-4 text-sm min-h-12">
+                <p className="text-slate-600 mb-4 text-sm min-h-12">
                   {service.description}
                 </p>
-                <div className="mb-4 flex flex-wrap gap-2 text-xs text-secondary-foreground/60">
+                <div className="mb-4 flex flex-wrap gap-2 text-xs text-slate-500">
                   {service.estimatedTime ? (
                     <span className="rounded-full border border-primary/15 px-3 py-1">
                       {service.estimatedTime}
@@ -123,7 +123,7 @@ const Services = () => {
               return (
                 <div
                   key={indicator.id}
-                  className="rounded-lg border border-primary/15 bg-secondary/70 p-6 text-center"
+                    className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm"
                 >
                   <div
                     className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full"
@@ -131,10 +131,10 @@ const Services = () => {
                   >
                     <Icon className="text-white" size={24} />
                   </div>
-                  <h3 className="font-heading text-lg font-bold text-secondary-foreground">
+                  <h3 className="font-heading text-lg font-bold text-slate-950">
                     {indicator.title}
                   </h3>
-                  <p className="mt-2 text-sm text-secondary-foreground/65">
+                  <p className="mt-2 text-sm text-slate-600">
                     {indicator.description}
                   </p>
                 </div>

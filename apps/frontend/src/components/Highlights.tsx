@@ -37,26 +37,22 @@ const Highlights = () => {
   };
 
   return (
-    <section className="relative z-10 -mt-12 pb-8">
+    <section className="bg-primary text-white">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 md:grid-cols-4">
           {items.slice(0, 4).map((item) => {
             const Icon = resolveIcon(item.icon);
 
             return (
               <div
                 key={item.id}
-                className="card-glow flex flex-col items-center rounded-lg border border-primary/20 bg-secondary p-6 text-center"
+                className="flex min-h-28 items-center gap-4 border-white/20 px-4 py-6 text-left even:border-l md:border-l md:first:border-l-0"
               >
-                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-                  <Icon className="text-primary" size={28} />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                  <Icon className="text-white" size={23} />
                 </div>
-                <span className="font-heading text-sm font-bold text-secondary-foreground md:text-base">
-                  {item.title}
-                </span>
-                <span className="mt-1 text-xs text-secondary-foreground/60 md:text-sm">
-                  {getValue(item.valueType, item.customValue)}
-                </span>
+                <div><span className="block font-heading text-sm font-bold md:text-base">{item.title}</span>
+                <span className="mt-1 block text-xs text-white/75 md:text-sm">{getValue(item.valueType, item.customValue)}</span></div>
               </div>
             );
           })}
