@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BadgePercent, Clock3, Package2, TrendingDown } from "lucide-react";
+import { ArrowRight, BadgePercent, Clock3, Package2, TrendingDown } from "lucide-react";
 
 import { useStorefront } from "@/context/StorefrontContext";
 import {
@@ -318,6 +318,7 @@ const Promotions = () => {
     useStorefront();
   const section = landingConfig.services;
   const marqueeItems = landingConfig.marquee?.items ?? [];
+  const [activePeriod, setActivePeriod] = useState<"daily" | "weekly" | "monthly">("daily");
 
   const nextDailyExpiration = useMemo(() => {
     if (!dailyOffers.length) {
@@ -331,6 +332,14 @@ const Promotions = () => {
 
   const countdown = useCountdown(nextDailyExpiration);
   const hasStructuredOffers = dailyOffers.length || weeklyOffers.length || monthlyOffers.length;
+  const activeOffers =
+    activePeriod === "daily"
+      ? dailyOffers
+      : activePeriod === "weekly"
+        ? weeklyOffers
+        : monthlyOffers;
+  const periodLabel =
+    activePeriod === "daily" ? "do dia" : activePeriod === "weekly" ? "da semana" : "do mês";
 
   if (section?.enabled === false) {
     return null;
@@ -339,55 +348,90 @@ const Promotions = () => {
   return (
     <section
       id="promocoes"
-      className="relative overflow-hidden py-20"
+      className="relative overflow-hidden py-12"
       style={{
         background: "radial-gradient(circle at 75% 20%, hsl(217 91% 28%), transparent 35%), linear-gradient(135deg, hsl(222 84% 8%), hsl(215 55% 15%))",
       }}
     >
       <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
-          <h2 className="mb-2 text-3xl font-heading font-bold text-secondary-foreground md:text-4xl">
-            {section?.title ? (
-              section.title
-            ) : (
-              <>
-                Promoções <span className="text-primary">ativas</span>
-              </>
-            )}
-          </h2>
-          <p className="text-secondary-foreground/60">
-            {section?.subtitle || "Acompanhe nossas ofertas do dia, da semana e do mês."}
-          </p>
+        <div className="mb-8 flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="mb-4 h-1 w-14 rounded-full bg-primary" />
+            <h2 className="font-heading text-3xl font-bold text-white md:text-4xl">Promoções</h2>
+            <p className="mt-1 text-white/60">
+              {hasStructuredOffers
+                ? `Confira as ofertas ${periodLabel}.`
+                : "Nenhuma promoção ativa no momento."}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3" role="tablist" aria-label="Período das promoções">
+            {([
+              ["daily", "Do dia"],
+              ["weekly", "Da semana"],
+              ["monthly", "Do mês"],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={activePeriod === value}
+                onClick={() => setActivePeriod(value)}
+                className={`min-h-11 rounded-lg border px-6 font-heading text-sm font-bold transition-all ${
+                  activePeriod === value
+                    ? "border-primary bg-primary text-white shadow-lg shadow-blue-600/25"
+                    : "border-white/15 bg-white/5 text-white/75 hover:border-primary/60 hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            <a
+              href={buildWhatsAppHref(settings.whatsapp || settings.phone)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-3 rounded-lg border border-primary/70 px-6 font-heading text-sm font-bold text-white transition-colors hover:bg-primary"
+            >
+              Consultar promoções
+              <ArrowRight size={16} />
+            </a>
+          </div>
         </div>
 
-        <OfferGroup
-          title="Ofertas do Dia"
-          subtitle="Condições válidas por tempo limitado."
-          icon={Clock3}
-          offers={dailyOffers}
-          whatsappNumber={settings.whatsapp || settings.phone}
-          countdown={nextDailyExpiration ? countdown : undefined}
-        />
+        {activePeriod === "daily" && nextDailyExpiration && activeOffers.length ? (
+          <div className="mb-5 inline-flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70">
+            <Clock3 className="text-primary" size={17} />
+            Termina em
+            <strong className="font-heading text-white">
+              {countdown.hours}:{countdown.minutes}:{countdown.seconds}
+            </strong>
+          </div>
+        ) : null}
 
-        <OfferGroup
-          title="Ofertas da Semana"
-          subtitle="Seleção especial para os próximos dias."
-          icon={TrendingDown}
-          offers={weeklyOffers}
-          whatsappNumber={settings.whatsapp || settings.phone}
-        />
-
-        <OfferGroup
-          title="Ofertas do Mes"
-          subtitle="Kits e condições de maior economia para aproveitar no período."
-          icon={Package2}
-          offers={monthlyOffers}
-          whatsappNumber={settings.whatsapp || settings.phone}
-          accent="gold"
-        />
+        {activeOffers.length ? (
+          <div
+            role="tabpanel"
+            className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-8"
+          >
+            {activeOffers.map((offer) => (
+              <div key={offer.id} className="w-[82vw] max-w-sm shrink-0 snap-start sm:w-80">
+                <OfferCard offer={offer} whatsappNumber={settings.whatsapp || settings.phone} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div role="tabpanel" className="mb-8 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
+            <p className="font-heading text-lg font-bold text-white">
+              Nenhuma oferta {periodLabel} no momento
+            </p>
+            <p className="mt-1 text-sm text-white/55">
+              Novas condições aparecerão aqui assim que forem publicadas pelo painel.
+            </p>
+          </div>
+        )}
 
         {promotions.length > 0 ? (
-          <div className="mb-12 rounded-2xl border border-white/20 bg-white/95 p-6 md:p-8">
+          <div className="mb-8 rounded-2xl border border-white/20 bg-white/95 p-6 md:p-8">
             <div className="mb-8 flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
                 <BadgePercent className="text-primary" size={28} />
@@ -402,13 +446,14 @@ const Promotions = () => {
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="scrollbar-hide flex gap-5 overflow-x-auto pb-3">
               {promotions.map((promotion) => (
-                <PromotionCard
-                  key={promotion.id}
-                  promotion={promotion}
-                  whatsappNumber={settings.whatsapp || settings.phone}
-                />
+                <div key={promotion.id} className="w-[82vw] max-w-sm shrink-0">
+                  <PromotionCard
+                    promotion={promotion}
+                    whatsappNumber={settings.whatsapp || settings.phone}
+                  />
+                </div>
               ))}
             </div>
           </div>
