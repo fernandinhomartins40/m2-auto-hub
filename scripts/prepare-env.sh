@@ -20,6 +20,21 @@ upsert_env() {
 }
 ensure_env() { local c; c="$(get_env "$1"|tr -d '\r')"; if [ -z "$c" ]; then upsert_env "$1" "$2"; fi; }
 ensure_hex() { local c; c="$(get_env "$1"|tr -d '\r')"; if [ -z "$c" ]; then upsert_env "$1" "$(openssl rand -hex "$2")"; fi; }
+ensure_strong_admin_password() {
+  local current
+  current="$(get_env DEFAULT_ADMIN_PASSWORD | tr -d '\r')"
+
+  if [ "${#current}" -lt 12 ] || [ "$current" = "Test123!" ]; then
+    # Instalacoes anteriores usavam uma senha curta/conhecida. Rotacionar o
+    # segredo e solicitar um unico resync deixa o bootstrap seguro e preserva
+    # acesso administrativo sem imprimir a credencial no log do deploy.
+    upsert_env DEFAULT_ADMIN_PASSWORD "$(openssl rand -hex 16)"
+    upsert_env ADMIN_PASSWORD_RESYNC true
+    echo "DEFAULT_ADMIN_PASSWORD legado foi rotacionado; resync administrativo agendado"
+  else
+    ensure_env ADMIN_PASSWORD_RESYNC false
+  fi
+}
 
 ensure_env  POSTGRES_USER     m2
 ensure_env  POSTGRES_DB       m2_auto_hub
@@ -64,7 +79,7 @@ ensure_env  SEED_DEMO_DATA  false
 #   docker compose up -d --force-recreate backend
 # Depois de entrar, remova a linha ADMIN_PASSWORD_RESYNC: mantida ligada, ela
 # faz todo deploy desfazer a senha trocada pelo painel.
-ensure_hex  DEFAULT_ADMIN_PASSWORD 16
+ensure_strong_admin_password
 
 # MARKETPLACE_ENC_KEY e opcional no schema e cai no JWT_SECRET (environment.ts).
 # Esse fallback faz a MESMA chave assinar tokens e cifrar segredos de marketplace:

@@ -114,6 +114,16 @@ compose_timeout 10m run --rm migrator
 log "Bootstrapping data (seed essencial)"
 compose_timeout 4m run --rm bootstrap
 
+# ADMIN_PASSWORD_RESYNC e um acionador de uso unico. Se a preparacao detectou
+# uma senha legada (ou o operador pediu recuperacao), o bootstrap acima ja a
+# aplicou; desliga-la imediatamente evita sobrescrever uma futura troca feita
+# pelo painel em todos os deploys seguintes.
+for target_env in "$ROOT_ENV" "$ENV_FILE"; do
+  if grep -q '^ADMIN_PASSWORD_RESYNC=true$' "$target_env"; then
+    sed -i 's/^ADMIN_PASSWORD_RESYNC=true$/ADMIN_PASSWORD_RESYNC=false/' "$target_env"
+  fi
+done
+
 log "Starting alpr"
 compose up -d --no-build --no-deps alpr
 wait_healthy alpr 18 5
