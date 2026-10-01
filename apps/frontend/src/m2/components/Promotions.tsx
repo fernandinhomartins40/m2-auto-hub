@@ -77,7 +77,7 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
       : null;
   const whatsappLink = buildWhatsAppHref(
     whatsappNumber,
-    `Ola! Quero aproveitar a oferta ${offer.name}.`
+    `Olá! Quero aproveitar a oferta ${offer.name}.`
   );
 
   return (
@@ -133,7 +133,7 @@ function OfferCard({ offer, whatsappNumber }: { offer: StorefrontOffer; whatsapp
             </>
           ) : (
             <p className="text-sm font-medium text-slate-600">
-              Consulte as condicoes comerciais desta campanha.
+              Consulte as condições comerciais desta campanha.
             </p>
           )}
         </div>
@@ -215,7 +215,7 @@ function OfferGroup({
             Nenhuma oferta ativa nesta faixa
           </p>
           <p className="mt-2 text-sm text-slate-600">
-            Assim que houver campanhas publicadas no backend para este periodo, elas aparecerao aqui.
+            Assim que houver campanhas publicadas no sistema para este período, elas aparecerão aqui.
           </p>
         </div>
       )}
@@ -255,7 +255,7 @@ function PromotionCard({
   const endDate = promotion.schedule?.endDate || promotion.endDate;
   const whatsappLink = buildWhatsAppHref(
     whatsappNumber,
-    `Ola! Quero saber mais sobre a promocao ${promotion.name}.`
+    `Olá! Quero saber mais sobre a promoção ${promotion.name}.`
   );
 
   return (
@@ -306,7 +306,7 @@ function PromotionCard({
           rel="noopener noreferrer"
           className="block rounded-md bg-primary px-6 py-3 text-center font-heading font-bold text-primary-foreground transition-all hover:scale-105 hover:bg-primary/90"
         >
-          Consultar Promocao
+          Consultar promoção
         </a>
       </div>
     </div>
@@ -351,18 +351,18 @@ const Promotions = () => {
               section.title
             ) : (
               <>
-                Promocoes <span className="text-primary">Ativas</span>
+                Promoções <span className="text-primary">ativas</span>
               </>
             )}
           </h2>
           <p className="text-secondary-foreground/60">
-            {section?.subtitle || "Acompanhe nossas ofertas do dia, da semana e do mes."}
+            {section?.subtitle || "Acompanhe nossas ofertas do dia, da semana e do mês."}
           </p>
         </div>
 
         <OfferGroup
           title="Ofertas do Dia"
-          subtitle="Condicoes validas por tempo limitado."
+          subtitle="Condições válidas por tempo limitado."
           icon={Clock3}
           offers={dailyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
@@ -371,7 +371,7 @@ const Promotions = () => {
 
         <OfferGroup
           title="Ofertas da Semana"
-          subtitle="Selecao especial para os proximos dias."
+          subtitle="Seleção especial para os próximos dias."
           icon={TrendingDown}
           offers={weeklyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
@@ -379,7 +379,7 @@ const Promotions = () => {
 
         <OfferGroup
           title="Ofertas do Mes"
-          subtitle="Kits e condicoes de maior economia para aproveitar no periodo."
+          subtitle="Kits e condições de maior economia para aproveitar no período."
           icon={Package2}
           offers={monthlyOffers}
           whatsappNumber={settings.whatsapp || settings.phone}
@@ -394,10 +394,10 @@ const Promotions = () => {
               </div>
               <div>
                 <h3 className="font-heading text-2xl font-bold text-slate-900">
-                  Campanhas e Promocoes
+                  Campanhas e promoções
                 </h3>
                 <p className="text-sm text-slate-600">
-                  Promocoes configuradas no painel e disponiveis para consulta na loja.
+                  Promoções configuradas no painel e disponíveis para consulta na loja.
                 </p>
               </div>
             </div>
@@ -417,10 +417,10 @@ const Promotions = () => {
         {!hasStructuredOffers && promotions.length === 0 ? (
           <div className="mb-12 rounded-xl border border-primary/20 bg-secondary/70 p-8 text-center">
             <h3 className="mb-2 font-heading text-2xl font-bold text-secondary-foreground">
-              Nenhuma promocao ativa no momento
+              Nenhuma promoção ativa no momento
             </h3>
             <p className="mb-6 text-secondary-foreground/60">
-              Entre em contato e consulte as melhores condicoes para o seu servico ou produto.
+              Entre em contato e consulte as melhores condições para o seu serviço ou produto.
             </p>
             <a
               href={buildWhatsAppHref(settings.whatsapp || settings.phone)}
@@ -428,7 +428,7 @@ const Promotions = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-8 py-4 text-lg font-heading font-bold text-primary-foreground transition-all blue-shadow hover:scale-105 hover:bg-primary/90"
             >
-              Consultar Promocoes
+              Consultar promoções
             </a>
           </div>
         ) : null}
@@ -454,7 +454,7 @@ const Promotions = () => {
             ) : (
               <>
                 <span className="mx-8 text-sm font-heading font-semibold text-primary">
-                  Promocoes validas enquanto durarem os estoques
+                  Promoções válidas enquanto durarem os estoques
                 </span>
                 <span className="mx-8 text-sm text-secondary-foreground/70">
                   Fale com a equipe para conferir disponibilidade

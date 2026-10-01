@@ -45,10 +45,10 @@ const About = () => {
   }
 
   const titlePrefix = aboutPage?.heroTitle || "Mais de 14 anos";
-  const titleHighlight = aboutPage?.heroHighlight || "cuidando do seu veiculo";
+  const titleHighlight = aboutPage?.heroHighlight || "cuidando do seu veículo";
   const description =
     aboutPage?.heroSubtitle ||
-    "A M2 Auto Center nasceu em Palmital com um proposito claro: oferecer pecas de qualidade e servicos confiaveis em um so lugar.";
+    "A M2 Auto Center nasceu em Palmital com um propósito claro: oferecer peças de qualidade e serviços confiáveis em um só lugar.";
   const stats = aboutPage?.stats?.slice(0, 4) ?? [];
   const sectionImage = toAssetUrl(aboutPage?.sectionImage?.url) || aboutImg;
   const sectionImageAlt = aboutPage?.sectionImage?.alt || "Equipe trabalhando na oficina";

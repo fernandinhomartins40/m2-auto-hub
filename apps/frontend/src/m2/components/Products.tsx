@@ -35,7 +35,7 @@ const Products = () => {
           <div className="w-20 h-1 bg-primary rounded-full mx-auto mb-4" />
           <p className="text-muted-foreground max-w-2xl mx-auto">
             {section?.subtitle ||
-              "Trabalhamos com as melhores marcas do mercado para garantir qualidade e durabilidade para o seu veiculo."}
+              "Trabalhamos com as melhores marcas do mercado para garantir qualidade e durabilidade para o seu veículo."}
           </p>
         </div>
 
@@ -66,7 +66,7 @@ const Products = () => {
               product.status !== "INACTIVE";
             const whatsappLink = buildWhatsAppHref(
               settings.whatsapp || settings.phone,
-              `Ola! Quero saber mais sobre o produto ${product.name}.`
+              `Olá! Quero saber mais sobre o produto ${product.name}.`
             );
 
             return (

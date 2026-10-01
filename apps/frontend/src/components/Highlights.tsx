@@ -13,10 +13,10 @@ const Highlights = () => {
     section?.items?.length
       ? section.items
       : [
-          { id: "1", icon: "Package", title: "Catalogo Integrado", valueType: "products" as const },
-          { id: "2", icon: "Wrench", title: "Servicos Ativos", valueType: "services" as const },
-          { id: "3", icon: "BadgePercent", title: "Promocoes no Ar", valueType: "promotions" as const },
-          { id: "4", icon: "MessageCircle", title: "Atendimento Rapido", valueType: "whatsapp" as const },
+          { id: "1", icon: "Package", title: "Catálogo integrado", valueType: "products" as const },
+          { id: "2", icon: "Wrench", title: "Serviços ativos", valueType: "services" as const },
+          { id: "3", icon: "BadgePercent", title: "Promoções no ar", valueType: "promotions" as const },
+          { id: "4", icon: "MessageCircle", title: "Atendimento rápido", valueType: "whatsapp" as const },
         ];
 
   const getValue = (valueType?: string, customValue?: string) => {
@@ -24,7 +24,7 @@ const Highlights = () => {
       case "products":
         return `${productsCount} produtos`;
       case "services":
-        return `${servicesCount} servicos`;
+        return `${servicesCount} serviços`;
       case "promotions":
         return `${offers.length || promotions.length} ofertas`;
       case "whatsapp":

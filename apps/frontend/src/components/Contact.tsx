@@ -34,9 +34,9 @@ const Contact = () => {
     event.preventDefault();
 
     const message = [
-      `Ola! Meu nome e ${form.nome}.`,
+      `Olá! Meu nome é ${form.nome}.`,
       `Telefone: ${form.telefone}.`,
-      form.servico ? `Servico de interesse: ${form.servico}.` : "",
+      form.servico ? `Serviço de interesse: ${form.servico}.` : "",
       form.mensagem,
     ]
       .filter(Boolean)
@@ -62,7 +62,7 @@ const Contact = () => {
           <div className="w-20 h-1 bg-primary rounded-full mx-auto mb-4" />
           <p className="text-muted-foreground max-w-2xl mx-auto">
             {section?.formSubtitle ||
-              "Conte o que voce precisa e seguimos com o atendimento pelo WhatsApp."}
+              "Conte o que você precisa e seguimos com o atendimento pelo WhatsApp."}
           </p>
         </div>
 
@@ -150,7 +150,7 @@ const Contact = () => {
               onChange={(event) => setForm({ ...form, servico: event.target.value })}
               className="w-full px-4 py-3 rounded-md border border-border bg-background text-foreground font-body focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="">Tipo de Servico</option>
+              <option value="">Tipo de serviço</option>
               {contactServiceOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}

@@ -59,7 +59,7 @@ const Footer = () => {
             ) : null}
             <p className="text-secondary-foreground/50 text-sm mb-4">
               {footer?.description ||
-                "Tudo que seu carro precisa, voce encontra aqui."}
+                "Tudo que seu carro precisa, você encontra aqui."}
             </p>
             {visibleAddressLines.length ? (
               <p className="text-secondary-foreground/60 text-sm">{visibleAddressLines.join(" | ")}</p>

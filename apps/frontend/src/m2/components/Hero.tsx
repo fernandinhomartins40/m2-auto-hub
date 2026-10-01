@@ -18,7 +18,7 @@ const Hero = () => {
 
   const backgroundImage = toAssetUrl(hero?.backgroundImage?.url) || heroBg;
   const buttons = (hero?.buttons ?? []).filter((button) => button.enabled !== false);
-  const storeName = settings.storeName || "M2 Auto Pecas & Auto Center";
+  const storeName = settings.storeName || "M2 Auto Peças & Auto Center";
 
   const handleAnchorClick = (href: string) => {
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
@@ -35,14 +35,14 @@ const Hero = () => {
             </span>
             <h1 className="mb-6 font-heading text-5xl font-bold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl xl:text-7xl">
               {hero?.title || "Tudo que seu carro precisa,"}{" "}
-              <span className="text-primary">{hero?.subtitle || "voce encontra aqui."}</span>
+              <span className="text-primary">{hero?.subtitle || "você encontra aqui."}</span>
             </h1>
             <p className="mb-6 max-w-xl text-lg leading-relaxed text-slate-600">
-              {hero?.description || "Auto Pecas + Auto Center em Palmital/PR. Atendimento especializado em mecanica leve, pesada e diesel."}
+              {hero?.description || "Auto Peças + Auto Center em Palmital/PR. Atendimento especializado em mecânica leve, pesada e diesel."}
             </p>
             <div className="mb-8 flex items-center gap-2 text-sm font-semibold text-slate-600">
               <MapPin size={18} className="text-primary" />
-              Atendimento local, pecas e servicos especializados
+              Atendimento local, peças e serviços especializados
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               {buttons.slice(0, 3).map((button, index) => {
@@ -72,7 +72,7 @@ const Hero = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/25 via-transparent to-primary/10" />
           <div className="absolute bottom-7 right-7 rounded-xl border border-white/25 bg-slate-950/70 px-5 py-4 text-white backdrop-blur-md">
             <strong className="block font-heading text-lg">Qualidade em cada detalhe</strong>
-            <span className="text-sm text-white/70">Do diagnostico a peca certa.</span>
+            <span className="text-sm text-white/70">Do diagnóstico à peça certa.</span>
           </div>
         </div>
       </div>
