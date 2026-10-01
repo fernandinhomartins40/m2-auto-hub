@@ -26,21 +26,21 @@ const Hero = () => {
 
   return (
     <section id="inicio" className="overflow-hidden bg-white pt-16">
-      <div className="grid min-h-[650px] lg:grid-cols-[48%_52%]">
-        <div className="relative z-10 flex items-center px-6 py-16 sm:px-10 lg:px-[max(2.5rem,calc((100vw-1280px)/2))] lg:pr-12">
+      <div className="grid lg:min-h-[500px] lg:grid-cols-[48%_52%]">
+        <div className="relative z-10 flex items-center px-6 py-10 sm:px-10 lg:px-[max(2.5rem,calc((100vw-1280px)/2))] lg:py-12 lg:pr-12">
           <div className="max-w-2xl animate-fade-up">
-            <div className="mb-7 h-1 w-16 rounded-full bg-primary" />
+            <div className="mb-5 h-1 w-14 rounded-full bg-primary" />
             <span className="mb-4 block font-heading text-sm font-bold uppercase tracking-[0.18em] text-primary">
               {storeName}
             </span>
-            <h1 className="mb-6 font-heading text-5xl font-bold leading-[0.95] tracking-tight text-slate-950 sm:text-6xl xl:text-7xl">
+            <h1 className="mb-5 font-heading text-4xl font-bold leading-[0.97] tracking-tight text-slate-950 sm:text-5xl xl:text-6xl">
               {hero?.title || "Tudo que seu carro precisa,"}{" "}
               <span className="text-primary">{hero?.subtitle || "você encontra aqui."}</span>
             </h1>
-            <p className="mb-6 max-w-xl text-lg leading-relaxed text-slate-600">
+            <p className="mb-4 max-w-xl text-base leading-relaxed text-slate-600 lg:text-lg">
               {hero?.description || "Auto Peças + Auto Center em Palmital/PR. Atendimento especializado em mecânica leve, pesada e diesel."}
             </p>
-            <div className="mb-8 flex items-center gap-2 text-sm font-semibold text-slate-600">
+            <div className="mb-6 flex items-center gap-2 text-sm font-semibold text-slate-600">
               <MapPin size={18} className="text-primary" />
               Atendimento local, peças e serviços especializados
             </div>
@@ -57,13 +57,13 @@ const Hero = () => {
               })}
             </div>
             {hero?.features?.length ? (
-              <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-200 pt-6">
+              <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-200 pt-5">
                 {hero.features.slice(0, 4).map((feature) => <span key={feature.id} className="text-sm font-semibold text-slate-600">• {feature.text}</span>)}
               </div>
             ) : null}
           </div>
         </div>
-        <div className="relative min-h-[420px] overflow-hidden lg:min-h-full">
+        <div className="relative min-h-[340px] overflow-hidden lg:min-h-full">
         <img
           src={backgroundImage}
           alt={hero?.backgroundImage?.alt || storeName}
