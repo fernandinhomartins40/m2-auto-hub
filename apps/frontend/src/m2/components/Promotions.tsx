@@ -357,11 +357,13 @@ const Promotions = () => {
         <div className="mb-8 flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="mb-4 h-1 w-14 rounded-full bg-primary" />
-            <h2 className="font-heading text-3xl font-bold text-white md:text-4xl">Promoções</h2>
+            <h2 className="font-heading text-3xl font-bold text-white md:text-4xl">
+              {section?.title || "Promoções"}
+            </h2>
             <p className="mt-1 text-white/60">
-              {hasStructuredOffers
+              {section?.subtitle || (hasStructuredOffers
                 ? `Confira as ofertas ${periodLabel}.`
-                : "Nenhuma promoção ativa no momento."}
+                : "Nenhuma promoção ativa no momento.")}
             </p>
           </div>
 

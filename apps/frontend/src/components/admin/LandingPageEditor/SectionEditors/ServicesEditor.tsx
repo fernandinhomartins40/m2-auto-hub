@@ -47,23 +47,17 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
       </Card>
 
       <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold">Textos da Secao</h3>
+        <h3 className="text-lg font-semibold">Texto de apoio</h3>
+        <p className="text-sm text-muted-foreground">
+          O título “Do cuidado à peça certa.” faz parte do layout aprovado.
+        </p>
 
         <div className="space-y-2">
-          <Label>Titulo</Label>
-          <Input
-            value={config.title}
-            onChange={(e) => updateConfig({ title: e.target.value })}
-            placeholder="Nossos Serviços"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Subtitulo</Label>
+          <Label>Subtítulo</Label>
           <Textarea
             value={config.subtitle}
             onChange={(e) => updateConfig({ subtitle: e.target.value })}
-            placeholder="Oferecemos uma gama completa de servicos automotivos..."
+            placeholder="Conte com a M2 para cuidar do seu veículo."
             rows={3}
           />
         </div>
@@ -71,7 +65,7 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
 
       <Card className="p-6">
         <ArrayEditor<TrustIndicator>
-          label="Indicadores de Confianca"
+          label="Diferenciais"
           items={config.trustIndicators}
           onChange={(trustIndicators) => updateConfig({ trustIndicators })}
           createNew={() => ({
@@ -131,8 +125,8 @@ export const ServicesEditor = ({ config, onChange }: ServicesEditorProps) => {
               </div>
             </div>
           )}
-          description="Cards exibidos abaixo da lista de servicos da landing."
-          maxItems={6}
+          description="Os quatro primeiros itens aparecem em linhas nesta seção; os três primeiros também aparecem no bloco institucional."
+          maxItems={4}
         />
       </Card>
 

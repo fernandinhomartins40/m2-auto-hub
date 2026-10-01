@@ -1,7 +1,3 @@
-/**
- * AboutEditor - Editor da seção Sobre da Home
- */
-
 import { Eye, Info } from 'lucide-react';
 
 import About from '@/components/About';
@@ -11,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { AboutConfig, AboutStat } from '@/types/landingPage';
-import { ArrayEditor, ColorPicker, ImageUploaderWithCrop, SliderControl } from '../StyleControls';
+import type { AboutConfig } from '@/types/landingPage';
+import { ImageUploaderWithCrop } from '../StyleControls';
 import { PreviewProviders } from './PreviewProviders';
 
 interface AboutEditorProps {
@@ -21,37 +17,16 @@ interface AboutEditorProps {
 }
 
 export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
-  const updateConfig = (updates: Partial<AboutConfig>) => {
-    onChange({ ...config, ...updates });
-  };
-
-  const updateDecorativeSquare = (updates: Partial<AboutConfig['decorativeSquare']>) => {
-    updateConfig({
-      decorativeSquare: {
-        ...config.decorativeSquare,
-        ...updates,
-      },
-    });
-  };
-
-  if (!config) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="text-center text-gray-500">
-          <p>Carregando configuracao...</p>
-        </div>
-      </div>
-    );
-  }
+  const updateConfig = (updates: Partial<AboutConfig>) => onChange({ ...config, ...updates });
 
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <Label>Secao Ativa</Label>
+            <Label>Seção ativa</Label>
             <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar a seção "Mais de 14 anos cuidando do seu veículo" na landing
+              Exibe o bloco horizontal com imagem e painel azul institucional.
             </p>
           </div>
           <Switch
@@ -61,219 +36,77 @@ export const AboutEditor = ({ config, onChange }: AboutEditorProps) => {
         </div>
       </Card>
 
-      <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold">Conteudo da Secao</h3>
-        <p className="text-sm text-muted-foreground">
-          Estes sao os campos usados pelo bloco publico da home.
-        </p>
-
-        <div className="space-y-2">
-          <Label>Titulo inicial</Label>
-          <Input
-            value={config.heroTitle || ''}
-            onChange={(e) => updateConfig({ heroTitle: e.target.value })}
-            placeholder="Mais de 14 anos"
-          />
+      <Card className="space-y-4 p-6">
+        <div>
+          <h3 className="text-lg font-semibold">Conteúdo institucional</h3>
+          <p className="text-sm text-muted-foreground">
+            Estes textos aparecem no painel azul à direita da imagem.
+          </p>
         </div>
-
-        <div className="space-y-2">
-          <Label>Destaque em azul</Label>
-          <Input
-            value={config.heroHighlight || ''}
-            onChange={(e) => updateConfig({ heroHighlight: e.target.value })}
-            placeholder="cuidando do seu veiculo"
-          />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Início do título</Label>
+            <Input
+              value={config.heroTitle || ''}
+              onChange={(event) => updateConfig({ heroTitle: event.target.value })}
+              placeholder="Há mais de 14 anos"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Complemento do título</Label>
+            <Input
+              value={config.heroHighlight || ''}
+              onChange={(event) => updateConfig({ heroHighlight: event.target.value })}
+              placeholder="cuidando do seu veículo."
+            />
+          </div>
         </div>
-
         <div className="space-y-2">
-          <Label>Descrição</Label>
+          <Label>Subtítulo</Label>
           <Textarea
             value={config.heroSubtitle || ''}
-            onChange={(e) => updateConfig({ heroSubtitle: e.target.value })}
-            placeholder="A M2 Auto Center nasceu em Palmital com um proposito claro..."
+            onChange={(event) => updateConfig({ heroSubtitle: event.target.value })}
+            placeholder="Peças de qualidade e serviços de confiança, em um só lugar."
             rows={3}
           />
         </div>
       </Card>
 
-      <Card className="p-6">
-        <ArrayEditor<AboutStat>
-          label="Cards de Estatisticas"
-          items={config.stats || []}
-          onChange={(stats) => updateConfig({ stats })}
-          createNew={() => ({
-            id: Date.now().toString(),
-            number: '0+',
-            label: 'Nova Estatistica',
-          })}
-          getItemLabel={(item) => `${item.number} - ${item.label}`}
-          renderItem={(item, _, update) => (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Numero</Label>
-                <Input
-                  value={item.number}
-                  onChange={(e) => update({ number: e.target.value })}
-                  placeholder="14+"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Label</Label>
-                <Input
-                  value={item.label}
-                  onChange={(e) => update({ label: e.target.value })}
-                  placeholder="Anos de Experiencia"
-                />
-              </div>
-            </div>
-          )}
-          description="A seção pública exibe até 4 cards."
-          maxItems={4}
-        />
-      </Card>
-
-      <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold">Imagem da Secao</h3>
+      <Card className="space-y-4 p-6">
+        <h3 className="text-lg font-semibold">Imagem do lado esquerdo</h3>
         <ImageUploaderWithCrop
-          label="Imagem lateral"
+          label="Imagem da oficina"
           value={config.sectionImage}
           onChange={(sectionImage) => updateConfig({ sectionImage })}
-          description="Imagem exibida ao lado direito da seção Sobre da Home"
-          recommendedWidth={900}
+          description="Use uma imagem horizontal. Ela ocupará toda a metade esquerda do bloco."
+          recommendedWidth={960}
           recommendedHeight={640}
-          aspectRatio={900 / 640}
+          aspectRatio={3 / 2}
           maxFileSizeMB={5}
           category="about-home"
         />
       </Card>
 
-      <Card className="p-6 space-y-4">
-        <div>
-          <h3 className="text-lg font-semibold">Quadrado Decorativo</h3>
-          <p className="text-sm text-muted-foreground">
-            Ajuste o detalhe visual exibido no canto inferior esquerdo da imagem.
+      <Card className="border-blue-200 bg-blue-50 p-5">
+        <div className="flex items-start gap-3">
+          <Info className="mt-0.5 h-5 w-5 text-blue-700" />
+          <p className="text-sm text-blue-900">
+            Os três diferenciais exibidos na base deste bloco são editados em
+            <strong> Cuidado à peça → Diferenciais</strong>.
           </p>
         </div>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Quadrado ativo</Label>
-            <p className="text-sm text-muted-foreground">
-              Exibir ou ocultar o quadrado decorativo.
-            </p>
-          </div>
-          <Switch
-            checked={config.decorativeSquare?.enabled ?? true}
-            onCheckedChange={(enabled) => updateDecorativeSquare({ enabled })}
-          />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <ColorPicker
-            label="Cor da borda"
-            value={config.decorativeSquare?.borderColor || '#2563eb'}
-            onChange={(borderColor) => updateDecorativeSquare({ borderColor })}
-          />
-
-          <ColorPicker
-            label="Cor de fundo"
-            value={config.decorativeSquare?.backgroundColor || '#ffffff'}
-            onChange={(backgroundColor) => updateDecorativeSquare({ backgroundColor })}
-          />
-        </div>
-
-        <SliderControl
-          label="Opacidade do fundo"
-          value={config.decorativeSquare?.backgroundOpacity ?? 100}
-          onChange={(backgroundOpacity) => updateDecorativeSquare({ backgroundOpacity })}
-          min={0}
-          max={100}
-          unit="%"
-          description="Use 0% para deixar apenas o tracado da borda."
-        />
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <SliderControl
-            label="Tamanho"
-            value={config.decorativeSquare?.size ?? 96}
-            onChange={(size) => updateDecorativeSquare({ size })}
-            min={32}
-            max={180}
-            unit="px"
-          />
-
-          <SliderControl
-            label="Espessura da borda"
-            value={config.decorativeSquare?.borderWidth ?? 4}
-            onChange={(borderWidth) => updateDecorativeSquare({ borderWidth })}
-            min={1}
-            max={16}
-            unit="px"
-          />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <SliderControl
-            label="Canto arredondado"
-            value={config.decorativeSquare?.borderRadius ?? 12}
-            onChange={(borderRadius) => updateDecorativeSquare({ borderRadius })}
-            min={0}
-            max={48}
-            unit="px"
-          />
-          <div />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <SliderControl
-            label="Deslocamento horizontal"
-            value={config.decorativeSquare?.offsetX ?? -16}
-            onChange={(offsetX) => updateDecorativeSquare({ offsetX })}
-            min={-120}
-            max={120}
-            unit="px"
-          />
-
-          <SliderControl
-            label="Deslocamento vertical"
-            value={config.decorativeSquare?.offsetY ?? -16}
-            onChange={(offsetY) => updateDecorativeSquare({ offsetY })}
-            min={-120}
-            max={120}
-            unit="px"
-          />
-        </div>
       </Card>
 
-      <Card className="p-6 bg-blue-50 border-blue-200">
-        <div className="flex items-start gap-3">
-          <div className="bg-blue-500 text-white p-2 rounded-full">
-            <Info className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-blue-900 mb-1">Escopo desta aba</h4>
-            <p className="text-sm text-blue-800">
-              Esta aba controla a seção Sobre da home: textos, cards, imagem lateral e o quadrado decorativo.
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-moria-orange/5 to-gold-accent/5 border-moria-orange/20">
+      <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center space-x-2">
-              <Eye className="h-5 w-5 text-moria-orange" />
-              <CardTitle>Preview da Secao Sobre da Home</CardTitle>
+            <div className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              <CardTitle>Prévia do bloco institucional</CardTitle>
             </div>
-            <Badge className="bg-green-100 text-green-800">
-              <div className="h-2 w-2 bg-green-600 rounded-full mr-2"></div>
-              Atualizacao em tempo real
-            </Badge>
+            <Badge className="bg-green-100 text-green-800">Atualização em tempo real</Badge>
           </div>
-          <CardDescription>
-            Preview usando a mesma estrutura real da landing publica
-          </CardDescription>
+          <CardDescription>Mesma estrutura horizontal usada na landing page.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-lg border bg-background">

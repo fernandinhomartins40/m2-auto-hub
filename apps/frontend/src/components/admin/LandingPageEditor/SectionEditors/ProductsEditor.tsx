@@ -6,7 +6,6 @@ import { Eye } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,23 +38,17 @@ export const ProductsEditor = ({ config, onChange }: ProductsEditorProps) => {
       </Card>
 
       <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold">Textos da Secao</h3>
+        <h3 className="text-lg font-semibold">Texto de apoio</h3>
+        <p className="text-sm text-muted-foreground">
+          O título “Encontre a peça que você precisa.” faz parte do layout aprovado.
+        </p>
 
         <div className="space-y-2">
-          <Label>Titulo</Label>
-          <Input
-            value={config.title}
-            onChange={(e) => updateConfig({ title: e.target.value })}
-            placeholder="Nossos Produtos"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Subtitulo</Label>
+          <Label>Subtítulo</Label>
           <Textarea
             value={config.subtitle}
             onChange={(e) => updateConfig({ subtitle: e.target.value })}
-            placeholder="Temos as melhores pecas para o seu veiculo..."
+            placeholder="Consulte a disponibilidade com nossa equipe."
             rows={3}
           />
         </div>
@@ -69,9 +62,9 @@ export const ProductsEditor = ({ config, onChange }: ProductsEditorProps) => {
             </svg>
           </div>
           <div className="flex-1">
-            <h4 className="mb-1 font-semibold text-blue-900">Produtos Dinamicos</h4>
+            <h4 className="mb-1 font-semibold text-blue-900">Produtos dinâmicos</h4>
             <p className="text-sm text-blue-800">
-              Os produtos desta seção são carregados do catálogo. Aqui você define apenas título e subtítulo.
+              Os produtos, preços e estoques são carregados do catálogo. Esta aba controla a apresentação da seção.
             </p>
           </div>
         </div>

@@ -43,16 +43,16 @@ import { toast } from 'sonner';
 import { AdminPageHeader } from './AdminPageHeader';
 
 const orderedTabs = [
-  { value: 'header', label: 'Header' },
-  { value: 'hero', label: 'Hero' },
-  { value: 'contact', label: 'Destaques' },
-  { value: 'aboutPage', label: 'Sobre da Home' },
-  { value: 'about', label: 'Serviços' },
-  { value: 'products', label: 'Peças' },
-  { value: 'services', label: 'Promoções' },
-  { value: 'contactPage', label: 'Contato' },
-  { value: 'footer', label: 'Footer' },
-  { value: 'marquee', label: 'Marquee' },
+  { value: 'header', label: 'Cabeçalho', description: 'Logo, navegação e ações do topo.' },
+  { value: 'hero', label: 'Hero compacto', description: 'Chamada principal dividida entre conteúdo e imagem.' },
+  { value: 'contact', label: 'Faixa de destaques', description: 'Indicadores azuis exibidos logo abaixo do hero.' },
+  { value: 'about', label: 'Cuidado à peça', description: 'Chamada de serviços e diferenciais da oficina.' },
+  { value: 'aboutPage', label: 'Institucional', description: 'Imagem e painel azul sobre a história da empresa.' },
+  { value: 'products', label: 'Produtos', description: 'Cabeçalho da lista compacta de produtos e preços.' },
+  { value: 'services', label: 'Promoções', description: 'Cabeçalho das abas por período e campanhas.' },
+  { value: 'marquee', label: 'Faixa promocional', description: 'Mensagens em movimento no final de Promoções.' },
+  { value: 'contactPage', label: 'Contato e mapa', description: 'Formulário, opções de serviço e localização.' },
+  { value: 'footer', label: 'Rodapé', description: 'Marca, contatos, redes sociais e links finais.' },
 ] as const;
 
 export function LandingPageContent() {
@@ -114,7 +114,7 @@ export function LandingPageContent() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-moria-orange" />
-          <p className="text-gray-600">Carregando configuracoes...</p>
+            <p className="text-gray-600">Carregando configurações...</p>
         </div>
       </div>
     );
@@ -125,14 +125,14 @@ export function LandingPageContent() {
       <AdminPageHeader
         icon={Palette}
         title="Editor da Landing Page"
-        description="Configure os elementos visuais e o conteúdo da página pública da loja."
+        description="Edite o conteúdo da página pública seguindo a mesma ordem da landing page."
       />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex-1">
           {isDirty && (
             <span className="text-sm text-orange-600 font-medium flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-orange-600 animate-pulse"></div>
-              Alteracoes nao salvas
+              Alterações não salvas
             </span>
           )}
         </div>
@@ -160,7 +160,7 @@ export function LandingPageContent() {
             size="sm"
           >
             <RotateCcw className="h-4 w-4 shrink-0" />
-            Restaurar Padrao
+            Restaurar padrão
           </Button>
 
           <Button
@@ -226,7 +226,7 @@ export function LandingPageContent() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleReset} className="text-red-600">
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Restaurar Padrao
+                Restaurar padrão
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -264,6 +264,15 @@ export function LandingPageContent() {
             </div>
           </div>
 
+          <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="font-heading text-sm font-bold text-blue-950">
+              {orderedTabs.find((tab) => tab.value === activeTab)?.label}
+            </p>
+            <p className="mt-1 text-sm text-blue-800/80">
+              {orderedTabs.find((tab) => tab.value === activeTab)?.description}
+            </p>
+          </div>
+
           <TabsContent value="header" className="space-y-4 mt-0">
             <HeaderEditor
               config={config.header}
@@ -282,15 +291,15 @@ export function LandingPageContent() {
             />
           </TabsContent>
 
+          <TabsContent value="about" className="space-y-4 mt-0">
+            <ServicesEditor config={config.about} onChange={(about) => updateConfig('about', about)} />
+          </TabsContent>
+
           <TabsContent value="aboutPage" className="space-y-4 mt-0">
             <AboutEditor
               config={config.aboutPage}
               onChange={(aboutPage) => updateConfig('aboutPage', aboutPage)}
             />
-          </TabsContent>
-
-          <TabsContent value="about" className="space-y-4 mt-0">
-            <ServicesEditor config={config.about} onChange={(about) => updateConfig('about', about)} />
           </TabsContent>
 
           <TabsContent value="products" className="space-y-4 mt-0">

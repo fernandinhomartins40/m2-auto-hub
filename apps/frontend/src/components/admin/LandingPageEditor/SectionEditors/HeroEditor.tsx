@@ -16,7 +16,6 @@ import {
   colorOrGradientToCSS,
   IconSelector,
   ImageUploaderWithCrop,
-  SliderControl,
 } from '../StyleControls';
 
 interface HeroEditorProps {
@@ -47,20 +46,20 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
         <h3 className="text-lg font-semibold">Textos Principais</h3>
 
         <div className="space-y-2">
-          <Label>Titulo (Palavra Dourada)</Label>
+          <Label>Primeira parte do título</Label>
           <Input
             value={config.title}
             onChange={(event) => updateConfig({ title: event.target.value })}
-            placeholder="M2"
+            placeholder="Tudo que seu carro precisa,"
           />
         </div>
 
         <div className="space-y-2">
-          <Label>Subtitulo</Label>
+          <Label>Trecho destacado em azul</Label>
           <Input
             value={config.subtitle}
             onChange={(event) => updateConfig({ subtitle: event.target.value })}
-            placeholder="Peças & Serviços"
+            placeholder="você encontra aqui."
           />
         </div>
 
@@ -77,7 +76,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
 
       <Card className="p-6">
         <ArrayEditor<HeroFeature>
-          label="Features (Icones com Texto)"
+          label="Benefícios abaixo dos botões"
           items={config.features}
           onChange={(features) => updateConfig({ features })}
           createNew={() => ({
@@ -106,7 +105,7 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
 
       <Card className="p-6">
         <ArrayEditor<HeroButton>
-          label="Botoes de Acao (CTAs)"
+          label="Botões de ação"
           items={config.buttons}
           onChange={(buttons) => updateConfig({ buttons })}
           createNew={() => ({
@@ -190,26 +189,14 @@ export const HeroEditor = ({ config, onChange }: HeroEditorProps) => {
 
       <Card className="p-6">
         <ImageUploaderWithCrop
-          label="Imagem de Fundo do Hero"
+          label="Imagem do lado direito"
           value={config.backgroundImage}
           onChange={(backgroundImage) => updateConfig({ backgroundImage })}
-          description="Imagem principal do banner hero - largura total da tela"
+          description="Imagem horizontal exibida na metade direita do hero compacto."
           recommendedWidth={1920}
           recommendedHeight={1080}
           aspectRatio={16 / 9}
           maxFileSizeMB={10}
-        />
-      </Card>
-
-      <Card className="p-6">
-        <SliderControl
-          label="Opacidade do Overlay Escuro"
-          value={config.overlayOpacity}
-          onChange={(overlayOpacity) => updateConfig({ overlayOpacity })}
-          min={0}
-          max={100}
-          unit="%"
-          description="Escurecimento sobre a imagem de fundo (0 = transparente, 100 = preto total)"
         />
       </Card>
 
