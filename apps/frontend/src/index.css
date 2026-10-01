@@ -523,7 +523,7 @@
   max-width: 1280px;
 }
 
-.landing-shell :is(#produtos, #promocoes, #contato) h2::before {
+.landing-shell :is(#promocoes, #contato) h2::before {
   content: "";
   display: inline-block;
   width: 2rem;
@@ -537,7 +537,7 @@
 @media (max-width: 767px) {
   .landing-navbar .container { height: 4rem; }
   .landing-shell > section { scroll-margin-top: 4rem; }
-  .landing-shell :is(#sobre, #produtos, #promocoes, #contato) h2::before {
+  .landing-shell :is(#sobre, #promocoes, #contato) h2::before {
     display: block;
     margin: 0 auto 0.75rem;
   }
