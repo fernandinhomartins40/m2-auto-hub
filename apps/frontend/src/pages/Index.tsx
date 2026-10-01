@@ -27,8 +27,12 @@ const Index = () => (
       <Products />
       <Promotions />
       <Testimonials />
-      <Contact />
-      <GoogleMap />
+      <div className="bg-white py-14 md:py-16">
+        <div className="container mx-auto grid gap-8 px-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <Contact />
+          <GoogleMap />
+        </div>
+      </div>
     </main>
     <Footer />
     <CartDrawer />

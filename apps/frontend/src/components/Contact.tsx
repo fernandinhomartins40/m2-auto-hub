@@ -1,29 +1,15 @@
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
-import { Clock3, Instagram, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { useStorefront } from "@/context/StorefrontContext";
-import { buildWhatsAppHref, formatPhoneNumber } from "@/lib/storefront-helpers";
+import { buildWhatsAppHref } from "@/lib/storefront-helpers";
+
+const fieldClasses =
+  "min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 
 const Contact = () => {
-  const {
-    addressLines,
-    businessHoursSummary,
-    contactServiceOptions,
-    landingConfig,
-    settings,
-    whatsappHref,
-  } = useStorefront();
-  const [form, setForm] = useState({
-    nome: "",
-    telefone: "",
-    servico: "",
-    mensagem: "",
-  });
-
-  const footerSocialLinks = landingConfig.footer?.socialLinks ?? [];
-  const instagramLink = footerSocialLinks.find((link) =>
-    (link.platform ?? "").toLowerCase().includes("instagram")
-  )?.url;
+  const { contactServiceOptions, landingConfig, settings } = useStorefront();
+  const [form, setForm] = useState({ nome: "", telefone: "", servico: "", mensagem: "" });
   const section = landingConfig.contactPage;
 
   if (section?.enabled === false) {
@@ -32,7 +18,6 @@ const Contact = () => {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-
     const message = [
       `Olá! Meu nome é ${form.nome}.`,
       `Telefone: ${form.telefone}.`,
@@ -42,137 +27,83 @@ const Contact = () => {
       .filter(Boolean)
       .join(" ");
 
-    const href = buildWhatsAppHref(settings.whatsapp || settings.phone, message);
-    window.open(href, "_blank", "noopener,noreferrer");
+    window.open(
+      buildWhatsAppHref(settings.whatsapp || settings.phone, message),
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   return (
-    <section id="contato" className="py-20 section-light">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
-            {section?.heroTitle ? (
-              section.heroTitle
-            ) : (
-              <>
-                Entre em <span className="text-primary">Contato</span>
-              </>
-            )}
-          </h2>
-          <div className="w-20 h-1 bg-primary rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            {section?.formSubtitle ||
-              "Conte o que você precisa e seguimos com o atendimento pelo WhatsApp."}
-          </p>
-        </div>
+    <section id="contato" className="h-full">
+      <div className="mb-6">
+        <div className="mb-3 h-1 w-14 rounded-full bg-primary" />
+        <h2 className="font-heading text-3xl font-bold leading-tight text-slate-950 md:text-4xl">
+          Vamos cuidar do <span className="text-primary">seu carro?</span>
+        </h2>
+        <p className="mt-2 text-sm text-slate-600 md:text-base">
+          {section?.formSubtitle || "Conte o que você precisa. Nossa equipe atende pelo WhatsApp."}
+        </p>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-secondary rounded-xl p-8 space-y-5">
-            {addressLines.length ? (
-              <div className="flex items-start gap-3">
-                <MapPin className="text-primary mt-1 shrink-0" size={20} />
-                <span className="text-secondary-foreground/80">{addressLines.join(" | ")}</span>
-              </div>
-            ) : null}
-            {settings.phone ? (
-              <div className="flex items-start gap-3">
-                <Phone className="text-primary mt-1 shrink-0" size={20} />
-                <span className="text-secondary-foreground/80">
-                  {formatPhoneNumber(settings.phone)}
-                </span>
-              </div>
-            ) : null}
-            {settings.whatsapp ? (
-              <div className="flex items-start gap-3">
-                <MessageCircle className="text-primary mt-1 shrink-0" size={20} />
-                <span className="text-secondary-foreground/80">
-                  WhatsApp: {formatPhoneNumber(settings.whatsapp)}
-                </span>
-              </div>
-            ) : null}
-            {businessHoursSummary ? (
-              <div className="flex items-start gap-3">
-                <Clock3 className="text-primary mt-1 shrink-0" size={20} />
-                <span className="text-secondary-foreground/80">{businessHoursSummary}</span>
-              </div>
-            ) : null}
-            {settings.email ? (
-              <div className="flex items-start gap-3">
-                <Mail className="text-primary mt-1 shrink-0" size={20} />
-                <a href={`mailto:${settings.email}`} className="text-primary hover:underline">
-                  {settings.email}
-                </a>
-              </div>
-            ) : null}
-            {instagramLink ? (
-              <div className="flex items-start gap-3">
-                <Instagram className="text-primary mt-1 shrink-0" size={20} />
-                <a
-                  href={instagramLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  {instagramLink.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "@")}
-                </a>
-              </div>
-            ) : null}
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-center gap-2 bg-whatsapp hover:opacity-90 text-primary-foreground px-6 py-3 rounded-md font-heading font-bold transition-all"
-            >
-              WhatsApp
-            </a>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="space-y-1.5 text-xs font-semibold text-slate-600">
+            Nome
             <input
               type="text"
-              placeholder="Nome"
               required
               value={form.nome}
               onChange={(event) => setForm({ ...form, nome: event.target.value })}
-              className="w-full px-4 py-3 rounded-md border border-border bg-background text-foreground font-body focus:outline-none focus:ring-2 focus:ring-primary"
+              className={fieldClasses}
             />
+          </label>
+          <label className="space-y-1.5 text-xs font-semibold text-slate-600">
+            Telefone
             <input
               type="tel"
-              placeholder="Telefone"
               required
               value={form.telefone}
               onChange={(event) => setForm({ ...form, telefone: event.target.value })}
-              className="w-full px-4 py-3 rounded-md border border-border bg-background text-foreground font-body focus:outline-none focus:ring-2 focus:ring-primary"
+              className={fieldClasses}
             />
-            <select
-              required
-              value={form.servico}
-              onChange={(event) => setForm({ ...form, servico: event.target.value })}
-              className="w-full px-4 py-3 rounded-md border border-border bg-background text-foreground font-body focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">Tipo de serviço</option>
-              {contactServiceOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <textarea
-              placeholder="Mensagem"
-              rows={4}
-              value={form.mensagem}
-              onChange={(event) => setForm({ ...form, mensagem: event.target.value })}
-              className="w-full px-4 py-3 rounded-md border border-border bg-background text-foreground font-body focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-            />
-            <button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-md font-heading font-bold text-lg transition-all blue-shadow hover:scale-[1.02]"
-            >
-              Enviar Solicitacao
-            </button>
-          </form>
+          </label>
         </div>
-      </div>
+
+        <label className="block space-y-1.5 text-xs font-semibold text-slate-600">
+          Tipo de serviço
+          <select
+            required
+            value={form.servico}
+            onChange={(event) => setForm({ ...form, servico: event.target.value })}
+            className={fieldClasses}
+          >
+            <option value="">Selecione</option>
+            {contactServiceOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block space-y-1.5 text-xs font-semibold text-slate-600">
+          Mensagem
+          <textarea
+            rows={3}
+            placeholder="Conte o que você precisa..."
+            value={form.mensagem}
+            onChange={(event) => setForm({ ...form, mensagem: event.target.value })}
+            className={`${fieldClasses} resize-none py-3`}
+          />
+        </label>
+
+        <button
+          type="submit"
+          className="inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-md bg-primary px-6 font-heading font-bold text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-primary/90"
+        >
+          Enviar solicitação
+          <ArrowRight size={17} />
+        </button>
+      </form>
     </section>
   );
 };

@@ -523,22 +523,7 @@
   max-width: 1280px;
 }
 
-.landing-shell #contato h2::before {
-  content: "";
-  display: inline-block;
-  width: 2rem;
-  height: 0.2rem;
-  margin-right: 0.7rem;
-  border-radius: 999px;
-  background: hsl(var(--primary));
-  vertical-align: 0.24em;
-}
-
 @media (max-width: 767px) {
   .landing-navbar .container { height: 4rem; }
   .landing-shell > section { scroll-margin-top: 4rem; }
-  .landing-shell #contato h2::before {
-    display: block;
-    margin: 0 auto 0.75rem;
-  }
 }
