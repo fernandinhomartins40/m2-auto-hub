@@ -4,9 +4,9 @@ import { buildWhatsAppHref, normalizeLink, toAssetUrl } from "@/lib/storefront-h
 import { ArrowRight, MapPin } from "lucide-react";
 
 const primaryButtonClasses =
-  "inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-7 py-4 rounded-lg font-heading font-bold transition-all blue-shadow hover:-translate-y-0.5";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-heading text-sm font-bold text-primary-foreground transition-all blue-shadow hover:-translate-y-0.5 hover:bg-primary/90";
 const secondaryButtonClasses =
-  "inline-flex items-center justify-center gap-2 border border-primary/30 hover:border-primary bg-primary/5 text-primary px-7 py-4 rounded-lg font-heading font-bold transition-all hover:-translate-y-0.5";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-5 py-3 font-heading text-sm font-bold text-primary transition-all hover:-translate-y-0.5 hover:border-primary";
 
 const Hero = () => {
   const { landingConfig, settings, whatsappHref } = useStorefront();
@@ -26,22 +26,22 @@ const Hero = () => {
 
   return (
     <section id="inicio" className="overflow-hidden bg-white pt-16">
-      <div className="grid lg:min-h-[500px] lg:grid-cols-[48%_52%]">
-        <div className="relative z-10 flex items-center px-6 py-10 sm:px-10 lg:px-[max(2.5rem,calc((100vw-1280px)/2))] lg:py-12 lg:pr-12">
+      <div className="grid lg:min-h-[420px] lg:grid-cols-[48%_52%]">
+        <div className="relative z-10 flex items-center px-6 py-8 sm:px-10 lg:px-[max(2.5rem,calc((100vw-1280px)/2))] lg:py-8 lg:pr-10">
           <div className="max-w-2xl animate-fade-up">
-            <div className="mb-5 h-1 w-14 rounded-full bg-primary" />
-            <span className="mb-4 block font-heading text-sm font-bold uppercase tracking-[0.18em] text-primary">
+            <div className="mb-3 h-1 w-12 rounded-full bg-primary" />
+            <span className="mb-2 block font-heading text-xs font-bold uppercase tracking-[0.18em] text-primary">
               {storeName}
             </span>
-            <h1 className="mb-5 font-heading text-4xl font-bold leading-[0.97] tracking-tight text-slate-950 sm:text-5xl xl:text-6xl">
+            <h1 className="mb-3 font-heading text-4xl font-bold leading-[0.96] tracking-tight text-slate-950 lg:text-[2.75rem] xl:text-5xl">
               {hero?.title || "Tudo que seu carro precisa,"}{" "}
               <span className="text-primary">{hero?.subtitle || "você encontra aqui."}</span>
             </h1>
-            <p className="mb-4 max-w-xl text-base leading-relaxed text-slate-600 lg:text-lg">
+            <p className="mb-3 max-w-xl text-sm leading-relaxed text-slate-600 lg:text-base">
               {hero?.description || "Auto Peças + Auto Center em Palmital/PR. Atendimento especializado em mecânica leve, pesada e diesel."}
             </p>
-            <div className="mb-6 flex items-center gap-2 text-sm font-semibold text-slate-600">
-              <MapPin size={18} className="text-primary" />
+            <div className="mb-4 flex items-center gap-2 text-xs font-semibold text-slate-600">
+              <MapPin size={16} className="text-primary" />
               Atendimento local, peças e serviços especializados
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -57,22 +57,22 @@ const Hero = () => {
               })}
             </div>
             {hero?.features?.length ? (
-              <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-200 pt-5">
-                {hero.features.slice(0, 4).map((feature) => <span key={feature.id} className="text-sm font-semibold text-slate-600">• {feature.text}</span>)}
+              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-slate-200 pt-3">
+                {hero.features.slice(0, 4).map((feature) => <span key={feature.id} className="text-xs font-semibold text-slate-600">• {feature.text}</span>)}
               </div>
             ) : null}
           </div>
         </div>
-        <div className="relative min-h-[340px] overflow-hidden lg:min-h-full">
+        <div className="relative min-h-[300px] overflow-hidden lg:min-h-full">
         <img
           src={backgroundImage}
           alt={hero?.backgroundImage?.alt || storeName}
           className="absolute inset-0 h-full w-full object-cover"
         />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/25 via-transparent to-primary/10" />
-          <div className="absolute bottom-7 right-7 rounded-xl border border-white/25 bg-slate-950/70 px-5 py-4 text-white backdrop-blur-md">
-            <strong className="block font-heading text-lg">Qualidade em cada detalhe</strong>
-            <span className="text-sm text-white/70">Do diagnóstico à peça certa.</span>
+          <div className="absolute bottom-5 right-5 rounded-xl border border-white/25 bg-slate-950/70 px-4 py-3 text-white backdrop-blur-md">
+            <strong className="block font-heading text-base">Qualidade em cada detalhe</strong>
+            <span className="text-xs text-white/70">Do diagnóstico à peça certa.</span>
           </div>
         </div>
       </div>
