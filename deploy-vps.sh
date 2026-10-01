@@ -139,6 +139,15 @@ wait_http "http://127.0.0.1:${DEPLOY_PORT}/health"     8 5 || { compose logs --n
 wait_http "http://127.0.0.1:${DEPLOY_PORT}/api/health" 8 5 || { compose logs --no-color --tail=40 backend  >&2; exit 1; }
 curl -fsS --max-time 10 -o /dev/null "http://127.0.0.1:${DEPLOY_PORT}/" || { compose logs --no-color --tail=40 frontend >&2; exit 1; }
 
+EXPECTED_IMAGE_TAG="${IMAGE_TAG:-local}"
+DEPLOYED_IMAGE_TAG="$(curl -fsS --max-time 10 "http://127.0.0.1:${DEPLOY_PORT}/.release-version" | tr -d '\r\n')"
+if [ "$DEPLOYED_IMAGE_TAG" != "$EXPECTED_IMAGE_TAG" ]; then
+  log "Frontend incorreto: esperado $EXPECTED_IMAGE_TAG, publicado $DEPLOYED_IMAGE_TAG"
+  compose images frontend >&2
+  exit 1
+fi
+log "Frontend confirmado no release $DEPLOYED_IMAGE_TAG"
+
 DEPLOY_OK=1
 
 ln -sfn "$APP_DIR" "$APP_ROOT/current"

@@ -196,4 +196,19 @@ jobs:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "curl -fsS http://localhost:${{ env.DEPLOY_PORT }}/health && echo 'Deploy OK'"
+            "test \"\$(curl -fsS http://localhost:${{ env.DEPLOY_PORT }}/.release-version)\" = '${{ github.sha }}' && curl -fsS http://localhost:${{ env.DEPLOY_PORT }}/health && echo 'Deploy OK: ${{ github.sha }}'"
+
+      - name: Verify public release
+        shell: bash
+        run: |
+          for attempt in {1..12}; do
+            deployed="$(curl -fsS -H 'Cache-Control: no-cache' '${{ env.CANONICAL_URL }}/.release-version?run=${{ github.run_id }}' || true)"
+            if [ "$deployed" = "${{ github.sha }}" ]; then
+              echo "Public release confirmed: $deployed"
+              exit 0
+            fi
+            echo "Attempt $attempt/12: expected ${{ github.sha }}, received ${deployed:-empty}"
+            sleep 5
+          done
+          echo "Public domain did not publish the expected frontend image" >&2
+          exit 1

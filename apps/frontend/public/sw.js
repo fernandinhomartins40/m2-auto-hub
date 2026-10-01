@@ -1,4 +1,4 @@
-const CACHE_NAME = "m2-pwa-shell-v1";
+const CACHE_NAME = "m2-pwa-shell-v2";
 const APP_SHELL = ["/", "/favicon.png"];
 
 self.addEventListener("install", (event) => {
@@ -36,8 +36,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Navegacoes e o proprio SW devem sempre consultar a rede. Assets gerados
+  // pelo Vite ja possuem hash e podem continuar no cache com seguranca.
+  const isNavigation = event.request.mode === "navigate";
+  const isMutableShell = requestUrl.pathname === "/sw.js" || requestUrl.pathname === "/index.html";
+
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, isNavigation || isMutableShell ? { cache: "no-store" } : undefined)
       .then((response) => {
         const cloned = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cloned)).catch(() => undefined);

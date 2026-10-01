@@ -14,6 +14,10 @@ export function registerServiceWorker() {
             console.log('[SW] Service Worker registered successfully:', registration.scope);
           }
 
+          // O navegador pode manter o registro por horas sem consultar o SW.
+          // A verificacao explicita garante que cada abertura veja o deploy atual.
+          void registration.update();
+
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             if (newWorker) {
@@ -23,10 +27,7 @@ export function registerServiceWorker() {
                     console.log('[SW] New service worker available, reloading...');
                   }
 
-                  if (confirm('Nova versao disponivel. Recarregar agora?')) {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                  }
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
                 }
               });
             }
