@@ -25,15 +25,12 @@ ensure_strong_admin_password() {
   current="$(get_env DEFAULT_ADMIN_PASSWORD | tr -d '\r')"
 
   if [ "${#current}" -lt 12 ] || [ "$current" = "Test123!" ]; then
-    # Instalacoes anteriores usavam uma senha curta/conhecida. Rotacionar o
-    # segredo e solicitar um unico resync deixa o bootstrap seguro e preserva
-    # acesso administrativo sem imprimir a credencial no log do deploy.
+    # Este segredo serve apenas para criar o primeiro SUPER_ADMIN em uma base
+    # vazia. Troca-lo jamais pode alterar contas que ja existem.
     upsert_env DEFAULT_ADMIN_PASSWORD "$(openssl rand -hex 16)"
-    upsert_env ADMIN_PASSWORD_RESYNC true
-    echo "DEFAULT_ADMIN_PASSWORD legado foi rotacionado; resync administrativo agendado"
-  else
-    ensure_env ADMIN_PASSWORD_RESYNC false
+    echo "DEFAULT_ADMIN_PASSWORD legado foi substituido para futuros bancos vazios"
   fi
+  upsert_env ADMIN_PASSWORD_RESYNC false
 }
 
 ensure_env  POSTGRES_USER     m2
@@ -71,14 +68,8 @@ ensure_env  SEED_DEMO_DATA  false
 # Para ver a senha gerada:
 #   grep '^DEFAULT_ADMIN_PASSWORD=' /opt/m2centerauto/.env
 #
-# Perdeu o acesso? O bootstrap nao reescreve a senha de uma conta que ja existe
-# (`update: {}` em essential-data.ts), entao redeploy sozinho nao adianta. Para
-# destravar, defina a senha desejada aqui e ligue o resync por um deploy:
-#   sed -i 's|^DEFAULT_ADMIN_PASSWORD=.*|DEFAULT_ADMIN_PASSWORD=<nova>|' .env
-#   echo 'ADMIN_PASSWORD_RESYNC=true' >> .env
-#   docker compose up -d --force-recreate backend
-# Depois de entrar, remova a linha ADMIN_PASSWORD_RESYNC: mantida ligada, ela
-# faz todo deploy desfazer a senha trocada pelo painel.
+# Perdeu o acesso? Use o procedimento individual documentado em
+# docs/RECUPERACAO-DE-SENHA-ADMIN.md. Um deploy nunca redefine senhas.
 ensure_strong_admin_password
 
 # MARKETPLACE_ENC_KEY e opcional no schema e cai no JWT_SECRET (environment.ts).

@@ -58,32 +58,20 @@ export async function ensureLandingPageConfig(): Promise<LandingPageConfig> {
 }
 
 /**
- * Uma vez criada a conta, o deploy nao
- * mexe mais nela, para nao reverter a senha que o operador trocou no painel.
+ * Uma vez criada a conta, deploys e seeds não alteram sua senha.
  *
  * O efeito colateral e que uma senha perdida vira uma conta inacessivel — o
- * bootstrap roda a cada deploy e nunca a corrige. Por isso existe
- * ADMIN_PASSWORD_RESYNC: com `true`, este deploy ressincroniza a senha das
- * contas padrao a partir de DEFAULT_ADMIN_PASSWORD. E uma chave para destravar
- * o acesso, ligada uma vez e desligada em seguida: deixa-la ligada faria todo
- * deploy desfazer a troca de senha feita no painel.
+ * bootstrap roda a cada deploy e nunca a corrige. A recuperação é individual
+ * e explícita pelo script reset-admin-password.
  */
-function shouldResyncPassword(): boolean {
-  return process.env.ADMIN_PASSWORD_RESYNC?.trim().toLowerCase() === 'true';
-}
-
 /**
- * A conta padrao so e criada quando o banco nao tem nenhum SUPER_ADMIN. Antes o
+ * A conta padrão só é criada quando o banco não tem nenhum SUPER_ADMIN. Antes o
  * upsert era por email: quem trocava o email do admin no painel ganhava, no
  * deploy seguinte, uma segunda conta SUPER_ADMIN com a senha padrao conhecida.
  *
- * Com ADMIN_PASSWORD_RESYNC, a senha e ressincronizada na conta padrao ou, se o
- * email dela foi trocado, no SUPER_ADMIN mais antigo.
+ * O segredo de bootstrap é usado somente quando nenhuma conta existe.
  */
 export async function ensureDefaultAdmins(): Promise<void> {
-  const hashedPassword = await HashUtil.hashPassword(getBootstrapPassword());
-  const resync = shouldResyncPassword();
-
   for (const seed of defaultAdminSeeds) {
     const target =
       (await prisma.admin.findUnique({ where: { email: seed.email } })) ??
@@ -93,6 +81,7 @@ export async function ensureDefaultAdmins(): Promise<void> {
       }));
 
     if (!target) {
+      const hashedPassword = await HashUtil.hashPassword(getBootstrapPassword());
       await prisma.admin.create({
         data: {
           email: seed.email,
@@ -104,18 +93,6 @@ export async function ensureDefaultAdmins(): Promise<void> {
         },
       });
       logger.warn('Default admin account created', { email: seed.email });
-      continue;
-    }
-
-    if (resync) {
-      await prisma.admin.update({
-        where: { id: target.id },
-        data: { password: hashedPassword, status: AdminStatus.ACTIVE },
-      });
-      logger.warn(
-        'ADMIN_PASSWORD_RESYNC ativo: senha redefinida a partir de DEFAULT_ADMIN_PASSWORD. Desligue a flag apos entrar.',
-        { email: target.email }
-      );
     }
   }
 }
