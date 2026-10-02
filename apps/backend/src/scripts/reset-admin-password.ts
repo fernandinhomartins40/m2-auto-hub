@@ -50,11 +50,13 @@ async function main(): Promise<void> {
 }
 
 main()
+  .then(() => {
+    // Utilitário de execução única: encerra também eventuais handles abertos
+    // por transports de log ou pelo cliente do banco dentro do contêiner.
+    process.exit(0);
+  })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     console.error(`Falha ao redefinir senha: ${message}`);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
+    process.exit(1);
   });
