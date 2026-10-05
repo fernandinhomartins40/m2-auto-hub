@@ -71,7 +71,7 @@ necessários para nossa integração HTTP e não devem ser alterados.
 
 Segundo o Swagger, as chamadas usam:
 
-1. `access_token` na query string;
+1. `access_token` na query string, calculado como MD5 de `codigo_integrador:token_fornecido`;
 2. `Authorization: Bearer {token}` no cabeçalho;
 3. `empresa` no cabeçalho, opcional no contrato e com padrão documentado `1`;
 4. autenticação por `POST /publico/integracoes/autenticacao`, com `usuario` e
@@ -81,21 +81,19 @@ Segundo a orientação direta da Ellon, as credenciais numéricas têm finalidad
 distintas: o usuário informado para entrar no portal é uma credencial do portal;
 o outro código fornecido é o **código que será solicitado no fluxo de
 integração**. Ele não deve ser confundido com código da empresa. O JWT informado
-pela Ellon foi denominado **HASH**. Os valores não são reproduzidos neste
-documento.
+pela Ellon é o **token de acesso fornecido** usado como insumo do MD5. Os valores
+não são reproduzidos neste documento.
 
 O mapeamento operacional adotado é: usuário Ellon/API e senha no corpo da
-autenticação, HASH em `access_token`, empresa no cabeçalho e Bearer retornado
-pelo endpoint para as chamadas seguintes. O código de integração permanece em
-campo próprio. Esse mapeamento deve ser validado depois de a Ellon liberar a
-configuração, pois antes disso a API devolve a mesma mensagem de “integração não
-configurada” sem chegar à validação final das credenciais.
+autenticação; MD5 de `codigo_integrador:token_fornecido` em `access_token`;
+empresa no cabeçalho; e Bearer retornado pelo endpoint para as chamadas
+seguintes. O código do integrador e o token fornecido permanecem em campos
+próprios e cifrados. Mesmo usando essa composição exatamente como descrita no
+Swagger, em 05/10/2026 a API ainda devolveu “integração não configurada”.
 
-Na implementação, usuário e código de integração são armazenados em campos
-separados e cifrados. A autenticação tenta primeiro o usuário Ellon/API exigido
-pelo Swagger e, somente diante de rejeição, tenta o código de integração como
-identificador. Isso acomoda a ambiguidade do fornecedor sem confundir empresa,
-usuário e código no cadastro administrativo.
+Na implementação, usuário, código do integrador e token fornecido são
+armazenados em campos separados e cifrados. O código não substitui o usuário:
+ele participa apenas da derivação MD5 exigida pelo Swagger.
 
 Há uma inconsistência no OpenAPI: o texto diz que `access_token` e Bearer são
 obrigatórios simultaneamente, mas o bloco `security` os descreve como opções
