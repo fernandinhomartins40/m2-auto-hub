@@ -291,6 +291,21 @@ export class ServiceOrdersService {
       return this.findById(id);
     }
 
+    const [externalLink, processingJob] = await Promise.all([
+      prisma.ellonEntityLink.findUnique({
+        where: { entityType_localId: { entityType: 'SERVICE_ORDER', localId: id } },
+      }),
+      prisma.ellonJob.findFirst({
+        where: { idempotencyKey: `service-order:${id}:v1`, status: 'PROCESSING' },
+      }),
+    ]);
+    if (externalLink) {
+      throw ApiError.conflict('A OS já gerou pedido na Ellon. Cancele e concilie o pedido externo antes de alterar a OS.');
+    }
+    if (processingJob) {
+      throw ApiError.conflict('A OS está sendo enviada à Ellon. Aguarde o término antes de cancelar.');
+    }
+
     const productItems = order.items.filter(i => i.type === 'PRODUCT' && i.productId);
 
     return prisma.$transaction(async tx => {
@@ -302,6 +317,13 @@ export class ServiceOrdersService {
           });
         }
       }
+      await tx.ellonJob.updateMany({
+        where: {
+          idempotencyKey: `service-order:${id}:v1`,
+          status: { in: ['PENDING', 'FAILED'] },
+        },
+        data: { status: 'CANCELLED', lastError: 'OS cancelada antes do envio à Ellon.' },
+      });
       return tx.serviceOrder.update({
         where: { id },
         data: {
@@ -334,6 +356,18 @@ export class ServiceOrdersService {
   async remove(id: string): Promise<void> {
     const order = await prisma.serviceOrder.findUnique({ where: { id } });
     if (!order) throw ApiError.notFound('Ordem de serviço não encontrada.');
+    const externalLink = await prisma.ellonEntityLink.findUnique({
+      where: { entityType_localId: { entityType: 'SERVICE_ORDER', localId: id } },
+    });
+    if (externalLink) {
+      throw ApiError.conflict('Esta OS já possui pedido na Ellon e não pode ser excluída. Cancele-a para preservar a auditoria.');
+    }
+    const activeJob = await prisma.ellonJob.findFirst({
+      where: { idempotencyKey: `service-order:${id}:v1`, status: { not: 'CANCELLED' } },
+    });
+    if (activeJob) {
+      throw ApiError.conflict('Esta OS possui processamento Ellon e não pode ser excluída.');
+    }
     await prisma.serviceOrder.delete({ where: { id } });
   }
 

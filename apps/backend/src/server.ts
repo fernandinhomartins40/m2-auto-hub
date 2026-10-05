@@ -6,6 +6,7 @@ import { validateEnvironment } from '@config/validate-env.js';
 import { ensureEssentialData } from './bootstrap/essential-data.js';
 import { startMarketplaceJobs } from '@modules/marketplace/marketplace.jobs.js';
 import { startRetentionJobs, stopRetentionJobs } from './jobs/retention.jobs.js';
+import { startEllonJobs, stopEllonJobs } from '@modules/ellon/ellon.jobs.js';
 
 async function bootstrap(): Promise<void> {
   try {
@@ -38,11 +39,13 @@ async function bootstrap(): Promise<void> {
     logger.info('Marketplace background jobs ready');
 
     startRetentionJobs();
+    startEllonJobs();
 
     const gracefulShutdown = async (signal: string) => {
       logger.info(`\n${signal} received, starting graceful shutdown...`);
 
       stopRetentionJobs();
+      stopEllonJobs();
 
       server.close(async () => {
         logger.info('HTTP server closed');

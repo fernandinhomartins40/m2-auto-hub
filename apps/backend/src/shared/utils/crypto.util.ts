@@ -2,8 +2,8 @@ import crypto from 'node:crypto';
 import { environment } from '@config/environment.js';
 
 /**
- * Criptografia simetrica AES-256-GCM para segredos de marketplace
- * (app secret, access token, refresh token) em repouso no banco.
+ * Criptografia simetrica AES-256-GCM para segredos de integrações externas
+ * (marketplaces, Ellon, tokens e senhas) em repouso no banco.
  *
  * Formato do ciphertext armazenado: `v1:<iv_hex>:<authTag_hex>:<ciphertext_hex>`.
  * O prefixo `v1` permite rotacao de algoritmo no futuro.

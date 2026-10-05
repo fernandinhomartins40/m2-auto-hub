@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { ArrowLeft, Loader2, Play, CheckCircle2, XCircle, UserCog } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, CheckCircle2, XCircle, UserCog, Send } from 'lucide-react';
 import serviceOrderService, { ServiceOrder, ServiceOrderStatus } from '@/api/serviceOrderService';
 import revisionService from '@/api/revisionService';
 import { useToast } from '../ui/use-toast';
@@ -56,6 +56,25 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
   const assign = async () => {
     if (!assigning) return;
     await run(() => serviceOrderService.assignMechanic(order.id, assigning), 'Mecânico atribuído');
+  };
+
+  const exportToEllon = async () => {
+    setBusy(true);
+    try {
+      const check = await serviceOrderService.ellonPreflight(order.id);
+      if (!check.ready) {
+        const details = [
+          ...check.missingConfig.map(item => `Configuração: ${item}`),
+          ...check.unmappedItems.map(item => `Sem mapeamento: ${item.name}${item.localId ? ` (${item.localId})` : ' — item sem cadastro'}`),
+          ...(!check.hasRegisteredCustomer ? ['A OS precisa ter um cliente cadastrado'] : []),
+        ];
+        throw new Error(details.join(' · ') || 'A OS ainda não está pronta para envio.');
+      }
+      await serviceOrderService.exportToEllon(order.id);
+      toast({ title: 'Envio para a Ellon enfileirado', description: 'O processamento é idempotente e continuará em segundo plano.' });
+    } catch (err: unknown) {
+      toast({ title: 'Não foi possível enviar à Ellon', description: getErrorMessage(err), variant: 'destructive' });
+    } finally { setBusy(false); }
   };
 
   return (
@@ -197,6 +216,12 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
         {!restricted && order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
           <Button variant="outline" className="text-red-600" disabled={busy} onClick={() => run(() => serviceOrderService.cancel(order.id), 'OS cancelada')}>
             <XCircle className="h-4 w-4 mr-1" /> Cancelar
+          </Button>
+        )}
+        {!restricted && order.status === 'COMPLETED' && (
+          <Button disabled={busy} onClick={() => void exportToEllon()}>
+            {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
+            Gerar pedido na Ellon
           </Button>
         )}
       </div>

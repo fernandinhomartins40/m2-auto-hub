@@ -159,6 +159,37 @@ enum NotificationType {
   SUPPORT_TICKET_MESSAGE
 }
 
+enum EllonConnectionStatus {
+  DISABLED
+  PENDING
+  CONNECTED
+  ERROR
+}
+
+enum EllonEntityType {
+  PRODUCT
+  SERVICE
+  CUSTOMER
+  ORDER
+  SERVICE_ORDER
+}
+
+enum EllonJobType {
+  EXPORT_CUSTOMER
+  EXPORT_ORDER
+  EXPORT_SERVICE_ORDER
+  SYNC_PRODUCTS
+  SYNC_ORDER_STATUS
+}
+
+enum EllonJobStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
 enum NotificationRecipientType {
   ADMIN
   CUSTOMER
@@ -754,6 +785,81 @@ model MarketplaceEvent {
   @@unique([provider, topic, externalId]) // idempotencia
   @@index([processed])
   @@map("marketplace_events")
+}
+
+// Conexao com o ERP Ellon. Os segredos usam AES-256-GCM e nunca sao devolvidos
+// pela API administrativa.
+model EllonConnection {
+  id                    String                @id @default("default")
+  status                EllonConnectionStatus @default(DISABLED)
+  enabled               Boolean               @default(false)
+  baseUrl               String                @default("http://fvendas.ellon.inf.br:9047")
+  companyCode           Int?
+  transactionCode       Int?
+  costCenterCode        Int?
+  sellerCode            Int?
+  warehouseCode         Int?
+  paymentMethodCode     Int?
+  carrierCode           Int?
+  integrationCodeEncrypted String?
+  passwordEncrypted     String?
+  accessHashEncrypted   String?
+  bearerTokenEncrypted  String?
+  bearerTokenExpiresAt  DateTime?
+  syncProducts          Boolean               @default(false)
+  syncCustomers         Boolean               @default(false)
+  syncOrders            Boolean               @default(false)
+  lastConnectionAt      DateTime?
+  lastProductSyncAt     DateTime?
+  lastOrderSyncAt       DateTime?
+  lastError             String?               @db.Text
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@map("ellon_connections")
+}
+
+// Vinculo generico entre entidades locais e codigos da Ellon. SERVICE permite
+// contornar a ausencia de endpoint de mao de obra mapeando um servico local para
+// um produto/servico comercial previamente cadastrado no ERP.
+model EllonEntityLink {
+  id               String          @id @default(uuid())
+  entityType       EllonEntityType
+  localId          String
+  externalId       String
+  externalSequence Int?
+  metadata         Json?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@unique([entityType, localId])
+  @@index([entityType, externalId])
+  @@map("ellon_entity_links")
+}
+
+// Outbox persistente: garante repeticao segura e rastreavel sem duplicar uma OS
+// ou pedido quando houver timeout entre a Ellon processar e responder.
+model EllonJob {
+  id             String         @id @default(uuid())
+  type           EllonJobType
+  status         EllonJobStatus @default(PENDING)
+  idempotencyKey String         @unique
+  localEntityId  String?
+  payload        Json
+  response       Json?
+  attempts       Int            @default(0)
+  maxAttempts    Int            @default(8)
+  nextAttemptAt  DateTime       @default(now())
+  lockedAt       DateTime?
+  processedAt    DateTime?
+  lastError      String?        @db.Text
+  createdById    String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([type, localEntityId])
+  @@map("ellon_jobs")
 }
 
 // Itens do Pedido

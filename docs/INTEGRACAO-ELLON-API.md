@@ -290,6 +290,42 @@ do M2 Auto Hub e não deve ser habilitado apenas porque existe na API.
    reprocessamento e histórico, sem revelar segredos.
 8. **Feature flags:** catálogo, clientes e pedidos são ativados separadamente.
 
+## Casos de contorno incorporados ao plano
+
+| Caso | Comportamento implementado/proposto |
+|---|---|
+| Serviço/mão de obra sem endpoint próprio | Um serviço do M2 pode ser mapeado para um código comercial previamente cadastrado na Ellon. A OS técnica continua intacta. |
+| Revisão gera várias OS | Cada OS possui chave idempotente própria; a revisão permanece como origem e não é faturada diretamente. |
+| OS sem cliente cadastrado | Bloquear exportação. Cliente avulso não tem dados fiscais suficientes. |
+| Cliente ainda não existe na Ellon | Criar/atualizar cliente antes do pré-pedido e persistir o vínculo dos IDs. |
+| Cliente duplicado ou resposta sem ID | Interromper o envio e exigir conciliação; nunca criar repetidamente às cegas. |
+| Peça ou serviço sem código Ellon | Pré-validação lista cada item sem mapeamento e impede a geração do pedido. |
+| Item excluído do catálogo depois da OS | O histórico da OS é preservado; o vínculo externo continua separado do cadastro atual. |
+| OS sem custo, garantia ou cortesia | Exigir um código Ellon específico de garantia/cortesia; não converter silenciosamente para venda normal. |
+| Desconto ou promoção do M2 | A Ellon recalcula valores. Divergência deve ir para conciliação antes do faturamento. |
+| Estoque mudou após aprovação | Revalidar na Ellon no momento do pré-pedido; não confiar somente no estoque local. |
+| Duplo clique/repetição da requisição | Chave única `service-order:{id}:v1`; retorna o mesmo job sem duplicar. |
+| Timeout depois de enviar | Marcar como resultado ambíguo e bloquear retentativa automática. Conferir na Ellon antes de reenviar. |
+| Erro conhecido antes do processamento | Retentativa com backoff exponencial e limite de tentativas. |
+| Cancelamento antes do envio | Cancelar o job pendente; não chamar a Ellon. |
+| Cancelamento depois do pré-pedido | Não apagar o vínculo. Encaminhar cancelamento/conciliação conforme endpoint que a Ellon ainda precisa fornecer. |
+| Pagamento dividido | A API aceita uma forma de pagamento. Inicialmente bloquear ou escolher uma regra comercial explícita. |
+| Serviço com quantidade fracionada | O modelo local atual usa inteiro. Horas fracionadas exigem código/unidade comercial ou ajuste de modelo. |
+| Pedido parcialmente faturado | Manter número do pré-pedido e vendas/notas recebidas como eventos separados. |
+| NF-e indisponível temporariamente | Consultar periodicamente até estado terminal; não considerar ausência imediata como erro definitivo. |
+| Produto com preço/estoque inválido | Rejeitar somente o registro problemático, registrar erro e continuar o lote. |
+| Token vencido ou `401` | Autenticar novamente uma vez; se persistir, abrir erro operacional sem loop infinito. |
+| Ellon indisponível | Site e oficina continuam funcionando; a outbox persiste o trabalho para processamento posterior. |
+| Integração desativada | Nenhum envio ocorre, mas OS, revisões e pedidos locais continuam normais. |
+
+### Regra de conversão de revisão/OS
+
+Uma revisão nunca vira pedido diretamente. Ela pode gerar uma ou mais ordens de
+serviço. Somente uma OS **concluída**, com cliente cadastrado, configuração
+comercial completa e todos os itens mapeados pode criar um pré-pedido Ellon.
+Assim, o M2 preserva diagnóstico, checklist, fotos, mecânico, aprovação e
+garantia; a Ellon recebe apenas a representação comercial/fiscal.
+
 ### Fonte de verdade sugerida
 
 | Domínio | Fonte principal | Regra |

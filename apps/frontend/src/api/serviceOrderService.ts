@@ -1,5 +1,6 @@
 // src/api/serviceOrderService.ts
 import apiClient from './apiClient';
+import ellonService, { EllonPreflight } from './ellonService';
 
 export type ServiceOrderStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type ServiceOrderItemType = 'SERVICE' | 'PRODUCT';
@@ -151,6 +152,14 @@ export const serviceOrderService = {
 
   async remove(id: string): Promise<void> {
     await apiClient.delete(`/service-orders/${id}`);
+  },
+
+  async ellonPreflight(id: string): Promise<EllonPreflight> {
+    return ellonService.preflightServiceOrder(id);
+  },
+
+  async exportToEllon(id: string): Promise<void> {
+    return ellonService.exportServiceOrder(id);
   },
 };
 

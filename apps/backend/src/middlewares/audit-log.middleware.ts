@@ -114,6 +114,8 @@ function sanitizeBody(body: unknown, depth = 0): unknown {
     'cpf',
     'creditCard',
     'cvv',
+    'accessHash',
+    'integrationCode',
   ];
 
   for (const [field, value] of Object.entries(sanitized)) {

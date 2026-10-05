@@ -12,6 +12,7 @@ import { clearSettingsCache } from '@/hooks/useStoreSettings';
 import settingsService from '@/api/settingsService';
 import { PdfBrandingSection } from './settings/PdfBrandingSection';
 import { PlateLookupSection } from './settings/PlateLookupSection';
+import { EllonIntegrationSection } from './settings/EllonIntegrationSection';
 import {
   MessageCircle,
   CheckCircle,
@@ -1029,6 +1030,10 @@ export function SettingsContent() {
             deviceTokenSet={formData.plateLookupDeviceTokenSet}
             onChange={handleInputChange}
           />
+
+          <Separator />
+
+          <EllonIntegrationSection />
 
           <Separator />
 
