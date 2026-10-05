@@ -116,6 +116,7 @@ function sanitizeBody(body: unknown, depth = 0): unknown {
     'cvv',
     'accessHash',
     'integrationCode',
+    'username',
   ];
 
   for (const [field, value] of Object.entries(sanitized)) {

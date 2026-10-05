@@ -10,6 +10,7 @@ const DEFAULT_URL = 'http://fvendas.ellon.inf.br:9047';
 export interface EllonCredentials {
   baseUrl: string;
   companyCode: number;
+  username: string;
   integrationCode: string;
   password: string;
   accessHash: string;
@@ -55,6 +56,9 @@ export class EllonConnectionService {
       warehouseCode: connection.warehouseCode,
       paymentMethodCode: connection.paymentMethodCode,
       carrierCode: connection.carrierCode,
+      usernameMasked: connection.usernameEncrypted
+        ? CryptoUtil.mask(CryptoUtil.decrypt(connection.usernameEncrypted))
+        : null,
       integrationCodeMasked: connection.integrationCodeEncrypted
         ? CryptoUtil.mask(CryptoUtil.decrypt(connection.integrationCodeEncrypted))
         : null,
@@ -85,6 +89,7 @@ export class EllonConnectionService {
         !(dto.sellerCode ?? current.sellerCode) && 'vendedor',
         !(dto.warehouseCode ?? current.warehouseCode) && 'depósito',
         !(dto.paymentMethodCode ?? current.paymentMethodCode) && 'forma de pagamento',
+        !(dto.username || current.usernameEncrypted) && 'usuário Ellon/API',
         !(dto.integrationCode || current.integrationCodeEncrypted) && 'código de integração',
         !(dto.password || current.passwordEncrypted) && 'senha',
         !(dto.accessHash || current.accessHashEncrypted) && 'HASH de acesso',
@@ -101,6 +106,7 @@ export class EllonConnectionService {
       ...(dto.warehouseCode !== undefined && { warehouseCode: dto.warehouseCode }),
       ...(dto.paymentMethodCode !== undefined && { paymentMethodCode: dto.paymentMethodCode }),
       ...(dto.carrierCode !== undefined && { carrierCode: dto.carrierCode }),
+      ...(dto.username !== undefined && { usernameEncrypted: CryptoUtil.encrypt(dto.username) }),
       ...(dto.integrationCode !== undefined && { integrationCodeEncrypted: CryptoUtil.encrypt(dto.integrationCode) }),
       ...(dto.password !== undefined && { passwordEncrypted: CryptoUtil.encrypt(dto.password) }),
       ...(dto.accessHash !== undefined && { accessHashEncrypted: CryptoUtil.encrypt(dto.accessHash) }),
@@ -119,12 +125,13 @@ export class EllonConnectionService {
   async credentials(): Promise<EllonCredentials> {
     const connection = await this.ensure();
     if (!connection.enabled) throw ApiError.badRequest('Integração Ellon está desabilitada.');
-    if (!connection.companyCode || !connection.integrationCodeEncrypted || !connection.passwordEncrypted || !connection.accessHashEncrypted) {
+    if (!connection.companyCode || !connection.usernameEncrypted || !connection.integrationCodeEncrypted || !connection.passwordEncrypted || !connection.accessHashEncrypted) {
       throw ApiError.badRequest('Configuração Ellon incompleta.');
     }
     return {
       baseUrl: validateBaseUrl(connection.baseUrl),
       companyCode: connection.companyCode,
+      username: CryptoUtil.decrypt(connection.usernameEncrypted) as string,
       integrationCode: CryptoUtil.decrypt(connection.integrationCodeEncrypted) as string,
       password: CryptoUtil.decrypt(connection.passwordEncrypted) as string,
       accessHash: CryptoUtil.decrypt(connection.accessHashEncrypted) as string,

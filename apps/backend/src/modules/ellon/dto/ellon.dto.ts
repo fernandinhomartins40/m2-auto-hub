@@ -13,6 +13,7 @@ export const updateEllonConfigSchema = z.object({
   warehouseCode: optionalPositiveInt,
   paymentMethodCode: optionalPositiveInt,
   carrierCode: optionalPositiveInt,
+  username: z.string().trim().min(1).max(100).optional(),
   integrationCode: z.string().trim().min(1).max(100).optional(),
   password: z.string().min(8).max(200).optional(),
   accessHash: z.string().min(16).max(4096).optional(),
@@ -25,7 +26,7 @@ export const upsertEllonLinkSchema = z.object({
   entityType: z.nativeEnum(EllonEntityType),
   localId: z.string().uuid(),
   externalId: z.string().trim().min(1).max(100),
-  externalSequence: z.number().int().nonnegative().nullable().optional(),
+  externalSequence: z.number().int().nonnegative().default(0),
   metadata: z.record(z.unknown()).nullable().optional(),
 });
 

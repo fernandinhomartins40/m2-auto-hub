@@ -11,6 +11,7 @@ export interface EllonConfig {
   warehouseCode: number | null;
   paymentMethodCode: number | null;
   carrierCode: number | null;
+  usernameMasked: string | null;
   integrationCodeMasked: string | null;
   hasPassword: boolean;
   accessHashMasked: string | null;
@@ -65,6 +66,7 @@ export const ellonService = {
     return response.data.data;
   },
   async retryJob(id: string): Promise<void> { await apiClient.post(`/ellon/jobs/${id}/retry`); },
+  async syncProducts(): Promise<void> { await apiClient.post('/ellon/sync/products'); },
 };
 
 export default ellonService;

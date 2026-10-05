@@ -801,6 +801,7 @@ model EllonConnection {
   warehouseCode         Int?
   paymentMethodCode     Int?
   carrierCode           Int?
+  usernameEncrypted     String?
   integrationCodeEncrypted String?
   passwordEncrypted     String?
   accessHashEncrypted   String?
@@ -827,12 +828,13 @@ model EllonEntityLink {
   entityType       EllonEntityType
   localId          String
   externalId       String
-  externalSequence Int?
+  externalSequence Int             @default(0)
   metadata         Json?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
   @@unique([entityType, localId])
+  @@unique([entityType, externalId, externalSequence])
   @@index([entityType, externalId])
   @@map("ellon_entity_links")
 }

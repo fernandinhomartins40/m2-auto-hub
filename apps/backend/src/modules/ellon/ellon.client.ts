@@ -1,10 +1,15 @@
 import { logger } from '@shared/utils/logger.util.js';
+import { ApiError } from '@shared/utils/error.util.js';
 import { ellonConnectionService } from './ellon-connection.service.js';
 
 interface EllonErrorBody { erro?: string; message?: string }
 interface AuthResponse { Token?: string }
 
-export class AmbiguousEllonError extends Error {}
+export class AmbiguousEllonError extends ApiError {
+  constructor() {
+    super(503, 'Falha de comunicação com a Ellon; reconciliação manual necessária antes de reenviar.');
+  }
+}
 
 function tokenExpiry(token: string): Date | null {
   try {
@@ -21,20 +26,24 @@ export class EllonClient {
     const url = new URL('/publico/integracoes/autenticacao', credentials.baseUrl);
     url.searchParams.set('access_token', credentials.accessHash);
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify({ usuario: credentials.integrationCode, senha: credentials.password }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    const body = await response.json().catch(() => ({})) as AuthResponse & EllonErrorBody;
-    if (!response.ok || !body.Token) {
-      const message = body.erro || body.message || `Autenticação Ellon falhou (${response.status})`;
-      await ellonConnectionService.markError(message);
-      throw new Error(message);
+    const candidates = [...new Set([credentials.username, credentials.integrationCode])];
+    let lastMessage = 'Autenticação Ellon falhou';
+    for (const usuario of candidates) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ usuario, senha: credentials.password }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      const body = await response.json().catch(() => ({})) as AuthResponse & EllonErrorBody;
+      if (response.ok && body.Token) {
+        await ellonConnectionService.saveToken(body.Token, tokenExpiry(body.Token));
+        return body.Token;
+      }
+      lastMessage = body.erro || body.message || `Autenticação Ellon falhou (${response.status})`;
     }
-    await ellonConnectionService.saveToken(body.Token, tokenExpiry(body.Token));
-    return body.Token;
+    await ellonConnectionService.markError(lastMessage);
+    throw new ApiError(502, `Ellon recusou a autenticação: ${lastMessage}`);
   }
 
   private async token(): Promise<string> {
@@ -68,12 +77,13 @@ export class EllonClient {
       response = await execute(await this.token());
       if (response.status === 401) response = await execute(await this.authenticate());
     } catch (error) {
+      if (error instanceof ApiError) throw error;
       logger.warn('[Ellon] falha de transporte; resultado remoto é desconhecido', { path, error: String(error) });
-      throw new AmbiguousEllonError('Falha de comunicação com a Ellon; reconciliação manual necessária antes de reenviar.');
+      throw new AmbiguousEllonError();
     }
 
     const body = await response.json().catch(() => ({})) as T & EllonErrorBody;
-    if (!response.ok) throw new Error(body.erro || body.message || `Ellon respondeu ${response.status}`);
+    if (!response.ok) throw new ApiError(502, body.erro || body.message || `Ellon respondeu ${response.status}`);
     return body;
   }
 

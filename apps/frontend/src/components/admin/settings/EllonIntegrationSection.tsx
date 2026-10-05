@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, DatabaseZap, Loader2, PlugZap, Save } from 'lucide-react';
+import { AlertTriangle, DatabaseZap, Loader2, PlugZap, RefreshCw, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import ellonService, { EllonConfig, EllonEntityType, EllonJob, EllonLink } from '@/api/ellonService';
 import { getErrorMessage } from '@/lib/errors';
@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 
 type Form = Pick<EllonConfig, 'enabled' | 'baseUrl' | 'companyCode' | 'transactionCode' | 'costCenterCode' | 'sellerCode' | 'warehouseCode' | 'paymentMethodCode' | 'carrierCode' | 'syncProducts' | 'syncCustomers' | 'syncOrders'> & {
   integrationCode: string;
+  username: string;
   password: string;
   accessHash: string;
 };
@@ -26,7 +27,7 @@ const emptyForm: Form = {
   warehouseCode: 1,
   paymentMethodCode: null,
   carrierCode: null,
-  integrationCode: '', password: '', accessHash: '',
+  username: '', integrationCode: '', password: '', accessHash: '',
   syncProducts: false, syncCustomers: false, syncOrders: false,
 };
 
@@ -43,7 +44,7 @@ export function EllonIntegrationSection() {
   useEffect(() => {
     ellonService.getConfig().then(value => {
       setConfig(value);
-      setForm(current => ({ ...current, ...value, integrationCode: '', password: '', accessHash: '' }));
+      setForm(current => ({ ...current, ...value, username: '', integrationCode: '', password: '', accessHash: '' }));
       void loadOperations();
     }).catch(error => toast.error(getErrorMessage(error))).finally(() => setBusy(null));
   }, []);
@@ -54,11 +55,12 @@ export function EllonIntegrationSection() {
     try {
       const payload: Record<string, unknown> = { ...form };
       if (!form.integrationCode) delete payload.integrationCode;
+      if (!form.username) delete payload.username;
       if (!form.password) delete payload.password;
       if (!form.accessHash) delete payload.accessHash;
       const updated = await ellonService.updateConfig(payload);
       setConfig(updated);
-      setForm(current => ({ ...current, integrationCode: '', password: '', accessHash: '' }));
+      setForm(current => ({ ...current, username: '', integrationCode: '', password: '', accessHash: '' }));
       toast.success('Configuração Ellon salva com segurança.');
     } catch (error) { toast.error(getErrorMessage(error)); } finally { setBusy(null); }
   };
@@ -78,6 +80,13 @@ export function EllonIntegrationSection() {
   const retry = async (id: string) => {
     try { await ellonService.retryJob(id); await loadOperations(); toast.success('Job reenfileirado após confirmação manual.'); }
     catch (error) { toast.error(getErrorMessage(error)); }
+  };
+  const syncProducts = async () => {
+    try {
+      await ellonService.syncProducts();
+      await loadOperations();
+      toast.success('Sincronização de produtos colocada na fila.');
+    } catch (error) { toast.error(getErrorMessage(error)); }
   };
 
   if (busy === 'load') return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Carregando integração Ellon...</div>;
@@ -103,14 +112,15 @@ export function EllonIntegrationSection() {
         <div className="md:col-span-2"><Label>URL Ellon</Label><Input value={form.baseUrl} onChange={e => setForm(current => ({ ...current, baseUrl: e.target.value }))} /></div>
         {numericFields.map(([key, label, placeholder]) => <div key={key}><Label>{label}</Label><Input type="number" min="1" value={String(form[key] ?? '')} placeholder={placeholder} onChange={e => number(key, e.target.value)} /></div>)}
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <div><Label>Usuário Ellon/API</Label><Input type="text" autoComplete="username" placeholder={config?.usernameMasked ?? 'Usuário fornecido pela Ellon'} value={form.username} onChange={e => setForm(current => ({ ...current, username: e.target.value }))} /></div>
         <div><Label>Código de integração</Label><Input type="password" autoComplete="new-password" placeholder={config?.integrationCodeMasked ?? 'Informar código'} value={form.integrationCode} onChange={e => setForm(current => ({ ...current, integrationCode: e.target.value }))} /></div>
         <div><Label>Senha da integração</Label><Input type="password" autoComplete="new-password" placeholder={config?.hasPassword ? 'Senha já configurada' : 'Informar senha'} value={form.password} onChange={e => setForm(current => ({ ...current, password: e.target.value }))} /></div>
         <div><Label>HASH de acesso</Label><Input type="password" autoComplete="new-password" placeholder={config?.accessHashMasked ?? 'Informar HASH'} value={form.accessHash} onChange={e => setForm(current => ({ ...current, accessHash: e.target.value }))} /></div>
       </div>
       <div className="grid gap-3 md:grid-cols-3">{([['syncProducts','Produtos, preços e estoque'],['syncCustomers','Clientes'],['syncOrders','Pedidos e faturamento']] as Array<[keyof Form,string]>).map(([key,label]) => <div key={key} className="flex items-center justify-between rounded-lg border bg-background p-3"><Label>{label}</Label><Switch checked={Boolean(form[key])} onCheckedChange={checked => setForm(current => ({ ...current, [key]: checked }))} /></div>)}</div>
       {config?.lastError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{config.lastError}</p>}
-      <div className="flex flex-wrap gap-2"><Button onClick={() => void save()} disabled={Boolean(busy)}>{busy === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Ellon</Button><Button variant="outline" onClick={() => void test()} disabled={Boolean(busy) || !config?.enabled}>{busy === 'test' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}Testar autenticação</Button></div>
+      <div className="flex flex-wrap gap-2"><Button onClick={() => void save()} disabled={Boolean(busy)}>{busy === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Ellon</Button><Button variant="outline" onClick={() => void test()} disabled={Boolean(busy) || !config?.enabled}>{busy === 'test' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}Testar autenticação</Button><Button variant="outline" onClick={() => void syncProducts()} disabled={!config?.enabled}><RefreshCw className="mr-2 h-4 w-4" />Sincronizar produtos agora</Button></div>
       <div className="space-y-3 border-t pt-5">
         <div><h3 className="font-medium">Mapeamento comercial de itens</h3><p className="text-xs text-muted-foreground">Vincule o UUID local da peça ou serviço ao ID e sequência cadastrados na Ellon.</p></div>
         <div className="grid gap-3 md:grid-cols-4">

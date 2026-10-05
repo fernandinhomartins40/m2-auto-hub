@@ -3,6 +3,7 @@ import { prisma } from '@config/database.js';
 import { logger } from '@shared/utils/logger.util.js';
 import { AmbiguousEllonError } from './ellon.client.js';
 import { ellonExportService } from './ellon-export.service.js';
+import { ellonProductSyncService } from './ellon-product-sync.service.js';
 
 export class EllonJobService {
   private running = false;
@@ -26,6 +27,8 @@ export class EllonJobService {
           let response: unknown;
           if (job.type === EllonJobType.EXPORT_SERVICE_ORDER && job.localEntityId) {
             response = await ellonExportService.exportServiceOrder(job.localEntityId);
+          } else if (job.type === EllonJobType.SYNC_PRODUCTS) {
+            response = await ellonProductSyncService.syncAll();
           } else {
             throw new Error(`Tipo de job ainda não suportado: ${job.type}`);
           }

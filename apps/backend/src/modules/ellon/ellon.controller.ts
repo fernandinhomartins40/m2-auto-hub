@@ -5,6 +5,7 @@ import { ellonConnectionService } from './ellon-connection.service.js';
 import { ellonExportService } from './ellon-export.service.js';
 import { ellonJobService } from './ellon-job.service.js';
 import { queryEllonJobsSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
+import { ellonProductSyncService } from './ellon-product-sync.service.js';
 
 export class EllonController {
   getConfig = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -76,6 +77,13 @@ export class EllonController {
 
   retryJob = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try { res.json({ success: true, data: await ellonJobService.retry(req.params.id) }); } catch (error) { next(error); }
+  };
+
+  syncProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await ellonProductSyncService.enqueue(req.admin?.adminId, true);
+      res.status(202).json({ success: true, data });
+    } catch (error) { next(error); }
   };
 }
 

@@ -84,12 +84,18 @@ integração**. Ele não deve ser confundido com código da empresa. O JWT infor
 pela Ellon foi denominado **HASH**. Os valores não são reproduzidos neste
 documento.
 
-O mapeamento operacional mais provável é: código de integração no campo de
-usuário/identificação da autenticação, HASH em `access_token` e Bearer retornado
-pelo endpoint para as chamadas seguintes. Esse mapeamento deve ser validado
-depois de salvar a configuração comercial, pois antes disso a API devolve a
-mesma mensagem de “integração não configurada” sem chegar à validação final das
-credenciais.
+O mapeamento operacional adotado é: usuário Ellon/API e senha no corpo da
+autenticação, HASH em `access_token`, empresa no cabeçalho e Bearer retornado
+pelo endpoint para as chamadas seguintes. O código de integração permanece em
+campo próprio. Esse mapeamento deve ser validado depois de a Ellon liberar a
+configuração, pois antes disso a API devolve a mesma mensagem de “integração não
+configurada” sem chegar à validação final das credenciais.
+
+Na implementação, usuário e código de integração são armazenados em campos
+separados e cifrados. A autenticação tenta primeiro o usuário Ellon/API exigido
+pelo Swagger e, somente diante de rejeição, tenta o código de integração como
+identificador. Isso acomoda a ambiguidade do fornecedor sem confundir empresa,
+usuário e código no cadastro administrativo.
 
 Há uma inconsistência no OpenAPI: o texto diz que `access_token` e Bearer são
 obrigatórios simultaneamente, mas o bloco `security` os descreve como opções
@@ -393,6 +399,24 @@ empresa de homologação.
 
 Importar grupos, marcas, produtos, fotos, preço e estoque. Validar paginação,
 decimais, performance e política de sobrescrita. É a fase de menor risco.
+
+#### Implementação disponível
+
+O painel já permite enfileirar **Sincronizar produtos agora** e habilitar uma
+execução automática a cada dez minutos. O importador:
+
+- percorre páginas até resposta vazia ou repetida;
+- aceita array direto ou envelopes `produtos`, `Produtos`, `data`, `items` e
+  `registros`, devido à ausência de contrato de paginação preciso;
+- converte números com ponto ou vírgula;
+- cria produtos novos e atualiza produtos já vinculados pelo ID + sequência;
+- vincula por SKU exato quando encontra um produto local correspondente;
+- importa preço, oferta, estoque, estoque mínimo, custo, categoria, marca,
+  aplicação, fotos e especificações técnicas;
+- isola registros inválidos sem interromper o restante do lote;
+- registra contagens e até cem erros no resultado do job;
+- usa checkpoint incremental por `data_alteracao` depois da carga inicial;
+- nunca apaga automaticamente um produto local ausente na resposta Ellon.
 
 ### Fase 2 — clientes
 
