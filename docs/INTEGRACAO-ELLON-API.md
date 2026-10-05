@@ -46,6 +46,27 @@ acompanhados posteriormente por consultas.
 - O JWT fornecido tem expiração declarada em **29/09/2027 às 19:39:52 UTC**, mas
   não foi aceito porque a configuração de integração está ausente.
 
+### Configuração encontrada no portal
+
+A leitura da tela `/configintegracoes/2/n` confirmou que a empresa **2 — M2
+AUTO CENTER** existe, mas os seguintes valores ainda não estão configurados:
+
+- Transação dos pedidos;
+- Centro de custo;
+- Vendedor;
+- Local de depósito.
+
+`Usa Fotos Produtos` está como **Sim** e `Limit Produtos` está como **0**. A
+ausência dos quatro vínculos comerciais é a causa mais provável da mensagem de
+integração não configurada. A opção mais provável para empresa é `2`, centro de
+custo é `1 — EMPRESA` e depósito é `1 — LOJA LOCAL`; transação e vendedor não
+devem ser escolhidos tecnicamente sem validação comercial/contábil. `0` para o
+limite de produtos também precisa ser confirmado como “sem limite”.
+
+A tela global `/configuracoesapi` exibe `ZgotmplZ` em campos de ZeroConf/spool,
+aparentemente um placeholder de template Go não resolvido. Esses campos não são
+necessários para nossa integração HTTP e não devem ser alterados.
+
 ## Segurança e autenticação
 
 Segundo o Swagger, as chamadas usam:
@@ -56,12 +77,26 @@ Segundo o Swagger, as chamadas usam:
 4. autenticação por `POST /publico/integracoes/autenticacao`, com `usuario` e
    `senha`, para obtenção do token Bearer.
 
+Segundo a orientação direta da Ellon, as credenciais numéricas têm finalidades
+distintas: o usuário informado para entrar no portal é uma credencial do portal;
+o outro código fornecido é o **código que será solicitado no fluxo de
+integração**. Ele não deve ser confundido com código da empresa. O JWT informado
+pela Ellon foi denominado **HASH**. Os valores não são reproduzidos neste
+documento.
+
+O mapeamento operacional mais provável é: código de integração no campo de
+usuário/identificação da autenticação, HASH em `access_token` e Bearer retornado
+pelo endpoint para as chamadas seguintes. Esse mapeamento deve ser validado
+depois de salvar a configuração comercial, pois antes disso a API devolve a
+mesma mensagem de “integração não configurada” sem chegar à validação final das
+credenciais.
+
 Há uma inconsistência no OpenAPI: o texto diz que `access_token` e Bearer são
 obrigatórios simultaneamente, mas o bloco `security` os descreve como opções
 alternativas. A implementação deve assumir que **ambos são obrigatórios** até a
 Ellon confirmar o contrário.
 
-### Riscos que precisam ser resolvidos antes da produção
+### Riscos e controles compensatórios
 
 - O servidor na porta `9047` aceita apenas HTTP. HTTPS nessa porta falhou. Isso
   expõe senha, token e dados pessoais em trânsito se a chamada for feita pela
@@ -74,9 +109,30 @@ Ellon confirmar o contrário.
 - Não há documentação de limite de requisições, tamanho de página, timeout,
   SLA, ambiente sandbox ou política de versionamento.
 
-**Condição para produção:** a Ellon deve disponibilizar HTTPS válido ou aceitar
-conexão por VPN/túnel privado. Não é recomendável transmitir dados pessoais e
-credenciais pela internet usando HTTP simples.
+O fornecedor confirmou que HTTPS não está disponível e não será alterado. Isso
+não impede tecnicamente a integração, mas mantém um risco residual de
+interceptação que não pode ser eliminado pelo nosso código. Para operar assim:
+
+- somente o backend deve chamar a Ellon; navegador e aplicativo nunca acessam a
+  porta `9047` diretamente;
+- usar um worker dedicado, com acesso mínimo aos segredos e sem resposta pública;
+- solicitar allowlist do IP fixo da VPS na porta `9047`, se o firewall da Ellon
+  oferecer essa possibilidade, mesmo que eles não ofereçam HTTPS;
+- restringir no firewall da nossa VPS a saída para o IP e porta exatos da Ellon;
+- usar uma credencial exclusiva de integração, com o menor nível de privilégio;
+- remover query string, cabeçalhos de autorização e payloads pessoais de logs,
+  APM, traces e mensagens de erro;
+- manter tokens cifrados em repouso, rotacionáveis e fora do frontend;
+- aplicar timeout curto, limite de concorrência, circuit breaker e fila para
+  reduzir exposição e impedir que a indisponibilidade da Ellon derrube o site;
+- minimizar os dados transmitidos e não buscar XML de NF-e sem necessidade;
+- registrar uma aceitação formal do risco HTTP e revisar o contrato/LGPD com o
+  cliente antes da ativação.
+
+Um proxy HTTPS na nossa VPS protegeria apenas navegador → nossa VPS; ele **não
+criptografa** o trecho nossa VPS → Ellon. VPN/túnel continuaria sendo a única
+forma de proteger esse trecho sem mudança na API, caso a infraestrutura Ellon
+algum dia permita.
 
 ## Inventário de endpoints
 
@@ -266,11 +322,15 @@ do M2 Auto Hub e não deve ser habilitado apenas porque existe na API.
 
 ## Perguntas obrigatórias para a Ellon
 
-1. Podem habilitar a configuração de integração e informar em qual empresa?
-2. Qual valor corresponde a usuário da API, `access_token`, Bearer e cabeçalho
-   `empresa`? O token informado é fixo ou deve ser renovado pela autenticação?
+1. Após preencher Transação, Centro de Custo, Vendedor e Depósito para a empresa
+   2, qual ação deve ser executada: apenas **Gravar Configurações** ou também
+   **Sincronizar**?
+2. Confirmar apenas o encaixe técnico: código de integração como usuário da
+   autenticação, HASH como `access_token`, Bearer retornado pelo endpoint e
+   empresa `2` no cabeçalho. O HASH é fixo? Qual é sua política de rotação?
 3. Existe endpoint de refresh/revogação? Qual a validade real do token?
-4. Há URL HTTPS, VPN, túnel ou ambiente sandbox/homologação?
+4. Mesmo sem HTTPS, podem restringir a porta `9047` ao IP fixo da nossa VPS? Há
+   ambiente sandbox/homologação?
 5. Qual o limite de chamadas, tamanho de página e número inicial da paginação?
 6. `produtos` retorna array ou objeto paginado? Como identificar a última página?
 7. Qual campo é único e estável para SKU: `reduzida`, `referencia`,
@@ -288,8 +348,10 @@ do M2 Auto Hub e não deve ser habilitado apenas porque existe na API.
 
 ### Fase 0 — desbloqueio e homologação
 
-Ellon habilita a integração, fornece transporte seguro e responde às perguntas.
-Executamos testes controlados em sandbox ou empresa de homologação.
+O responsável comercial define transação e vendedor, a configuração é gravada
+na empresa 2 e a Ellon confirma o procedimento de sincronização. Registramos os
+controles compensatórios e executamos testes controlados, preferencialmente em
+empresa de homologação.
 
 ### Fase 1 — catálogo somente leitura
 
@@ -314,7 +376,7 @@ painel operacional, alertas e reprocessamento.
 ## Decisão recomendada
 
 Não implementar tudo de uma vez. Aprovar **Fase 0 + Fase 1** primeiro. Depois de
-validar dados reais e segurança do transporte, decidir se clientes e pedidos
+validar dados reais e os controles compensatórios, decidir se clientes e pedidos
 devem ser bidirecionais. A maior decisão funcional é quem vence conflitos de
-cadastro e preço; a maior decisão técnica é como obter HTTPS/VPN e idempotência
-confirmada pela Ellon.
+cadastro e preço; as maiores decisões técnicas são a aceitação formal do HTTP,
+o isolamento da conexão e a idempotência confirmada pela Ellon.
