@@ -3,6 +3,7 @@ import {
   EllonJobStatus,
   EllonJobType,
   Prisma,
+  OrderStatus,
   ServiceOrderStatus,
 } from '@prisma/client';
 import { prisma } from '@config/database.js';
@@ -82,6 +83,27 @@ export class EllonExportService {
         payload: { serviceOrderId },
         createdById,
       },
+    });
+  }
+
+  async enqueueOrder(orderId: string, createdById?: string) {
+    const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+    if (!order) throw ApiError.notFound('Pedido não encontrado.');
+    if (order.status !== OrderStatus.CONFIRMED) throw ApiError.unprocessableEntity('Somente pedido confirmado pode ser enviado à Ellon.');
+    if (!order.items.length) throw ApiError.unprocessableEntity('Pedido não possui itens.');
+    const localRefs = order.items.map(item => ({
+      localId: item.type === 'PRODUCT' ? item.productId : item.serviceId,
+      entityType: item.type === 'PRODUCT' ? EllonEntityType.PRODUCT : EllonEntityType.SERVICE,
+    }));
+    if (localRefs.some(item => !item.localId)) throw ApiError.unprocessableEntity('Pedido possui item sem vínculo com o catálogo.');
+    const uniqueRefs = [...new Map(localRefs.map(item => [`${item.entityType}:${item.localId}`, item])).values()];
+    const links = await prisma.ellonEntityLink.findMany({
+      where: { OR: uniqueRefs.map(item => ({ entityType: item.entityType, localId: item.localId as string })) },
+    });
+    if (links.length !== uniqueRefs.length) throw ApiError.unprocessableEntity('Pedido possui item sem mapeamento Ellon.');
+    return prisma.ellonJob.upsert({
+      where: { idempotencyKey: `order:${orderId}:v1` }, update: {},
+      create: { type: EllonJobType.EXPORT_ORDER, idempotencyKey: `order:${orderId}:v1`, localEntityId: orderId, payload: { orderId }, createdById },
     });
   }
 
@@ -165,6 +187,38 @@ export class EllonExportService {
         externalId: String(response.numeroPedido),
         metadata: response as Prisma.InputJsonValue,
       },
+    });
+    return response;
+  }
+
+  async exportOrder(orderId: string): Promise<EllonOrderResponse> {
+    const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+    if (!order) throw new Error('Pedido não encontrado.');
+    if (order.status !== OrderStatus.CONFIRMED) throw new Error('Somente pedido confirmado pode ser enviado à Ellon.');
+    const customerExternalId = await this.ensureCustomer(order.customerId);
+    const itemLinks = await Promise.all(order.items.map(async item => {
+      const localId = item.type === 'PRODUCT' ? item.productId : item.serviceId;
+      const entityType = item.type === 'PRODUCT' ? EllonEntityType.PRODUCT : EllonEntityType.SERVICE;
+      if (!localId) throw new Error(`Item "${item.name}" não está vinculado ao catálogo.`);
+      const link = await prisma.ellonEntityLink.findUnique({ where: { entityType_localId: { entityType, localId } } });
+      if (!link) throw new Error(`Item "${item.name}" não possui mapeamento Ellon.`);
+      return { id_produto: Number(link.externalId), id_sequencia: link.externalSequence, quantidade: item.quantity };
+    }));
+    const config = await ellonConnectionService.getRaw();
+    if (!config.paymentMethodCode) throw new Error('Forma de pagamento Ellon não configurada.');
+    const response = await ellonClient.request<EllonOrderResponse>('POST', '/publico/integracoes/gerarprepedido', {
+      body: {
+        id_cliente: Number(customerExternalId), id_pedido_site: `PED-${order.id}`,
+        id_vendedor: config.sellerCode ?? undefined, forma_pagto: config.paymentMethodCode,
+        transportadora: config.carrierCode ?? 0, valor_frete: 0,
+        observacao: `Pedido M2 ${order.id}`, itens: itemLinks,
+      },
+    });
+    if (!response.numeroPedido) throw new Error('Ellon não retornou o número do pré-pedido.');
+    await prisma.ellonEntityLink.upsert({
+      where: { entityType_localId: { entityType: EllonEntityType.ORDER, localId: order.id } },
+      update: { externalId: String(response.numeroPedido), metadata: response as Prisma.InputJsonValue },
+      create: { entityType: EllonEntityType.ORDER, localId: order.id, externalId: String(response.numeroPedido), metadata: response as Prisma.InputJsonValue },
     });
     return response;
   }

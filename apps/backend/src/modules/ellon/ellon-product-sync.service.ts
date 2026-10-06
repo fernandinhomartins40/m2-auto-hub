@@ -101,6 +101,15 @@ function normalizedProduct(raw: RawProduct) {
 
 export class EllonProductSyncService {
   async enqueue(createdById?: string, manual = false) {
+    const active = await prisma.ellonJob.findFirst({
+      where: {
+        type: EllonJobType.SYNC_PRODUCTS,
+        status: { in: ['PENDING', 'PROCESSING'] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (active) return active;
+
     const bucket = Math.floor(Date.now() / (10 * 60_000));
     const idempotencyKey = manual ? `product-sync:manual:${randomUUID()}` : `product-sync:${bucket}`;
     return prisma.ellonJob.upsert({

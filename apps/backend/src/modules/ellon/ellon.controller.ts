@@ -6,22 +6,52 @@ import { ellonExportService } from './ellon-export.service.js';
 import { ellonJobService } from './ellon-job.service.js';
 import { queryEllonJobsSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
 import { ellonProductSyncService } from './ellon-product-sync.service.js';
+import { ellonMasterSyncService } from './ellon-master-sync.service.js';
 
 export class EllonController {
   getConfig = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try { res.json({ success: true, data: await ellonConnectionService.getSafe() }); } catch (error) { next(error); }
   };
 
-  updateConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getSyncSummary = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const dto = updateEllonConfigSchema.parse(req.body);
-      res.json({ success: true, data: await ellonConnectionService.update(dto) });
+      const [snapshots, links, products, customers, jobs] = await Promise.all([
+        prisma.ellonSnapshot.groupBy({ by: ['type'], _count: { _all: true }, _max: { syncedAt: true } }),
+        prisma.ellonEntityLink.groupBy({ by: ['entityType'], _count: { _all: true }, _max: { updatedAt: true } }),
+        prisma.ellonEntityLink.count({ where: { entityType: 'PRODUCT' } }),
+        prisma.ellonEntityLink.count({ where: { entityType: 'CUSTOMER' } }),
+        prisma.ellonJob.groupBy({ by: ['status'], _count: { _all: true } }),
+      ]);
+      res.json({ success: true, data: { products, customers, snapshots, links, jobs } });
     } catch (error) { next(error); }
   };
 
-  test = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto = updateEllonConfigSchema.parse(req.body);
+      const data = await ellonConnectionService.update(dto);
+      if (data.enabled && data.syncProducts) {
+        await ellonProductSyncService.enqueue(req.admin?.adminId);
+      }
+      if (data.enabled) await ellonMasterSyncService.enqueueReferences();
+      if (data.enabled && data.syncCustomers) await ellonMasterSyncService.enqueueCustomers();
+      if (data.enabled && data.syncOrders) await ellonMasterSyncService.enqueueOrders();
+      if (data.enabled) void ellonJobService.processPending();
+      res.json({ success: true, data });
+    } catch (error) { next(error); }
+  };
+
+  test = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       await ellonClient.testConnection();
+      const config = await ellonConnectionService.getSafe();
+      if (config.enabled && config.syncProducts) {
+        await ellonProductSyncService.enqueue(req.admin?.adminId);
+      }
+      if (config.enabled) await ellonMasterSyncService.enqueueReferences();
+      if (config.enabled && config.syncCustomers) await ellonMasterSyncService.enqueueCustomers();
+      if (config.enabled && config.syncOrders) await ellonMasterSyncService.enqueueOrders();
+      if (config.enabled) void ellonJobService.processPending();
       res.json({ success: true, message: 'Conexão com a Ellon validada.' });
     } catch (error) { next(error); }
   };

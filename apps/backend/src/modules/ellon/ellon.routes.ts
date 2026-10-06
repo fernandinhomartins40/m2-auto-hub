@@ -10,6 +10,7 @@ const manager = [AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMi
 const admin = [AdminAuthMiddleware.authenticate, AdminAuthMiddleware.requireMinRole(AdminRole.ADMIN)];
 
 router.get('/config', ...staff, ellonController.getConfig);
+router.get('/summary', ...staff, ellonController.getSyncSummary);
 router.put('/config', ...admin, AuditLogMiddleware.log('UPDATE', 'EllonConnection'), ellonController.updateConfig);
 router.post('/test', ...admin, ellonController.test);
 router.post('/sync/products', ...manager, AuditLogMiddleware.log('SYNC', 'EllonProducts'), ellonController.syncProducts);

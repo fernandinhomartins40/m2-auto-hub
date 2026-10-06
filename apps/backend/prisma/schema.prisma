@@ -179,6 +179,8 @@ enum EllonJobType {
   EXPORT_ORDER
   EXPORT_SERVICE_ORDER
   SYNC_PRODUCTS
+  SYNC_CUSTOMERS
+  SYNC_REFERENCE_DATA
   SYNC_ORDER_STATUS
 }
 
@@ -807,9 +809,9 @@ model EllonConnection {
   accessHashEncrypted   String?
   bearerTokenEncrypted  String?
   bearerTokenExpiresAt  DateTime?
-  syncProducts          Boolean               @default(false)
-  syncCustomers         Boolean               @default(false)
-  syncOrders            Boolean               @default(false)
+  syncProducts          Boolean               @default(true)
+  syncCustomers         Boolean               @default(true)
+  syncOrders            Boolean               @default(true)
   lastConnectionAt      DateTime?
   lastProductSyncAt     DateTime?
   lastOrderSyncAt       DateTime?
@@ -862,6 +864,23 @@ model EllonJob {
   @@index([status, nextAttemptAt])
   @@index([type, localEntityId])
   @@map("ellon_jobs")
+}
+
+// Espelho auditavel de cadastros e movimentos que a Ellon expoe, inclusive
+// dados que nao possuem um modelo operacional equivalente no M2.
+model EllonSnapshot {
+  id         String   @id @default(uuid())
+  type       String
+  externalId String
+  name       String?
+  payload    Json
+  syncedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([type, externalId])
+  @@index([type, syncedAt])
+  @@map("ellon_snapshots")
 }
 
 // Itens do Pedido

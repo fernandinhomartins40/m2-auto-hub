@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, DatabaseZap, Loader2, PlugZap, RefreshCw, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import ellonService, { EllonConfig, EllonEntityType, EllonJob, EllonLink } from '@/api/ellonService';
+import ellonService, { EllonConfig, EllonEntityType, EllonJob, EllonLink, EllonSyncSummary } from '@/api/ellonService';
 import { getErrorMessage } from '@/lib/errors';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ const emptyForm: Form = {
   paymentMethodCode: null,
   carrierCode: null,
   username: '', integrationCode: '', password: '', accessHash: '',
-  syncProducts: false, syncCustomers: false, syncOrders: false,
+  syncProducts: true, syncCustomers: true, syncOrders: true,
 };
 
 export function EllonIntegrationSection() {
@@ -37,9 +37,10 @@ export function EllonIntegrationSection() {
   const [busy, setBusy] = useState<'load' | 'save' | 'test' | null>('load');
   const [links, setLinks] = useState<EllonLink[]>([]);
   const [jobs, setJobs] = useState<EllonJob[]>([]);
+  const [summary, setSummary] = useState<EllonSyncSummary | null>(null);
   const [mapping, setMapping] = useState<{ entityType: EllonEntityType; localId: string; externalId: string; externalSequence: string }>({ entityType: 'PRODUCT', localId: '', externalId: '', externalSequence: '' });
 
-  const loadOperations = () => Promise.all([ellonService.listLinks(), ellonService.listJobs()]).then(([nextLinks, nextJobs]) => { setLinks(nextLinks); setJobs(nextJobs); });
+  const loadOperations = () => Promise.all([ellonService.listLinks(), ellonService.listJobs(), ellonService.getSummary()]).then(([nextLinks, nextJobs, nextSummary]) => { setLinks(nextLinks); setJobs(nextJobs); setSummary(nextSummary); });
 
   useEffect(() => {
     ellonService.getConfig().then(value => {
@@ -120,6 +121,12 @@ export function EllonIntegrationSection() {
         <p className="md:col-span-4 text-xs text-muted-foreground">O HASH enviado à API é calculado no backend como MD5(código do integrador:token de acesso), conforme o Swagger da Ellon.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-3">{([['syncProducts','Produtos, preços e estoque'],['syncCustomers','Clientes'],['syncOrders','Pedidos e faturamento']] as Array<[keyof Form,string]>).map(([key,label]) => <div key={key} className="flex items-center justify-between rounded-lg border bg-background p-3"><Label>{label}</Label><Switch checked={Boolean(form[key])} onCheckedChange={checked => setForm(current => ({ ...current, [key]: checked }))} /></div>)}</div>
+      {summary && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Produtos vinculados</p><p className="text-2xl font-semibold">{summary.products}</p></div>
+        <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Clientes vinculados</p><p className="text-2xl font-semibold">{summary.customers}</p></div>
+        <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Cadastros espelhados</p><p className="text-2xl font-semibold">{summary.snapshots.reduce((total, item) => total + item._count._all, 0)}</p></div>
+        <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Sincronização</p><p className="text-sm font-medium">Automática e contínua</p></div>
+      </div>}
       {config?.lastError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{config.lastError}</p>}
       <div className="flex flex-wrap gap-2"><Button onClick={() => void save()} disabled={Boolean(busy)}>{busy === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Ellon</Button><Button variant="outline" onClick={() => void test()} disabled={Boolean(busy) || !config?.enabled}>{busy === 'test' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}Testar autenticação</Button><Button variant="outline" onClick={() => void syncProducts()} disabled={!config?.enabled}><RefreshCw className="mr-2 h-4 w-4" />Sincronizar produtos agora</Button></div>
       <div className="space-y-3 border-t pt-5">

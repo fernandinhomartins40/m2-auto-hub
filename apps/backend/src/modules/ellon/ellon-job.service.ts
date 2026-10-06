@@ -4,17 +4,35 @@ import { logger } from '@shared/utils/logger.util.js';
 import { AmbiguousEllonError } from './ellon.client.js';
 import { ellonExportService } from './ellon-export.service.js';
 import { ellonProductSyncService } from './ellon-product-sync.service.js';
+import { ellonMasterSyncService } from './ellon-master-sync.service.js';
 
 export class EllonJobService {
   private running = false;
+
+  async recoverInterrupted(): Promise<void> {
+    await prisma.ellonJob.updateMany({
+      where: { status: EllonJobStatus.PROCESSING },
+      data: {
+        status: EllonJobStatus.FAILED,
+        lockedAt: null,
+        nextAttemptAt: new Date(),
+        lastError: 'Processamento interrompido por reinicialização; reagendado automaticamente.',
+      },
+    });
+  }
 
   async processPending(): Promise<void> {
     if (this.running) return;
     this.running = true;
     try {
-      const jobs = await prisma.ellonJob.findMany({
-        where: { status: { in: [EllonJobStatus.PENDING, EllonJobStatus.FAILED] }, nextAttemptAt: { lte: new Date() } },
+      const pending = await prisma.ellonJob.findMany({
+        where: { status: EllonJobStatus.PENDING, nextAttemptAt: { lte: new Date() } },
         orderBy: { createdAt: 'asc' },
+        take: 5,
+      });
+      const jobs = pending.length ? pending : await prisma.ellonJob.findMany({
+        where: { status: EllonJobStatus.FAILED, nextAttemptAt: { lte: new Date() } },
+        orderBy: { nextAttemptAt: 'asc' },
         take: 5,
       });
       for (const job of jobs) {
@@ -27,8 +45,16 @@ export class EllonJobService {
           let response: unknown;
           if (job.type === EllonJobType.EXPORT_SERVICE_ORDER && job.localEntityId) {
             response = await ellonExportService.exportServiceOrder(job.localEntityId);
+          } else if (job.type === EllonJobType.EXPORT_ORDER && job.localEntityId) {
+            response = await ellonExportService.exportOrder(job.localEntityId);
           } else if (job.type === EllonJobType.SYNC_PRODUCTS) {
             response = await ellonProductSyncService.syncAll();
+          } else if (job.type === EllonJobType.SYNC_CUSTOMERS) {
+            response = await ellonMasterSyncService.syncCustomers();
+          } else if (job.type === EllonJobType.SYNC_REFERENCE_DATA) {
+            response = await ellonMasterSyncService.syncReferences();
+          } else if (job.type === EllonJobType.SYNC_ORDER_STATUS) {
+            response = await ellonMasterSyncService.syncOrders();
           } else {
             throw new Error(`Tipo de job ainda não suportado: ${job.type}`);
           }
@@ -36,6 +62,27 @@ export class EllonJobService {
             where: { id: job.id },
             data: { status: EllonJobStatus.SUCCEEDED, response: response as object, processedAt: new Date(), lockedAt: null, lastError: null },
           });
+          const synchronizationTypes: EllonJobType[] = [
+            EllonJobType.SYNC_PRODUCTS,
+            EllonJobType.SYNC_CUSTOMERS,
+            EllonJobType.SYNC_REFERENCE_DATA,
+            EllonJobType.SYNC_ORDER_STATUS,
+          ];
+          if (synchronizationTypes.includes(job.type)) {
+            await prisma.ellonJob.updateMany({
+              where: {
+                id: { not: job.id },
+                type: job.type,
+                status: { in: [EllonJobStatus.PENDING, EllonJobStatus.FAILED] },
+              },
+              data: {
+                status: EllonJobStatus.CANCELLED,
+                processedAt: new Date(),
+                lockedAt: null,
+                lastError: 'Substituído por uma sincronização mais recente concluída com sucesso.',
+              },
+            });
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           const ambiguous = error instanceof AmbiguousEllonError;

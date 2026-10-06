@@ -32,17 +32,38 @@ Hub permanece responsável pela experiência digital, promoções, oficina e
 relacionamento. Pedidos aprovados no site seriam enviados como pré-pedidos e
 acompanhados posteriormente por consultas.
 
-## Situação do acesso em 05/10/2026
+## Automação implementada
+
+A integração não depende do botão manual. Quando habilitada, o backend agenda,
+executa e reconcilia automaticamente:
+
+- produtos, preços, ofertas e estoque a cada 10 minutos;
+- clientes da Ellon a cada hora, conciliados por e-mail ou CPF/CNPJ;
+- formas de pagamento, vendedores, transportadoras, grupos e marcas diariamente;
+- pré-pedidos e resumo de vendas a cada 10 minutos;
+- ordens de serviço concluídas, com cliente, configuração comercial e todos os
+  itens mapeados, convertidas automaticamente em pré-pedido;
+- retomada de jobs interrompidos após reinicialização e eliminação de jobs
+  antigos substituídos por uma execução bem-sucedida.
+
+Os dados sem equivalente operacional seguro no M2 são mantidos em
+`ellon_snapshots`, com tipo, identificador externo, payload e data da última
+sincronização. O painel apresenta um resumo das quantidades sincronizadas.
+
+Em teste real de 06/10/2026, a Ellon retornou clientes, formas de pagamento,
+vendedor, transportadora, grupos, marcas e vendas. O campo `fotos` não foi
+retornado nem pela listagem nem pelo endpoint detalhado de produto, apesar de
+constar no Swagger; por isso imagens não podem ser importadas até o fornecedor
+passar a entregá-las.
+
+## Situação do acesso
 
 - O login no portal Ellon foi validado com sucesso.
 - A documentação Swagger está acessível.
-- O endpoint de autenticação da integração respondeu `401` com a mensagem de
-  que a configuração de integração ainda não foi realizada.
-- Todas as consultas de integração também retornaram `401`, como esperado sem
-  essa vinculação.
-- Portanto, as credenciais do portal não são o bloqueio. A Ellon precisa
-  habilitar/vincular a integração no ambiente do cliente e confirmar os papéis
-  do código de integração, hash e token Bearer.
+- Em 05/10/2026 o endpoint respondia `401` porque a configuração ainda não
+  estava vinculada no ambiente da Ellon.
+- Em 06/10/2026, após a liberação pelo fornecedor, autenticação, produtos,
+  clientes, referências comerciais, pré-pedidos e vendas responderam `200`.
 - O JWT fornecido tem expiração declarada em **29/09/2027 às 19:39:52 UTC**, mas
   não foi aceito porque a configuração de integração está ausente.
 

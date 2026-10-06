@@ -35,10 +35,20 @@ export interface EllonPreflight {
 export type EllonEntityType = 'PRODUCT' | 'SERVICE' | 'CUSTOMER' | 'ORDER' | 'SERVICE_ORDER';
 export interface EllonLink { id: string; entityType: EllonEntityType; localId: string; externalId: string; externalSequence: number | null }
 export interface EllonJob { id: string; type: string; status: string; localEntityId: string | null; attempts: number; lastError: string | null; createdAt: string }
+export interface EllonSyncSummary {
+  products: number;
+  customers: number;
+  snapshots: Array<{ type: string; _count: { _all: number }; _max: { syncedAt: string | null } }>;
+  jobs: Array<{ status: string; _count: { _all: number } }>;
+}
 
 export const ellonService = {
   async getConfig(): Promise<EllonConfig> {
     const response = await apiClient.get('/ellon/config');
+    return response.data.data;
+  },
+  async getSummary(): Promise<EllonSyncSummary> {
+    const response = await apiClient.get('/ellon/summary');
     return response.data.data;
   },
   async updateConfig(data: Record<string, unknown>): Promise<EllonConfig> {
