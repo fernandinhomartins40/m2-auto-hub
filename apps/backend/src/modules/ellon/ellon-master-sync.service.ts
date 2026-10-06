@@ -28,6 +28,13 @@ function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+function validBirthDate(value: unknown): Date | null {
+  const raw = clean(value);
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export class EllonMasterSyncService {
   private async enqueue(type: EllonJobType, intervalMs: number) {
     const active = await prisma.ellonJob.findFirst({
@@ -105,32 +112,51 @@ export class EllonMasterSyncService {
             where: { OR: [...(email.includes('@') ? [{ email }] : []), ...([11, 14].includes(cpf.length) ? [{ cpf }] : [])] },
           });
           if (customer) {
-            await prisma.ellonEntityLink.create({
-              data: { entityType: EllonEntityType.CUSTOMER, localId: customer.id, externalId, metadata: { matchedBy: customer.email === email ? 'email' : 'cpf' } },
+            const existingLocalLink = await prisma.ellonEntityLink.findUnique({
+              where: { entityType_localId: { entityType: EllonEntityType.CUSTOMER, localId: customer.id } },
             });
-            result.linked += 1;
-            continue;
+            if (!existingLocalLink) {
+              await prisma.ellonEntityLink.create({
+                data: { entityType: EllonEntityType.CUSTOMER, localId: customer.id, externalId, metadata: { matchedBy: customer.email === email ? 'email' : 'cpf' } },
+              });
+              result.linked += 1;
+              continue;
+            }
           }
           const phone = digits(item.celular) || digits(item.telefone);
-          if (!email.includes('@') || !phone || !clean(item.nome)) continue;
+          const usableEmail = email.includes('@') && !customer
+            ? email
+            : `ellon-${externalId}@sync.invalid`;
           const password = await bcrypt.hash(randomBytes(32).toString('hex'), 12);
           const created = await prisma.customer.create({
             data: {
-              name: clean(item.nome), email, phone, password,
-              cpf: [11, 14].includes(cpf.length) ? cpf : null,
-              birthDate: clean(item.nascimento) ? new Date(clean(item.nascimento)) : null,
+              name: clean(item.nome) || clean(item.fantasia) || `Cliente Ellon ${externalId}`,
+              email: usableEmail,
+              phone: phone || 'Não informado',
+              password,
+              cpf: [11, 14].includes(cpf.length) && !customer ? cpf : null,
+              birthDate: validBirthDate(item.nascimento),
               status: clean(item.status).toUpperCase() === 'I' ? 'INACTIVE' : 'ACTIVE',
             },
           });
           await prisma.ellonEntityLink.create({
-            data: { entityType: EllonEntityType.CUSTOMER, localId: created.id, externalId, metadata: { imported: true } },
+            data: {
+              entityType: EllonEntityType.CUSTOMER,
+              localId: created.id,
+              externalId,
+              metadata: {
+                imported: true,
+                syntheticEmail: usableEmail.endsWith('@sync.invalid'),
+                missingPhone: !phone,
+                duplicateOfLocalId: customer?.id,
+              },
+            },
           });
           result.created += 1;
         } catch (error) {
           if (result.errors.length < 100) result.errors.push(`Cliente ${externalId}: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
-      if (items.length < 50) break;
     }
     return result;
   }
@@ -163,7 +189,6 @@ export class EllonMasterSyncService {
           result.linked += 1;
         }
       }
-      if (items.length < 50) break;
     }
 
     try {
