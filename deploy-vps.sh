@@ -89,7 +89,11 @@ on_exit() {
 trap on_exit EXIT
 
 log "Pulling images built by GitHub Actions"
-compose_timeout 15m pull backend frontend alpr plate-scraper
+if [ "${SKIP_PULL:-0}" = "1" ]; then
+  log "Images preloaded by GitHub Actions; registry pull skipped"
+else
+  compose_timeout 15m pull backend frontend alpr plate-scraper
+fi
 
 log "Starting postgres"
 STACK_MUTATED=1

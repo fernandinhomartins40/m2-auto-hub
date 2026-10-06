@@ -177,6 +177,29 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin"
 
+      - name: Authenticate runner to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Preload release images on VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        shell: bash
+        run: |
+          IMAGES=(
+            "${IMAGE_PREFIX}-backend:${GITHUB_SHA}"
+            "${IMAGE_PREFIX}-frontend:${GITHUB_SHA}"
+            "${IMAGE_PREFIX}-alpr:${GITHUB_SHA}"
+            "${IMAGE_PREFIX}-plate-scraper:${GITHUB_SHA}"
+          )
+          for image in "${IMAGES[@]}"; do docker pull "$image"; done
+          docker save "${IMAGES[@]}" | gzip -1 | sshpass -e ssh -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=40 \
+            ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "gzip -d | docker load"
+
       - name: Deploy on VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
@@ -184,7 +207,7 @@ jobs:
           SCRIPT="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/deploy-vps.sh"
           sshpass -e ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=40 \
             ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "export APP_ROOT=${{ env.APP_ROOT }} RELEASE=${{ steps.release.outputs.version }} DEPLOY_PORT=${{ env.DEPLOY_PORT }} IMAGE_TAG=${{ github.sha }} IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}; bash $SCRIPT"
+            "export APP_ROOT=${{ env.APP_ROOT }} RELEASE=${{ steps.release.outputs.version }} DEPLOY_PORT=${{ env.DEPLOY_PORT }} IMAGE_TAG=${{ github.sha }} IMAGE_PREFIX=${{ env.IMAGE_PREFIX }} SKIP_PULL=1; bash $SCRIPT"
 
       - name: Configure Nginx
         env:
