@@ -123,6 +123,9 @@ jobs:
   deploy:
     name: Deploy prebuilt images to VPS
     needs: [build-backend, build-frontend, build-alpr, build-plate-scraper]
+    permissions:
+      contents: read
+      packages: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -172,7 +175,7 @@ jobs:
         shell: bash
         run: |
           printf '%s' "$GHCR_TOKEN" | sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+            "docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin"
 
       - name: Deploy on VPS
         env:

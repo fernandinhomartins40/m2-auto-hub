@@ -75,11 +75,14 @@ cd "$APP_DIR"
 # Derrubar o que subiu e o unico desfecho seguro: o deploy anterior ja nao
 # esta no ar de qualquer forma.
 DEPLOY_OK=0
+STACK_MUTATED=0
 on_exit() {
   local code=$?
-  if [ "$DEPLOY_OK" != "1" ]; then
+  if [ "$DEPLOY_OK" != "1" ] && [ "$STACK_MUTATED" = "1" ]; then
     log "DEPLOY FALHOU (exit $code) - derrubando stack parcial para nao deixar containers em loop"
     compose down --remove-orphans >/dev/null 2>&1 || true
+  elif [ "$DEPLOY_OK" != "1" ]; then
+    log "DEPLOY FALHOU antes de alterar a stack; release anterior preservado"
   fi
   exit "$code"
 }
@@ -89,6 +92,7 @@ log "Pulling images built by GitHub Actions"
 compose_timeout 15m pull backend frontend alpr plate-scraper
 
 log "Starting postgres"
+STACK_MUTATED=1
 compose up -d --no-build --no-deps postgres
 wait_healthy postgres 12 5
 
