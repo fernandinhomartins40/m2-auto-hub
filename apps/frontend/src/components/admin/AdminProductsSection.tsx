@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from '../ui/alert-dialog';
 import { formatCurrency as formatPrice } from '@/lib/format';
+import { ListPagination } from './ListPagination';
 
 interface AdminProductsSectionProps {
   searchTerm: string;
@@ -51,8 +52,19 @@ export function AdminProductsSection({
   statusFilter, 
   setStatusFilter 
 }: AdminProductsSectionProps) {
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearchTerm(searchTerm.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
+
   const {
     products,
+    page,
+    setPage,
+    pageSize,
+    totalCount,
     loading,
     error,
     updateLoading,
@@ -60,7 +72,11 @@ export function AdminProductsSection({
     fetchProducts,
     deleteProduct,
     toggleProductStatus
-  } = useAdminProducts();
+  } = useAdminProducts(debouncedSearchTerm, statusFilter);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, setPage]);
 
   // Estados do modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -484,6 +500,14 @@ export function AdminProductsSection({
               })}
             </div>
           )}
+
+          <ListPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            loading={loading}
+          />
         </CardContent>
       </Card>
 

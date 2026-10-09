@@ -597,6 +597,7 @@ class AdminService {
     limit?: number;
     status?: string;
     search?: string;
+    source?: string;
   }): Promise<{ orders: StoreOrder[]; totalCount: number }> {
     const response = await apiClient.get('/admin/orders', { params });
     return response.data;

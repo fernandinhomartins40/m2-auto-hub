@@ -186,12 +186,13 @@ export class AdminController {
 
   getOrders = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page = 1, limit = 20, status, search } = req.query;
+      const { page = 1, limit = 20, status, search, source } = req.query;
       const result = await this.adminService.getOrders({
         page: Number(page),
         limit: Number(limit),
         status: status as string,
-        search: search as string
+        search: search as string,
+        source: source as string,
       });
       res.json(result);
     } catch (error) {

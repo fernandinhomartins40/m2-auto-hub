@@ -240,8 +240,9 @@ export class AdminService {
     limit: number;
     status?: string;
     search?: string;
+    source?: string;
   }) {
-    const { page, limit, status, search } = params;
+    const { page, limit, status, search, source } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.OrderWhereInput = {};
@@ -250,8 +251,13 @@ export class AdminService {
       where.status = status as OrderStatus;
     }
 
+    if (source) {
+      where.source = (source === 'ADMIN' ? OrderSource.PHONE : source) as OrderSource;
+    }
+
     if (search) {
       where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
         { customer: { name: { contains: search, mode: 'insensitive' } } },
         { customer: { email: { contains: search, mode: 'insensitive' } } },
         { customer: { phone: { contains: search, mode: 'insensitive' } } }
@@ -928,6 +934,7 @@ export class AdminService {
 
     if (search) {
       where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
         { customer: { name: { contains: search, mode: 'insensitive' } } },
         { customer: { email: { contains: search, mode: 'insensitive' } } },
         { customer: { phone: { contains: search, mode: 'insensitive' } } }

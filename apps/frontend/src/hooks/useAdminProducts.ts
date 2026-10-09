@@ -6,6 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UseAdminProductsResult {
   products: Product[];
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  totalCount: number;
   loading: boolean;
   error: string | null;
   createLoading: boolean;
@@ -18,8 +22,11 @@ interface UseAdminProductsResult {
   toggleProductStatus: (id: string, currentStatus: boolean) => Promise<void>;
 }
 
-export const useAdminProducts = (): UseAdminProductsResult => {
+export const useAdminProducts = (search = '', statusFilter = 'all'): UseAdminProductsResult => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 20;
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [createLoading, setCreateLoading] = useState<boolean>(false);
@@ -32,8 +39,21 @@ export const useAdminProducts = (): UseAdminProductsResult => {
     setError(null);
 
     try {
-      const response = await productService.getProducts({ limit: 100 });
+      const response = await productService.getProducts({
+        page,
+        limit: pageSize,
+        search: search || undefined,
+        status: statusFilter === 'active'
+          ? 'ACTIVE'
+          : statusFilter === 'inactive'
+            ? 'DISCONTINUED'
+            : statusFilter === 'out_of_stock'
+              ? 'OUT_OF_STOCK'
+              : undefined,
+        lowStock: statusFilter === 'low_stock' ? true : undefined,
+      });
       setProducts(response.products);
+      setTotalCount(response.totalCount);
     } catch (err) {
       const apiError = handleApiError(err);
       setError(apiError.message);
@@ -45,7 +65,7 @@ export const useAdminProducts = (): UseAdminProductsResult => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [page, search, statusFilter, toast]);
 
   const createProduct = async (data: Partial<Product>) => {
     setCreateLoading(true);
@@ -152,6 +172,10 @@ export const useAdminProducts = (): UseAdminProductsResult => {
 
   return {
     products,
+    page,
+    setPage,
+    pageSize,
+    totalCount,
     loading,
     error,
     createLoading,

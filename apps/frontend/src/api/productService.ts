@@ -123,6 +123,8 @@ class ProductService {
     limit?: number;
     category?: string;
     search?: string;
+    status?: Product['status'];
+    lowStock?: boolean;
   }): Promise<ProductListResponse> {
     const response = await apiClient.get('/products', { params });
     // Mapear resposta da API para o formato esperado

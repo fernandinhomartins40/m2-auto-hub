@@ -85,6 +85,9 @@ import { getAdminDataNeeds } from './adminDataNeeds';
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
 import { PanelWorkspaceTabs } from '../layout/PanelWorkspaceTabs';
 import { PanelPage } from '../layout/PanelPage';
+import { ListPagination } from './ListPagination';
+
+const LIST_PAGE_SIZE = 20;
 
 const AdminUsersSection = lazy(() => import("./AdminUsersSection"));
 const LoyaltyManagement = lazy(() => import("./LoyaltyManagement"));
@@ -180,12 +183,17 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     workspace.tabs.some((tab) => tab.id === activeTab)
   );
   const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersTotalCount, setOrdersTotalCount] = useState(0);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [quotesPage, setQuotesPage] = useState(1);
   const [quotesTotalCount, setQuotesTotalCount] = useState(0);
   const [services, setServices] = useState<Service[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<CustomerListItem[]>([]);
+  const [customersPage, setCustomersPage] = useState(1);
+  const [customersTotalCount, setCustomersTotalCount] = useState(0);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [filteredOrders, setFilteredOrders] = useState<StoreOrder[]>([]);
   const [filteredQuotes, setFilteredQuotes] = useState<Quote[]>([]);
@@ -193,6 +201,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
   const [filteredCoupons, setFilteredCoupons] = useState<Coupon[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
@@ -223,7 +232,24 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
   useEffect(() => {
     void loadData(activeTab);
-  }, [activeTab]);
+  }, [activeTab, serviceCenterView, ordersPage, quotesPage, customersPage, debouncedSearchTerm, statusFilter, sourceFilter]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearchTerm(searchTerm.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setOrdersPage(1);
+    setQuotesPage(1);
+    setCustomersPage(1);
+  }, [searchTerm, statusFilter]);
+
+  useEffect(() => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setSourceFilter('all');
+  }, [activeTab, serviceCenterView]);
 
   useEffect(() => {
     if (activeTab === 'reports') {
@@ -246,16 +272,19 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
       const [dashboardStatsRes, ordersRes, quotesRes, servicesRes, couponsRes, productsRes, customersRes] = await Promise.all([
         needs.dashboard ? adminService.getDashboardStats().catch(() => null) : Promise.resolve(null),
-        needs.orders ? adminService.getOrders({ page: 1, limit: 100 }).catch(() => ({ orders: [], totalCount: 0 })) : Promise.resolve(null),
-        needs.quotes ? adminService.getQuotes({ page: 1, limit: 100 }).catch(() => ({ quotes: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.orders ? adminService.getOrders({ page: ordersPage, limit: LIST_PAGE_SIZE, search: debouncedSearchTerm || undefined, status: statusFilter === 'all' ? undefined : statusFilter, source: sourceFilter === 'all' ? undefined : sourceFilter }).catch(() => ({ orders: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.quotes ? adminService.getQuotes({ page: quotesPage, limit: LIST_PAGE_SIZE, search: debouncedSearchTerm || undefined, status: statusFilter === 'all' ? undefined : statusFilter }).catch(() => ({ quotes: [], totalCount: 0 })) : Promise.resolve(null),
         needs.dashboard ? adminService.getServices({ page: 1, limit: 100 }).catch(() => ({ services: [], totalCount: 0 })) : Promise.resolve(null),
         needs.dashboard ? adminService.getCoupons({ page: 1, limit: 100 }).catch(() => ({ coupons: [], totalCount: 0 })) : Promise.resolve(null),
         needs.dashboard ? adminService.getProducts({ page: 1, limit: 100 }).catch(() => ({ products: [], totalCount: 0 })) : Promise.resolve(null),
-        needs.customers ? adminService.getCustomers({ page: 1, limit: 100 }).catch(() => ({ customers: [], totalCount: 0 })) : Promise.resolve(null),
+        needs.customers ? adminService.getCustomers({ page: customersPage, limit: LIST_PAGE_SIZE, search: debouncedSearchTerm || undefined, status: statusFilter === 'all' ? undefined : statusFilter }).catch(() => ({ customers: [], totalCount: 0 })) : Promise.resolve(null),
       ]);
 
       if (dashboardStatsRes) setDashboardStats(dashboardStatsRes);
-      if (ordersRes) setOrders(ordersRes.orders || []);
+      if (ordersRes) {
+        setOrders(ordersRes.orders || []);
+        setOrdersTotalCount(ordersRes.totalCount || 0);
+      }
       if (quotesRes) {
         setQuotes(quotesRes.quotes || []);
         setQuotesTotalCount(quotesRes.totalCount || 0);
@@ -263,7 +292,10 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
       if (servicesRes) setServices(servicesRes.services || []);
       if (couponsRes) setCoupons(couponsRes.coupons || []);
       if (productsRes) setProducts(productsRes.products || []);
-      if (customersRes) setUsers(customersRes.customers || []);
+      if (customersRes) {
+        setUsers(customersRes.customers || []);
+        setCustomersTotalCount(customersRes.totalCount || 0);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -366,10 +398,6 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
 
     if (statusFilter !== "all") {
       filtered = filtered.filter(order => order.status === statusFilter);
-    }
-
-    if (sourceFilter !== "all") {
-      filtered = filtered.filter(order => (order.source || "WEB") === sourceFilter);
     }
 
     filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -1240,6 +1268,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               ))}
             </div>
           )}
+          <ListPagination page={quotesPage} pageSize={LIST_PAGE_SIZE} totalCount={quotesTotalCount} onPageChange={setQuotesPage} loading={isLoading} />
       </CardContent>
     </Card>
   );
@@ -1776,6 +1805,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
               })}
             </div>
           )}
+          <ListPagination page={ordersPage} pageSize={LIST_PAGE_SIZE} totalCount={ordersTotalCount} onPageChange={setOrdersPage} loading={isLoading} />
       </CardContent>
     </Card>
   );
@@ -1836,6 +1866,15 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
         />
       </CardHeader>
       <CardContent>
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar por nome, e-mail, telefone ou CPF..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
         {users.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <User className="mx-auto h-12 w-12 text-gray-300" />
@@ -1935,6 +1974,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             ))}
           </div>
         )}
+        <ListPagination page={customersPage} pageSize={LIST_PAGE_SIZE} totalCount={customersTotalCount} onPageChange={setCustomersPage} loading={isLoading} />
       </CardContent>
     </Card>
   );

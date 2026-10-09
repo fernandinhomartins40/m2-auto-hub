@@ -165,6 +165,8 @@ export class ProductsService {
         { name: { contains: query.search, mode: 'insensitive' } },
         { description: { contains: query.search, mode: 'insensitive' } },
         { sku: { contains: query.search, mode: 'insensitive' } },
+        { category: { contains: query.search, mode: 'insensitive' } },
+        { supplier: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
