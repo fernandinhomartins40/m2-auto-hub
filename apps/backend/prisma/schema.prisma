@@ -858,6 +858,12 @@ model EllonConnection {
   defaultCustomerCode   Int?
   // Forma de pagamento do M2 -> código Ellon.
   paymentMethodMap      Json?
+  // Status do pré-pedido observado na Ellon -> OPEN | INVOICED | CANCELLED (o contrato não lista os valores).
+  preOrderStatusMap     Json?
+  // Reduzido automaticamente se a Ellon recusar a observação por tamanho.
+  observationLimit      Int                   @default(1000)
+  // Desligado automaticamente se a atualização de cliente criar duplicata na Ellon.
+  customerUpdatesEnabled Boolean              @default(true)
   lastConnectionAt      DateTime?
   lastProductSyncAt     DateTime?
   lastFullProductSyncAt DateTime?

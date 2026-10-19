@@ -7,6 +7,7 @@ import { ellonConnectionService } from './ellon-connection.service.js';
 import { ellonExportService, linkMetadata } from './ellon-export.service.js';
 import { ellonCancellationService } from './ellon-cancellation.service.js';
 import { ellonStockService } from './ellon-stock.service.js';
+import { ellonContractService } from './ellon-contract.service.js';
 import { ellonJobService } from './ellon-job.service.js';
 import { cancellationEntitySchema, catalogQuerySchema, queryEllonJobsSchema, queryLinksSchema, querySnapshotsSchema, syncTargetSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
 import { ellonProductSyncService } from './ellon-product-sync.service.js';
@@ -247,6 +248,21 @@ export class EllonController {
       });
       res.json({ success: true, data });
     } catch (error) { next(error); }
+  };
+
+  getContract = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const [swagger, observed] = await Promise.all([ellonContractService.swaggerSummary(), ellonContractService.observed()]);
+      res.json({ success: true, data: { swagger, observed } });
+    } catch (error) { next(error); }
+  };
+
+  refreshContract = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try { res.json({ success: true, data: await ellonContractService.refreshSwagger() }); } catch (error) { next(error); }
+  };
+
+  createDefaultCustomer = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try { res.json({ success: true, data: await ellonContractService.createDefaultCustomer() }); } catch (error) { next(error); }
   };
 
   requestCancellation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

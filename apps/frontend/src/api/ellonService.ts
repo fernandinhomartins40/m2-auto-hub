@@ -31,6 +31,26 @@ export interface EllonConfig {
   serviceItemTypes: string[];
   defaultCustomerCode: number | null;
   paymentMethodMap: Record<string, number> | null;
+  preOrderStatusMap: Record<string, PreOrderState> | null;
+  observationLimit: number;
+  customerUpdatesEnabled: boolean;
+}
+
+export type PreOrderState = 'OPEN' | 'INVOICED' | 'CANCELLED';
+export interface EllonContract {
+  swagger: {
+    fetchedAt: string;
+    version: string | null;
+    operations: Array<{ method: string; path: string; summary: string; parameters: string[]; body: unknown; response: unknown }>;
+  } | null;
+  observed: {
+    productTypes: Array<{ type: string | null; total: number; examples: string[]; isService: boolean }>;
+    preOrderStatuses: Array<{ status: string; total: number; mapped: PreOrderState | null; detected: PreOrderState }>;
+    fieldsByType: Record<string, Array<{ key: string; total: number }>>;
+    consumerCandidates: Array<{ externalId: string; name: string | null }>;
+    stockEvidence: { measured: number; dropped: number; unchanged: number; suggestion: 'INCLUDES' | 'EXCLUDES' | 'INCONCLUSIVE' };
+    settings: { observationLimit: number; customerUpdatesEnabled: boolean; stockIncludesPreOrders: boolean };
+  };
 }
 
 export type OrderSource = 'WEB' | 'APP' | 'PHONE' | 'MERCADO_LIVRE' | 'SHOPEE';
@@ -111,6 +131,15 @@ export const ellonService = {
   },
   async retryJob(id: string): Promise<void> { await apiClient.post(`/ellon/jobs/${id}/retry`); },
   async syncProducts(): Promise<void> { await apiClient.post('/ellon/sync/products'); },
+  async getContract(): Promise<EllonContract> {
+    const response = await apiClient.get('/ellon/contract');
+    return response.data.data;
+  },
+  async refreshContract(): Promise<void> { await apiClient.post('/ellon/contract/refresh'); },
+  async createDefaultCustomer(): Promise<{ defaultCustomerCode: number }> {
+    const response = await apiClient.post('/ellon/default-customer');
+    return response.data.data;
+  },
   async getPending(): Promise<EllonPending> {
     const response = await apiClient.get('/ellon/pending');
     return response.data.data;

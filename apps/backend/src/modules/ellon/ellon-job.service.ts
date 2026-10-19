@@ -5,6 +5,7 @@ import { AmbiguousEllonError } from './ellon.client.js';
 import { ellonExportService } from './ellon-export.service.js';
 import { ProductSyncProgress, ellonProductSyncService } from './ellon-product-sync.service.js';
 import { PagedProgress, ellonMasterSyncService } from './ellon-master-sync.service.js';
+import { ellonContractService } from './ellon-contract.service.js';
 
 const payloadOf = (job: EllonJob): Record<string, unknown> =>
   job.payload && typeof job.payload === 'object' && !Array.isArray(job.payload) ? job.payload as Record<string, unknown> : {};
@@ -49,8 +50,12 @@ export class EllonJobService {
         return ellonProductSyncService.syncAll({ full: payload.full === true, progress: progress as ProductSyncProgress | null, checkpoint });
       case EllonJobType.SYNC_CUSTOMERS:
         return ellonMasterSyncService.syncCustomers(progress as PagedProgress | null, checkpoint);
-      case EllonJobType.SYNC_REFERENCE_DATA:
-        return ellonMasterSyncService.syncReferences();
+      case EllonJobType.SYNC_REFERENCE_DATA: {
+        const result = await ellonMasterSyncService.syncReferences();
+        // O contrato publicado é relido diariamente; falha aqui não invalida os cadastros.
+        const contract = await ellonContractService.refreshSwagger().then(() => 'atualizado').catch(error => `falhou: ${String(error)}`);
+        return { ...result, contract };
+      }
       case EllonJobType.SYNC_ORDER_STATUS:
         return ellonMasterSyncService.syncOrders(progress as PagedProgress | null, checkpoint);
     }

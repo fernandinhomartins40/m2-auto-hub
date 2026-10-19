@@ -17,6 +17,9 @@ router.post('/sync/products', ...manager, AuditLogMiddleware.log('SYNC', 'EllonP
 router.post('/sync/:target', ...manager, AuditLogMiddleware.log('SYNC', 'Ellon'), ellonController.syncNow);
 router.get('/snapshots', ...staff, ellonController.listSnapshots);
 router.get('/pending', ...staff, ellonController.getPending);
+router.get('/contract', ...staff, ellonController.getContract);
+router.post('/contract/refresh', ...admin, ellonController.refreshContract);
+router.post('/default-customer', ...admin, AuditLogMiddleware.log('CREATE', 'EllonDefaultCustomer'), ellonController.createDefaultCustomer);
 router.get('/catalog', ...staff, ellonController.searchCatalog);
 router.get('/services', ...staff, ellonController.listServices);
 router.get('/payment-methods', ...staff, ellonController.listPaymentMethods);

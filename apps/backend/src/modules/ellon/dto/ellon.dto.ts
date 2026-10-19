@@ -26,6 +26,9 @@ export const updateEllonConfigSchema = z.object({
   serviceItemTypes: z.array(z.string().trim().min(1).max(30)).max(20).optional(),
   defaultCustomerCode: optionalPositiveInt,
   paymentMethodMap: z.record(z.string().trim().min(1).max(60), z.number().int().positive()).nullable().optional(),
+  preOrderStatusMap: z.record(z.string().trim().min(1).max(60), z.enum(['OPEN', 'INVOICED', 'CANCELLED'])).nullable().optional(),
+  observationLimit: z.number().int().min(100).max(4000).optional(),
+  customerUpdatesEnabled: z.boolean().optional(),
 });
 
 export const upsertEllonLinkSchema = z.object({

@@ -102,13 +102,26 @@ sincronização. O painel apresenta um resumo das quantidades sincronizadas.
   `instanceof AmbiguousEllonError` nunca era verdadeiro. Com isso, um timeout ao
   gerar pré-pedido era reenviado automaticamente.
 
-**Pendências que dependem da Ellon**
+**A Ellon não altera nem esclarece a API: o M2 se adapta sozinho**
 
-- `consultapedidosentrega` não foi implementado, porque o contrato não define
-  quais filtros são obrigatórios.
-- Precisa ser confirmado: o campo de UF aceito por `cadastrocliente`, a chave do
-  upsert de clientes e os nomes exatos dos campos de status/cancelamento e de NF-e.
-  A implementação aceita as variações mais prováveis.
+Configurado em **Configurações → Ellon ERP → Contrato descoberto**
+(migração `20261019020000_ellon_self_discovery`).
+
+| Dúvida sobre o contrato | Como o M2 resolve sem a Ellon |
+|---|---|
+| Campos exatos de cada operação | O servidor lê o Swagger publicado (`/swagger/doc.json`) todos os dias e o painel mostra os campos de envio e retorno de cada operação. |
+| Valores do campo `tipo` (serviço × mercadoria) | O painel lista os tipos reais dos produtos importados, com exemplos. Os tipos de serviço são marcados com um clique (com aval do contador). |
+| Status do pré-pedido | O painel lista os status reais recebidos. Cada um pode ser mapeado para aberto, faturado ou cancelado; sem mapeamento, vale a dedução por texto. |
+| A Ellon reserva estoque no pré-pedido? | O M2 grava a quantidade Ellon no envio e compara com a sincronização seguinte. Com amostra suficiente, sugere ligar ou não `stockIncludesPreOrders`. Até lá fica o modo seguro (subtrair). |
+| `cadastrocliente` cria ou atualiza? | A cada importação, o M2 procura CPF/CNPJ duplicado. Se a duplicata surgiu depois de uma atualização enviada pelo M2, as atualizações são desligadas sozinhas. Clientes novos continuam sendo enviados. |
+| Limite da observação | Se a Ellon recusar a observação por tamanho (recusa explícita, sem risco de duplicar), o M2 reenvia com 250 caracteres e memoriza o novo limite. |
+| UF do cliente | Enviada como `uf` e `estado`. Numa atualização, o restante dos campos parte do cadastro atual da Ellon. |
+| Cliente consumidor final | Um cadastro existente com "consumidor" no nome pode ser escolhido, ou o M2 cria o cadastro pela própria API. |
+| Preço, desconto e cancelamento | Sem suporte na API: valores seguem na observação com alerta de divergência, e o cancelamento vira solicitação conciliada automaticamente. |
+
+`consultapedidosentrega` continua fora: o rastreio de entrega do M2 (código de
+rastreio e status do pedido) cobre a necessidade. Os filtros exigidos aparecem no
+painel do contrato, caso seja preciso ativá-lo.
 
 ### Contornos de regra de negócio (19/10/2026)
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, DatabaseZap, Loader2, PlugZap, RefreshCw, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import ellonService, { EllonConfig, EllonJob, EllonPaymentMethods, EllonSyncSummary, EllonSyncTarget, OrderSource } from '@/api/ellonService';
+import ellonService, { EllonConfig, EllonJob, EllonPaymentMethods, EllonSyncSummary, EllonSyncTarget, OrderSource, PreOrderState } from '@/api/ellonService';
+import { EllonDiscoveryPanel } from './EllonDiscoveryPanel';
 import { EllonDataExplorer } from './EllonDataExplorer';
 import { EllonPendingPanel } from './EllonPendingPanel';
 import { EllonServiceMapping } from './EllonServiceMapping';
@@ -13,7 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
-type Form = Pick<EllonConfig, 'enabled' | 'baseUrl' | 'companyCode' | 'transactionCode' | 'costCenterCode' | 'sellerCode' | 'warehouseCode' | 'paymentMethodCode' | 'carrierCode' | 'syncProducts' | 'syncCustomers' | 'syncOrders' | 'exportOrderSources' | 'stockIncludesPreOrders' | 'reservationTtlDays' | 'defaultCustomerCode'> & {
+type Form = Pick<EllonConfig, 'enabled' | 'baseUrl' | 'companyCode' | 'transactionCode' | 'costCenterCode' | 'sellerCode' | 'warehouseCode' | 'paymentMethodCode' | 'carrierCode' | 'syncProducts' | 'syncCustomers' | 'syncOrders' | 'exportOrderSources' | 'stockIncludesPreOrders' | 'reservationTtlDays' | 'defaultCustomerCode' | 'customerUpdatesEnabled'> & {
+  preOrderStatusMap: Record<string, PreOrderState>;
   serviceItemTypes: string;
   paymentMethodMap: Record<string, number>;
   integrationCode: string;
@@ -35,7 +37,7 @@ const emptyForm: Form = {
   username: '', integrationCode: '', password: '', accessHash: '',
   syncProducts: true, syncCustomers: true, syncOrders: true,
   exportOrderSources: ['WEB', 'APP', 'PHONE'], stockIncludesPreOrders: false, reservationTtlDays: 15,
-  defaultCustomerCode: null, serviceItemTypes: '', paymentMethodMap: {},
+  defaultCustomerCode: null, serviceItemTypes: '', paymentMethodMap: {}, preOrderStatusMap: {}, customerUpdatesEnabled: true,
 };
 
 const SOURCES: Array<[OrderSource, string]> = [['WEB', 'Site'], ['APP', 'App'], ['PHONE', 'Telefone/balcão'], ['MERCADO_LIVRE', 'Mercado Livre'], ['SHOPEE', 'Shopee']];
@@ -53,7 +55,7 @@ export function EllonIntegrationSection() {
   useEffect(() => {
     ellonService.getConfig().then(value => {
       setConfig(value);
-      setForm(current => ({ ...current, ...value, serviceItemTypes: value.serviceItemTypes.join(', '), paymentMethodMap: value.paymentMethodMap ?? {}, username: '', integrationCode: '', password: '', accessHash: '' }));
+      setForm(current => ({ ...current, ...value, serviceItemTypes: value.serviceItemTypes.join(', '), paymentMethodMap: value.paymentMethodMap ?? {}, preOrderStatusMap: value.preOrderStatusMap ?? {}, username: '', integrationCode: '', password: '', accessHash: '' }));
       void loadOperations();
     }).catch(error => toast.error(getErrorMessage(error))).finally(() => setBusy(null));
   }, []);
@@ -66,6 +68,7 @@ export function EllonIntegrationSection() {
         ...form,
         serviceItemTypes: form.serviceItemTypes.split(',').map(value => value.trim()).filter(Boolean),
         paymentMethodMap: Object.keys(form.paymentMethodMap).length ? form.paymentMethodMap : null,
+        preOrderStatusMap: Object.keys(form.preOrderStatusMap).length ? form.preOrderStatusMap : null,
       };
       if (!form.integrationCode) delete payload.integrationCode;
       if (!form.username) delete payload.username;
@@ -176,6 +179,21 @@ export function EllonIntegrationSection() {
       {config?.lastError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{config.lastError}</p>}
       <div className="flex flex-wrap gap-2"><Button onClick={() => void save()} disabled={Boolean(busy)}>{busy === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Ellon</Button><Button variant="outline" onClick={() => void test()} disabled={Boolean(busy) || !config?.enabled}>{busy === 'test' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}Testar autenticação</Button></div>
       {config?.enabled && <div className="flex flex-wrap gap-2">{([['products', 'Produtos alterados'], ['products-full', 'Catálogo completo'], ['customers', 'Clientes'], ['orders', 'Pedidos e vendas'], ['references', 'Cadastros auxiliares']] as Array<[EllonSyncTarget, string]>).map(([target, label]) => <Button key={target} size="sm" variant="outline" onClick={() => void syncNow(target)}><RefreshCw className="mr-2 h-4 w-4" />{label}</Button>)}</div>}
+      {config?.enabled && <div className="space-y-3 border-t pt-5">
+        <div><h3 className="font-medium">Contrato descoberto</h3><p className="text-xs text-muted-foreground">A API da Ellon não muda: o M2 lê o contrato publicado e aprende com os dados recebidos. Alterações aqui são gravadas em “Salvar Ellon”.</p></div>
+        <EllonDiscoveryPanel
+          serviceItemTypes={form.serviceItemTypes.split(',').map(value => value.trim()).filter(Boolean)}
+          onServiceItemTypes={types => setForm(current => ({ ...current, serviceItemTypes: types.join(', ') }))}
+          statusMap={form.preOrderStatusMap}
+          onStatusMap={preOrderStatusMap => setForm(current => ({ ...current, preOrderStatusMap }))}
+          defaultCustomerCode={form.defaultCustomerCode}
+          onDefaultCustomer={defaultCustomerCode => setForm(current => ({ ...current, defaultCustomerCode }))}
+          stockIncludesPreOrders={form.stockIncludesPreOrders}
+          onStockIncludesPreOrders={stockIncludesPreOrders => setForm(current => ({ ...current, stockIncludesPreOrders }))}
+          customerUpdatesEnabled={form.customerUpdatesEnabled}
+          onCustomerUpdatesEnabled={customerUpdatesEnabled => setForm(current => ({ ...current, customerUpdatesEnabled }))}
+        />
+      </div>}
       {config?.enabled && <div className="space-y-3 border-t pt-5">
         <div><h3 className="font-medium">Pendências da integração</h3><p className="text-xs text-muted-foreground">Situações que a API não permite resolver automaticamente.</p></div>
         <EllonPendingPanel />

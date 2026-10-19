@@ -38,6 +38,8 @@ beforeEach(() => {
   (ellonConnectionService.getRaw as jest.Mock).mockResolvedValue({ ...config });
   db.ellonConnection.findUnique.mockResolvedValue({ ...config });
   db.ellonEntityLink.findMany.mockResolvedValue([]);
+  db.product.findMany.mockResolvedValue([]);
+  db.ellonConnection.update.mockResolvedValue({});
 });
 afterEach(() => jest.restoreAllMocks());
 
@@ -185,5 +187,54 @@ describe('cancelamento com pré-pedido existente', () => {
   it('recusa cancelamento de pré-pedido já faturado', async () => {
     db.ellonEntityLink.findUnique.mockResolvedValue({ id: 'l', externalId: '321', metadata: { nfe: { key: 'k' } } });
     await expect(service.request('ORDER', 'o1')).rejects.toThrow(/faturado/);
+  });
+});
+
+describe('adaptação sem depender da Ellon', () => {
+  it('classifica status pelo mapa aprendido antes da heurística', async () => {
+    const { classifyPreOrder } = await import('../src/modules/ellon/ellon-master-sync.service.js');
+    expect(classifyPreOrder({ status: 'F' })).toBe('OPEN');
+    expect(classifyPreOrder({ status: 'F' }, { F: 'INVOICED' })).toBe('INVOICED');
+    expect(classifyPreOrder({ situacao: 'Cancelado' })).toBe('CANCELLED');
+    expect(classifyPreOrder({ status: 'X', cancelado: 'S' })).toBe('CANCELLED');
+  });
+
+  it('reenvia com observação curta quando a Ellon recusa por tamanho e memoriza o limite', async () => {
+    const { ApiError } = await import('../src/shared/utils/error.util.js');
+    (ellonConnectionService.getRaw as jest.Mock).mockResolvedValue({ ...config, defaultCustomerCode: 777, observationLimit: 1000 });
+    db.serviceOrder.findUnique.mockResolvedValue({
+      id: 'os1', number: 1, status: 'COMPLETED', customerId: null, customerName: 'A', customerPhone: null, laborTotal: 1, partsTotal: 0, discount: 0, total: 1,
+      items: [{ id: 'i', type: 'SERVICE', serviceId: 'svc', productId: null, name: 'x'.repeat(600), quantity: 1, unitPrice: 1 }],
+    });
+    db.ellonEntityLink.findMany.mockResolvedValue([{ entityType: 'SERVICE', localId: 'svc', externalId: '5', externalSequence: 0 }]);
+    const request = jest.spyOn(ellonClient, 'request')
+      .mockRejectedValueOnce(new ApiError(502, 'Campo observacao excede o tamanho permitido'))
+      .mockResolvedValueOnce({ numeroPedido: 9 });
+    await new EllonExportService().exportServiceOrder('os1');
+    const second = request.mock.calls[1][2]?.body as Record<string, string>;
+    expect(second.observacao.length).toBeLessThanOrEqual(250);
+    expect(db.ellonConnection.update.mock.calls[0][0].data).toEqual({ observationLimit: 250 });
+  });
+
+  it('não reenvia após timeout (pode ter sido criado)', async () => {
+    const { AmbiguousEllonError } = await import('../src/modules/ellon/ellon.client.js');
+    (ellonConnectionService.getRaw as jest.Mock).mockResolvedValue({ ...config, defaultCustomerCode: 777 });
+    db.serviceOrder.findUnique.mockResolvedValue({
+      id: 'os1', number: 1, status: 'COMPLETED', customerId: null, customerName: 'A', customerPhone: null, laborTotal: 1, partsTotal: 0, discount: 0, total: 1,
+      items: [{ id: 'i', type: 'SERVICE', serviceId: 'svc', productId: null, name: 'x', quantity: 1, unitPrice: 1 }],
+    });
+    db.ellonEntityLink.findMany.mockResolvedValue([{ entityType: 'SERVICE', localId: 'svc', externalId: '5', externalSequence: 0 }]);
+    const request = jest.spyOn(ellonClient, 'request').mockRejectedValue(new AmbiguousEllonError());
+    await expect(new EllonExportService().exportServiceOrder('os1')).rejects.toBeInstanceOf(AmbiguousEllonError);
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  it('não envia atualização de cliente quando a trava de duplicidade está ativa', async () => {
+    db.customer.findUnique.mockResolvedValue({ id: 'c1', name: 'Ana', cpf: null, birthDate: null, email: 'a@x.com', phone: '1', status: 'ACTIVE', addresses: [] });
+    db.ellonEntityLink.findUnique.mockResolvedValue({ id: 'l', externalId: '55', metadata: { exportHash: 'antigo' } });
+    db.ellonConnection.findUnique.mockResolvedValue({ customerUpdatesEnabled: false });
+    const request = jest.spyOn(ellonClient, 'request');
+    await expect(new EllonExportService().exportCustomer('c1')).resolves.toEqual({ externalId: '55', skipped: true });
+    expect(request).not.toHaveBeenCalled();
   });
 });

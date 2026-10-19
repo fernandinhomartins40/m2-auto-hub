@@ -55,13 +55,31 @@ export function divergenceOf(m2Total: unknown, ellonTotal: string) {
   return Math.abs(difference) > 0.05 ? { m2Total: expected, ellonTotal: actual, difference } : null;
 }
 
+export type PreOrderState = 'OPEN' | 'INVOICED' | 'CANCELLED';
+export const STATUS_KEYS = ['status', 'situacao', 'status_pedido', 'Status'];
+
 function isCancelled(item: Raw): boolean {
   const flag = pick(item, ['cancelado', 'cancelada', 'flag_cancelado']).toUpperCase();
-  const status = pick(item, ['status', 'situacao', 'status_pedido', 'Status']);
+  const status = pick(item, STATUS_KEYS);
   return ['S', 'SIM', '1', 'TRUE'].includes(flag) || /cancel/i.test(status) || Boolean(pick(item, ['data_cancelamento', 'dt_cancelamento']));
 }
 
+/**
+ * O contrato não lista os status possíveis. O mapa configurado no painel (a partir dos valores
+ * realmente recebidos) prevalece; sem mapeamento, vale a heurística por texto/flags.
+ */
+export function classifyPreOrder(item: Raw, statusMap: Record<string, unknown> = {}): PreOrderState {
+  const status = pick(item, STATUS_KEYS).toUpperCase();
+  const mapped = statusMap[status];
+  if (mapped === 'OPEN' || mapped === 'INVOICED' || mapped === 'CANCELLED') return mapped;
+  if (isCancelled(item)) return 'CANCELLED';
+  if (/fatur|emitid|conclu/i.test(status) || Boolean(pick(item, ['data_faturamento', 'nota_fiscal', 'numero_nf']))) return 'INVOICED';
+  return 'OPEN';
+}
+
 export class EllonMasterSyncService {
+  private statusMap: Record<string, unknown> = {};
+
   private async enqueue(type: EllonJobType, intervalMs: number) {
     const active = await prisma.ellonJob.findFirst({
       where: {
@@ -307,8 +325,57 @@ export class EllonMasterSyncService {
       await checkpoint?.(state);
     }
     if (!finished) throw new Error('Limite de páginas de clientes atingido antes do fim da listagem Ellon.');
+    try {
+      await this.guardCustomerUpdates(result);
+    } catch (error) {
+      pushError(result, `Verificação de duplicidade: ${errorMessage(error)}`);
+    }
     await prisma.ellonConnection.update({ where: { id: 'default' }, data: { lastCustomerSyncAt: new Date(state.runStartedAt) } });
     return result;
+  }
+
+  /** CPF/CNPJ que aparecem em mais de um cadastro da Ellon. */
+  async duplicateCustomers(): Promise<Array<{ document: string; externalIds: string[] }>> {
+    const rows = await prisma.$queryRaw<Array<{ document: string; external_ids: string[] }>>`
+      SELECT regexp_replace(COALESCE(payload->>'cpf_cnpj', ''), '[^0-9]', '', 'g') AS document,
+             array_agg("externalId" ORDER BY "createdAt") AS external_ids
+      FROM "ellon_snapshots"
+      WHERE "type" = 'CUSTOMER'
+      GROUP BY 1
+      HAVING count(*) > 1 AND length(regexp_replace(COALESCE(payload->>'cpf_cnpj', ''), '[^0-9]', '', 'g')) IN (11, 14)
+      LIMIT 500`;
+    return rows.map(row => ({ document: row.document, externalIds: row.external_ids }));
+  }
+
+  /**
+   * O contrato não diz como `cadastrocliente` decide entre criar e atualizar. Se surgir na Ellon
+   * um cadastro novo com o mesmo CPF/CNPJ de um cliente que o M2 atualizou antes, a atualização
+   * está criando duplicatas: o envio de atualizações é desligado e o caso vai para conferência.
+   */
+  private async guardCustomerUpdates(result: MasterSyncResult) {
+    const duplicates = await this.duplicateCustomers();
+    if (!duplicates.length) return;
+    const ids = duplicates.flatMap(item => item.externalIds);
+    const [links, snapshots] = await Promise.all([
+      prisma.ellonEntityLink.findMany({ where: { entityType: EllonEntityType.CUSTOMER, externalId: { in: ids } } }),
+      prisma.ellonSnapshot.findMany({ where: { type: 'CUSTOMER', externalId: { in: ids } }, select: { externalId: true, createdAt: true } }),
+    ]);
+    const firstSeen = new Map(snapshots.map(item => [item.externalId, item.createdAt.getTime()]));
+    const causedByM2 = duplicates.some(group => links.some(link => {
+      const exportedAt = Date.parse(String(linkMetadata(link.metadata).exportedAt ?? ''));
+      if (!group.externalIds.includes(link.externalId) || !Number.isFinite(exportedAt) || linkMetadata(link.metadata).createdBy === 'm2') return false;
+      return group.externalIds.some(id => id !== link.externalId && (firstSeen.get(id) ?? 0) > exportedAt);
+    }));
+    pushError(result, `${duplicates.length} CPF/CNPJ com mais de um cadastro na Ellon.`);
+    if (!causedByM2) return;
+    await prisma.ellonConnection.update({
+      where: { id: 'default' },
+      data: {
+        customerUpdatesEnabled: false,
+        lastError: 'Atualizações de clientes M2 → Ellon foram desligadas: uma atualização criou cadastro duplicado na Ellon. Novos clientes continuam sendo enviados.',
+      },
+    });
+    logger.warn('[Ellon] atualização de clientes desligada por duplicidade detectada');
   }
 
   // ==================== PEDIDOS, VENDAS E NF-e ====================
@@ -319,13 +386,14 @@ export class EllonMasterSyncService {
 
   /** Vincula pré-pedidos criados pelo M2 (inclusive após timeout ambíguo) e aplica cancelamentos da Ellon. */
   private async reconcilePreOrder(item: Raw, externalId: string, result: MasterSyncResult) {
-    const status = pick(item, ['status', 'situacao', 'status_pedido', 'Status']);
-    const cancelled = isCancelled(item);
+    const status = pick(item, STATUS_KEYS);
+    const state = classifyPreOrder(item, this.statusMap);
+    const cancelled = state === 'CANCELLED';
     const ellonTotal = pick(item, ['valor_total', 'total', 'valor_liquido', 'valor_pedido']);
     const summary = {
       ellonStatus: status || null,
       ellonCancelled: cancelled,
-      ...(/fatur/i.test(status) && { ellonInvoiced: true }),
+      ...(state === 'INVOICED' && { ellonInvoiced: true }),
       ellonTotal: ellonTotal || null,
       ellonSyncedAt: new Date().toISOString(),
     };
@@ -482,6 +550,7 @@ export class EllonMasterSyncService {
 
   async syncOrders(progress?: PagedProgress | null, checkpoint?: Checkpoint): Promise<MasterSyncResult> {
     const connection = await prisma.ellonConnection.findUnique({ where: { id: 'default' } });
+    this.statusMap = linkMetadata(connection?.preOrderStatusMap);
     const runStartedAt = new Date();
     const firstStart = connection?.lastOrderSyncAt
       ? new Date(connection.lastOrderSyncAt.getTime() - ORDER_OVERLAP_DAYS * DAY_MS)

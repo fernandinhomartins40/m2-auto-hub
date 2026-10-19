@@ -10,7 +10,7 @@ import {
 } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { ApiError } from '@shared/utils/error.util.js';
-import { ellonClient } from './ellon.client.js';
+import { AmbiguousEllonError, ellonClient } from './ellon.client.js';
 import { ellonConnectionService } from './ellon-connection.service.js';
 import { logger } from '@shared/utils/logger.util.js';
 import { payloadHash } from './ellon-sync.util.js';
@@ -20,15 +20,20 @@ interface EllonOrderResponse { numeroPedido?: number; status?: string }
 
 interface LocalItem { id: string; type: string; productId: string | null; serviceId: string | null; name: string; quantity: number }
 
-const OBSERVATION_LIMIT = 1000;
+const SHORT_OBSERVATION = 250;
 const hasDocument = (cpf: string | null | undefined) => [11, 14].includes((cpf ?? '').replace(/\D/g, '').length);
 const money = (value: Prisma.Decimal | number) => Number(value).toFixed(2).replace('.', ',');
 
 /** Observação do pré-pedido: contexto e valores aprovados no M2, já que a API não recebe preço. */
-export function observation(parts: string[]): string {
+export function observation(parts: string[], limit = 1000): string {
   const text = parts.filter(Boolean).join(' | ');
-  return text.length > OBSERVATION_LIMIT ? `${text.slice(0, OBSERVATION_LIMIT - 1)}…` : text;
+  return text.length > limit ? `${text.slice(0, limit - 1)}…` : text;
 }
+
+/** Recusa da Ellon que indica observação longa demais (o contrato não informa o limite). */
+const isSizeRejection = (error: unknown) =>
+  error instanceof ApiError && !(error instanceof AmbiguousEllonError)
+  && /observa|tamanho|caracter|length|long|trunc|excede|maior que|size/i.test(error.message);
 
 /** Código Ellon da forma de pagamento do M2, pelo mapa configurado (sem diferenciar maiúsculas). */
 export function paymentCode(map: Prisma.JsonValue | null, method: string): number | null {
@@ -251,10 +256,16 @@ export class EllonExportService {
     const hash = payloadHash(payload);
     const metadata = linkMetadata(link?.metadata);
     if (link && metadata.exportHash === hash) return { externalId: link.externalId, skipped: true };
+    if (link) {
+      const connection = await prisma.ellonConnection.findUnique({ where: { id: 'default' }, select: { customerUpdatesEnabled: true } });
+      // Desligado ao detectar que a atualização duplica cadastros na Ellon.
+      if (connection && !connection.customerUpdatesEnabled) return { externalId: link.externalId, skipped: true };
+    }
 
     // O contrato não documenta a chave do upsert; enviamos o ID Ellon conhecido para atualização.
     const response = await ellonClient.request<EllonCustomerResponse>('POST', '/publico/integracoes/cadastrocliente', {
-      body: link ? await this.updateBody(link.externalId, payload) : payload,
+      // UF vai nas duas grafias usuais; a Ellon ignora a que não usa.
+      body: link ? await this.updateBody(link.externalId, payload) : { ...payload, estado: payload.uf },
     });
     const returnedId = response.id ? String(response.id) : null;
     const exported = { exportHash: hash, exportedAt: new Date().toISOString() };
@@ -298,6 +309,7 @@ export class EllonExportService {
     return {
       ...base,
       ...filled,
+      ...(payload.uf && { estado: payload.uf }),
       fantasia: keep('fantasia', payload.fantasia),
       telefone: keep('telefone', payload.telefone),
       id: Number(externalId),
@@ -387,8 +399,40 @@ export class EllonExportService {
     });
   }
 
-  private async saveExportLink(entityType: EllonEntityType, localId: string, response: EllonOrderResponse, m2Total: number) {
-    const metadata = { ...response, m2Total, exportedAt: new Date().toISOString() } as Prisma.InputJsonValue;
+  /**
+   * Guarda a quantidade Ellon de cada produto no momento do envio. Comparando com a próxima
+   * sincronização, o M2 mede se a Ellon baixa estoque já no pré-pedido (ver EllonContractService).
+   */
+  private async stockAtExport(items: LocalItem[]) {
+    const ids = items.flatMap(item => item.type === 'PRODUCT' && item.productId ? [item.productId] : []);
+    if (!ids.length) return {};
+    const products = await prisma.product.findMany({ where: { id: { in: ids } }, select: { id: true, specifications: true } });
+    return Object.fromEntries(products.flatMap(product => {
+      const ellonStock = linkMetadata(product.specifications).ellonStock;
+      const quantity = items.filter(item => item.productId === product.id).reduce((total, item) => total + item.quantity, 0);
+      return typeof ellonStock === 'number' ? [[product.id, { ellonStock, quantity }]] : [];
+    }));
+  }
+
+  /** Envia o pré-pedido; se a Ellon recusar a observação por tamanho, reenvia uma vez com texto curto. */
+  private async sendPreOrder(body: Record<string, unknown>, parts: string[], limit: number): Promise<EllonOrderResponse> {
+    const send = (size: number) => ellonClient.request<EllonOrderResponse>('POST', '/publico/integracoes/gerarprepedido', {
+      body: { ...body, observacao: observation(parts, size) },
+    });
+    try {
+      return await send(limit);
+    } catch (error) {
+      if (limit <= SHORT_OBSERVATION || !isSizeRejection(error)) throw error;
+      // Recusa explícita (não ambígua): nada foi criado, o reenvio é seguro.
+      const response = await send(SHORT_OBSERVATION);
+      await prisma.ellonConnection.update({ where: { id: 'default' }, data: { observationLimit: SHORT_OBSERVATION } });
+      logger.warn('[Ellon] observação reduzida após recusa por tamanho', { limit: SHORT_OBSERVATION });
+      return response;
+    }
+  }
+
+  private async saveExportLink(entityType: EllonEntityType, localId: string, response: EllonOrderResponse, m2Total: number, items: LocalItem[]) {
+    const metadata = { ...response, m2Total, exportedAt: new Date().toISOString(), stockAtExport: await this.stockAtExport(items) } as Prisma.InputJsonValue;
     await prisma.ellonEntityLink.upsert({
       where: { entityType_localId: { entityType, localId } },
       update: { externalId: String(response.numeroPedido), metadata },
@@ -408,32 +452,29 @@ export class EllonExportService {
     const itens = await this.preOrderItems(serviceOrder.items);
     const customer = await this.resolveCustomer(serviceOrder.customerId, config.defaultCustomerCode);
 
-    const response = await ellonClient.request<EllonOrderResponse>('POST', '/publico/integracoes/gerarprepedido', {
-      body: {
-        id_cliente: Number(customer.externalId),
-        id_pedido_site: `OS-${serviceOrder.id}`,
-        id_vendedor: config.sellerCode ?? undefined,
-        forma_pagto: config.paymentMethodCode,
-        transportadora: config.carrierCode ?? 0,
-        valor_frete: 0,
-        observacao: observation([
-          `OS M2 nº ${serviceOrder.number}`,
-          customer.usedDefault ? `Cliente: ${serviceOrder.customerName}${serviceOrder.customerPhone ? ` ${serviceOrder.customerPhone}` : ''}` : '',
-          serviceOrder.vehicleLabel || serviceOrder.vehiclePlate ? `Veículo: ${[serviceOrder.vehicleLabel, serviceOrder.vehiclePlate].filter(Boolean).join(' ')}` : '',
-          serviceOrder.mileage ? `Km: ${serviceOrder.mileage}` : '',
-          serviceOrder.mechanicName ? `Mecânico: ${serviceOrder.mechanicName}` : '',
-          serviceOrder.revisionId ? 'Origem: revisão M2' : '',
-          `Itens: ${serviceOrder.items.map(item => `${item.quantity}x ${item.name} R$ ${money(item.unitPrice)}`).join('; ')}`,
-          `Mão de obra R$ ${money(serviceOrder.laborTotal)}`,
-          `Peças R$ ${money(serviceOrder.partsTotal)}`,
-          Number(serviceOrder.discount) > 0 ? `Desconto R$ ${money(serviceOrder.discount)}` : '',
-          `Total aprovado R$ ${money(serviceOrder.total)}`,
-        ]),
-        itens,
-      },
-    });
+    const response = await this.sendPreOrder({
+      id_cliente: Number(customer.externalId),
+      id_pedido_site: `OS-${serviceOrder.id}`,
+      id_vendedor: config.sellerCode ?? undefined,
+      forma_pagto: config.paymentMethodCode,
+      transportadora: config.carrierCode ?? 0,
+      valor_frete: 0,
+      itens,
+    }, [
+      `OS M2 nº ${serviceOrder.number}`,
+      customer.usedDefault ? `Cliente: ${serviceOrder.customerName}${serviceOrder.customerPhone ? ` ${serviceOrder.customerPhone}` : ''}` : '',
+      serviceOrder.vehicleLabel || serviceOrder.vehiclePlate ? `Veículo: ${[serviceOrder.vehicleLabel, serviceOrder.vehiclePlate].filter(Boolean).join(' ')}` : '',
+      serviceOrder.mileage ? `Km: ${serviceOrder.mileage}` : '',
+      serviceOrder.mechanicName ? `Mecânico: ${serviceOrder.mechanicName}` : '',
+      serviceOrder.revisionId ? 'Origem: revisão M2' : '',
+      `Itens: ${serviceOrder.items.map(item => `${item.quantity}x ${item.name} R$ ${money(item.unitPrice)}`).join('; ')}`,
+      `Mão de obra R$ ${money(serviceOrder.laborTotal)}`,
+      `Peças R$ ${money(serviceOrder.partsTotal)}`,
+      Number(serviceOrder.discount) > 0 ? `Desconto R$ ${money(serviceOrder.discount)}` : '',
+      `Total aprovado R$ ${money(serviceOrder.total)}`,
+    ], config.observationLimit);
     if (!response.numeroPedido) throw new Error('Ellon não retornou o número do pré-pedido.');
-    await this.saveExportLink(EllonEntityType.SERVICE_ORDER, serviceOrder.id, response, Number(serviceOrder.total));
+    await this.saveExportLink(EllonEntityType.SERVICE_ORDER, serviceOrder.id, response, Number(serviceOrder.total), serviceOrder.items);
     return response;
   }
 
@@ -451,26 +492,23 @@ export class EllonExportService {
       ? await prisma.customer.findUnique({ where: { id: order.customerId }, select: { name: true, phone: true } })
       : null;
 
-    const response = await ellonClient.request<EllonOrderResponse>('POST', '/publico/integracoes/gerarprepedido', {
-      body: {
-        id_cliente: Number(customer.externalId), id_pedido_site: `PED-${order.id}`,
-        id_vendedor: config.sellerCode ?? undefined, forma_pagto: formaPagto,
-        transportadora: config.carrierCode ?? 0, valor_frete: 0,
-        observacao: observation([
-          `Pedido M2 ${order.id.slice(0, 8)} (${order.source})`,
-          order.externalOrderId ? `Pedido externo ${order.externalOrderId}` : '',
-          localCustomer ? `Cliente: ${localCustomer.name} ${localCustomer.phone}` : '',
-          `Pagamento: ${order.paymentMethod}`,
-          `Itens: ${order.items.map(item => `${item.quantity}x ${item.name} R$ ${money(item.quotedPrice ?? item.price)}`).join('; ')}`,
-          Number(order.discountAmount) > 0 ? `Desconto R$ ${money(order.discountAmount)}` : '',
-          order.couponCode ? `Cupom ${order.couponCode}` : '',
-          `Total aprovado R$ ${money(order.total)}`,
-        ]),
-        itens,
-      },
-    });
+    const response = await this.sendPreOrder({
+      id_cliente: Number(customer.externalId), id_pedido_site: `PED-${order.id}`,
+      id_vendedor: config.sellerCode ?? undefined, forma_pagto: formaPagto,
+      transportadora: config.carrierCode ?? 0, valor_frete: 0,
+      itens,
+    }, [
+      `Pedido M2 ${order.id.slice(0, 8)} (${order.source})`,
+      order.externalOrderId ? `Pedido externo ${order.externalOrderId}` : '',
+      localCustomer ? `Cliente: ${localCustomer.name} ${localCustomer.phone}` : '',
+      `Pagamento: ${order.paymentMethod}`,
+      `Itens: ${order.items.map(item => `${item.quantity}x ${item.name} R$ ${money(item.quotedPrice ?? item.price)}`).join('; ')}`,
+      Number(order.discountAmount) > 0 ? `Desconto R$ ${money(order.discountAmount)}` : '',
+      order.couponCode ? `Cupom ${order.couponCode}` : '',
+      `Total aprovado R$ ${money(order.total)}`,
+    ], config.observationLimit);
     if (!response.numeroPedido) throw new Error('Ellon não retornou o número do pré-pedido.');
-    await this.saveExportLink(EllonEntityType.ORDER, order.id, response, Number(order.total));
+    await this.saveExportLink(EllonEntityType.ORDER, order.id, response, Number(order.total), order.items);
     return response;
   }
 
