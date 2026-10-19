@@ -1,7 +1,7 @@
 import { EllonEntityType, EllonJobType, Prisma, Product, ProductStatus } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '@config/database.js';
-import { ellonClient } from './ellon.client.js';
+import { ellonClient, isEmptyResult } from './ellon.client.js';
 import { ellonStockService } from './ellon-stock.service.js';
 import { DAY_MS, Raw, decimal, errorMessage, integer, localDate, normalizeCategory, text } from './ellon-sync.util.js';
 
@@ -305,7 +305,14 @@ export class EllonProductSyncService {
     let finished = false;
 
     for (let page = progress.nextPage; page <= 5000; page += 1) {
-      const body = await ellonClient.request<unknown>('POST', '/publico/integracoes/produtos', { query: { pagina: page }, body: filter, read: true });
+      let body: unknown;
+      try {
+        body = await ellonClient.request<unknown>('POST', '/publico/integracoes/produtos', { query: { pagina: page }, body: filter, read: true });
+      } catch (error) {
+        // "Nenhum produto encontrado" devolvido como erro marca o fim da listagem.
+        if (!isEmptyResult(error)) throw error;
+        body = [];
+      }
       const products = productsFrom(body);
       const fingerprint = products.map(item => `${text(item.id)}:${integer(item.sequencia)}`).join('|');
       if (products.length === 0 || seenPages.has(fingerprint)) { finished = true; break; }

@@ -244,3 +244,57 @@ describe('pedidos', () => {
     expect(result).toMatchObject({ reconciled: 1, cancelled: 1 });
   });
 });
+
+describe('vendas não dependem dos pré-pedidos', () => {
+  afterEach(() => jest.restoreAllMocks());
+  const setup = () => {
+    db.ellonConnection.findUnique.mockResolvedValue({ lastOrderSyncAt: new Date() });
+    db.ellonSnapshot.upsert.mockResolvedValue({});
+    db.ellonEntityLink.findMany.mockResolvedValue([]);
+  };
+
+  it('"nenhum pedido encontrado" como erro não impede importar vendas, mesmo sem id_venda', async () => {
+    const { EllonResponseError } = await import('../src/modules/ellon/ellon.client.js');
+    setup();
+    jest.spyOn(ellonClient, 'request').mockImplementation(async (_m, path, options) => {
+      if (path.includes('prepedidosdetalhados')) throw new EllonResponseError(400, 'Nenhum pedido encontrado no período');
+      if (path.includes('consultaresumovendas') && Number(options?.query?.pagina) === 1) return { Faturamentos: [{ numero: 'NF10', valor: '50,00' }, { valor: '20,00', cliente: 'B' }] };
+      return [];
+    });
+    const result = await new EllonMasterSyncService().syncOrders();
+    const stored = db.ellonSnapshot.upsert.mock.calls.filter(call => call[0].where.type_externalId.type === 'SALE');
+    expect(stored).toHaveLength(2);
+    expect(stored[0][0].where.type_externalId.externalId).toBe('NF10');
+    expect(stored[1][0].where.type_externalId.externalId).toMatch(/^h[0-9a-f]{16}$/);
+    expect(result).toMatchObject({ sales: 2, preOrders: 0 });
+    expect(result.errors).toEqual([]);
+  });
+
+  it('erro respondido pela Ellon fica registrado e o restante continua; falha de rede interrompe', async () => {
+    const { EllonResponseError } = await import('../src/modules/ellon/ellon.client.js');
+    setup();
+    jest.spyOn(ellonClient, 'request').mockImplementation(async (_m, path) => {
+      if (path.includes('prepedidosdetalhados')) throw new EllonResponseError(400, 'Período inválido');
+      return [];
+    });
+    const result = await new EllonMasterSyncService().syncOrders();
+    expect(result.errors[0]).toMatch(/Pré-pedidos .*Período inválido/);
+
+    jest.spyOn(ellonClient, 'request').mockRejectedValue(new Error('ECONNRESET'));
+    await expect(new EllonMasterSyncService().syncOrders()).rejects.toThrow('ECONNRESET');
+  });
+
+  it('produtos: "nenhum produto" como erro encerra a listagem em vez de falhar a carga', async () => {
+    const { EllonResponseError } = await import('../src/modules/ellon/ellon.client.js');
+    db.ellonConnection.findUnique.mockResolvedValue(null);
+    db.ellonEntityLink.findUnique.mockResolvedValue({ id: 'link', localId: 'p', metadata: {} });
+    db.product.findUnique.mockResolvedValue({ id: 'p', name: 'x', description: '', images: [], specifications: {}, status: 'ACTIVE' });
+    jest.spyOn(ellonClient, 'request').mockImplementation(async (_m, _p, options) => {
+      if (Number(options?.query?.pagina) === 1) return [{ id: '1', quantidade: '2' }];
+      throw new EllonResponseError(404, 'Nenhum produto encontrado');
+    });
+    const result = await new EllonProductSyncService().syncAll();
+    expect(result).toMatchObject({ updated: 1, pages: 1 });
+    expect(db.ellonConnection.update).toHaveBeenCalled();
+  });
+});

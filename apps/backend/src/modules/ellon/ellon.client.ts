@@ -6,6 +6,19 @@ import { ellonConnectionService } from './ellon-connection.service.js';
 interface EllonErrorBody { erro?: string; message?: string }
 interface AuthResponse { Token?: string }
 
+/** A Ellon respondeu com erro (resposta determinística: repetir não muda o resultado). */
+export class EllonResponseError extends ApiError {
+  constructor(public upstreamStatus: number, message: string) {
+    super(502, message);
+  }
+}
+
+/** Consulta sem resultados que a Ellon devolve como erro em vez de lista vazia. */
+export function isEmptyResult(error: unknown): boolean {
+  return error instanceof EllonResponseError
+    && (error.upstreamStatus === 404 || /nenhum|n[aã]o (foi |foram )?encontrad|not found|sem (registro|dado|resultado)|vazi/i.test(error.message));
+}
+
 export class AmbiguousEllonError extends ApiError {
   constructor() {
     super(503, 'Falha de comunicação com a Ellon; reconciliação manual necessária antes de reenviar.');
@@ -105,7 +118,7 @@ export class EllonClient {
         continue;
       }
       const body = await response.json().catch(() => ({})) as T & EllonErrorBody;
-      if (!response.ok) throw new ApiError(502, body.erro || body.message || `Ellon respondeu ${response.status}`);
+      if (!response.ok) throw new EllonResponseError(response.status, body.erro || body.message || `Ellon respondeu ${response.status}`);
       return body;
     }
   }

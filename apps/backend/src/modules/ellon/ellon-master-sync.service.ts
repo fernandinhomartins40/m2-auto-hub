@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { prisma } from '@config/database.js';
 import { logger } from '@shared/utils/logger.util.js';
-import { ellonClient } from './ellon.client.js';
+import { EllonResponseError, ellonClient, isEmptyResult } from './ellon.client.js';
 import { ellonCancellationService } from './ellon-cancellation.service.js';
 import { customerPayload, isSyntheticEmail, linkMetadata } from './ellon-export.service.js';
 import {
@@ -21,6 +21,8 @@ interface MasterSyncResult {
   cancelled: number;
   invoices: number;
   divergences: number;
+  preOrders: number;
+  sales: number;
   errors: string[];
 }
 
@@ -37,7 +39,7 @@ export interface PagedProgress {
 type Checkpoint = (progress: PagedProgress) => Promise<void>;
 
 const emptyResult = (): MasterSyncResult => ({
-  received: 0, stored: 0, linked: 0, created: 0, updated: 0, addresses: 0, reconciled: 0, cancelled: 0, invoices: 0, divergences: 0, errors: [],
+  received: 0, stored: 0, linked: 0, created: 0, updated: 0, addresses: 0, reconciled: 0, cancelled: 0, invoices: 0, divergences: 0, preOrders: 0, sales: 0, errors: [],
 });
 const pushError = (result: MasterSyncResult, message: string) => { if (result.errors.length < 100) result.errors.push(message); };
 
@@ -304,7 +306,10 @@ export class EllonMasterSyncService {
     const seen = new Set(state.fingerprints);
     let finished = false;
     for (let page = state.nextPage; page <= 5000; page += 1) {
-      const items = rows(await ellonClient.request<unknown>('GET', '/publico/integracoes/clientes', { query: { pagina: page } }), ['clientes', 'Clientes']);
+      // "Nenhum cliente encontrado" devolvido como erro marca o fim da listagem.
+      const response = await ellonClient.request<unknown>('GET', '/publico/integracoes/clientes', { query: { pagina: page } })
+        .catch(error => { if (isEmptyResult(error)) return []; throw error; });
+      const items = rows(response, ['clientes', 'Clientes']);
       const fingerprint = items.map(item => text(item.id)).join('|');
       if (!items.length || seen.has(fingerprint)) { finished = true; break; }
       seen.add(fingerprint);
@@ -464,57 +469,68 @@ export class EllonMasterSyncService {
     }
   }
 
+  /**
+   * Percorre as páginas de uma consulta por período. "Nenhum registro" devolvido como erro vale
+   * como fim da lista; erro respondido pela Ellon fica registrado sem travar o restante (repetir
+   * não muda a resposta); só falha de comunicação interrompe para nova tentativa.
+   */
+  private async eachPage(label: string, result: MasterSyncResult, fetchPage: (page: number) => Promise<unknown>, keys: string[], idKeys: string[], handle: (item: Raw, id: string) => Promise<void>) {
+    const seen = new Set<string>();
+    for (let page = 1; page <= 2000; page += 1) {
+      let response: unknown;
+      try {
+        response = await fetchPage(page);
+      } catch (error) {
+        if (isEmptyResult(error)) return;
+        if (error instanceof EllonResponseError) { pushError(result, `${label} (página ${page}): ${error.message}`); return; }
+        throw error;
+      }
+      const items = rows(response, keys);
+      // Sem identificador conhecido, o próprio conteúdo identifica o registro (o contrato não garante o nome do campo).
+      const ids = items.map(item => pick(item, idKeys) || `h${payloadHash(item).slice(0, 16)}`);
+      const fingerprint = ids.join('|');
+      if (!items.length || seen.has(fingerprint)) return;
+      seen.add(fingerprint);
+      result.received += items.length;
+      for (const [index, item] of items.entries()) {
+        try {
+          await handle(item, ids[index]);
+          result.stored += 1;
+        } catch (error) {
+          pushError(result, `${label} ${ids[index]}: ${errorMessage(error)}`);
+        }
+      }
+    }
+  }
+
   private async syncWindow(start: Date, end: Date, state: PagedProgress, checkpoint?: Checkpoint) {
     const { result } = state;
     const range = { dataInicial: localDate(start), dataFinal: localDate(end) };
+    const period = `${range.dataInicial} a ${range.dataFinal}`;
 
-    const seenOrders = new Set<string>();
-    for (let page = 1; page <= 2000; page += 1) {
-      const response = await ellonClient.request<unknown>('GET', '/publico/integracoes/prepedidosdetalhados', {
-        query: { pagina: page, registros: 50, ...range },
+    // Pré-pedidos e vendas são independentes: falha em um não impede o outro.
+    await this.eachPage(`Pré-pedidos ${period}`, result,
+      page => ellonClient.request<unknown>('GET', '/publico/integracoes/prepedidosdetalhados', { query: { pagina: page, registros: 50, ...range } }),
+      ['pedidos', 'Pedidos', 'prepedidos'], ['numero', 'numeroPedido', 'numero_pedido'],
+      async (item, id) => {
+        await this.snapshot('PRE_ORDER', id, `Pré-pedido ${id}`, item);
+        result.preOrders += 1;
+        await this.reconcilePreOrder(item, id, result);
       });
-      const items = rows(response, ['pedidos', 'Pedidos', 'prepedidos']);
-      const fingerprint = items.map(item => text(item.numero)).join('|');
-      if (!items.length || seenOrders.has(fingerprint)) break;
-      seenOrders.add(fingerprint);
-      result.received += items.length;
-      for (const item of items) {
-        const externalId = pick(item, ['numero', 'numeroPedido', 'numero_pedido']);
-        if (!externalId) continue;
-        try {
-          await this.snapshot('PRE_ORDER', externalId, `Pré-pedido ${externalId}`, item);
-          result.stored += 1;
-          await this.reconcilePreOrder(item, externalId, result);
-        } catch (error) {
-          pushError(result, `Pré-pedido ${externalId}: ${errorMessage(error)}`);
-        }
-      }
-    }
 
-    const seenSales = new Set<string>();
-    for (let page = 1; page <= 2000; page += 1) {
-      const response = await ellonClient.request<unknown>('POST', '/publico/integracoes/consultaresumovendas', {
+    await this.eachPage(`Vendas ${period}`, result,
+      page => ellonClient.request<unknown>('POST', '/publico/integracoes/consultaresumovendas', {
         query: { pagina: page },
         body: { data_inicial: range.dataInicial, data_final: range.dataFinal, tipo_movimento: 'V' },
         read: true,
+      }),
+      ['Faturamentos', 'faturamentos', 'vendas', 'Vendas'], ['id_venda', 'idVenda', 'id', 'numero_venda', 'numero', 'documento'],
+      async (item, id) => {
+        await this.snapshot('SALE', id, `Venda ${pick(item, ['numero_nf', 'numero', 'documento']) || id}`, item);
+        result.sales += 1;
+        await this.reconcileSale(item, result);
       });
-      const items = rows(response, ['Faturamentos', 'faturamentos', 'vendas']);
-      const fingerprint = items.map(item => text(item.id_venda)).join('|');
-      if (!items.length || seenSales.has(fingerprint)) break;
-      seenSales.add(fingerprint);
-      result.received += items.length;
-      for (const item of items) {
-        const externalId = pick(item, ['id_venda', 'id']);
-        if (!externalId) continue;
-        try {
-          await this.snapshot('SALE', externalId, `Venda ${externalId}`, item);
-          result.stored += 1;
-          await this.reconcileSale(item, result);
-        } catch (error) {
-          pushError(result, `Venda ${externalId}: ${errorMessage(error)}`);
-        }
-      }
-    }
+
     state.windowStart = new Date(end.getTime() + 1).toISOString();
     await checkpoint?.(state);
   }
