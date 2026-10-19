@@ -14,6 +14,8 @@ router.get('/summary', ...staff, ellonController.getSyncSummary);
 router.put('/config', ...admin, AuditLogMiddleware.log('UPDATE', 'EllonConnection'), ellonController.updateConfig);
 router.post('/test', ...admin, ellonController.test);
 router.post('/sync/products', ...manager, AuditLogMiddleware.log('SYNC', 'EllonProducts'), ellonController.syncProducts);
+router.post('/sync/:target', ...manager, AuditLogMiddleware.log('SYNC', 'Ellon'), ellonController.syncNow);
+router.get('/snapshots', ...staff, ellonController.listSnapshots);
 
 router.get('/links', ...staff, ellonController.listLinks);
 router.put('/links', ...manager, AuditLogMiddleware.log('UPSERT', 'EllonEntityLink'), ellonController.upsertLink);

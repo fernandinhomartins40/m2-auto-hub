@@ -847,8 +847,22 @@ model EllonConnection {
   syncProducts          Boolean               @default(true)
   syncCustomers         Boolean               @default(true)
   syncOrders            Boolean               @default(true)
+  // Origens de pedido que viram pré-pedido; marketplaces emitem nota própria.
+  exportOrderSources    OrderSource[]         @default([WEB, APP, PHONE])
+  // true quando a quantidade da Ellon já desconta pré-pedidos em aberto.
+  stockIncludesPreOrders Boolean              @default(false)
+  reservationTtlDays    Int                   @default(15)
+  // Valores do campo `tipo` da Ellon que identificam item de serviço (ISS/NFS-e).
+  serviceItemTypes      String[]              @default([])
+  // Cliente Ellon "consumidor final" para OS avulsa ou cliente sem CPF/CNPJ.
+  defaultCustomerCode   Int?
+  // Forma de pagamento do M2 -> código Ellon.
+  paymentMethodMap      Json?
   lastConnectionAt      DateTime?
   lastProductSyncAt     DateTime?
+  lastFullProductSyncAt DateTime?
+  lastCustomerSyncAt    DateTime?
+  lastCustomerExportScanAt DateTime?
   lastOrderSyncAt       DateTime?
   lastError             String?               @db.Text
   createdAt             DateTime              @default(now())

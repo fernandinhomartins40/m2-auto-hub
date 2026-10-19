@@ -3,6 +3,7 @@ import { prisma } from '@config/database.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { PaginationUtil, PaginatedResponse } from '@shared/utils/pagination.util.js';
 import { logger } from '@shared/utils/logger.util.js';
+import { ellonCancellationService } from '../ellon/ellon-cancellation.service.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
 import { UpdateOrderDto } from './dto/update-order.dto.js';
 
@@ -340,6 +341,7 @@ export class OrdersService {
       }
 
       if (dto.status === 'CANCELLED') {
+        await ellonCancellationService.assertLocalCancelAllowed('ORDER', orderId);
         updateData.cancelledAt = new Date();
 
         // Restore product stock

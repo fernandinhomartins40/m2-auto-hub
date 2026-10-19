@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, DatabaseZap, Loader2, PlugZap, RefreshCw, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import ellonService, { EllonConfig, EllonEntityType, EllonJob, EllonLink, EllonSyncSummary } from '@/api/ellonService';
+import ellonService, { EllonConfig, EllonEntityType, EllonJob, EllonLink, EllonSyncSummary, EllonSyncTarget } from '@/api/ellonService';
+import { EllonDataExplorer } from './EllonDataExplorer';
 import { getErrorMessage } from '@/lib/errors';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -82,13 +83,15 @@ export function EllonIntegrationSection() {
     try { await ellonService.retryJob(id); await loadOperations(); toast.success('Job reenfileirado após confirmação manual.'); }
     catch (error) { toast.error(getErrorMessage(error)); }
   };
-  const syncProducts = async () => {
+  const syncNow = async (target: EllonSyncTarget) => {
     try {
-      await ellonService.syncProducts();
+      await ellonService.syncNow(target);
       await loadOperations();
-      toast.success('Sincronização de produtos colocada na fila.');
+      toast.success('Sincronização colocada na fila.');
     } catch (error) { toast.error(getErrorMessage(error)); }
   };
+  const formatDate = (value: string | null | undefined) => value ? new Date(value).toLocaleString('pt-BR') : 'nunca';
+  const snapshotCounts = Object.fromEntries((summary?.snapshots ?? []).map(item => [item.type, item._count._all]));
 
   if (busy === 'load') return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Carregando integração Ellon...</div>;
 
@@ -127,8 +130,15 @@ export function EllonIntegrationSection() {
         <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Cadastros espelhados</p><p className="text-2xl font-semibold">{summary.snapshots.reduce((total, item) => total + item._count._all, 0)}</p></div>
         <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Sincronização</p><p className="text-sm font-medium">Automática e contínua</p></div>
       </div>}
+      {config?.enabled && <div className="grid gap-1 rounded-lg border bg-background p-3 text-xs text-muted-foreground sm:grid-cols-2">
+        <span>Produtos (incremental): {formatDate(config.lastProductSyncAt)}</span>
+        <span>Produtos (carga completa): {formatDate(config.lastFullProductSyncAt)}</span>
+        <span>Clientes: {formatDate(config.lastCustomerSyncAt)}</span>
+        <span>Pedidos, vendas e NF-e: {formatDate(config.lastOrderSyncAt)}</span>
+      </div>}
       {config?.lastError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{config.lastError}</p>}
-      <div className="flex flex-wrap gap-2"><Button onClick={() => void save()} disabled={Boolean(busy)}>{busy === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Ellon</Button><Button variant="outline" onClick={() => void test()} disabled={Boolean(busy) || !config?.enabled}>{busy === 'test' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}Testar autenticação</Button><Button variant="outline" onClick={() => void syncProducts()} disabled={!config?.enabled}><RefreshCw className="mr-2 h-4 w-4" />Sincronizar produtos agora</Button></div>
+      <div className="flex flex-wrap gap-2"><Button onClick={() => void save()} disabled={Boolean(busy)}>{busy === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Ellon</Button><Button variant="outline" onClick={() => void test()} disabled={Boolean(busy) || !config?.enabled}>{busy === 'test' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}Testar autenticação</Button></div>
+      {config?.enabled && <div className="flex flex-wrap gap-2">{([['products', 'Produtos alterados'], ['products-full', 'Catálogo completo'], ['customers', 'Clientes'], ['orders', 'Pedidos e vendas'], ['references', 'Cadastros auxiliares']] as Array<[EllonSyncTarget, string]>).map(([target, label]) => <Button key={target} size="sm" variant="outline" onClick={() => void syncNow(target)}><RefreshCw className="mr-2 h-4 w-4" />{label}</Button>)}</div>}
       <div className="space-y-3 border-t pt-5">
         <div><h3 className="font-medium">Mapeamento comercial de itens</h3><p className="text-xs text-muted-foreground">Vincule o UUID local da peça ou serviço ao ID e sequência cadastrados na Ellon.</p></div>
         <div className="grid gap-3 md:grid-cols-4">
@@ -138,6 +148,10 @@ export function EllonIntegrationSection() {
           <div className="flex gap-2"><Input type="number" min="0" placeholder="Sequência" value={mapping.externalSequence} onChange={e => setMapping(current => ({ ...current, externalSequence: e.target.value }))} /><Button variant="outline" onClick={() => void saveMapping()} disabled={!mapping.localId || !mapping.externalId}>Vincular</Button></div>
         </div>
         {links.length > 0 && <div className="max-h-40 overflow-auto rounded-md border bg-background text-xs">{links.slice(0, 20).map(link => <div key={link.id} className="grid grid-cols-[90px_1fr_100px] gap-2 border-b p-2 last:border-0"><span>{link.entityType}</span><span className="truncate font-mono">{link.localId}</span><span>Ellon {link.externalId}{link.externalSequence != null ? `/${link.externalSequence}` : ''}</span></div>)}</div>}
+      </div>
+      <div className="space-y-3 border-t pt-5">
+        <div><h3 className="font-medium">Dados recebidos da Ellon</h3><p className="text-xs text-muted-foreground">Produtos e clientes entram nos cadastros do M2; os demais registros ficam disponíveis aqui para consulta.</p></div>
+        <EllonDataExplorer counts={snapshotCounts} />
       </div>
       <div className="space-y-3 border-t pt-5">
         <div><h3 className="font-medium">Processamento recente</h3><p className="text-xs text-muted-foreground">Falhas após timeout exigem conferência na Ellon antes de reenviar.</p></div>

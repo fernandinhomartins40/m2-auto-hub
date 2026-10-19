@@ -36,5 +36,20 @@ export const queryEllonJobsSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
+export const querySnapshotsSchema = z.object({
+  type: z.enum(['CUSTOMER', 'PAYMENT_METHOD', 'SELLER', 'CARRIER', 'PRODUCT_GROUP', 'PRODUCT_BRAND', 'PRE_ORDER', 'SALE', 'NFE']).optional(),
+  search: z.string().trim().max(100).optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(25),
+});
+
+export const queryLinksSchema = z.object({
+  entityType: z.nativeEnum(EllonEntityType).optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(50),
+});
+
+export const syncTargetSchema = z.enum(['products', 'products-full', 'customers', 'references', 'orders']);
+
 export type UpdateEllonConfigDto = z.infer<typeof updateEllonConfigSchema>;
 export type UpsertEllonLinkDto = z.infer<typeof upsertEllonLinkSchema>;

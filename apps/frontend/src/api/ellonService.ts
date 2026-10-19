@@ -21,6 +21,10 @@ export interface EllonConfig {
   syncProducts: boolean;
   syncCustomers: boolean;
   syncOrders: boolean;
+  lastProductSyncAt: string | null;
+  lastFullProductSyncAt: string | null;
+  lastCustomerSyncAt: string | null;
+  lastOrderSyncAt: string | null;
 }
 
 export interface EllonPreflight {
@@ -41,6 +45,11 @@ export interface EllonSyncSummary {
   snapshots: Array<{ type: string; _count: { _all: number }; _max: { syncedAt: string | null } }>;
   jobs: Array<{ status: string; _count: { _all: number } }>;
 }
+
+export type EllonSnapshotType = 'CUSTOMER' | 'PAYMENT_METHOD' | 'SELLER' | 'CARRIER' | 'PRODUCT_GROUP' | 'PRODUCT_BRAND' | 'PRE_ORDER' | 'SALE' | 'NFE';
+export interface EllonSnapshot { id: string; type: EllonSnapshotType; externalId: string; name: string | null; payload: Record<string, unknown>; syncedAt: string }
+export interface Paginated<T> { data: T[]; meta: { page: number; limit: number; total: number; totalPages: number } }
+export type EllonSyncTarget = 'products' | 'products-full' | 'customers' | 'references' | 'orders';
 
 export const ellonService = {
   async getConfig(): Promise<EllonConfig> {
@@ -77,6 +86,11 @@ export const ellonService = {
   },
   async retryJob(id: string): Promise<void> { await apiClient.post(`/ellon/jobs/${id}/retry`); },
   async syncProducts(): Promise<void> { await apiClient.post('/ellon/sync/products'); },
+  async syncNow(target: EllonSyncTarget): Promise<void> { await apiClient.post(`/ellon/sync/${target}`); },
+  async listSnapshots(params: { type?: EllonSnapshotType; search?: string; page?: number; limit?: number }): Promise<Paginated<EllonSnapshot>> {
+    const response = await apiClient.get('/ellon/snapshots', { params });
+    return { data: response.data.data, meta: response.data.meta };
+  },
 };
 
 export default ellonService;

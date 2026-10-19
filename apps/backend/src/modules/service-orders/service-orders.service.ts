@@ -296,14 +296,22 @@ export class ServiceOrdersService {
         where: { entityType_localId: { entityType: 'SERVICE_ORDER', localId: id } },
       }),
       prisma.ellonJob.findFirst({
-        where: { idempotencyKey: `service-order:${id}:v1`, status: 'PROCESSING' },
+        where: {
+          idempotencyKey: `service-order:${id}:v1`,
+          // Envio em andamento ou encerrado sem confirmação (o pré-pedido pode existir na Ellon).
+          OR: [{ status: 'PROCESSING' }, { status: 'FAILED', nextAttemptAt: { gte: new Date('9000-01-01') } }],
+        },
       }),
     ]);
-    if (externalLink) {
-      throw ApiError.conflict('A OS já gerou pedido na Ellon. Cancele e concilie o pedido externo antes de alterar a OS.');
+    const cancelledInEllon = Boolean(
+      externalLink?.metadata && typeof externalLink.metadata === 'object'
+        && (externalLink.metadata as Record<string, unknown>).ellonCancelled,
+    );
+    if (externalLink && !cancelledInEllon) {
+      throw ApiError.conflict(`A OS já gerou o pré-pedido ${externalLink.externalId} na Ellon. Use "Solicitar cancelamento na Ellon"; a OS é cancelada automaticamente quando a Ellon cancelar.`);
     }
     if (processingJob) {
-      throw ApiError.conflict('A OS está sendo enviada à Ellon. Aguarde o término antes de cancelar.');
+      throw ApiError.conflict('O envio desta OS à Ellon está em andamento ou sem confirmação. Confira na Ellon antes de cancelar.');
     }
 
     const productItems = order.items.filter(i => i.type === 'PRODUCT' && i.productId);

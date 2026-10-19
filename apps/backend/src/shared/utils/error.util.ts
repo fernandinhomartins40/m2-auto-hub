@@ -5,7 +5,8 @@ export class ApiError extends Error {
     public isOperational: boolean = true
   ) {
     super(message);
-    Object.setPrototypeOf(this, ApiError.prototype);
+    // new.target preserva subclasses (ex.: AmbiguousEllonError) para `instanceof`.
+    Object.setPrototypeOf(this, new.target.prototype);
     Error.captureStackTrace(this, this.constructor);
   }
 

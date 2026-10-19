@@ -27,7 +27,11 @@ async function scheduleEnabledSyncs(): Promise<void> {
   if (!connection?.enabled) return;
   await ellonMasterSyncService.enqueueReferences();
   if (connection.syncProducts) await ellonProductSyncService.enqueue();
-  if (connection.syncCustomers) await ellonMasterSyncService.enqueueCustomers();
+  if (connection.syncCustomers) {
+    await ellonMasterSyncService.enqueueCustomers();
+    await ellonExportService.scanCustomerChanges().catch(error =>
+      logger.warn('[Ellon] falha ao detectar clientes alterados no M2', { error: String(error) }));
+  }
   if (connection.syncOrders) {
     await ellonMasterSyncService.enqueueOrders();
     await enqueueReadyServiceOrders();

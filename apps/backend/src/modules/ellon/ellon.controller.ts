@@ -4,7 +4,7 @@ import { ellonClient } from './ellon.client.js';
 import { ellonConnectionService } from './ellon-connection.service.js';
 import { ellonExportService } from './ellon-export.service.js';
 import { ellonJobService } from './ellon-job.service.js';
-import { queryEllonJobsSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
+import { queryEllonJobsSchema, queryLinksSchema, querySnapshotsSchema, syncTargetSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
 import { ellonProductSyncService } from './ellon-product-sync.service.js';
 import { ellonMasterSyncService } from './ellon-master-sync.service.js';
 
@@ -58,12 +58,48 @@ export class EllonController {
 
   listLinks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const entityType = upsertEllonLinkSchema.shape.entityType.optional().parse(req.query.entityType);
-      const data = await prisma.ellonEntityLink.findMany({
-        where: entityType ? { entityType } : undefined,
-        orderBy: { updatedAt: 'desc' },
-      });
-      res.json({ success: true, data });
+      const query = queryLinksSchema.parse(req.query);
+      const where = query.entityType ? { entityType: query.entityType } : {};
+      const [data, total] = await Promise.all([
+        prisma.ellonEntityLink.findMany({ where, orderBy: { updatedAt: 'desc' }, skip: (query.page - 1) * query.limit, take: query.limit }),
+        prisma.ellonEntityLink.count({ where }),
+      ]);
+      res.json({ success: true, data, meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) } });
+    } catch (error) { next(error); }
+  };
+
+  listSnapshots = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const query = querySnapshotsSchema.parse(req.query);
+      const where = {
+        ...(query.type && { type: query.type }),
+        ...(query.search && {
+          OR: [
+            { externalId: { contains: query.search } },
+            { name: { contains: query.search, mode: 'insensitive' as const } },
+          ],
+        }),
+      };
+      const [data, total] = await Promise.all([
+        prisma.ellonSnapshot.findMany({ where, orderBy: [{ syncedAt: 'desc' }, { externalId: 'desc' }], skip: (query.page - 1) * query.limit, take: query.limit }),
+        prisma.ellonSnapshot.count({ where }),
+      ]);
+      res.json({ success: true, data, meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) } });
+    } catch (error) { next(error); }
+  };
+
+  syncNow = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const target = syncTargetSchema.parse(req.params.target);
+      const data = target === 'products' || target === 'products-full'
+        ? await ellonProductSyncService.enqueue(req.admin?.adminId, true, target === 'products-full')
+        : target === 'customers'
+          ? await ellonMasterSyncService.enqueueCustomers()
+          : target === 'references'
+            ? await ellonMasterSyncService.enqueueReferences()
+            : await ellonMasterSyncService.enqueueOrders();
+      void ellonJobService.processPending();
+      res.status(202).json({ success: true, data });
     } catch (error) { next(error); }
   };
 

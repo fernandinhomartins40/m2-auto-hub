@@ -73,6 +73,8 @@ export class EllonConnectionService {
       syncOrders: connection.syncOrders,
       lastConnectionAt: connection.lastConnectionAt,
       lastProductSyncAt: connection.lastProductSyncAt,
+      lastFullProductSyncAt: connection.lastFullProductSyncAt,
+      lastCustomerSyncAt: connection.lastCustomerSyncAt,
       lastOrderSyncAt: connection.lastOrderSyncAt,
       lastError: connection.lastError,
       updatedAt: connection.updatedAt,

@@ -50,6 +50,66 @@ Os dados sem equivalente operacional seguro no M2 são mantidos em
 `ellon_snapshots`, com tipo, identificador externo, payload e data da última
 sincronização. O painel apresenta um resumo das quantidades sincronizadas.
 
+### Revisão de 19/10/2026
+
+**Ellon → M2**
+
+- Produtos: carga completa a cada 24 h e incremental a cada 10 min, com
+  `data_alteracao` recuando um dia (fuso de São Paulo). O checkpoint só é gravado
+  quando a listagem termina, com o horário de início da execução. A migração
+  `20261019000000_ellon_full_sync` zera os checkpoints para forçar a recarga.
+- Grupos da Ellon viram categorias gerenciadas e passam a aparecer no menu da loja.
+- Fotos, descrição editorial, ofertas próprias e status `DISCONTINUED`/`INACTIVE`
+  definidos no M2 não são mais sobrescritos.
+- Variações com a mesma referência recebem SKU próprio (`ELLON-id-sequência`)
+  em vez de serem ignoradas.
+- Produto vinculado que some de uma carga completa é inativado. Se mais de 30%
+  sumirem, nada é inativado e um alerta fica registrado no job.
+- Clientes já vinculados são atualizados (nome, celular, nascimento, CPF/CNPJ
+  livre, e-mail real no lugar do sintético) e o endereço é importado. Uma
+  alteração feita no M2 e ainda não enviada não é sobrescrita.
+- Pedidos e vendas: na primeira execução são carregados os últimos
+  `ELLON_HISTORY_DAYS` dias (padrão 730), em janelas de 31 dias. Depois, cada
+  execução volta 3 dias para cobrir sobreposição.
+- Um pré-pedido com `id_pedido_site` do M2 é vinculado automaticamente, inclusive
+  depois de um timeout ambíguo. O job travado é encerrado sem reenvio.
+- Cancelamento na Ellon cancela o pedido M2 que ainda não foi enviado. Numa OS,
+  a mudança libera o cancelamento no M2.
+- NF-e: chave, número, série e emissão são guardados no vínculo do pedido. O XML
+  não é armazenado.
+- Os dados sem tela própria (pré-pedidos, vendas, NF-e, clientes, formas de
+  pagamento, vendedores, transportadoras, grupos e marcas) podem ser consultados
+  no painel, em **Dados recebidos da Ellon**.
+
+**M2 → Ellon**
+
+- Clientes criados ou alterados no M2 (inclusive endereços) são detectados por
+  hash e enviados via `cadastrocliente`. O envio automático cobre clientes já
+  vinculados ou com CPF/CNPJ e e-mail real, e só começa depois da primeira
+  importação completa de clientes.
+- Na atualização, o corpo enviado parte do último cadastro recebido da Ellon,
+  então campos que o M2 não conhece (RG/IE, telefone fixo) não são apagados.
+  O ID Ellon vai em `id`/`id_cliente`, porque o contrato não documenta a chave
+  do upsert. Se a Ellon devolver outro ID, o conflito é registrado.
+- Pedidos confirmados e OS concluídas continuam gerando pré-pedidos.
+
+**Robustez**
+
+- Consultas são repetidas em falha de rede, 429 e 5xx. Só escritas viram
+  "resultado ambíguo".
+- Jobs de sincronização retomam da última página processada.
+- Correção crítica: `ApiError` fixava o próprio protótipo, então
+  `instanceof AmbiguousEllonError` nunca era verdadeiro. Com isso, um timeout ao
+  gerar pré-pedido era reenviado automaticamente.
+
+**Pendências que dependem da Ellon**
+
+- `consultapedidosentrega` não foi implementado, porque o contrato não define
+  quais filtros são obrigatórios.
+- Precisa ser confirmado: o campo de UF aceito por `cadastrocliente`, a chave do
+  upsert de clientes e os nomes exatos dos campos de status/cancelamento e de NF-e.
+  A implementação aceita as variações mais prováveis.
+
 Em teste real de 06/10/2026, a Ellon retornou clientes, formas de pagamento,
 vendedor, transportadora, grupos, marcas e vendas. O campo `fotos` não foi
 retornado nem pela listagem nem pelo endpoint detalhado de produto, apesar de

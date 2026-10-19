@@ -27,6 +27,9 @@ function accessToken(credentials: { integrationCode: string; accessHash: string 
     .digest('hex');
 }
 
+const READ_ATTEMPTS = 4;
+const wait = (attempt: number) => new Promise(resolve => setTimeout(resolve, 1_000 * 3 ** (attempt - 1)));
+
 export class EllonClient {
   private async authenticate(): Promise<string> {
     const credentials = await ellonConnectionService.credentials();
@@ -56,8 +59,14 @@ export class EllonClient {
     return this.authenticate();
   }
 
-  async request<T>(method: 'GET' | 'POST', path: string, options?: { query?: Record<string, string | number>; body?: unknown }): Promise<T> {
+  /**
+   * `read` marca chamadas sem efeito colateral (inclusive consultas feitas via POST,
+   * como produtos e resumo de vendas). Leituras são repetidas em falhas de rede,
+   * 429 e 5xx; só escritas viram resultado ambíguo, pois a Ellon pode tê-las aplicado.
+   */
+  async request<T>(method: 'GET' | 'POST', path: string, options?: { query?: Record<string, string | number>; body?: unknown; read?: boolean }): Promise<T> {
     const credentials = await ellonConnectionService.credentials();
+    const read = options?.read ?? method === 'GET';
     const execute = async (token: string) => {
       const url = new URL(path, credentials.baseUrl);
       url.searchParams.set('access_token', accessToken(credentials));
@@ -71,23 +80,34 @@ export class EllonClient {
           ...(options?.body !== undefined && { 'content-type': 'application/json' }),
         },
         ...(options?.body !== undefined && { body: JSON.stringify(options.body) }),
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(read ? 45_000 : 20_000),
       });
     };
 
-    let response: Response;
-    try {
-      response = await execute(await this.token());
-      if (response.status === 401) response = await execute(await this.authenticate());
-    } catch (error) {
-      if (error instanceof ApiError) throw error;
-      logger.warn('[Ellon] falha de transporte; resultado remoto é desconhecido', { path, error: String(error) });
-      throw new AmbiguousEllonError();
-    }
+    const attempts = read ? READ_ATTEMPTS : 1;
+    for (let attempt = 1; ; attempt += 1) {
+      let response: Response;
+      try {
+        response = await execute(await this.token());
+        if (response.status === 401) response = await execute(await this.authenticate());
+      } catch (error) {
+        if (error instanceof ApiError) throw error;
+        if (read) {
+          if (attempt < attempts) { await wait(attempt); continue; }
+          throw new ApiError(503, `Ellon indisponível ao consultar ${path}: ${String(error)}`);
+        }
+        logger.warn('[Ellon] falha de transporte; resultado remoto é desconhecido', { path, error: String(error) });
+        throw new AmbiguousEllonError();
+      }
 
-    const body = await response.json().catch(() => ({})) as T & EllonErrorBody;
-    if (!response.ok) throw new ApiError(502, body.erro || body.message || `Ellon respondeu ${response.status}`);
-    return body;
+      if (read && (response.status === 429 || response.status >= 500) && attempt < attempts) {
+        await wait(attempt);
+        continue;
+      }
+      const body = await response.json().catch(() => ({})) as T & EllonErrorBody;
+      if (!response.ok) throw new ApiError(502, body.erro || body.message || `Ellon respondeu ${response.status}`);
+      return body;
+    }
   }
 
   async testConnection(): Promise<void> {

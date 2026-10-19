@@ -6,6 +6,7 @@ import { LicensePlateUtil } from '@shared/utils/license-plate.util.js';
 import { PhoneUtil } from '@shared/utils/phone.util.js';
 import plateLookupService from '@shared/services/plate-lookup.service.js';
 import { randomUUID } from 'crypto';
+import { ellonCancellationService } from '../ellon/ellon-cancellation.service.js';
 import {
   matchesRules,
   parseRules,
@@ -334,6 +335,9 @@ export class AdminService {
     }
 
     const allowedTransitions = this.getAllowedOrderStatusTransitions(existingOrder);
+    if (nextStatus === OrderStatus.CANCELLED && allowedTransitions.includes(nextStatus)) {
+      await ellonCancellationService.assertLocalCancelAllowed('ORDER', id);
+    }
     if (!allowedTransitions.includes(nextStatus)) {
       const allowedLabels = allowedTransitions.map((allowedStatus) =>
         this.getOrderStatusLabel(allowedStatus)
