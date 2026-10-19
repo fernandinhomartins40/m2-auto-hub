@@ -1,5 +1,8 @@
 import { Prisma, ServiceOrder, ServiceOrderStatus } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 import { prisma } from '@config/database.js';
+import { validDocument } from '../ellon/ellon-sync.util.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { PaginationUtil, PaginatedResponse } from '@shared/utils/pagination.util.js';
 import { logger } from '@shared/utils/logger.util.js';
@@ -7,6 +10,7 @@ import {
   CreateServiceOrderDto,
   UpdateServiceOrderDto,
   QueryServiceOrdersDto,
+  RegisterServiceOrderCustomerDto,
   ServiceOrderItemInput,
 } from './dto/service-order.dto.js';
 
@@ -341,6 +345,48 @@ export class ServiceOrdersService {
         },
         include: itemsInclude,
       });
+    });
+  }
+
+  /**
+   * Vincula uma OS avulsa a um cliente cadastrado (existente pelo CPF/CNPJ ou novo).
+   * A Ellon exige cliente identificado para gerar o pré-pedido.
+   */
+  async registerCustomer(id: string, dto: RegisterServiceOrderCustomerDto): Promise<ServiceOrder> {
+    const order = await prisma.serviceOrder.findUnique({ where: { id } });
+    if (!order) throw ApiError.notFound('Ordem de serviço não encontrada.');
+    if (order.customerId) throw ApiError.conflict('Esta OS já possui cliente cadastrado.');
+    if (order.status === ServiceOrderStatus.CANCELLED) throw ApiError.badRequest('OS cancelada não pode receber cliente.');
+    const document = dto.document.replace(/\D/g, '');
+    if (!validDocument(document)) throw ApiError.badRequest('CPF/CNPJ inválido.');
+    const email = dto.email ? dto.email.toLowerCase() : '';
+
+    const customer = await prisma.$transaction(async tx => {
+      const byDocument = await tx.customer.findUnique({ where: { cpf: document } });
+      if (byDocument) return byDocument;
+      if (email) {
+        const byEmail = await tx.customer.findUnique({ where: { email } });
+        if (byEmail) {
+          if (byEmail.cpf) throw ApiError.conflict('Já existe cliente com este e-mail e outro CPF/CNPJ.');
+          return tx.customer.update({ where: { id: byEmail.id }, data: { cpf: document } });
+        }
+      }
+      return tx.customer.create({
+        data: {
+          name: dto.name,
+          // Sem e-mail informado, a conta não tem acesso ao site até o cliente cadastrar um.
+          email: email || `os-${order.number}-${randomBytes(4).toString('hex')}@sync.invalid`,
+          phone: dto.phone.replace(/\D/g, ''),
+          cpf: document,
+          password: await bcrypt.hash(randomBytes(32).toString('hex'), 12),
+        },
+      });
+    });
+
+    return prisma.serviceOrder.update({
+      where: { id },
+      data: { customerId: customer.id, customerName: customer.name, customerPhone: customer.phone },
+      include: itemsInclude,
     });
   }
 

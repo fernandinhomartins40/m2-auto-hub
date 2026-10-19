@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import adminService, { StoreOrder } from "../../api/adminService";
+import ellonService from "../../api/ellonService";
 import { useToast } from "../../hooks/use-toast";
 import { buildOrderStatusWhatsAppUrl, getOrderStatusLabel } from "../../utils/orderWhatsApp";
 import { Badge } from "../ui/badge";
@@ -211,6 +212,20 @@ export function OrderDetailsModal({
 
       onUpdate();
     } catch (error: unknown) {
+      const message = getApiError(error).response?.data?.error || getApiError(error).message || "";
+      if (newStatus === "CANCELLED" && /Solicitar cancelamento na Ellon/.test(message)) {
+        // A API Ellon não cancela pré-pedidos: registra a solicitação; o pedido é cancelado quando a Ellon cancelar.
+        try {
+          const result = await ellonService.requestCancellation("order", currentOrder.id);
+          toast(result.status === "CANCELLED"
+            ? { title: "Pedido cancelado", description: `O pré-pedido ${result.preOrder} já estava cancelado na Ellon.` }
+            : { title: "Cancelamento solicitado", description: `Cancele o pré-pedido ${result.preOrder} na Ellon. O pedido será cancelado automaticamente na próxima sincronização.` });
+          onUpdate();
+        } catch (requestError: unknown) {
+          toast({ title: "Não foi possível solicitar o cancelamento", description: getApiError(requestError).response?.data?.error || getApiError(requestError).message, variant: "destructive" });
+        }
+        return;
+      }
       console.error("Error updating order status:", error);
       toast({
         title: "Erro ao atualizar status",

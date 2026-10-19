@@ -12,7 +12,7 @@ jest.mock('../src/config/database.js', () => {
   });
   return { prisma: {
     product: model(), productCategory: model(), ellonEntityLink: model(), ellonConnection: model(), ellonSnapshot: model(),
-    ellonJob: model(), customer: model(), address: model(), order: model(), serviceOrder: model(),
+    ellonJob: model(), customer: model(), address: model(), order: model(), serviceOrder: model(), service: model(),
     $transaction: jest.fn(),
   } };
 });
@@ -42,6 +42,8 @@ beforeEach(() => {
   db.ellonEntityLink.count.mockResolvedValue(0);
   db.ellonEntityLink.findMany.mockResolvedValue([]);
   db.ellonEntityLink.updateMany.mockResolvedValue({ count: 0 });
+  db.order.findMany.mockResolvedValue([]);
+  db.serviceOrder.findMany.mockResolvedValue([]);
 });
 
 describe('normalização de produto', () => {
@@ -229,7 +231,7 @@ describe('pedidos', () => {
     db.ellonConnection.findUnique.mockResolvedValue({ lastOrderSyncAt: new Date() });
     db.ellonSnapshot.upsert.mockResolvedValue({});
     db.ellonEntityLink.findMany.mockResolvedValue([]);
-    db.order.findUnique.mockResolvedValue({ id: orderId });
+    db.order.findUnique.mockResolvedValue({ id: orderId, status: 'CONFIRMED', items: [{ type: 'PRODUCT', productId: 'p1', quantity: 2 }] });
     db.ellonEntityLink.findUnique.mockResolvedValue(null);
     db.ellonEntityLink.create.mockResolvedValue({ id: 'new-link', entityType: 'ORDER', localId: orderId, metadata: {} });
     db.ellonJob.updateMany.mockResolvedValue({ count: 1 });
@@ -238,6 +240,7 @@ describe('pedidos', () => {
     expect(db.ellonEntityLink.create.mock.calls[0][0].data).toMatchObject({ entityType: 'ORDER', localId: orderId, externalId: '777' });
     expect(db.ellonJob.updateMany.mock.calls[0][0].data.status).toBe('SUCCEEDED');
     expect(db.order.updateMany.mock.calls[0][0].data.status).toBe('CANCELLED');
+    expect(db.product.update.mock.calls[0][0]).toEqual({ where: { id: 'p1' }, data: { stock: { increment: 2 } } });
     expect(result).toMatchObject({ reconciled: 1, cancelled: 1 });
   });
 });

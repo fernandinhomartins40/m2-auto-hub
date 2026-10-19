@@ -1,4 +1,4 @@
-import { EllonEntityType, EllonJobStatus } from '@prisma/client';
+import { EllonEntityType, EllonJobStatus, OrderSource } from '@prisma/client';
 import { z } from 'zod';
 
 const optionalPositiveInt = z.number().int().positive().nullable().optional();
@@ -20,6 +20,12 @@ export const updateEllonConfigSchema = z.object({
   syncProducts: z.boolean().optional(),
   syncCustomers: z.boolean().optional(),
   syncOrders: z.boolean().optional(),
+  exportOrderSources: z.array(z.nativeEnum(OrderSource)).max(10).optional(),
+  stockIncludesPreOrders: z.boolean().optional(),
+  reservationTtlDays: z.number().int().min(1).max(90).optional(),
+  serviceItemTypes: z.array(z.string().trim().min(1).max(30)).max(20).optional(),
+  defaultCustomerCode: optionalPositiveInt,
+  paymentMethodMap: z.record(z.string().trim().min(1).max(60), z.number().int().positive()).nullable().optional(),
 });
 
 export const upsertEllonLinkSchema = z.object({
@@ -48,6 +54,10 @@ export const queryLinksSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(50),
 });
+
+export const catalogQuerySchema = z.object({ search: z.string().trim().min(2).max(100) });
+
+export const cancellationEntitySchema = z.enum(['order', 'service-order']);
 
 export const syncTargetSchema = z.enum(['products', 'products-full', 'customers', 'references', 'orders']);
 

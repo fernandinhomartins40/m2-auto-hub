@@ -4,7 +4,7 @@ import { prisma } from '@config/database.js';
 import { ellonProductSyncService } from './ellon-product-sync.service.js';
 import { ellonMasterSyncService } from './ellon-master-sync.service.js';
 import { ellonExportService } from './ellon-export.service.js';
-import { EllonEntityType, OrderStatus, ServiceOrderStatus } from '@prisma/client';
+import { EllonEntityType, EllonJobType, OrderSource, OrderStatus, ServiceOrderStatus } from '@prisma/client';
 
 const INTERVAL_MS = 30_000;
 let timer: NodeJS.Timeout | null = null;
@@ -35,38 +35,42 @@ async function scheduleEnabledSyncs(): Promise<void> {
   if (connection.syncOrders) {
     await ellonMasterSyncService.enqueueOrders();
     await enqueueReadyServiceOrders();
-    await enqueueReadyOrders();
+    await enqueueReadyOrders(connection.exportOrderSources);
   }
 }
 
-async function enqueueReadyOrders(): Promise<void> {
+// Pendências mais antigas que isso exigem envio manual pelo painel (evita revalidar o histórico a cada ciclo).
+const recent = () => new Date(Date.now() - 30 * 24 * 60 * 60_000);
+
+/** Registros que já têm envio (job) ou vínculo: não voltam a ocupar a janela de candidatos. */
+async function handledIds(jobType: EllonJobType, entityType: EllonEntityType): Promise<string[]> {
+  const [jobs, links] = await Promise.all([
+    prisma.ellonJob.findMany({ where: { type: jobType, localEntityId: { not: null } }, select: { localEntityId: true } }),
+    prisma.ellonEntityLink.findMany({ where: { entityType }, select: { localId: true } }),
+  ]);
+  return [...new Set([...jobs.map(job => job.localEntityId as string), ...links.map(link => link.localId)])];
+}
+
+async function enqueueReadyOrders(sources: OrderSource[]): Promise<void> {
+  if (!sources.length) return;
+  const handled = await handledIds(EllonJobType.EXPORT_ORDER, EllonEntityType.ORDER);
   const candidates = await prisma.order.findMany({
-    where: { status: OrderStatus.CONFIRMED }, select: { id: true }, orderBy: { updatedAt: 'asc' }, take: 100,
+    where: { status: OrderStatus.CONFIRMED, source: { in: sources }, id: { notIn: handled }, updatedAt: { gte: recent() } },
+    select: { id: true }, orderBy: { updatedAt: 'desc' }, take: 50,
   });
-  if (!candidates.length) return;
-  const exported = await prisma.ellonEntityLink.findMany({
-    where: { entityType: EllonEntityType.ORDER, localId: { in: candidates.map(item => item.id) } }, select: { localId: true },
-  });
-  const exportedIds = new Set(exported.map(item => item.localId));
   for (const candidate of candidates) {
-    if (exportedIds.has(candidate.id)) continue;
     try { await ellonExportService.enqueueOrder(candidate.id); } catch { /* aguarda mapeamentos/configuração */ }
   }
 }
 
 async function enqueueReadyServiceOrders(): Promise<void> {
+  const handled = await handledIds(EllonJobType.EXPORT_SERVICE_ORDER, EllonEntityType.SERVICE_ORDER);
   const candidates = await prisma.serviceOrder.findMany({
-    where: { status: ServiceOrderStatus.COMPLETED, customerId: { not: null } },
-    select: { id: true }, orderBy: { updatedAt: 'asc' }, take: 100,
+    // Sem cliente, a pré-validação decide (cliente consumidor final configurado ou não).
+    where: { status: ServiceOrderStatus.COMPLETED, id: { notIn: handled }, updatedAt: { gte: recent() } },
+    select: { id: true }, orderBy: { updatedAt: 'desc' }, take: 50,
   });
-  if (!candidates.length) return;
-  const exported = await prisma.ellonEntityLink.findMany({
-    where: { entityType: EllonEntityType.SERVICE_ORDER, localId: { in: candidates.map(item => item.id) } },
-    select: { localId: true },
-  });
-  const exportedIds = new Set(exported.map(item => item.localId));
   for (const candidate of candidates) {
-    if (exportedIds.has(candidate.id)) continue;
     try { await ellonExportService.enqueueServiceOrder(candidate.id); } catch { /* aguarda os mapeamentos/configuração necessários */ }
   }
 }

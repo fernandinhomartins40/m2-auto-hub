@@ -110,6 +110,29 @@ sincronização. O painel apresenta um resumo das quantidades sincronizadas.
   upsert de clientes e os nomes exatos dos campos de status/cancelamento e de NF-e.
   A implementação aceita as variações mais prováveis.
 
+### Contornos de regra de negócio (19/10/2026)
+
+Configuráveis em **Configurações → Ellon ERP → Regras de negócio**
+(migração `20261019010000_ellon_business_rules`).
+
+| Limitação da API | Contorno implementado |
+|---|---|
+| Pré-pedido não baixa estoque até faturar; a sincronização sobrescrevia a baixa do M2 | **Reservas:** estoque local = quantidade Ellon − saídas do M2 (pedidos não cancelados, OS concluídas) ainda não faturadas na Ellon. A reserva é liberada pelo faturamento (venda, NF-e ou status "faturado"). Depois do prazo (`reservationTtlDays`), vai para conferência. Se a Ellon já descontar pré-pedidos, basta ativar `stockIncludesPreOrders`. |
+| `gerarprepedido` não recebe preço nem desconto | A observação leva itens com valor unitário, desconto, total aprovado, veículo, km e mecânico, até 1000 caracteres. O total aprovado fica no vínculo; se o total da Ellon divergir em mais de R$ 0,05, aparece em **Pendências** até alguém marcar como conferido. |
+| Não há cadastro de serviços | Cada serviço do M2 é vinculado a um item comercial da Ellon, escolhido por busca. Com `serviceItemTypes` configurado, a mão de obra só pode ser vinculada e enviada com item do tipo fiscal de serviço. |
+| Pedido exige cliente Ellon identificado | OS avulsa pode virar cliente cadastrado (CPF/CNPJ validado). Cliente sem documento usa o **consumidor final** (`defaultCustomerCode`), com nome e telefone na observação. Sem nenhum dos dois, o envio é bloqueado. |
+| Uma forma de pagamento fixa | Mapa de forma de pagamento M2 → código Ellon. Sem mapeamento, vale a forma padrão. |
+| Marketplaces emitem nota própria | Só as origens marcadas (padrão: site, app, telefone) viram pré-pedido. |
+| Não há cancelamento de pré-pedido | Depois do envio, o cancelamento local fica bloqueado e vira **solicitação**. O operador cancela na Ellon e a sincronização conclui o cancelamento no M2, devolvendo o estoque. Pré-pedido já faturado exige cancelamento fiscal na Ellon. Envio ainda não feito é descartado; envio sem confirmação bloqueia o cancelamento até a conferência. |
+
+Correção adicional: os candidatos a envio automático eram "os 100 mais antigos".
+Depois de 100 envios, pedidos e OS novos nunca seriam enfileirados. Agora
+registros já enviados ficam fora da seleção.
+
+**Fora do código:** quantidades fracionadas (ex.: 1,5 h de mão de obra) dependem
+de cadastrar na Ellon unidades menores (ex.: mão de obra por 0,5 h). O M2 usa
+quantidade inteira.
+
 Em teste real de 06/10/2026, a Ellon retornou clientes, formas de pagamento,
 vendedor, transportadora, grupos, marcas e vendas. O campo `fotos` não foi
 retornado nem pela listagem nem pelo endpoint detalhado de produto, apesar de

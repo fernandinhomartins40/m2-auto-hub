@@ -5,6 +5,7 @@ import {
   updateServiceOrderSchema,
   queryServiceOrdersSchema,
   assignMechanicSchema,
+  registerServiceOrderCustomerSchema,
 } from './dto/service-order.dto.js';
 
 export class ServiceOrdersController {
@@ -79,6 +80,15 @@ export class ServiceOrdersController {
   complete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = await serviceOrdersService.complete(req.params.id);
+      res.status(200).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  registerCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await serviceOrdersService.registerCustomer(req.params.id, registerServiceOrderCustomerSchema.parse(req.body));
       res.status(200).json({ success: true, data });
     } catch (error) {
       next(error);

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, DatabaseZap, Loader2, PlugZap, RefreshCw, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import ellonService, { EllonConfig, EllonEntityType, EllonJob, EllonLink, EllonSyncSummary, EllonSyncTarget } from '@/api/ellonService';
+import ellonService, { EllonConfig, EllonJob, EllonPaymentMethods, EllonSyncSummary, EllonSyncTarget, OrderSource } from '@/api/ellonService';
 import { EllonDataExplorer } from './EllonDataExplorer';
+import { EllonPendingPanel } from './EllonPendingPanel';
+import { EllonServiceMapping } from './EllonServiceMapping';
 import { getErrorMessage } from '@/lib/errors';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
-type Form = Pick<EllonConfig, 'enabled' | 'baseUrl' | 'companyCode' | 'transactionCode' | 'costCenterCode' | 'sellerCode' | 'warehouseCode' | 'paymentMethodCode' | 'carrierCode' | 'syncProducts' | 'syncCustomers' | 'syncOrders'> & {
+type Form = Pick<EllonConfig, 'enabled' | 'baseUrl' | 'companyCode' | 'transactionCode' | 'costCenterCode' | 'sellerCode' | 'warehouseCode' | 'paymentMethodCode' | 'carrierCode' | 'syncProducts' | 'syncCustomers' | 'syncOrders' | 'exportOrderSources' | 'stockIncludesPreOrders' | 'reservationTtlDays' | 'defaultCustomerCode'> & {
+  serviceItemTypes: string;
+  paymentMethodMap: Record<string, number>;
   integrationCode: string;
   username: string;
   password: string;
@@ -30,23 +34,26 @@ const emptyForm: Form = {
   carrierCode: null,
   username: '', integrationCode: '', password: '', accessHash: '',
   syncProducts: true, syncCustomers: true, syncOrders: true,
+  exportOrderSources: ['WEB', 'APP', 'PHONE'], stockIncludesPreOrders: false, reservationTtlDays: 15,
+  defaultCustomerCode: null, serviceItemTypes: '', paymentMethodMap: {},
 };
+
+const SOURCES: Array<[OrderSource, string]> = [['WEB', 'Site'], ['APP', 'App'], ['PHONE', 'Telefone/balcão'], ['MERCADO_LIVRE', 'Mercado Livre'], ['SHOPEE', 'Shopee']];
 
 export function EllonIntegrationSection() {
   const [config, setConfig] = useState<EllonConfig | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
   const [busy, setBusy] = useState<'load' | 'save' | 'test' | null>('load');
-  const [links, setLinks] = useState<EllonLink[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<EllonPaymentMethods | null>(null);
   const [jobs, setJobs] = useState<EllonJob[]>([]);
   const [summary, setSummary] = useState<EllonSyncSummary | null>(null);
-  const [mapping, setMapping] = useState<{ entityType: EllonEntityType; localId: string; externalId: string; externalSequence: string }>({ entityType: 'PRODUCT', localId: '', externalId: '', externalSequence: '' });
 
-  const loadOperations = () => Promise.all([ellonService.listLinks(), ellonService.listJobs(), ellonService.getSummary()]).then(([nextLinks, nextJobs, nextSummary]) => { setLinks(nextLinks); setJobs(nextJobs); setSummary(nextSummary); });
+  const loadOperations = () => Promise.all([ellonService.listJobs(), ellonService.getSummary(), ellonService.listPaymentMethods()]).then(([nextJobs, nextSummary, nextPayments]) => { setJobs(nextJobs); setSummary(nextSummary); setPaymentMethods(nextPayments); });
 
   useEffect(() => {
     ellonService.getConfig().then(value => {
       setConfig(value);
-      setForm(current => ({ ...current, ...value, username: '', integrationCode: '', password: '', accessHash: '' }));
+      setForm(current => ({ ...current, ...value, serviceItemTypes: value.serviceItemTypes.join(', '), paymentMethodMap: value.paymentMethodMap ?? {}, username: '', integrationCode: '', password: '', accessHash: '' }));
       void loadOperations();
     }).catch(error => toast.error(getErrorMessage(error))).finally(() => setBusy(null));
   }, []);
@@ -55,7 +62,11 @@ export function EllonIntegrationSection() {
   const save = async () => {
     setBusy('save');
     try {
-      const payload: Record<string, unknown> = { ...form };
+      const payload: Record<string, unknown> = {
+        ...form,
+        serviceItemTypes: form.serviceItemTypes.split(',').map(value => value.trim()).filter(Boolean),
+        paymentMethodMap: Object.keys(form.paymentMethodMap).length ? form.paymentMethodMap : null,
+      };
       if (!form.integrationCode) delete payload.integrationCode;
       if (!form.username) delete payload.username;
       if (!form.password) delete payload.password;
@@ -63,6 +74,7 @@ export function EllonIntegrationSection() {
       const updated = await ellonService.updateConfig(payload);
       setConfig(updated);
       setForm(current => ({ ...current, username: '', integrationCode: '', password: '', accessHash: '' }));
+      void loadOperations();
       toast.success('Configuração Ellon salva com segurança.');
     } catch (error) { toast.error(getErrorMessage(error)); } finally { setBusy(null); }
   };
@@ -71,14 +83,15 @@ export function EllonIntegrationSection() {
     try { await ellonService.test(); toast.success('Autenticação Ellon validada.'); setConfig(await ellonService.getConfig()); }
     catch (error) { toast.error(getErrorMessage(error)); } finally { setBusy(null); }
   };
-  const saveMapping = async () => {
-    try {
-      await ellonService.upsertLink({ ...mapping, externalSequence: mapping.externalSequence ? Number(mapping.externalSequence) : null });
-      setMapping(current => ({ ...current, localId: '', externalId: '', externalSequence: '' }));
-      await loadOperations();
-      toast.success('Mapeamento Ellon salvo.');
-    } catch (error) { toast.error(getErrorMessage(error)); }
-  };
+  const toggleSource = (source: OrderSource, checked: boolean) => setForm(current => ({
+    ...current,
+    exportOrderSources: checked ? [...new Set([...current.exportOrderSources, source])] : current.exportOrderSources.filter(item => item !== source),
+  }));
+  const setPayment = (method: string, code: string) => setForm(current => {
+    const next = { ...current.paymentMethodMap };
+    if (code) next[method] = Number(code); else delete next[method];
+    return { ...current, paymentMethodMap: next };
+  });
   const retry = async (id: string) => {
     try { await ellonService.retryJob(id); await loadOperations(); toast.success('Job reenfileirado após confirmação manual.'); }
     catch (error) { toast.error(getErrorMessage(error)); }
@@ -124,6 +137,30 @@ export function EllonIntegrationSection() {
         <p className="md:col-span-4 text-xs text-muted-foreground">O HASH enviado à API é calculado no backend como MD5(código do integrador:token de acesso), conforme o Swagger da Ellon.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-3">{([['syncProducts','Produtos, preços e estoque'],['syncCustomers','Clientes'],['syncOrders','Pedidos e faturamento']] as Array<[keyof Form,string]>).map(([key,label]) => <div key={key} className="flex items-center justify-between rounded-lg border bg-background p-3"><Label>{label}</Label><Switch checked={Boolean(form[key])} onCheckedChange={checked => setForm(current => ({ ...current, [key]: checked }))} /></div>)}</div>
+      <div className="space-y-4 rounded-lg border bg-background p-4">
+        <div><h3 className="font-medium">Regras de negócio</h3><p className="text-xs text-muted-foreground">Contornos para o que a API Ellon não oferece. Confirme os valores com a Ellon e com o contador.</p></div>
+        <div>
+          <Label>Pedidos enviados à Ellon como pré-pedido</Label>
+          <div className="mt-2 flex flex-wrap gap-3">{SOURCES.map(([source, label]) => <label key={source} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.exportOrderSources.includes(source)} onChange={event => toggleSource(source, event.target.checked)} />{label}</label>)}</div>
+          <p className="mt-1 text-xs text-muted-foreground">Marketplaces emitem nota própria; enviá-los pode duplicar o faturamento.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div><Label>Cliente consumidor final (ID Ellon)</Label><Input type="number" min="1" placeholder="Opcional" value={String(form.defaultCustomerCode ?? '')} onChange={e => number('defaultCustomerCode', e.target.value)} /><p className="mt-1 text-xs text-muted-foreground">Usado para OS avulsa ou cliente sem CPF/CNPJ.</p></div>
+          <div><Label>Tipos fiscais de serviço (campo "tipo")</Label><Input placeholder="Ex.: S" value={form.serviceItemTypes} onChange={e => setForm(current => ({ ...current, serviceItemTypes: e.target.value }))} /><p className="mt-1 text-xs text-muted-foreground">Separados por vírgula. Mão de obra só pode ir com estes tipos.</p></div>
+          <div><Label>Prazo da reserva de estoque (dias)</Label><Input type="number" min="1" max="90" value={String(form.reservationTtlDays)} onChange={e => setForm(current => ({ ...current, reservationTtlDays: Number(e.target.value) || 15 }))} /><p className="mt-1 text-xs text-muted-foreground">Após o prazo sem faturamento, a reserva vai para conferência.</p></div>
+        </div>
+        <div className="flex items-center justify-between rounded-lg border p-3"><div><Label>A quantidade da Ellon já desconta pré-pedidos em aberto</Label><p className="text-xs text-muted-foreground">Ative somente se a Ellon confirmar; evita descontar a mesma saída duas vezes.</p></div><Switch checked={form.stockIncludesPreOrders} onCheckedChange={checked => setForm(current => ({ ...current, stockIncludesPreOrders: checked }))} /></div>
+        <div>
+          <Label>Formas de pagamento (M2 → Ellon)</Label>
+          {!paymentMethods?.m2.length ? <p className="text-xs text-muted-foreground">Nenhum pedido registrado ainda.</p> : <div className="mt-2 grid gap-2 md:grid-cols-2">{paymentMethods.m2.map(method => <div key={method.value} className="flex items-center gap-2 text-sm">
+            <span className="w-40 truncate" title={method.value}>{method.value} <span className="text-xs text-muted-foreground">({method.orders})</span></span>
+            <select aria-label={`Forma Ellon para ${method.value}`} className="h-9 flex-1 rounded-md border bg-background px-2 text-sm" value={String(form.paymentMethodMap[method.value] ?? '')} onChange={event => setPayment(method.value, event.target.value)}>
+              <option value="">Padrão ({form.paymentMethodCode ?? 'não definido'})</option>
+              {paymentMethods.ellon.map(item => <option key={item.externalId} value={item.externalId}>{item.externalId} — {item.name}</option>)}
+            </select>
+          </div>)}</div>}
+        </div>
+      </div>
       {summary && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Produtos vinculados</p><p className="text-2xl font-semibold">{summary.products}</p></div>
         <div className="rounded-lg border bg-background p-3"><p className="text-xs text-muted-foreground">Clientes vinculados</p><p className="text-2xl font-semibold">{summary.customers}</p></div>
@@ -139,15 +176,13 @@ export function EllonIntegrationSection() {
       {config?.lastError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{config.lastError}</p>}
       <div className="flex flex-wrap gap-2"><Button onClick={() => void save()} disabled={Boolean(busy)}>{busy === 'save' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar Ellon</Button><Button variant="outline" onClick={() => void test()} disabled={Boolean(busy) || !config?.enabled}>{busy === 'test' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}Testar autenticação</Button></div>
       {config?.enabled && <div className="flex flex-wrap gap-2">{([['products', 'Produtos alterados'], ['products-full', 'Catálogo completo'], ['customers', 'Clientes'], ['orders', 'Pedidos e vendas'], ['references', 'Cadastros auxiliares']] as Array<[EllonSyncTarget, string]>).map(([target, label]) => <Button key={target} size="sm" variant="outline" onClick={() => void syncNow(target)}><RefreshCw className="mr-2 h-4 w-4" />{label}</Button>)}</div>}
+      {config?.enabled && <div className="space-y-3 border-t pt-5">
+        <div><h3 className="font-medium">Pendências da integração</h3><p className="text-xs text-muted-foreground">Situações que a API não permite resolver automaticamente.</p></div>
+        <EllonPendingPanel />
+      </div>}
       <div className="space-y-3 border-t pt-5">
-        <div><h3 className="font-medium">Mapeamento comercial de itens</h3><p className="text-xs text-muted-foreground">Vincule o UUID local da peça ou serviço ao ID e sequência cadastrados na Ellon.</p></div>
-        <div className="grid gap-3 md:grid-cols-4">
-          <select className="h-10 rounded-md border bg-background px-3 text-sm" value={mapping.entityType} onChange={e => setMapping(current => ({ ...current, entityType: e.target.value as EllonEntityType }))}><option value="PRODUCT">Produto</option><option value="SERVICE">Serviço/mão de obra</option></select>
-          <Input placeholder="UUID local" value={mapping.localId} onChange={e => setMapping(current => ({ ...current, localId: e.target.value }))} />
-          <Input placeholder="ID Ellon" value={mapping.externalId} onChange={e => setMapping(current => ({ ...current, externalId: e.target.value }))} />
-          <div className="flex gap-2"><Input type="number" min="0" placeholder="Sequência" value={mapping.externalSequence} onChange={e => setMapping(current => ({ ...current, externalSequence: e.target.value }))} /><Button variant="outline" onClick={() => void saveMapping()} disabled={!mapping.localId || !mapping.externalId}>Vincular</Button></div>
-        </div>
-        {links.length > 0 && <div className="max-h-40 overflow-auto rounded-md border bg-background text-xs">{links.slice(0, 20).map(link => <div key={link.id} className="grid grid-cols-[90px_1fr_100px] gap-2 border-b p-2 last:border-0"><span>{link.entityType}</span><span className="truncate font-mono">{link.localId}</span><span>Ellon {link.externalId}{link.externalSequence != null ? `/${link.externalSequence}` : ''}</span></div>)}</div>}
+        <div><h3 className="font-medium">Serviços e mão de obra</h3><p className="text-xs text-muted-foreground">A Ellon não tem cadastro de serviços na API: vincule cada serviço a um item comercial da Ellon. Produtos são vinculados automaticamente.</p></div>
+        <EllonServiceMapping serviceItemTypes={form.serviceItemTypes.split(',').map(value => value.trim()).filter(Boolean)} />
       </div>
       <div className="space-y-3 border-t pt-5">
         <div><h3 className="font-medium">Dados recebidos da Ellon</h3><p className="text-xs text-muted-foreground">Produtos e clientes entram nos cadastros do M2; os demais registros ficam disponíveis aqui para consulta.</p></div>

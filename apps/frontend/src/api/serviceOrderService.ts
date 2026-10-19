@@ -135,6 +135,11 @@ export const serviceOrderService = {
     return unwrap(res.data);
   },
 
+  async registerCustomer(id: string, data: { name: string; document: string; phone: string; email?: string }): Promise<ServiceOrder> {
+    const res = await apiClient.post(`/service-orders/${id}/register-customer`, data);
+    return unwrap(res.data);
+  },
+
   async cancel(id: string): Promise<ServiceOrder> {
     const res = await apiClient.patch(`/service-orders/${id}/cancel`);
     return unwrap(res.data);

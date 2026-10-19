@@ -24,6 +24,7 @@ router.put('/:id', ...staff, serviceOrdersController.update);
 router.patch('/:id/start', ...staff, serviceOrdersController.start);
 router.patch('/:id/complete', ...staff, serviceOrdersController.complete);
 router.patch('/:id/cancel', ...manager, serviceOrdersController.cancel);
+router.post('/:id/register-customer', ...staff, AuditLogMiddleware.log('REGISTER_CUSTOMER', 'ServiceOrder'), serviceOrdersController.registerCustomer);
 
 // Atribuicao de mecanico (MANAGER+, com AuditLog)
 router.post(

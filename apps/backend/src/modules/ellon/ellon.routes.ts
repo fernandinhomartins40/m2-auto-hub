@@ -16,6 +16,12 @@ router.post('/test', ...admin, ellonController.test);
 router.post('/sync/products', ...manager, AuditLogMiddleware.log('SYNC', 'EllonProducts'), ellonController.syncProducts);
 router.post('/sync/:target', ...manager, AuditLogMiddleware.log('SYNC', 'Ellon'), ellonController.syncNow);
 router.get('/snapshots', ...staff, ellonController.listSnapshots);
+router.get('/pending', ...staff, ellonController.getPending);
+router.get('/catalog', ...staff, ellonController.searchCatalog);
+router.get('/services', ...staff, ellonController.listServices);
+router.get('/payment-methods', ...staff, ellonController.listPaymentMethods);
+router.post('/links/:id/acknowledge-divergence', ...manager, AuditLogMiddleware.log('ACKNOWLEDGE', 'EllonDivergence'), ellonController.acknowledgeDivergence);
+router.post('/cancellations/:entity/:id', ...manager, AuditLogMiddleware.log('REQUEST_CANCEL', 'EllonPreOrder'), ellonController.requestCancellation);
 
 router.get('/links', ...staff, ellonController.listLinks);
 router.put('/links', ...manager, AuditLogMiddleware.log('UPSERT', 'EllonEntityLink'), ellonController.upsertLink);

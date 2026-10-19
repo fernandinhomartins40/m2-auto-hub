@@ -78,3 +78,20 @@ export function state(value: unknown): string | null {
   const uf = text(value).toUpperCase();
   return BR_STATES.has(uf) ? uf : null;
 }
+
+/** CPF ou CNPJ com dígitos verificadores válidos. */
+export function validDocument(value: string): boolean {
+  const doc = value.replace(/\D/g, '');
+  if (!/^(\d{11}|\d{14})$/.test(doc) || new Set(doc).size === 1) return false;
+  const check = (base: string, weights: number[]) => {
+    const sum = weights.reduce((total, weight, index) => total + Number(base[index]) * weight, 0);
+    const rest = sum % 11;
+    return rest < 2 ? 0 : 11 - rest;
+  };
+  if (doc.length === 11) {
+    const first = check(doc, [10, 9, 8, 7, 6, 5, 4, 3, 2]);
+    return first === Number(doc[9]) && check(doc, [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(doc[10]);
+  }
+  const first = check(doc, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return first === Number(doc[12]) && check(doc, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(doc[13]);
+}

@@ -25,16 +25,41 @@ export interface EllonConfig {
   lastFullProductSyncAt: string | null;
   lastCustomerSyncAt: string | null;
   lastOrderSyncAt: string | null;
+  exportOrderSources: OrderSource[];
+  stockIncludesPreOrders: boolean;
+  reservationTtlDays: number;
+  serviceItemTypes: string[];
+  defaultCustomerCode: number | null;
+  paymentMethodMap: Record<string, number> | null;
 }
+
+export type OrderSource = 'WEB' | 'APP' | 'PHONE' | 'MERCADO_LIVRE' | 'SHOPEE';
 
 export interface EllonPreflight {
   ready: boolean;
   serviceOrderStatus: string;
   hasRegisteredCustomer: boolean;
   customerWillBeCreated: boolean;
+  customerMode: 'linked' | 'export' | 'default' | 'missing';
+  customerProblem: string | null;
   unmappedItems: Array<{ itemId: string; type: string; localId: string | null; name: string }>;
+  fiscalIssues: Array<{ itemId: string; name: string; ellonType: string | null; message: string }>;
+  warnings: string[];
   missingConfig: string[];
 }
+
+export interface EllonCatalogItem { externalId: string; externalSequence: number; name: string; sku: string; salePrice: number; type: string | null; unit: string | null }
+export interface EllonServiceMapping { id: string; name: string; category: string; link: { id: string; externalId: string; externalSequence: number; ellonType: string | null } | null }
+export interface EllonReservation { sourceType: 'ORDER' | 'SERVICE_ORDER'; sourceId: string; label: string; productId: string; productName: string; quantity: number; since: string; preOrder: string | null; expired: boolean }
+export interface EllonLinkWithMetadata extends EllonLink { metadata: Record<string, unknown> | null; updatedAt: string }
+export interface EllonPending {
+  divergences: EllonLinkWithMetadata[];
+  cancellations: EllonLinkWithMetadata[];
+  reservations: { active: EllonReservation[]; expired: EllonReservation[] };
+  customerConflicts: EllonLinkWithMetadata[];
+  parkedJobs: EllonJob[];
+}
+export interface EllonPaymentMethods { m2: Array<{ value: string; orders: number }>; ellon: Array<{ externalId: string; name: string | null }> }
 
 export type EllonEntityType = 'PRODUCT' | 'SERVICE' | 'CUSTOMER' | 'ORDER' | 'SERVICE_ORDER';
 export interface EllonLink { id: string; entityType: EllonEntityType; localId: string; externalId: string; externalSequence: number | null }
@@ -86,6 +111,28 @@ export const ellonService = {
   },
   async retryJob(id: string): Promise<void> { await apiClient.post(`/ellon/jobs/${id}/retry`); },
   async syncProducts(): Promise<void> { await apiClient.post('/ellon/sync/products'); },
+  async getPending(): Promise<EllonPending> {
+    const response = await apiClient.get('/ellon/pending');
+    return response.data.data;
+  },
+  async searchCatalog(search: string): Promise<EllonCatalogItem[]> {
+    const response = await apiClient.get('/ellon/catalog', { params: { search } });
+    return response.data.data;
+  },
+  async listServices(): Promise<EllonServiceMapping[]> {
+    const response = await apiClient.get('/ellon/services');
+    return response.data.data;
+  },
+  async listPaymentMethods(): Promise<EllonPaymentMethods> {
+    const response = await apiClient.get('/ellon/payment-methods');
+    return response.data.data;
+  },
+  async acknowledgeDivergence(linkId: string): Promise<void> { await apiClient.post(`/ellon/links/${linkId}/acknowledge-divergence`); },
+  async requestCancellation(entity: 'order' | 'service-order', id: string): Promise<{ status: 'REQUESTED' | 'CANCELLED'; preOrder: string }> {
+    const response = await apiClient.post(`/ellon/cancellations/${entity}/${id}`);
+    return response.data.data;
+  },
+  async removeLink(id: string): Promise<void> { await apiClient.delete(`/ellon/links/${id}`); },
   async syncNow(target: EllonSyncTarget): Promise<void> { await apiClient.post(`/ellon/sync/${target}`); },
   async listSnapshots(params: { type?: EllonSnapshotType; search?: string; page?: number; limit?: number }): Promise<Paginated<EllonSnapshot>> {
     const response = await apiClient.get('/ellon/snapshots', { params });

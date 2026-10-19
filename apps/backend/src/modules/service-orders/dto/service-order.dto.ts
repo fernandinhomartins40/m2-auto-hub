@@ -58,3 +58,12 @@ export const assignMechanicSchema = z.object({
   mechanicId: z.string().uuid('ID do mecânico inválido'),
 });
 export type AssignMechanicDto = z.infer<typeof assignMechanicSchema>;
+
+/** Converte uma OS avulsa em cliente cadastrado (exigido para faturar na Ellon). */
+export const registerServiceOrderCustomerSchema = z.object({
+  name: z.string().trim().min(2).max(150),
+  document: z.string().trim().min(11).max(20),
+  phone: z.string().trim().min(8).max(20),
+  email: z.string().trim().email().max(150).optional().or(z.literal('')),
+});
+export type RegisterServiceOrderCustomerDto = z.infer<typeof registerServiceOrderCustomerSchema>;

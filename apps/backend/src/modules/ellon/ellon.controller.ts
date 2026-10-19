@@ -1,10 +1,14 @@
 import { NextFunction, Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
+import { ApiError } from '@shared/utils/error.util.js';
 import { prisma } from '@config/database.js';
 import { ellonClient } from './ellon.client.js';
 import { ellonConnectionService } from './ellon-connection.service.js';
-import { ellonExportService } from './ellon-export.service.js';
+import { ellonExportService, linkMetadata } from './ellon-export.service.js';
+import { ellonCancellationService } from './ellon-cancellation.service.js';
+import { ellonStockService } from './ellon-stock.service.js';
 import { ellonJobService } from './ellon-job.service.js';
-import { queryEllonJobsSchema, queryLinksSchema, querySnapshotsSchema, syncTargetSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
+import { cancellationEntitySchema, catalogQuerySchema, queryEllonJobsSchema, queryLinksSchema, querySnapshotsSchema, syncTargetSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
 import { ellonProductSyncService } from './ellon-product-sync.service.js';
 import { ellonMasterSyncService } from './ellon-master-sync.service.js';
 
@@ -106,11 +110,149 @@ export class EllonController {
   upsertLink = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const dto = upsertEllonLinkSchema.parse(req.body);
+      if (dto.entityType === 'SERVICE') {
+        const config = await ellonConnectionService.getRaw();
+        const type = await ellonExportService.ellonItemType(dto.externalId, dto.externalSequence);
+        const allowed = config.serviceItemTypes.map(value => value.toUpperCase());
+        if (allowed.length && (!type || !allowed.includes(type.toUpperCase()))) {
+          throw ApiError.unprocessableEntity(`O item Ellon ${dto.externalId}/${dto.externalSequence} é do tipo "${type ?? 'desconhecido'}", que não está entre os tipos fiscais de serviço configurados.`);
+        }
+      }
+      // O vínculo atual da Ellon é substituído: o par externo também é único.
+      const occupied = await prisma.ellonEntityLink.findUnique({
+        where: { entityType_externalId_externalSequence: { entityType: dto.entityType, externalId: dto.externalId, externalSequence: dto.externalSequence } },
+      });
+      if (occupied && occupied.localId !== dto.localId) {
+        throw ApiError.conflict(`Este item Ellon já está vinculado a outro registro local (${occupied.localId}).`);
+      }
       const data = await prisma.ellonEntityLink.upsert({
         where: { entityType_localId: { entityType: dto.entityType, localId: dto.localId } },
         update: { externalId: dto.externalId, externalSequence: dto.externalSequence, metadata: dto.metadata as object },
         create: { ...dto, metadata: dto.metadata as object },
       });
+      res.json({ success: true, data });
+    } catch (error) { next(error); }
+  };
+
+  /** Itens Ellon (produtos importados) para escolher o código comercial de um serviço. */
+  searchCatalog = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { search } = catalogQuerySchema.parse(req.query);
+      const products = await prisma.product.findMany({
+        where: { OR: [{ name: { contains: search, mode: 'insensitive' } }, { sku: { contains: search, mode: 'insensitive' } }] },
+        select: { id: true, name: true, sku: true, salePrice: true, specifications: true },
+        take: 60,
+      });
+      const links = await prisma.ellonEntityLink.findMany({ where: { entityType: 'PRODUCT', localId: { in: products.map(item => item.id) } } });
+      const linkByProduct = new Map(links.map(link => [link.localId, link]));
+      const data = products.flatMap(product => {
+        const link = linkByProduct.get(product.id);
+        if (!link) return [];
+        const specs = linkMetadata(product.specifications);
+        return [{
+          externalId: link.externalId, externalSequence: link.externalSequence, name: product.name, sku: product.sku,
+          salePrice: Number(product.salePrice), type: typeof specs.type === 'string' ? specs.type : null,
+          unit: typeof specs.unit === 'string' ? specs.unit : null,
+        }];
+      }).slice(0, 30);
+      res.json({ success: true, data });
+    } catch (error) { next(error); }
+  };
+
+  /** Serviços do M2 com o vínculo Ellon atual (mão de obra não existe na API). */
+  listServices = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const services = await prisma.service.findMany({ where: { status: 'ACTIVE' }, select: { id: true, name: true, category: true }, orderBy: { name: 'asc' } });
+      const links = await prisma.ellonEntityLink.findMany({ where: { entityType: 'SERVICE', localId: { in: services.map(item => item.id) } } });
+      const linkByService = new Map(links.map(link => [link.localId, link]));
+      const data = await Promise.all(services.map(async service => {
+        const link = linkByService.get(service.id);
+        return {
+          ...service,
+          link: link ? {
+            id: link.id, externalId: link.externalId, externalSequence: link.externalSequence,
+            ellonType: await ellonExportService.ellonItemType(link.externalId, link.externalSequence),
+          } : null,
+        };
+      }));
+      res.json({ success: true, data });
+    } catch (error) { next(error); }
+  };
+
+  /** Valores usados no M2 e formas de pagamento recebidas da Ellon, para montar o mapa. */
+  listPaymentMethods = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const [used, ellon] = await Promise.all([
+        prisma.order.groupBy({ by: ['paymentMethod'], _count: { _all: true }, orderBy: { paymentMethod: 'asc' } }),
+        prisma.ellonSnapshot.findMany({ where: { type: 'PAYMENT_METHOD' }, select: { externalId: true, name: true }, orderBy: { name: 'asc' } }),
+      ]);
+      res.json({ success: true, data: { m2: used.map(item => ({ value: item.paymentMethod, orders: item._count._all })), ellon } });
+    } catch (error) { next(error); }
+  };
+
+  /** Tudo que exige ação humana: divergências, cancelamentos, reservas vencidas, conflitos. */
+  getPending = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const [orderLinks, cancellations, reservations, customerLinks, parkedJobs] = await Promise.all([
+        prisma.ellonEntityLink.findMany({
+          where: { entityType: { in: ['ORDER', 'SERVICE_ORDER'] }, metadata: { path: ['totalDivergence'], not: Prisma.AnyNull } },
+          orderBy: { updatedAt: 'desc' }, take: 200,
+        }),
+        ellonCancellationService.pendingRequests(),
+        ellonStockService.reservations(),
+        prisma.ellonEntityLink.findMany({
+          where: { entityType: 'CUSTOMER', metadata: { path: ['conflictExternalId'], not: Prisma.AnyNull } }, take: 100,
+        }),
+        prisma.ellonJob.findMany({
+          where: { status: 'FAILED', nextAttemptAt: { gte: new Date('9000-01-01') } }, orderBy: { updatedAt: 'desc' }, take: 50,
+        }),
+      ]);
+      const divergences = orderLinks.filter(link => {
+        const metadata = linkMetadata(link.metadata);
+        const divergence = linkMetadata(metadata.totalDivergence);
+        return divergence.difference !== undefined && metadata.divergenceAcknowledgedDifference !== divergence.difference;
+      });
+      res.json({
+        success: true,
+        data: {
+          divergences,
+          cancellations,
+          reservations: {
+            active: reservations.filter(item => !item.expired),
+            expired: reservations.filter(item => item.expired),
+          },
+          customerConflicts: customerLinks.filter(link => linkMetadata(link.metadata).conflictExternalId),
+          parkedJobs,
+        },
+      });
+    } catch (error) { next(error); }
+  };
+
+  acknowledgeDivergence = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const link = await prisma.ellonEntityLink.findUnique({ where: { id: req.params.id } });
+      if (!link) throw ApiError.notFound('Vínculo não encontrado.');
+      const metadata = linkMetadata(link.metadata);
+      const divergence = linkMetadata(metadata.totalDivergence);
+      const data = await prisma.ellonEntityLink.update({
+        where: { id: link.id },
+        data: {
+          metadata: {
+            ...metadata,
+            divergenceAcknowledgedDifference: divergence.difference ?? null,
+            divergenceAcknowledgedAt: new Date().toISOString(),
+            divergenceAcknowledgedBy: req.admin?.adminId ?? null,
+          } as Prisma.InputJsonValue,
+        },
+      });
+      res.json({ success: true, data });
+    } catch (error) { next(error); }
+  };
+
+  requestCancellation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const entity = cancellationEntitySchema.parse(req.params.entity);
+      const data = await ellonCancellationService.request(entity === 'order' ? 'ORDER' : 'SERVICE_ORDER', req.params.id, req.admin?.adminId);
       res.json({ success: true, data });
     } catch (error) { next(error); }
   };
