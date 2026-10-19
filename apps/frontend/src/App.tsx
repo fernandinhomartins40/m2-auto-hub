@@ -24,6 +24,7 @@ const PwaEntryPage = lazy(() => import("./pages/PwaEntryPage"));
 const PublicQuoteApprovalPage = lazy(() => import("./pages/PublicQuoteApprovalPage"));
 const StorePanel = lazy(() => import("./pages/StorePanel"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const EmailActionPage = lazy(() => import("./pages/EmailActionPage"));
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,11 @@ const App = () => (
                         <Suspense fallback={<div className="flex min-h-screen items-center justify-center" role="status">Carregando aplicação...</div>}>
                         <Routes>
                           <Route path="/" element={<Index />} />
+                          <Route path="/recuperar-senha" element={<EmailActionPage key="forgot" />} />
+                          <Route path="/recuperar-senha-admin" element={<EmailActionPage key="admin-forgot" />} />
+                          <Route path="/redefinir-senha-admin" element={<EmailActionPage key="admin-reset" />} />
+                          <Route path="/redefinir-senha" element={<EmailActionPage key="reset" />} />
+                          <Route path="/confirmar-email" element={<EmailActionPage key="verify" />} />
                           <Route path="/app" element={<Navigate to="/" replace />} />
                           <Route path="/customer-login/*" element={<CustomerLoginPage />} />
                           <Route path="/admin-login/*" element={<AdminLoginPage />} />

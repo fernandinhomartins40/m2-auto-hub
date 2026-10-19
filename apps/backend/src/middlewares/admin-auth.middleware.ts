@@ -38,10 +38,13 @@ export class AdminAuthMiddleware {
         const payload = JwtUtil.verifyAdminToken(token);
         const admin = await prisma.admin.findUnique({
           where: { id: payload.adminId },
-          select: { email: true, role: true, status: true },
+          select: { email: true, role: true, status: true, passwordChangedAt: true },
         });
         if (!admin || admin.status !== AdminStatus.ACTIVE) {
           throw ApiError.unauthorized('Conta administrativa inexistente ou inativa');
+        }
+        if (admin.passwordChangedAt && (!payload.iat || payload.iat * 1000 < admin.passwordChangedAt.getTime())) {
+          throw ApiError.unauthorized('Senha alterada. Entre novamente.');
         }
         req.admin = { ...payload, ...admin };
         runWithRLSContext(payload.adminId, admin.role, next);

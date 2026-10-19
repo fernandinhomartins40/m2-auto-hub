@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Loader2, LogIn, Shield } from "lucide-react";
 
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -194,6 +194,7 @@ export function AdminLoginDialog({ showInstallBanner = false }: AdminLoginDialog
             </div>
 
             <div className="space-y-3">
+              <Link to="/recuperar-senha-admin" className="block py-2 text-sm font-medium text-moria-orange underline underline-offset-4">Recuperar senha por e-mail</Link>
               <div className="flex items-start gap-3">
                 <Checkbox
                   id="save-data"

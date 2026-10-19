@@ -36,6 +36,7 @@ import { readApiError } from "@/lib/apiError";
 import { privacyService, type PrivacyRequestType } from "@/api/privacyService";
 import { PanelPageHeader } from "../layout/PanelPageHeader";
 import { PanelPage } from "../layout/PanelPage";
+import authService from '@/api/authService';
 
 const emptyAddressForm: AddressPayload = {
   type: 'HOME',
@@ -71,6 +72,7 @@ function buildProfileForm(customer: { name?: string; email?: string; phone?: str
 export function CustomerProfile() {
   const { customer, updateProfile, addAddress, updateAddress, deleteAddress } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
@@ -298,6 +300,15 @@ export function CustomerProfile() {
 
   return (
     <PanelPage>
+      {!customer.emailVerifiedAt && <div className="rounded-lg border bg-white p-4 space-y-2" role="status">
+        <p>Confirme seu e-mail para manter seus dados de acesso atualizados.</p>
+        <Button variant="outline" disabled={sendingVerification} onClick={async () => {
+          setSendingVerification(true);
+          try { await authService.resendVerification(); toast.success('E-mail de confirmação enviado. Verifique também a pasta de spam.'); }
+          catch { toast.error('Não foi possível enviar. Tente novamente mais tarde.'); }
+          finally { setSendingVerification(false); }
+        }}>{sendingVerification ? 'Enviando...' : 'Reenviar confirmação de e-mail'}</Button>
+      </div>}
       <PanelPageHeader icon={User} title="Meu perfil" description="Gerencie suas informações pessoais, segurança, endereços e privacidade" />
 
       <Tabs defaultValue="personal" className="space-y-6">

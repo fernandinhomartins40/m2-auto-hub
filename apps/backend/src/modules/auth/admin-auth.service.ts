@@ -603,6 +603,7 @@ export class AdminAuthService {
           lastLoginAt: true,
           permissions: true,
           preferences: true,
+          passwordChangedAt: true,
         },
       }),
       prisma.admin.count({ where }),

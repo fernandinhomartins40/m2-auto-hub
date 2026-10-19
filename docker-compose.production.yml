@@ -35,6 +35,9 @@ x-backend-env: &backend-env
   LOG_LEVEL: ${LOG_LEVEL:-info}
   # URL publica HTTPS usada para montar redirect/callback de OAuth e webhooks dos marketplaces
   APP_BASE_URL: ${APP_BASE_URL:-https://m2centerauto.com.br}
+  VELOMAIL_API_URL: ${VELOMAIL_API_URL:-https://www.velomail.com.br/api}
+  VELOMAIL_API_KEY: ${VELOMAIL_API_KEY:-}
+  EMAIL_FROM: ${EMAIL_FROM:-nao-responda@m2centerauto.com.br}
   # Chave de criptografia (AES-256-GCM) dos segredos de marketplace. Definir um valor forte em producao.
   MARKETPLACE_ENC_KEY: ${MARKETPLACE_ENC_KEY:?MARKETPLACE_ENC_KEY propria e obrigatoria em producao}
   MARKETPLACE_JOBS_ENABLED: ${MARKETPLACE_JOBS_ENABLED:-true}

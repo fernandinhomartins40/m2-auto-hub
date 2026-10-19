@@ -78,6 +78,13 @@ ensure_strong_admin_password
 # ilegiveis. Uma chave propria, gerada uma unica vez, desacopla os dois.
 ensure_hex  MARKETPLACE_ENC_KEY 32
 
+# Configuracao transacional preservada entre deploys. A chave e provisionada
+# separadamente no .env da VPS, nunca no repositorio ou no frontend.
+ensure_env VELOMAIL_API_URL https://www.velomail.com.br/api
+ensure_env VELOMAIL_API_KEY ''
+ensure_env EMAIL_FROM nao-responda@m2centerauto.com.br
+ensure_env APP_BASE_URL "$CANONICAL_URL"
+
 PG_USER="$(get_env POSTGRES_USER|tr -d '\r')"
 PG_PASS="$(get_env POSTGRES_PASSWORD|tr -d '\r')"
 PG_DB="$(get_env POSTGRES_DB|tr -d '\r')"

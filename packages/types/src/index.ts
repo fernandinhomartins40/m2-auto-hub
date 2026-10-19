@@ -2,6 +2,7 @@
 
 // Auth Types
 export interface Customer {
+  emailVerifiedAt?: string | null;
   id: string;
   name: string;
   email: string;

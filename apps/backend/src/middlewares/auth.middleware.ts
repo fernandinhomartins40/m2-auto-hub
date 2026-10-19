@@ -44,10 +44,13 @@ export class AuthMiddleware {
 
         const customer = await prisma.customer.findUnique({
           where: { id: payload.customerId },
-          select: { email: true, level: true, status: true },
+          select: { email: true, level: true, status: true, passwordChangedAt: true },
         });
         if (!customer || customer.status !== CustomerStatus.ACTIVE) {
           throw ApiError.unauthorized('Conta inexistente ou inativa');
+        }
+        if (customer.passwordChangedAt && (!payload.iat || payload.iat * 1000 < customer.passwordChangedAt.getTime())) {
+          throw ApiError.unauthorized('Senha alterada. Entre novamente.');
         }
 
         req.user = { ...payload, ...customer };

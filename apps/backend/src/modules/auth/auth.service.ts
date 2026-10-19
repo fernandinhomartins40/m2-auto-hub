@@ -9,6 +9,7 @@ import { RegisterDto } from './dto/register.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { UpdateCustomerProfileDto } from './dto/update-profile.dto.js';
 import { logger } from '@shared/utils/logger.util.js';
+import { EmailAuthService } from './email-auth.service.js';
 
 export interface AuthResponse {
   token: string;
@@ -172,6 +173,9 @@ export class AuthService {
     const { password, ...customerWithoutPassword } = customer;
 
     logger.info(`New customer registered: ${customer.email}`);
+    await new EmailAuthService().request(customer.email, 'VERIFY_EMAIL').catch(() => {
+      logger.error('Registration verification email failed', { customerId: customer.id });
+    });
 
     return {
       token,
@@ -279,12 +283,19 @@ export class AuthService {
       }
 
       data.email = dto.email;
+      data.emailVerifiedAt = null;
     }
 
     const customer = await prisma.customer.update({
       where: { id: customerId },
       data,
     });
+
+    if (data.email) {
+      await new EmailAuthService().request(customer.email, 'VERIFY_EMAIL').catch(() => {
+        logger.error('Profile verification email failed', { customerId });
+      });
+    }
 
     const { password, ...customerWithoutPassword } = customer;
     return customerWithoutPassword;
@@ -320,10 +331,10 @@ export class AuthService {
 
       const hashedNewPassword = await HashUtil.hashPassword(dto.newPassword);
 
-      await prisma.customer.update({
-        where: { id: customerId },
-        data: { password: hashedNewPassword },
-      });
+      await prisma.$transaction([
+        prisma.customer.update({ where: { id: customerId }, data: { password: hashedNewPassword } }),
+        prisma.emailActionToken.updateMany({ where: { customerId, purpose: 'RESET_PASSWORD', usedAt: null }, data: { usedAt: new Date() } }),
+      ]);
 
       logger.info(`Password changed successfully for customer: ${customer.email}`);
     } catch (error) {

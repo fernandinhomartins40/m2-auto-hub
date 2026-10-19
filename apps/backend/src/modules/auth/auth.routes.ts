@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import emailAuthRoutes from './email-auth.routes.js';
 import { AuthController } from './auth.controller.js';
 import { AdminAuthController } from './admin-auth.controller.js';
 import { AuthMiddleware } from '@middlewares/auth.middleware.js';
@@ -8,6 +9,7 @@ import { loginLimiter, createUserLimiter } from '@middlewares/rate-limit.middlew
 import { AuditLogMiddleware } from '@middlewares/audit-log.middleware.js';
 
 const router = Router();
+router.use(emailAuthRoutes);
 const authController = new AuthController();
 const adminAuthController = new AdminAuthController();
 

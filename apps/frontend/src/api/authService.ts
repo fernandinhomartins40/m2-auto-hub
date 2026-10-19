@@ -24,6 +24,21 @@ export interface UpdateProfileRequest {
 }
 
 class AuthService {
+  async forgotPassword(email: string, admin = false): Promise<void> {
+    await apiClient.post(admin ? '/auth/admin/forgot-password' : '/auth/forgot-password', { email });
+  }
+
+  async resetPassword(token: string, newPassword: string, confirmPassword: string, admin = false): Promise<void> {
+    await apiClient.post(admin ? '/auth/admin/reset-password' : '/auth/reset-password', { token, newPassword, confirmPassword });
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    await apiClient.post('/auth/verify-email', { token });
+  }
+
+  async resendVerification(): Promise<void> {
+    await apiClient.post('/auth/resend-verification');
+  }
   async login(data: LoginRequest): Promise<ApiResponse<{ customer: Customer }>> {
     const response = await apiClient.post<ApiResponse<{ customer: Customer }>>('/auth/login', data);
     return response.data;

@@ -270,6 +270,8 @@ enum SecurityIncidentStatus {
 // ============================================================================
 
 model Admin {
+  passwordChangedAt DateTime?
+  passwordResetTokens AdminPasswordResetToken[]
   id          String      @id @default(uuid())
   email       String      @unique
   password    String
@@ -320,6 +322,9 @@ model AuditLog {
 }
 
 model Customer {
+  emailVerifiedAt DateTime?
+  passwordChangedAt DateTime?
+  emailActionTokens EmailActionToken[]
   id          String         @id @default(uuid())
   email       String         @unique
   password    String
@@ -358,6 +363,36 @@ model Customer {
   @@index([level])
   @@index([createdAt])
   @@map("customers")
+}
+
+model AdminPasswordResetToken {
+  id String @id @default(uuid())
+  adminId String
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  email String
+  tokenHash String @unique
+  passwordDigest String
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([adminId])
+  @@index([expiresAt])
+  @@map("admin_password_reset_tokens")
+}
+
+model EmailActionToken {
+  id String @id @default(uuid())
+  customerId String
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  email String
+  purpose String
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([customerId, purpose])
+  @@index([expiresAt])
+  @@map("email_action_tokens")
 }
 
 model PrivacyRequest {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CreditCard, Loader2, Mail, Phone, User } from "lucide-react";
 
 import { useAuth } from "../../contexts/AuthContext";
@@ -180,6 +180,7 @@ export function CustomerAuthCard({
                       onChange={(e) => setLoginForm((prev) => ({ ...prev, password: e.target.value }))}
                       disabled={isLoading}
                     />
+                    <Link to="/recuperar-senha" className="block py-2 text-sm font-medium text-moria-orange underline underline-offset-4">Recuperar senha por e-mail</Link>
                   </div>
                 </CardContent>
 

@@ -2,6 +2,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { environment } from '@config/environment.js';
 
 export interface TokenPayload {
+  iat?: number;
   customerId: string;
   email: string;
   level: string;
@@ -9,6 +10,7 @@ export interface TokenPayload {
 }
 
 export interface AdminTokenPayload {
+  iat?: number;
   adminId: string;
   email: string;
   role: string;
@@ -52,6 +54,7 @@ export class JwtUtil {
       }) as JwtPayload;
 
       return {
+        iat: decoded.iat,
         customerId: decoded.customerId,
         email: decoded.email,
         level: decoded.level,
@@ -74,6 +77,7 @@ export class JwtUtil {
 
       return {
         adminId: decoded.adminId,
+        iat: decoded.iat,
         email: decoded.email,
         role: decoded.role,
         status: decoded.status,
