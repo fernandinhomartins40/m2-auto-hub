@@ -232,6 +232,13 @@ export class LoyaltyService {
     return LEVEL_ORDER.slice(0, index + 1);
   }
 
+  /** Pontos de uma compra pelas regras vigentes (0 se o programa estiver inativo ou abaixo do mínimo). */
+  async pointsForPurchase(total: number, level: CustomerLevel): Promise<number> {
+    const settings = this.toSettingsDto(await settingsService.getSettings());
+    if (!settings.isActive || total < settings.minPurchaseForPoints) return 0;
+    return Math.max(0, Math.floor(total * settings.pointsPerReal * this.getTierMultiplier(level, settings)));
+  }
+
   private getTierMultiplier(level: CustomerLevel, settings: LoyaltySettings) {
     return Number(settings.tierMultipliers[level] ?? 1) || 1;
   }

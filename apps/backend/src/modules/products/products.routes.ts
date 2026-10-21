@@ -10,6 +10,7 @@ const productsController = new ProductsController();
 // Public routes
 router.get('/', productsController.getProducts);
 router.get('/categories/list', productsController.getCategories);
+router.get('/brands/list', productsController.getBrands);
 router.get('/offers/active', productsController.getActiveOffers);
 router.get('/slug/:slug', productsController.getProductBySlug);
 router.get('/sku/:sku', productsController.getProductBySku);

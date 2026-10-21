@@ -21,6 +21,8 @@ export function Products() {
   const { config, loading: configLoading } = useLandingPageConfig();
 
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [brands, setBrands] = useState<Array<{ name: string; count: number }>>([]);
+  const [selectedBrand, setSelectedBrand] = useState("");
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [categories, setCategories] = useState<string[]>(["Todos"]);
   const [loading, setLoading] = useState(true);
@@ -29,12 +31,13 @@ export function Products() {
   // Carregar categorias ao montar
   useEffect(() => {
     loadCategories();
+    productService.getBrands().then(setBrands).catch(() => setBrands([]));
   }, []);
 
   // Carregar produtos quando categoria muda
   useEffect(() => {
     loadProducts();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedBrand]);
 
   const loadCategories = async () => {
     try {
@@ -64,6 +67,7 @@ export function Products() {
       const params = {
         limit: 20,
         ...(selectedCategory !== "Todos" && { category: selectedCategory }),
+        ...(selectedBrand && { supplier: selectedBrand }),
         inStock: true, // Apenas produtos em estoque
       };
 
@@ -200,6 +204,26 @@ export function Products() {
             </Button>
           ))}
         </div>
+
+        {/* Brand Filter (marcas vindas da Ellon) */}
+        {brands.length > 1 && (
+          <div className="mb-10 -mt-8 flex justify-center">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              Marca
+              <select
+                className="h-10 rounded-md border bg-background px-3 text-sm text-foreground"
+                value={selectedBrand}
+                onChange={(event) => setSelectedBrand(event.target.value)}
+                disabled={loading}
+              >
+                <option value="">Todas as marcas</option>
+                {brands.map((brand) => (
+                  <option key={brand.name} value={brand.name}>{brand.name} ({brand.count})</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
 
         {/* Loading State with Skeleton */}
         {loading && (

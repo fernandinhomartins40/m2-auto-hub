@@ -77,7 +77,7 @@ export class EllonClient {
    * como produtos e resumo de vendas). Leituras são repetidas em falhas de rede,
    * 429 e 5xx; só escritas viram resultado ambíguo, pois a Ellon pode tê-las aplicado.
    */
-  async request<T>(method: 'GET' | 'POST', path: string, options?: { query?: Record<string, string | number>; body?: unknown; read?: boolean }): Promise<T> {
+  async request<T>(method: 'GET' | 'POST', path: string, options?: { query?: Record<string, string | number>; body?: unknown; read?: boolean; fast?: boolean }): Promise<T> {
     const credentials = await ellonConnectionService.credentials();
     const read = options?.read ?? method === 'GET';
     const execute = async (token: string) => {
@@ -93,11 +93,12 @@ export class EllonClient {
           ...(options?.body !== undefined && { 'content-type': 'application/json' }),
         },
         ...(options?.body !== undefined && { body: JSON.stringify(options.body) }),
-        signal: AbortSignal.timeout(read ? 45_000 : 20_000),
+        signal: AbortSignal.timeout(options?.fast ? 6_000 : read ? 45_000 : 20_000),
       });
     };
 
-    const attempts = read ? READ_ATTEMPTS : 1;
+    // Modo rápido (checkout): uma tentativa curta; quem chama decide o que fazer se falhar.
+    const attempts = read && !options?.fast ? READ_ATTEMPTS : 1;
     for (let attempt = 1; ; attempt += 1) {
       let response: Response;
       try {

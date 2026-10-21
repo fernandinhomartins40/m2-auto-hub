@@ -30,6 +30,7 @@ import { OrderDetailsModal } from "./OrderDetailsModal";
 import { formatCurrency } from '@/lib/format';
 import { getAdminCustomerStats } from '../../api/loyaltyService';
 import type { LoyaltyStats } from '@moria/types';
+import { CustomerStorePurchases } from '@/components/ellon/PurchaseHistory';
 
 interface CustomerOrdersModalProps {
   customer: AdminCustomer | null;
@@ -232,6 +233,16 @@ export function CustomerOrdersModal({ customer, isOpen, onClose }: CustomerOrder
                     ))}
                   </div>
                 )}
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-moria-orange" />
+                  Compras na loja e oficina (Ellon)
+                </h3>
+                <CustomerStorePurchases customerId={customer.id} />
               </div>
 
               <Separator />

@@ -29,6 +29,8 @@ export const updateEllonConfigSchema = z.object({
   preOrderStatusMap: z.record(z.string().trim().min(1).max(60), z.enum(['OPEN', 'INVOICED', 'CANCELLED'])).nullable().optional(),
   observationLimit: z.number().int().min(100).max(4000).optional(),
   customerUpdatesEnabled: z.boolean().optional(),
+  liveStockCheck: z.boolean().optional(),
+  loyaltyFromStoreSales: z.boolean().optional(),
 });
 
 export const upsertEllonLinkSchema = z.object({
@@ -46,7 +48,7 @@ export const queryEllonJobsSchema = z.object({
 });
 
 export const querySnapshotsSchema = z.object({
-  type: z.enum(['CUSTOMER', 'PAYMENT_METHOD', 'SELLER', 'CARRIER', 'PRODUCT_GROUP', 'PRODUCT_BRAND', 'PRE_ORDER', 'SALE', 'NFE']).optional(),
+  type: z.enum(['CUSTOMER', 'PAYMENT_METHOD', 'SELLER', 'CARRIER', 'PRODUCT_GROUP', 'PRODUCT_BRAND', 'PRE_ORDER', 'SALE', 'NFE', 'DELIVERY']).optional(),
   search: z.string().trim().max(100).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(25),
@@ -59,6 +61,11 @@ export const queryLinksSchema = z.object({
 });
 
 export const catalogQuerySchema = z.object({ search: z.string().trim().min(2).max(100) });
+
+export const salesReportQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
 
 export const cancellationEntitySchema = z.enum(['order', 'service-order']);
 

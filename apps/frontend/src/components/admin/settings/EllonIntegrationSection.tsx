@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
-type Form = Pick<EllonConfig, 'enabled' | 'baseUrl' | 'companyCode' | 'transactionCode' | 'costCenterCode' | 'sellerCode' | 'warehouseCode' | 'paymentMethodCode' | 'carrierCode' | 'syncProducts' | 'syncCustomers' | 'syncOrders' | 'exportOrderSources' | 'stockIncludesPreOrders' | 'reservationTtlDays' | 'defaultCustomerCode' | 'customerUpdatesEnabled'> & {
+type Form = Pick<EllonConfig, 'enabled' | 'baseUrl' | 'companyCode' | 'transactionCode' | 'costCenterCode' | 'sellerCode' | 'warehouseCode' | 'paymentMethodCode' | 'carrierCode' | 'syncProducts' | 'syncCustomers' | 'syncOrders' | 'exportOrderSources' | 'stockIncludesPreOrders' | 'reservationTtlDays' | 'defaultCustomerCode' | 'customerUpdatesEnabled' | 'liveStockCheck' | 'loyaltyFromStoreSales'> & {
   preOrderStatusMap: Record<string, PreOrderState>;
   serviceItemTypes: string;
   paymentMethodMap: Record<string, number>;
@@ -38,6 +38,7 @@ const emptyForm: Form = {
   syncProducts: true, syncCustomers: true, syncOrders: true,
   exportOrderSources: ['WEB', 'APP', 'PHONE'], stockIncludesPreOrders: false, reservationTtlDays: 15,
   defaultCustomerCode: null, serviceItemTypes: '', paymentMethodMap: {}, preOrderStatusMap: {}, customerUpdatesEnabled: true,
+  liveStockCheck: true, loyaltyFromStoreSales: false,
 };
 
 const SOURCES: Array<[OrderSource, string]> = [['WEB', 'Site'], ['APP', 'App'], ['PHONE', 'Telefone/balcão'], ['MERCADO_LIVRE', 'Mercado Livre'], ['SHOPEE', 'Shopee']];
@@ -152,6 +153,8 @@ export function EllonIntegrationSection() {
           <div><Label>Tipos fiscais de serviço (campo "tipo")</Label><Input placeholder="Ex.: S" value={form.serviceItemTypes} onChange={e => setForm(current => ({ ...current, serviceItemTypes: e.target.value }))} /><p className="mt-1 text-xs text-muted-foreground">Separados por vírgula. Mão de obra só pode ir com estes tipos.</p></div>
           <div><Label>Prazo da reserva de estoque (dias)</Label><Input type="number" min="1" max="90" value={String(form.reservationTtlDays)} onChange={e => setForm(current => ({ ...current, reservationTtlDays: Number(e.target.value) || 15 }))} /><p className="mt-1 text-xs text-muted-foreground">Após o prazo sem faturamento, a reserva vai para conferência.</p></div>
         </div>
+        <div className="flex items-center justify-between rounded-lg border p-3"><div><Label>Conferir estoque na Ellon ao fechar pedido no site</Label><p className="text-xs text-muted-foreground">Consulta o estoque real no momento da compra. Se a Ellon não responder em 6 segundos, a venda segue com o estoque local.</p></div><Switch checked={form.liveStockCheck} onCheckedChange={checked => setForm(current => ({ ...current, liveStockCheck: checked }))} /></div>
+        <div className="flex items-center justify-between rounded-lg border p-3"><div><Label>Pontos de fidelidade nas compras do balcão</Label><p className="text-xs text-muted-foreground">Vendas da Ellon de clientes identificados geram pontos pelas regras do programa, a partir de quando for ligado{config?.loyaltyStoreSalesSince ? ` (ativo desde ${new Date(config.loyaltyStoreSalesSince).toLocaleDateString('pt-BR')})` : ''}. Venda cancelada estorna os pontos.</p></div><Switch checked={form.loyaltyFromStoreSales} onCheckedChange={checked => setForm(current => ({ ...current, loyaltyFromStoreSales: checked }))} /></div>
         <div className="flex items-center justify-between rounded-lg border p-3"><div><Label>A quantidade da Ellon já desconta pré-pedidos em aberto</Label><p className="text-xs text-muted-foreground">Ative somente se a Ellon confirmar; evita descontar a mesma saída duas vezes.</p></div><Switch checked={form.stockIncludesPreOrders} onCheckedChange={checked => setForm(current => ({ ...current, stockIncludesPreOrders: checked }))} /></div>
         <div>
           <Label>Formas de pagamento (M2 → Ellon)</Label>

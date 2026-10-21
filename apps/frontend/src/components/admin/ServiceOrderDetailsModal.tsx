@@ -11,6 +11,7 @@ import revisionService from '@/api/revisionService';
 import { useToast } from '../ui/use-toast';
 import { formatCurrency as money } from '@/lib/format';
 import { getErrorMessage } from '@/lib/errors';
+import { EllonOrderStatusCard } from '@/components/ellon/EllonOrderStatusCard';
 
 interface Props {
   /** Pagina de tela cheia: montada condicionalmente pelo pai, sem "isOpen". */
@@ -145,6 +146,8 @@ export function ServiceOrderDetailsModal({ order, onClose, onChanged, restricted
           Originada pela revisão #{order.revisionId.slice(0, 8)}
         </Badge>
       )}
+
+      {!restricted && <div className="mx-auto w-full max-w-3xl"><EllonOrderStatusCard entity="service-order" id={order.id} /></div>}
 
       <div className="mx-auto w-full max-w-3xl rounded-xl border bg-card p-4 space-y-3 text-sm shadow-sm">
           <div>

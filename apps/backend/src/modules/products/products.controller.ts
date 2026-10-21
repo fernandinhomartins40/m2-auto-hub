@@ -99,6 +99,15 @@ export class ProductsController {
   /**
    * GET /products/categories/list
    */
+  getBrands = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const brands = await this.productsService.getBrands();
+      res.status(200).json({ success: true, data: brands });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getCategories = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const categories = await this.productsService.getCategories();

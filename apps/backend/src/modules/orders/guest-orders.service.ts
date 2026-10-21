@@ -1,4 +1,5 @@
 import { prisma } from '@config/database.js';
+import { ellonStoreService } from '../ellon/ellon-store.service.js';
 import { CustomerStatus, CustomerLevel, OrderStatus, QuoteStatus, OrderItemType, OrderSource } from '@prisma/client';
 import { ApiError } from '@shared/utils/error.util.js';
 import { logger } from '@shared/utils/logger.util.js';
@@ -127,6 +128,9 @@ export class GuestOrdersService {
         throw ApiError.badRequest(`Insufficient stock for product ${product.name}. Available: ${product.stock}`);
       }
     }
+
+    // Estoque real da Ellon (menos reservas do M2) antes de aceitar o pedido.
+    await ellonStoreService.verifyStock(items);
 
     // Map to order items
     return items.map(item => {

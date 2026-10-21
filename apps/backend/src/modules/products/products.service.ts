@@ -604,6 +604,17 @@ export class ProductsService {
   /**
    * Get product categories
    */
+  /** Marcas (campo supplier, preenchido com a marca da Ellon) dos produtos ativos. */
+  async getBrands(): Promise<Array<{ name: string; count: number }>> {
+    const groups = await prisma.product.groupBy({
+      by: ['supplier'],
+      where: { status: ProductStatus.ACTIVE, supplier: { not: '' } },
+      _count: { supplier: true },
+      orderBy: { supplier: 'asc' },
+    });
+    return groups.filter((group) => group.supplier !== 'Ellon').map((group) => ({ name: group.supplier, count: group._count.supplier }));
+  }
+
   async getCategories(): Promise<ProductCategorySummary[]> {
     return this.buildCategorySummaries(false, true);
   }

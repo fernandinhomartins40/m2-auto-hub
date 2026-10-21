@@ -9,6 +9,7 @@ import { StatGrid } from "../layout/ResponsiveGrids";
 import type { CompleteReportData } from "@/api/reportsService";
 import type { ReportExportSection, ReportPdfStats } from "@/utils/reportPdf";
 import { formatCurrency as formatPrice } from '@/lib/format';
+import { EllonSalesReport } from '@/components/ellon/EllonSalesReport';
 
 interface AdminReportsSectionProps {
   reportData: CompleteReportData | null;
@@ -383,6 +384,8 @@ export function AdminReportsSection({
           </CardContent>
         </Card>
       </div>
+
+      <EllonSalesReport />
     </div>
   );
 }

@@ -80,6 +80,9 @@ export class EllonConnectionService {
       preOrderStatusMap: connection.preOrderStatusMap,
       observationLimit: connection.observationLimit,
       customerUpdatesEnabled: connection.customerUpdatesEnabled,
+      liveStockCheck: connection.liveStockCheck,
+      loyaltyFromStoreSales: connection.loyaltyFromStoreSales,
+      loyaltyStoreSalesSince: connection.loyaltyStoreSalesSince,
       lastConnectionAt: connection.lastConnectionAt,
       lastProductSyncAt: connection.lastProductSyncAt,
       lastFullProductSyncAt: connection.lastFullProductSyncAt,
@@ -133,6 +136,12 @@ export class EllonConnectionService {
       ...(dto.preOrderStatusMap !== undefined && { preOrderStatusMap: dto.preOrderStatusMap ?? Prisma.DbNull }),
       ...(dto.observationLimit !== undefined && { observationLimit: dto.observationLimit }),
       ...(dto.customerUpdatesEnabled !== undefined && { customerUpdatesEnabled: dto.customerUpdatesEnabled }),
+      ...(dto.liveStockCheck !== undefined && { liveStockCheck: dto.liveStockCheck }),
+      // Pontos do balcão valem só para compras a partir do momento em que a opção é ligada.
+      ...(dto.loyaltyFromStoreSales !== undefined && {
+        loyaltyFromStoreSales: dto.loyaltyFromStoreSales,
+        loyaltyStoreSalesSince: dto.loyaltyFromStoreSales ? current.loyaltyStoreSalesSince ?? new Date() : null,
+      }),
       status: dto.enabled === false ? EllonConnectionStatus.DISABLED : EllonConnectionStatus.PENDING,
       bearerTokenEncrypted: null,
       bearerTokenExpiresAt: null,

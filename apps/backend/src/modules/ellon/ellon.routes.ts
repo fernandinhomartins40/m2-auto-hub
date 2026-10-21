@@ -18,6 +18,10 @@ router.post('/sync/:target', ...manager, AuditLogMiddleware.log('SYNC', 'Ellon')
 router.get('/snapshots', ...staff, ellonController.listSnapshots);
 router.get('/pending', ...staff, ellonController.getPending);
 router.get('/contract', ...staff, ellonController.getContract);
+router.get('/orders/:entity/:id/status', ...staff, ellonController.orderStatus);
+router.post('/orders/:entity/:id/refresh', ...staff, ellonController.refreshOrder);
+router.get('/customers/:customerId/history', ...staff, ellonController.customerHistory);
+router.get('/reports/sales', ...manager, ellonController.salesReport);
 router.post('/contract/refresh', ...admin, ellonController.refreshContract);
 router.post('/default-customer', ...admin, AuditLogMiddleware.log('CREATE', 'EllonDefaultCustomer'), ellonController.createDefaultCustomer);
 router.get('/catalog', ...staff, ellonController.searchCatalog);

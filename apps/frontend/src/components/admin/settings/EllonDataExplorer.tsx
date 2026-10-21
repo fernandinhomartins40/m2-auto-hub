@@ -10,6 +10,7 @@ const TYPES: Array<[EllonSnapshotType, string]> = [
   ['PRE_ORDER', 'Pré-pedidos'],
   ['SALE', 'Vendas/faturamento'],
   ['NFE', 'NF-e'],
+  ['DELIVERY', 'Entregas'],
   ['CUSTOMER', 'Clientes'],
   ['PAYMENT_METHOD', 'Formas de pagamento'],
   ['SELLER', 'Vendedores'],

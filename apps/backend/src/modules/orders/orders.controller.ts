@@ -5,6 +5,7 @@ import { updateOrderSchema } from './dto/update-order.dto.js';
 import { OrderStatus } from '@prisma/client';
 import notificationsService from '../notifications/notifications.service.js';
 import { prisma } from '@config/database.js';
+import { ellonStoreService } from '../ellon/ellon-store.service.js';
 
 export class OrdersController {
   private ordersService: OrdersService;
@@ -79,10 +80,12 @@ export class OrdersController {
         limit,
         filters
       );
+      const invoices = await ellonStoreService.invoicesFor(result.data.map((order) => order.id));
 
       res.status(200).json({
         success: true,
         ...result,
+        data: result.data.map((order) => ({ ...order, invoice: invoices.get(order.id) ?? null })),
       });
     } catch (error) {
       next(error);
@@ -103,10 +106,11 @@ export class OrdersController {
         req.params.id,
         req.user.customerId
       );
+      const invoices = await ellonStoreService.invoicesFor([order.id]);
 
       res.status(200).json({
         success: true,
-        data: order,
+        data: { ...order, invoice: invoices.get(order.id) ?? null },
       });
     } catch (error) {
       next(error);

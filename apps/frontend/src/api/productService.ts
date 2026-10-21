@@ -64,6 +64,7 @@ class ProductService {
     page?: number;
     limit?: number;
     category?: string;
+    supplier?: string;
     search?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -95,6 +96,11 @@ class ProductService {
       params: { limit }
     });
     return response.data;
+  }
+
+  async getBrands(): Promise<Array<{ name: string; count: number }>> {
+    const response = await apiClient.get('/products/brands/list');
+    return response.data.data;
   }
 
   async getCategories(): Promise<{ success: boolean; data: CategoryResponse[] }> {

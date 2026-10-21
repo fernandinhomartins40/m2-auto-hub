@@ -23,6 +23,8 @@ interface MasterSyncResult {
   divergences: number;
   preOrders: number;
   sales: number;
+  deliveries: number;
+  loyaltyPoints: number;
   errors: string[];
 }
 
@@ -39,7 +41,7 @@ export interface PagedProgress {
 type Checkpoint = (progress: PagedProgress) => Promise<void>;
 
 const emptyResult = (): MasterSyncResult => ({
-  received: 0, stored: 0, linked: 0, created: 0, updated: 0, addresses: 0, reconciled: 0, cancelled: 0, invoices: 0, divergences: 0, preOrders: 0, sales: 0, errors: [],
+  received: 0, stored: 0, linked: 0, created: 0, updated: 0, addresses: 0, reconciled: 0, cancelled: 0, invoices: 0, divergences: 0, preOrders: 0, sales: 0, deliveries: 0, loyaltyPoints: 0, errors: [],
 });
 const pushError = (result: MasterSyncResult, message: string) => { if (result.errors.length < 100) result.errors.push(message); };
 
@@ -79,8 +81,26 @@ export function classifyPreOrder(item: Raw, statusMap: Record<string, unknown> =
   return 'OPEN';
 }
 
+export interface NormalizedMovement { occurredAt: Date | null; amount: Prisma.Decimal; customerExternalId: string | null; cancelled: boolean }
+
+export const DATE_KEYS = ['data', 'data_venda', 'data_emissao', 'dt_emissao', 'emissao', 'data_pedido', 'data_cadastro', 'dt_venda'];
+export const AMOUNT_KEYS = ['valor_liquido', 'valor_total', 'total', 'valor_pedido', 'valor', 'vl_total'];
+export const CUSTOMER_KEYS = ['id_cliente', 'idCliente', 'cliente', 'codigo_cliente', 'cod_cliente'];
+
+/** Data, valor, cliente e cancelamento extraídos de uma venda ou pré-pedido, em campos fixos. */
+export function movementFields(type: string, item: Raw, statusMap: Record<string, unknown> = {}): NormalizedMovement {
+  const customer = digits(pick(item, CUSTOMER_KEYS));
+  return {
+    occurredAt: parseDate(pick(item, DATE_KEYS)),
+    amount: new Prisma.Decimal(Math.max(0, decimal(pick(item, AMOUNT_KEYS)))),
+    customerExternalId: customer || null,
+    cancelled: type === 'PRE_ORDER' ? classifyPreOrder(item, statusMap) === 'CANCELLED' : isCancelled(item),
+  };
+}
+
 export class EllonMasterSyncService {
   private statusMap: Record<string, unknown> = {};
+  private deliveriesUnavailable = false;
 
   private async enqueue(type: EllonJobType, intervalMs: number) {
     const active = await prisma.ellonJob.findFirst({
@@ -107,13 +127,25 @@ export class EllonMasterSyncService {
   enqueueReferences() { return this.enqueue(EllonJobType.SYNC_REFERENCE_DATA, DAY_MS); }
   enqueueOrders() { return this.enqueue(EllonJobType.SYNC_ORDER_STATUS, 10 * 60_000); }
 
-  private async snapshot(type: string, externalId: string, name: string | undefined, payload: Raw) {
+  private async snapshot(type: string, externalId: string, name: string | undefined, payload: Raw, normalized: NormalizedMovement | Record<string, never> = {}) {
     const clean = withoutXml(payload) as Prisma.InputJsonValue;
     await prisma.ellonSnapshot.upsert({
       where: { type_externalId: { type, externalId } },
-      update: { name, payload: clean, syncedAt: new Date() },
-      create: { type, externalId, name, payload: clean },
+      update: { name, payload: clean, syncedAt: new Date(), ...normalized },
+      create: { type, externalId, name, payload: clean, ...normalized },
     });
+  }
+
+  /** Preenche os campos normalizados de vendas/pré-pedidos gravados antes de existirem. */
+  private async backfillMovements() {
+    const pending = await prisma.ellonSnapshot.findMany({
+      where: { type: { in: ['SALE', 'PRE_ORDER'] }, occurredAt: null, amount: null },
+      select: { id: true, type: true, payload: true },
+      take: 2000,
+    });
+    for (const item of pending) {
+      await prisma.ellonSnapshot.update({ where: { id: item.id }, data: movementFields(item.type, linkMetadata(item.payload), this.statusMap) });
+    }
   }
 
   async syncReferences(): Promise<MasterSyncResult> {
@@ -474,22 +506,22 @@ export class EllonMasterSyncService {
    * como fim da lista; erro respondido pela Ellon fica registrado sem travar o restante (repetir
    * não muda a resposta); só falha de comunicação interrompe para nova tentativa.
    */
-  private async eachPage(label: string, result: MasterSyncResult, fetchPage: (page: number) => Promise<unknown>, keys: string[], idKeys: string[], handle: (item: Raw, id: string) => Promise<void>) {
+  private async eachPage(label: string, result: MasterSyncResult, fetchPage: (page: number) => Promise<unknown>, keys: string[], idKeys: string[], handle: (item: Raw, id: string) => Promise<void>): Promise<boolean> {
     const seen = new Set<string>();
     for (let page = 1; page <= 2000; page += 1) {
       let response: unknown;
       try {
         response = await fetchPage(page);
       } catch (error) {
-        if (isEmptyResult(error)) return;
-        if (error instanceof EllonResponseError) { pushError(result, `${label} (página ${page}): ${error.message}`); return; }
+        if (isEmptyResult(error)) return true;
+        if (error instanceof EllonResponseError) { pushError(result, `${label} (página ${page}): ${error.message}`); return false; }
         throw error;
       }
       const items = rows(response, keys);
       // Sem identificador conhecido, o próprio conteúdo identifica o registro (o contrato não garante o nome do campo).
       const ids = items.map(item => pick(item, idKeys) || `h${payloadHash(item).slice(0, 16)}`);
       const fingerprint = ids.join('|');
-      if (!items.length || seen.has(fingerprint)) return;
+      if (!items.length || seen.has(fingerprint)) return true;
       seen.add(fingerprint);
       result.received += items.length;
       for (const [index, item] of items.entries()) {
@@ -501,6 +533,7 @@ export class EllonMasterSyncService {
         }
       }
     }
+    return true;
   }
 
   private async syncWindow(start: Date, end: Date, state: PagedProgress, checkpoint?: Checkpoint) {
@@ -513,7 +546,7 @@ export class EllonMasterSyncService {
       page => ellonClient.request<unknown>('GET', '/publico/integracoes/prepedidosdetalhados', { query: { pagina: page, registros: 50, ...range } }),
       ['pedidos', 'Pedidos', 'prepedidos'], ['numero', 'numeroPedido', 'numero_pedido'],
       async (item, id) => {
-        await this.snapshot('PRE_ORDER', id, `Pré-pedido ${id}`, item);
+        await this.snapshot('PRE_ORDER', id, `Pré-pedido ${id}`, item, movementFields('PRE_ORDER', item, this.statusMap));
         result.preOrders += 1;
         await this.reconcilePreOrder(item, id, result);
       });
@@ -526,13 +559,53 @@ export class EllonMasterSyncService {
       }),
       ['Faturamentos', 'faturamentos', 'vendas', 'Vendas'], ['id_venda', 'idVenda', 'id', 'numero_venda', 'numero', 'documento'],
       async (item, id) => {
-        await this.snapshot('SALE', id, `Venda ${pick(item, ['numero_nf', 'numero', 'documento']) || id}`, item);
+        await this.snapshot('SALE', id, `Venda ${pick(item, ['numero_nf', 'numero', 'documento']) || id}`, item, movementFields('SALE', item, this.statusMap));
         result.sales += 1;
         await this.reconcileSale(item, result);
       });
 
+    // Controle de entregas: o contrato exige filtros não documentados; se a Ellon recusar,
+    // a consulta é desligada nesta execução e o rastreio continua pelo M2.
+    if (!this.deliveriesUnavailable) {
+      const ok = await this.eachPage(`Entregas ${period}`, result,
+        page => ellonClient.request<unknown>('POST', '/publico/integracoes/consultapedidosentrega', {
+          query: { pagina: page },
+          body: { data_inicial: range.dataInicial, data_final: range.dataFinal },
+          read: true,
+        }),
+        ['entregas', 'Entregas', 'pedidos', 'Pedidos'], ['numero', 'numero_pedido', 'pedido', 'id'],
+        async (item, id) => {
+          await this.snapshot('DELIVERY', id, `Entrega ${id}`, item);
+          await this.reconcileDelivery(item, result);
+        });
+      if (!ok) this.deliveriesUnavailable = true;
+    }
+
     state.windowStart = new Date(end.getTime() + 1).toISOString();
     await checkpoint?.(state);
+  }
+
+  /** Leva situação e código de rastreio da entrega ao pedido M2 correspondente. */
+  private async reconcileDelivery(item: Raw, result: MasterSyncResult) {
+    const preOrder = pick(item, ['numero_prepedido', 'prepedido', 'numero_pedido', 'pedido', 'numero']);
+    if (!preOrder) return;
+    const links = await prisma.ellonEntityLink.findMany({
+      where: { entityType: { in: [EllonEntityType.ORDER, EllonEntityType.SERVICE_ORDER] }, externalId: preOrder },
+    });
+    const tracking = pick(item, ['codigo_rastreio', 'rastreio', 'rastreamento', 'codigo_rastreamento', 'tracking']);
+    const delivery = {
+      status: pick(item, ['status', 'situacao', 'status_entrega']) || null,
+      deliveredAt: pick(item, ['data_entrega', 'dt_entrega']) || null,
+      carrier: pick(item, ['transportadora', 'nome_transportadora']) || null,
+      tracking: tracking || null,
+    };
+    for (const link of links) {
+      await this.mergeLinkMetadata(link.id, link.metadata, { ellonDelivery: delivery });
+      if (tracking && link.entityType === EllonEntityType.ORDER) {
+        await prisma.order.updateMany({ where: { id: link.localId, trackingCode: null }, data: { trackingCode: tracking.slice(0, 100) } });
+      }
+      result.deliveries += 1;
+    }
   }
 
   /** Busca metadados de NF-e dos pedidos enviados pelo M2 (o XML não é armazenado). */
@@ -544,29 +617,56 @@ export class EllonMasterSyncService {
     });
     let checked = 0;
     for (const link of links) {
-      const metadata = linkMetadata(link.metadata);
-      if (metadata.nfe || checked >= 50) continue;
+      if (linkMetadata(link.metadata).nfe || checked >= 50) continue;
       checked += 1;
-      const siteId = `${link.entityType === EllonEntityType.ORDER ? 'PED' : 'OS'}-${link.localId}`;
-      try {
-        const response = await ellonClient.request<unknown>('GET', `/publico/integracoes/consultanfe/${encodeURIComponent(siteId)}`);
-        const invoice = rows(response, ['nfe', 'NFe', 'notas'])[0] ?? (response && typeof response === 'object' && !Array.isArray(response) ? response as Raw : null);
-        const key = invoice ? pick(invoice, ['chave', 'chave_nfe', 'chaveNfe', 'chave_acesso']) : '';
-        if (!invoice || !key) { await this.mergeLinkMetadata(link.id, link.metadata, { nfeCheckedAt: new Date().toISOString() }); continue; }
-        const nfe = { key, number: pick(invoice, ['numero', 'numero_nfe', 'nNF']), series: pick(invoice, ['serie']), issuedAt: pick(invoice, ['data_emissao', 'emissao', 'data']) };
-        await this.snapshot('NFE', key, `NF-e ${nfe.number || key}`, { ...invoice, siteId });
-        await this.mergeLinkMetadata(link.id, link.metadata, { nfe });
-        result.invoices += 1;
-      } catch (error) {
-        // Nota ainda não emitida também chega como erro; tenta de novo nas próximas execuções.
-        await this.mergeLinkMetadata(link.id, link.metadata, { nfeCheckedAt: new Date().toISOString(), nfeLastError: errorMessage(error).slice(0, 300) });
-      }
+      if (await this.checkInvoice(link)) result.invoices += 1;
     }
+  }
+
+  /** Consulta a NF-e de um pedido/OS enviado pelo M2 (o XML não é armazenado). */
+  async checkInvoice(link: { id: string; entityType: EllonEntityType; localId: string; metadata: Prisma.JsonValue }): Promise<boolean> {
+    const siteId = `${link.entityType === EllonEntityType.ORDER ? 'PED' : 'OS'}-${link.localId}`;
+    try {
+      const response = await ellonClient.request<unknown>('GET', `/publico/integracoes/consultanfe/${encodeURIComponent(siteId)}`);
+      const invoice = rows(response, ['nfe', 'NFe', 'notas'])[0] ?? (response && typeof response === 'object' && !Array.isArray(response) ? response as Raw : null);
+      const key = invoice ? pick(invoice, ['chave', 'chave_nfe', 'chaveNfe', 'chave_acesso']) : '';
+      if (!invoice || !key) { await this.mergeLinkMetadata(link.id, link.metadata, { nfeCheckedAt: new Date().toISOString() }); return false; }
+      const nfe = { key, number: pick(invoice, ['numero', 'numero_nfe', 'nNF']), series: pick(invoice, ['serie']), issuedAt: pick(invoice, ['data_emissao', 'emissao', 'data']) };
+      await this.snapshot('NFE', key, `NF-e ${nfe.number || key}`, { ...invoice, siteId });
+      await this.mergeLinkMetadata(link.id, link.metadata, { nfe });
+      return true;
+    } catch (error) {
+      // Nota ainda não emitida também chega como erro; tenta de novo nas próximas execuções.
+      await this.mergeLinkMetadata(link.id, link.metadata, { nfeCheckedAt: new Date().toISOString(), nfeLastError: errorMessage(error).slice(0, 300) });
+      return false;
+    }
+  }
+
+  /** Consulta um único pré-pedido agora (sem esperar a sincronização) e aplica status, cancelamento e NF-e. */
+  async refreshPreOrder(entityType: EllonEntityType, localId: string) {
+    const link = await prisma.ellonEntityLink.findUnique({ where: { entityType_localId: { entityType, localId } } });
+    if (!link) return null;
+    const connection = await prisma.ellonConnection.findUnique({ where: { id: 'default' } });
+    this.statusMap = linkMetadata(connection?.preOrderStatusMap);
+    const result = emptyResult();
+    const response = await ellonClient.request<unknown>('GET', `/publico/integracoes/prepedido/${encodeURIComponent(link.externalId)}`)
+      .catch(error => { if (isEmptyResult(error)) return []; throw error; });
+    const item = rows(response, ['pedidos', 'prepedidos', 'Pedidos'])[0]
+      ?? (response && typeof response === 'object' && !Array.isArray(response) && Object.keys(response).length ? response as Raw : null);
+    if (item) {
+      await this.snapshot('PRE_ORDER', link.externalId, `Pré-pedido ${link.externalId}`, item, movementFields('PRE_ORDER', item, this.statusMap));
+      await this.reconcilePreOrder(item, link.externalId, result);
+    }
+    const fresh = await prisma.ellonEntityLink.findUniqueOrThrow({ where: { id: link.id } });
+    if (!linkMetadata(fresh.metadata).nfe) await this.checkInvoice(fresh);
+    return { found: Boolean(item), errors: result.errors };
   }
 
   async syncOrders(progress?: PagedProgress | null, checkpoint?: Checkpoint): Promise<MasterSyncResult> {
     const connection = await prisma.ellonConnection.findUnique({ where: { id: 'default' } });
     this.statusMap = linkMetadata(connection?.preOrderStatusMap);
+    this.deliveriesUnavailable = false;
+    await this.backfillMovements().catch(error => logger.warn('[Ellon] normalização de vendas antigas falhou', { error: errorMessage(error) }));
     const runStartedAt = new Date();
     const firstStart = connection?.lastOrderSyncAt
       ? new Date(connection.lastOrderSyncAt.getTime() - ORDER_OVERLAP_DAYS * DAY_MS)

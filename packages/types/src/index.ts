@@ -87,6 +87,8 @@ export interface Order {
   addressId: string;
   paymentMethod: string;
   trackingCode?: string;
+  /** Nota fiscal emitida pela Ellon (sem XML). */
+  invoice?: { number: string; series: string; key: string; issuedAt: string } | null;
   estimatedDelivery?: string;
   createdAt: string;
   updatedAt: string;
@@ -289,7 +291,9 @@ export type LoyaltyTransactionType =
   | 'EARN_MANUAL'
   | 'ADJUST_MANUAL'
   | 'REDEEM_REWARD'
-  | 'EXPIRE_POINTS';
+  | 'EXPIRE_POINTS'
+  | 'EARN_STORE_SALE'
+  | 'REVERSE_STORE_SALE';
 
 export type LoyaltyRedemptionStatus = 'AVAILABLE' | 'USED' | 'EXPIRED' | 'CANCELLED';
 

@@ -21,11 +21,13 @@ import {
   Calendar,
   MapPin,
   CreditCard,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from "lucide-react";
 import { formatCurrency } from '@/lib/format';
 import { PanelPageHeader } from '../layout/PanelPageHeader';
 import { PanelPage } from '../layout/PanelPage';
+import { MyStorePurchases } from '@/components/ellon/PurchaseHistory';
 
 export function CustomerOrders() {
   const { getOrders } = useAuth();
@@ -249,6 +251,18 @@ export function CustomerOrders() {
                           <CreditCard className="w-4 h-4 mr-2" />
                           <span>Pagamento: {order.paymentMethod}</span>
                         </div>
+                        {order.invoice && (
+                          <div className="flex items-start text-muted-foreground">
+                            <FileText className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
+                            <span>
+                              Nota fiscal nº {order.invoice.number}
+                              <span className="block break-all font-mono text-xs">Chave: {order.invoice.key}</span>
+                              <a className="text-xs text-moria-orange underline" href="https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7PhJ+gAVw2g=" target="_blank" rel="noopener noreferrer">
+                                Consultar no portal da NF-e
+                              </a>
+                            </span>
+                          </div>
+                        )}
                         {order.trackingCode && (
                           <div className="flex items-center text-muted-foreground">
                             <Truck className="w-4 h-4 mr-2" />
@@ -408,6 +422,14 @@ export function CustomerOrders() {
           })}
         </div>
       )}
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Compras na loja e na oficina</CardTitle>
+          <CardDescription>Compras feitas no balcão ou na oficina, registradas no sistema da loja.</CardDescription>
+        </CardHeader>
+        <CardContent><MyStorePurchases /></CardContent>
+      </Card>
     </PanelPage>
   );
 }

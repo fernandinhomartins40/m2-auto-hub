@@ -34,6 +34,48 @@ export interface EllonConfig {
   preOrderStatusMap: Record<string, PreOrderState> | null;
   observationLimit: number;
   customerUpdatesEnabled: boolean;
+  liveStockCheck: boolean;
+  loyaltyFromStoreSales: boolean;
+  loyaltyStoreSalesSince: string | null;
+}
+
+export interface EllonOrderStatus {
+  exported: boolean;
+  preOrder: string | null;
+  status: string | null;
+  cancelled: boolean;
+  invoiced: boolean;
+  nfe: { key: string; number: string; series: string; issuedAt: string } | null;
+  delivery: { status: string | null; deliveredAt: string | null; carrier: string | null; tracking: string | null } | null;
+  divergence: { m2Total: number; ellonTotal: number; difference: number } | null;
+  cancellationRequestedAt: string | null;
+  lastSyncAt: string | null;
+  job: { status: string; lastError: string | null; parked: boolean } | null;
+}
+
+export interface PurchaseEntry {
+  id: string;
+  kind: 'SALE' | 'PRE_ORDER';
+  origin: 'site' | 'oficina' | 'loja';
+  date: string | null;
+  total: number;
+  status: string | null;
+  cancelled: boolean;
+  items: Array<{ name: string; quantity: number; total: number }>;
+}
+
+export interface EllonSalesReport {
+  from: string;
+  to: string;
+  count: number;
+  total: number;
+  averageTicket: number;
+  cancelled: number;
+  undated: number;
+  byDay: Array<{ date: string; total: number; count: number }>;
+  byOrigin: Array<{ name: string; total: number; count: number }>;
+  bySeller: Array<{ name: string; total: number; count: number }>;
+  topProducts: Array<{ name: string; quantity: number; total: number }>;
 }
 
 export type PreOrderState = 'OPEN' | 'INVOICED' | 'CANCELLED';
@@ -91,7 +133,7 @@ export interface EllonSyncSummary {
   jobs: Array<{ status: string; _count: { _all: number } }>;
 }
 
-export type EllonSnapshotType = 'CUSTOMER' | 'PAYMENT_METHOD' | 'SELLER' | 'CARRIER' | 'PRODUCT_GROUP' | 'PRODUCT_BRAND' | 'PRE_ORDER' | 'SALE' | 'NFE';
+export type EllonSnapshotType = 'CUSTOMER' | 'PAYMENT_METHOD' | 'SELLER' | 'CARRIER' | 'PRODUCT_GROUP' | 'PRODUCT_BRAND' | 'PRE_ORDER' | 'SALE' | 'NFE' | 'DELIVERY';
 export interface EllonSnapshot { id: string; type: EllonSnapshotType; externalId: string; name: string | null; payload: Record<string, unknown>; syncedAt: string }
 export interface Paginated<T> { data: T[]; meta: { page: number; limit: number; total: number; totalPages: number } }
 export type EllonSyncTarget = 'products' | 'products-full' | 'customers' | 'references' | 'orders';
@@ -131,6 +173,26 @@ export const ellonService = {
   },
   async retryJob(id: string): Promise<void> { await apiClient.post(`/ellon/jobs/${id}/retry`); },
   async syncProducts(): Promise<void> { await apiClient.post('/ellon/sync/products'); },
+  async orderStatus(entity: 'order' | 'service-order', id: string): Promise<EllonOrderStatus> {
+    const response = await apiClient.get(`/ellon/orders/${entity}/${id}/status`);
+    return response.data.data;
+  },
+  async refreshOrder(entity: 'order' | 'service-order', id: string): Promise<EllonOrderStatus & { found: boolean; errors: string[] }> {
+    const response = await apiClient.post(`/ellon/orders/${entity}/${id}/refresh`);
+    return response.data.data;
+  },
+  async customerHistory(customerId: string): Promise<{ linked: boolean; ellonCustomerId: string | null; purchases: PurchaseEntry[] }> {
+    const response = await apiClient.get(`/ellon/customers/${customerId}/history`);
+    return response.data.data;
+  },
+  async salesReport(params: { from?: string; to?: string }): Promise<EllonSalesReport> {
+    const response = await apiClient.get('/ellon/reports/sales', { params });
+    return response.data.data;
+  },
+  async myStorePurchases(): Promise<{ linked: boolean; purchases: PurchaseEntry[] }> {
+    const response = await apiClient.get('/customers/me/store-purchases');
+    return { linked: response.data.linked, purchases: response.data.data };
+  },
   async getContract(): Promise<EllonContract> {
     const response = await apiClient.get('/ellon/contract');
     return response.data.data;

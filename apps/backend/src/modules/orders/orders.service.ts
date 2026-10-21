@@ -4,6 +4,7 @@ import { ApiError } from '@shared/utils/error.util.js';
 import { PaginationUtil, PaginatedResponse } from '@shared/utils/pagination.util.js';
 import { logger } from '@shared/utils/logger.util.js';
 import { ellonCancellationService } from '../ellon/ellon-cancellation.service.js';
+import { ellonStoreService } from '../ellon/ellon-store.service.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
 import { UpdateOrderDto } from './dto/update-order.dto.js';
 
@@ -78,6 +79,9 @@ export class OrdersService {
         }
       }
     }
+
+    // Estoque real da Ellon (menos reservas do M2) antes de aceitar o pedido.
+    await ellonStoreService.verifyStock(dto.items.filter((item) => item.type === 'PRODUCT'));
 
     // Validate and apply coupon if provided
     let discountAmount = 0;

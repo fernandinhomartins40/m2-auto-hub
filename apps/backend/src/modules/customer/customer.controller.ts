@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '@config/database.js';
+import { ellonStoreService } from '../ellon/ellon-store.service.js';
 import {
   Address,
   Customer,
@@ -682,9 +683,12 @@ export class CustomerController {
         },
       });
 
+      const invoices = await ellonStoreService.invoicesFor(orders.map((order) => order.id));
       const mappedOrders = orders.map((order: Order & { items: OrderItem[] }) => ({
         id: order.id,
         status: order.status,
+        trackingCode: order.trackingCode,
+        invoice: invoices.get(order.id) ?? null,
         quoteStatus: order.quoteStatus,
         hasProducts: order.hasProducts,
         hasServices: order.hasServices,
@@ -731,9 +735,12 @@ export class CustomerController {
         return;
       }
 
+      const invoices = await ellonStoreService.invoicesFor([order.id]);
       res.json({
         id: order.id,
         status: order.status,
+        trackingCode: order.trackingCode,
+        invoice: invoices.get(order.id) ?? null,
         quoteStatus: order.quoteStatus,
         hasProducts: order.hasProducts,
         hasServices: order.hasServices,

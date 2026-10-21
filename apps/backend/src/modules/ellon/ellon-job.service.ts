@@ -6,6 +6,7 @@ import { ellonExportService } from './ellon-export.service.js';
 import { ProductSyncProgress, ellonProductSyncService } from './ellon-product-sync.service.js';
 import { PagedProgress, ellonMasterSyncService } from './ellon-master-sync.service.js';
 import { ellonContractService } from './ellon-contract.service.js';
+import { ellonStoreService } from './ellon-store.service.js';
 
 const payloadOf = (job: EllonJob): Record<string, unknown> =>
   job.payload && typeof job.payload === 'object' && !Array.isArray(job.payload) ? job.payload as Record<string, unknown> : {};
@@ -56,8 +57,12 @@ export class EllonJobService {
         const contract = await ellonContractService.refreshSwagger().then(() => 'atualizado').catch(error => `falhou: ${String(error)}`);
         return { ...result, contract };
       }
-      case EllonJobType.SYNC_ORDER_STATUS:
-        return ellonMasterSyncService.syncOrders(progress as PagedProgress | null, checkpoint);
+      case EllonJobType.SYNC_ORDER_STATUS: {
+        const result = await ellonMasterSyncService.syncOrders(progress as PagedProgress | null, checkpoint);
+        // Falha nos pontos não invalida a sincronização; é refeita na próxima execução (idempotente).
+        const loyalty = await ellonStoreService.awardStoreSales().catch(error => ({ error: String(error) }));
+        return { ...result, loyalty };
+      }
     }
     throw new Error(`Job ${job.type} sem entidade local ou tipo não suportado.`);
   }

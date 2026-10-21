@@ -123,6 +123,25 @@ Configurado em **Configurações → Ellon ERP → Contrato descoberto**
 rastreio e status do pedido) cobre a necessidade. Os filtros exigidos aparecem no
 painel do contrato, caso seja preciso ativá-lo.
 
+### Recursos de loja com dados da Ellon (20/10/2026)
+
+Migração `20261020000000_ellon_store_insights`.
+
+| Recurso | Endereço Ellon | Onde aparece |
+|---|---|---|
+| Estoque em tempo real no checkout | `produto/{id}` | Ao fechar pedido no site (logado ou visitante). Estoque = Ellon − reservas do M2. Sem resposta em 6 s, segue com o estoque local. Pode ser desligado em Regras de negócio. |
+| Histórico de compras do cliente (site, oficina e balcão) | `prepedidoscliente/{cliente}` + vendas sincronizadas | Admin: modal do cliente. Cliente: "Meus pedidos → Compras na loja e na oficina". |
+| Situação do pedido na Ellon, com "Atualizar agora" | `prepedido/{numero}` + `consultanfe` | Detalhes do pedido e da OS no admin. |
+| Entregas | `consultapedidosentrega` | Situação e rastreio no pedido; o código de rastreio preenche o pedido do site. Se a Ellon recusar os filtros (período), a consulta é desligada naquela execução. |
+| Relatório de vendas da loja inteira | vendas sincronizadas | Relatórios: faturamento, ticket médio, origem (site/oficina/balcão), vendedor, produtos e dias. |
+| Pontos de fidelidade das compras do balcão | vendas sincronizadas | Opção em Regras de negócio, desligada por padrão. Vale a partir de quando é ligada; vendas vindas do site não pontuam de novo; venda cancelada estorna. |
+| Filtro por marca na vitrine | marcas (campo `supplier`) | Vitrine de produtos. |
+| Nota fiscal no pedido do cliente | `consultanfe` | "Meus pedidos": número e chave da NF-e. |
+
+Vendas e pré-pedidos passam a gravar data, valor, cliente e cancelamento em
+colunas próprias (`occurredAt`, `amount`, `customerExternalId`, `cancelled`). Os
+registros antigos são preenchidos aos poucos (até 2000 por sincronização).
+
 ### Contornos de regra de negócio (19/10/2026)
 
 Configuráveis em **Configurações → Ellon ERP → Regras de negócio**

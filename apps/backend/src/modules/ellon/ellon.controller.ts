@@ -8,8 +8,9 @@ import { ellonExportService, linkMetadata } from './ellon-export.service.js';
 import { ellonCancellationService } from './ellon-cancellation.service.js';
 import { ellonStockService } from './ellon-stock.service.js';
 import { ellonContractService } from './ellon-contract.service.js';
+import { ellonStoreService, reportRange } from './ellon-store.service.js';
 import { ellonJobService } from './ellon-job.service.js';
-import { cancellationEntitySchema, catalogQuerySchema, queryEllonJobsSchema, queryLinksSchema, querySnapshotsSchema, syncTargetSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
+import { cancellationEntitySchema, catalogQuerySchema, salesReportQuerySchema, queryEllonJobsSchema, queryLinksSchema, querySnapshotsSchema, syncTargetSchema, updateEllonConfigSchema, upsertEllonLinkSchema } from './dto/ellon.dto.js';
 import { ellonProductSyncService } from './ellon-product-sync.service.js';
 import { ellonMasterSyncService } from './ellon-master-sync.service.js';
 
@@ -263,6 +264,35 @@ export class EllonController {
 
   createDefaultCustomer = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try { res.json({ success: true, data: await ellonContractService.createDefaultCustomer() }); } catch (error) { next(error); }
+  };
+
+  orderStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const entity = cancellationEntitySchema.parse(req.params.entity) === 'order' ? 'ORDER' : 'SERVICE_ORDER';
+      res.json({ success: true, data: await ellonStoreService.status(entity, req.params.id) });
+    } catch (error) { next(error); }
+  };
+
+  /** Consulta o pré-pedido na Ellon agora, sem esperar a sincronização. */
+  refreshOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const entity = cancellationEntitySchema.parse(req.params.entity) === 'order' ? 'ORDER' : 'SERVICE_ORDER';
+      const refreshed = await ellonMasterSyncService.refreshPreOrder(entity, req.params.id);
+      if (!refreshed) throw ApiError.badRequest('Este registro ainda não foi enviado à Ellon.');
+      res.json({ success: true, data: { ...(await ellonStoreService.status(entity, req.params.id)), found: refreshed.found, errors: refreshed.errors } });
+    } catch (error) { next(error); }
+  };
+
+  customerHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try { res.json({ success: true, data: await ellonStoreService.customerHistory(req.params.customerId) }); } catch (error) { next(error); }
+  };
+
+  salesReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const query = salesReportQuerySchema.parse(req.query);
+      const { start, end } = reportRange(query.from, query.to);
+      res.json({ success: true, data: await ellonStoreService.salesReport(start, end) });
+    } catch (error) { next(error); }
   };
 
   requestCancellation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

@@ -28,6 +28,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { formatCurrency } from '@/lib/format';
+import { EllonOrderStatusCard } from "@/components/ellon/EllonOrderStatusCard";
 
 interface OrderDetailsModalProps {
   order: StoreOrder | null;
@@ -421,6 +422,8 @@ export function OrderDetailsModal({
                 </div>
               )}
             </div>
+
+            <EllonOrderStatusCard entity="order" id={currentOrder.id} />
 
             <div>
               <Label className="text-sm font-semibold mb-2 flex items-center gap-1.5">
