@@ -108,6 +108,21 @@ export interface NormalizedOrder {
   } | null;
   paymentMethod?: string | null;
   createdAt?: Date | null;
+  shipmentId?: string | null;
+  packId?: string | null;
+  buyerNickname?: string | null;
+}
+
+/** Situacao do envio de uma venda, normalizada. */
+export interface NormalizedShipment {
+  id: string;
+  orderId: string | null;
+  status: string;
+  substatus: string | null;
+  logisticType: string | null;
+  trackingNumber: string | null;
+  /** Prazo limite de despacho, quando o marketplace informa. */
+  dispatchBy: Date | null;
 }
 
 /** Item de checklist devolvido pelo endpoint de prontidao. */

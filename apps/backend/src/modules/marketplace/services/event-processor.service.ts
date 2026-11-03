@@ -2,6 +2,7 @@ import { MarketplaceProvider } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { logger } from '@shared/utils/logger.util.js';
 import { orderImportService } from './order-import.service.js';
+import { mlOrderService } from './ml-order.service.js';
 
 /** Topicos que representam um pedido (geram importacao). */
 const ORDER_TOPICS = new Set(['orders', 'orders_v2', 'order_status_push', 'shop_order']);
@@ -67,11 +68,22 @@ export class EventProcessorService {
   }
 
   private async handle(provider: MarketplaceProvider, topic: string, externalId: string): Promise<void> {
+    if (provider === MarketplaceProvider.MERCADO_LIVRE) {
+      // Vendas do ML passam pelo acompanhamento de despacho (importa, reserva, cancela, envio).
+      if (ORDER_TOPICS.has(topic)) {
+        await mlOrderService.sync(externalId);
+        return;
+      }
+      if (topic === 'shipments') {
+        await mlOrderService.syncShipment(externalId);
+        return;
+      }
+    }
     if (ORDER_TOPICS.has(topic)) {
       await orderImportService.importOrder(provider, externalId);
       return;
     }
-    // outros topicos (items, questions, shipments) podem ser tratados aqui no futuro
+    // outros topicos (items, questions) podem ser tratados aqui no futuro
     logger.info('[EventProcessor] topico ignorado', { provider, topic });
   }
 }

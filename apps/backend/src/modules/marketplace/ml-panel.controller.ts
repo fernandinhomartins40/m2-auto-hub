@@ -2,10 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '@shared/utils/error.util.js';
 import { mlPanelService } from './services/ml-panel.service.js';
 import { listingService } from './services/listing.service.js';
+import { mlOrderService } from './services/ml-order.service.js';
 import {
   mlBulkApproveSchema,
   mlCategorySearchSchema,
   mlImagesSchema,
+  mlOrderMoveSchema,
+  mlOrdersQuerySchema,
   mlPanelQuerySchema,
   mlProfileSchema,
   mlSettingsSchema,
@@ -43,4 +46,26 @@ export const mlPanelController = {
   approve: handle(req => mlPanelService.approveAndPublish(req.params.productId, req.admin?.adminId)),
   approveMany: handle(req => mlPanelService.approveMany(mlBulkApproveSchema.parse(req.body).productIds, req.admin?.adminId)),
   activateListing: handle(req => listingService.activate(req.params.id)),
+
+  // --- Vendas ---
+  listOrders: handle(req => {
+    const query = mlOrdersQuerySchema.parse(req.query);
+    return mlOrderService.list(query.stage, query.page, query.pageSize);
+  }),
+  moveOrder: handle(req => mlOrderService.move(req.params.id, mlOrderMoveSchema.parse(req.body).action)),
+  refreshOrder: handle(req => mlOrderService.refresh(req.params.id)),
+  syncOrders: handle(async () => {
+    await mlOrderService.pollRecent();
+    return { ok: true };
+  }),
+  label: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { pdf, filename } = await mlOrderService.label(req.params.id);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.status(200).send(pdf);
+    } catch (error) {
+      next(error);
+    }
+  },
 };

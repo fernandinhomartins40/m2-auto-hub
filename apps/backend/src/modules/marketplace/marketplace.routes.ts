@@ -51,6 +51,12 @@ router.get('/ml-panel/products/:productId/categories', ...authManager, mlPanelCo
 router.post('/ml-panel/products/:productId/images', ...authManager, upload.array('images', 12), mlPanelController.addImages);
 router.put('/ml-panel/products/:productId/images', ...authManager, mlPanelController.setImages);
 router.post('/ml-panel/products/:productId/approve', ...authManager, mlPanelController.approve);
+// Vendas: acompanhamento do despacho (STAFF+: quem separa e despacha e a equipe)
+router.get('/ml-panel/orders', ...authStaff, mlPanelController.listOrders);
+router.post('/ml-panel/orders/sync', ...authStaff, mlPanelController.syncOrders);
+router.post('/ml-panel/orders/:id/move', ...authStaff, mlPanelController.moveOrder);
+router.post('/ml-panel/orders/:id/refresh', ...authStaff, mlPanelController.refreshOrder);
+router.get('/ml-panel/orders/:id/label', ...authStaff, mlPanelController.label);
 
 export default router;
 

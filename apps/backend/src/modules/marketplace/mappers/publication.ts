@@ -174,8 +174,10 @@ export function effectiveFields(product: ProductInput, profile: ProfileInput | n
   const supplier = text(product.supplier);
   const brand = text(profile?.brand) ?? text(s.brand) ?? (supplier && supplier !== 'Ellon' ? supplier : null);
   const basePrice = money(product.promoPrice) > 0 ? money(product.promoPrice) : money(product.salePrice);
+  // Alguns cadastros do Ellon trazem o nome vazio ("'") e a descricao no codigo.
+  const baseName = /\p{L}{3}/u.test(product.name) ? product.name : product.sku;
   return {
-    title: text(profile?.title) ?? suggestTitle(product.name, brand),
+    title: text(profile?.title) ?? suggestTitle(baseName, brand),
     brand,
     partNumber: text(profile?.partNumber) ?? text(s.factoryReference),
     gtin: validGtin(s.barcode),

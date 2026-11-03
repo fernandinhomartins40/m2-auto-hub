@@ -863,6 +863,57 @@ model MarketplaceProductProfile {
   @@map("marketplace_product_profiles")
 }
 
+// Etapa do despacho de uma venda de marketplace, do pagamento a entrega.
+enum MarketplaceFulfillmentStage {
+  AWAITING_PAYMENT // pedido criado, pagamento ainda nao aprovado
+  AWAITING_SUPPLIER // falta mercadoria que vem do fornecedor
+  TO_PICK // tudo na loja: separar e embalar
+  READY_TO_SHIP // separado; falta levar o pacote
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// Venda de marketplace acompanhada pelo painel ate a entrega.
+model MarketplaceOrder {
+  id              String                      @id @default(uuid())
+  provider        MarketplaceProvider
+  externalOrderId String
+  packId          String?
+  orderId         String?                     @unique // Order do M2, criado quando o pagamento aprova
+  status          String // status do pedido no marketplace (paid, cancelled...)
+  stage           MarketplaceFulfillmentStage @default(AWAITING_PAYMENT)
+  buyerNickname   String?
+  total           Decimal                     @db.Decimal(10, 2)
+  // [{ productId, title, quantity, fromStore, fromSupplier, supplier }]
+  items           Json
+
+  shipmentId        String?
+  shipmentStatus    String?
+  shipmentSubstatus String?
+  logisticType      String?
+  trackingNumber    String?
+  dispatchBy        DateTime? // prazo de despacho informado pelo marketplace
+
+  supplierReceivedAt DateTime?
+  pickedAt           DateTime?
+  labelPrintedAt     DateTime?
+  shippedAt          DateTime?
+  deliveredAt        DateTime?
+  cancelledAt        DateTime?
+  slaAlertedAt       DateTime? // alerta de prazo perto de vencer ja enviado
+
+  soldAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([provider, externalOrderId])
+  @@index([stage])
+  @@index([shipmentId])
+  @@index([dispatchBy])
+  @@map("marketplace_orders")
+}
+
 // Log de eventos (auditoria/idempotencia de webhooks)
 model MarketplaceEvent {
   id          String              @id @default(uuid())

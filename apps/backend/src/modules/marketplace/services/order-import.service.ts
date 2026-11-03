@@ -36,17 +36,24 @@ export class OrderImportService {
     await this.persistOrder(provider, order);
   }
 
-  /** Persiste o pedido normalizado, criando customer/address sinteticos quando preciso. */
-  private async persistOrder(provider: MarketplaceProvider, order: NormalizedOrder): Promise<void> {
+  /**
+   * Persiste o pedido normalizado, criando customer/address sinteticos quando preciso.
+   * `items` evita casar os itens de novo quando quem chama ja casou.
+   */
+  async persistOrder(
+    provider: MarketplaceProvider,
+    order: NormalizedOrder,
+    resolved?: Array<{ productId: string | null }>
+  ): Promise<string> {
     const customer = await this.ensureMarketplaceCustomer(provider, order);
     const address = await this.ensureAddress(customer.id, order);
 
     // Casa itens do marketplace com produtos do M2 via MarketplaceListing.externalId ou SKU
-    const items = await this.resolveItems(provider, order);
+    const items = resolved ?? await this.resolveItems(provider, order);
 
     const subtotal = order.items.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0);
 
-    await prisma.$transaction(async tx => {
+    const orderId = await prisma.$transaction(async tx => {
       const created = await tx.order.create({
         data: {
           customerId: customer.id,
@@ -90,9 +97,34 @@ export class OrderImportService {
         externalOrderId: order.externalOrderId,
         orderId: created.id,
       });
+      return created.id;
     });
 
     // Propaga o novo estoque para os demais marketplaces (anti-overselling)
+    await this.propagate(items);
+    return orderId;
+  }
+
+  /**
+   * Cancela o pedido importado e devolve ao estoque o que a venda baixou.
+   * Idempotente: pedido ja cancelado nao devolve de novo.
+   */
+  async cancelOrder(externalOrderId: string): Promise<void> {
+    const order = await prisma.order.findUnique({ where: { externalOrderId }, include: { items: true } });
+    if (!order || order.status === OrderStatus.CANCELLED) return;
+    await prisma.$transaction(async tx => {
+      await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.CANCELLED, cancelledAt: new Date() } });
+      for (const item of order.items) {
+        if (item.productId) {
+          await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.quantity } } });
+        }
+      }
+    });
+    logger.info('[OrderImport] pedido cancelado e estoque devolvido', { externalOrderId, orderId: order.id });
+    await this.propagate(order.items);
+  }
+
+  private async propagate(items: Array<{ productId: string | null } | undefined>): Promise<void> {
     const productIds = items.map(i => i?.productId).filter((id): id is string => Boolean(id));
     if (productIds.length > 0) {
       const { syncService } = await import('./sync.service.js');
@@ -103,7 +135,7 @@ export class OrderImportService {
   }
 
   /** Casa cada item do pedido com um Product do M2. */
-  private async resolveItems(
+  async resolveItems(
     provider: MarketplaceProvider,
     order: NormalizedOrder
   ): Promise<Array<{ productId: string | null }>> {

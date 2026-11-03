@@ -37,7 +37,9 @@ export class WebhookController {
           return;
         }
 
-        // Grava idempotente (unique provider+topic+externalId)
+        // Uma linha por recurso (provider+topic+externalId). O ML avisa de novo a cada
+        // mudanca do mesmo pedido (pago, cancelado, enviado): o aviso repetido volta
+        // para a fila, e o processamento e idempotente.
         await prisma.marketplaceEvent
           .upsert({
             where: {
@@ -47,7 +49,12 @@ export class WebhookController {
                 externalId: event.externalId,
               },
             },
-            update: {}, // ja existe -> ignora (idempotencia)
+            update: {
+              processed: false,
+              attempts: 0,
+              error: null,
+              rawPayload: event.raw as Prisma.InputJsonValue,
+            },
             create: {
               provider: event.provider,
               topic: event.topic,

@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "../../ui/alert";
 import { AdminPageHeader } from "../AdminPageHeader";
 import { MlProductEditor } from "./MlProductEditor";
 import { MlSettingsCard } from "./MlSettingsCard";
+import { MlOrdersTab } from "./MlOrdersTab";
 import {
   AlertCircle,
   CheckCircle2,
@@ -171,8 +172,13 @@ export function MercadoLivrePanel() {
       <Tabs defaultValue="products">
         <TabsList>
           <TabsTrigger value="products">Produtos</TabsTrigger>
+          <TabsTrigger value="orders">Vendas</TabsTrigger>
           <TabsTrigger value="rules">Regras da loja</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="orders" className="mt-4">
+          <MlOrdersTab />
+        </TabsContent>
 
         <TabsContent value="products" className="space-y-4 mt-4">
           <div className="flex flex-wrap gap-2">

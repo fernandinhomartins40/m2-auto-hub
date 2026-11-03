@@ -26,6 +26,11 @@ describe('título sugerido', () => {
     expect(suggestTitle('FILTRO LUB PEL310 PARA GOL 1.6')).toBe('Filtro Lub PEL310 para Gol 1.6');
   });
 
+  it('usa o código quando o nome do ERP veio vazio', () => {
+    const eff = effectiveFields({ ...product, name: "'", sku: 'FILTRO OLEO PEL674' }, null, DEFAULT_SETTINGS);
+    expect(eff.title).toBe('Filtro Oleo PEL674 Metal Leve');
+  });
+
   it('acrescenta a marca quando falta e respeita 60 caracteres', () => {
     expect(suggestTitle('FILTRO AR MEGANE/SCENIC', 'METAL LEVE')).toBe('Filtro Ar Megane/Scenic Metal Leve');
     const long = suggestTitle('AMORTECEDOR DIANTEIRO LADO DIREITO ORIGINAL REFORÇADO PARA CAMINHONETE', 'COFAP');

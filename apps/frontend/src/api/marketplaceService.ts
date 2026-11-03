@@ -233,11 +233,113 @@ export interface MlPanelQuery {
   pageSize?: number;
 }
 
+export type MlOrderStage =
+  | 'AWAITING_PAYMENT'
+  | 'AWAITING_SUPPLIER'
+  | 'TO_PICK'
+  | 'READY_TO_SHIP'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED';
+
+export interface MlOrderItem {
+  productId: string | null;
+  title: string;
+  quantity: number;
+  fromStore: number;
+  fromSupplier: number;
+  supplier: string | null;
+}
+
+export interface MlOrder {
+  id: string;
+  externalOrderId: string;
+  orderId: string | null;
+  status: string;
+  stage: MlOrderStage;
+  buyerNickname: string | null;
+  total: number;
+  items: MlOrderItem[];
+  shipmentId: string | null;
+  shipmentStatus: string | null;
+  shipmentSubstatus: string | null;
+  logisticType: string | null;
+  trackingNumber: string | null;
+  dispatchBy: string | null;
+  supplierReceivedAt: string | null;
+  pickedAt: string | null;
+  labelPrintedAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  soldAt: string | null;
+  open: boolean;
+}
+
+export interface MlOrderList {
+  items: MlOrder[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<'OPEN' | 'ALL' | MlOrderStage, number>;
+  supplierNeeds: Array<{ supplier: string; items: Array<{ title: string; quantity: number }> }>;
+}
+
+export type MlOrderAction = 'SUPPLIER_RECEIVED' | 'PICKED' | 'BACK_TO_PICK';
+
 function unwrap<T>(data: { data: T }): T {
   return data.data;
 }
 
 export const mlPanelService = {
+  async listOrders(stage: 'OPEN' | 'ALL' | MlOrderStage, page = 1): Promise<MlOrderList> {
+    return unwrap((await apiClient.get('/marketplace/ml-panel/orders', { params: { stage, page } })).data);
+  },
+
+  async syncOrders(): Promise<void> {
+    await apiClient.post('/marketplace/ml-panel/orders/sync');
+  },
+
+  async moveOrder(id: string, action: MlOrderAction): Promise<MlOrder> {
+    return unwrap((await apiClient.post(`/marketplace/ml-panel/orders/${id}/move`, { action })).data);
+  },
+
+  async refreshOrder(id: string): Promise<MlOrder> {
+    return unwrap((await apiClient.post(`/marketplace/ml-panel/orders/${id}/refresh`)).data);
+  },
+
+  /** Abre o PDF da etiqueta em outra aba. */
+  async openLabel(id: string): Promise<void> {
+    // Abre a aba antes da espera: depois dela o navegador bloquearia o pop-up.
+    const tab = window.open('', '_blank');
+    let res;
+    try {
+      res = await apiClient.get(`/marketplace/ml-panel/orders/${id}/label`, { responseType: 'blob' });
+    } catch (err) {
+      tab?.close();
+      // Com responseType blob, a mensagem de erro da API chega dentro do Blob.
+      const data = (err as { response?: { data?: unknown } }).response?.data;
+      if (data instanceof Blob) {
+        let body: { error?: string; message?: string } = {};
+        try {
+          body = JSON.parse(await data.text());
+        } catch {
+          // corpo sem JSON: fica a mensagem padrao
+        }
+        throw new Error(body.error || body.message || 'Etiqueta indisponível');
+      }
+      throw err;
+    }
+    const url = URL.createObjectURL(res.data as Blob);
+    if (tab) {
+      tab.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      return;
+    }
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  },
+
   async getSettings(): Promise<MlStoreSettings> {
     return unwrap((await apiClient.get('/marketplace/ml-panel/settings')).data);
   },

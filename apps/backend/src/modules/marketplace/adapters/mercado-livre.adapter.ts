@@ -14,6 +14,7 @@ import {
   CategorySuggestion,
   CategoryAttribute,
   NormalizedWebhookEvent,
+  NormalizedShipment,
   PublicationAttribute,
 } from '../marketplace.types.js';
 
@@ -292,6 +293,7 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
 
     const buyer = (data.buyer as Record<string, unknown>) ?? {};
     const payments = (data.payments as Array<Record<string, unknown>>) ?? [];
+    const shipping = (data.shipping as Record<string, unknown>) ?? {};
 
     return {
       externalOrderId: String(data.id),
@@ -303,7 +305,56 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
       items,
       paymentMethod: payments[0] ? String(payments[0].payment_type ?? 'mercado_pago') : 'mercado_pago',
       createdAt: data.date_created ? new Date(String(data.date_created)) : null,
+      shipmentId: shipping.id ? String(shipping.id) : null,
+      packId: data.pack_id ? String(data.pack_id) : null,
+      buyerNickname: (buyer.nickname as string) ?? null,
     };
+  }
+
+  /** Ids dos pedidos criados desde `since` (rede de seguranca para webhooks perdidos). */
+  async searchRecentOrders(account: ProviderAccount, since: Date): Promise<string[]> {
+    const params = new URLSearchParams({
+      seller: account.sellerId ?? '',
+      'order.date_created.from': since.toISOString(),
+      sort: 'date_desc',
+      limit: '50',
+    });
+    const data = await this.apiGet<Record<string, unknown>>(account, `/orders/search?${params.toString()}`);
+    const results = (data.results as Array<Record<string, unknown>>) ?? [];
+    return results.map(order => String(order.id));
+  }
+
+  async fetchShipment(account: ProviderAccount, shipmentId: string): Promise<NormalizedShipment> {
+    const data = await this.apiSend<Record<string, unknown>>(account, 'GET', `/shipments/${shipmentId}`, undefined, {
+      'x-format-new': 'true',
+    });
+    const logistic = (data.logistic as Record<string, unknown>) ?? {};
+    // O SLA so existe enquanto o envio nao saiu; fora disso a chamada falha e seguimos sem prazo.
+    const sla = await this.apiGet<Record<string, unknown>>(account, `/shipments/${shipmentId}/sla`).catch(() => null);
+    return {
+      id: String(data.id ?? shipmentId),
+      orderId: data.order_id ? String(data.order_id) : null,
+      status: String(data.status ?? 'unknown'),
+      substatus: data.substatus ? String(data.substatus) : null,
+      logisticType: logistic.type ? String(logistic.type) : (data.logistic_type as string) ?? null,
+      trackingNumber: data.tracking_number ? String(data.tracking_number) : null,
+      dispatchBy: sla?.expected_date ? new Date(String(sla.expected_date)) : null,
+    };
+  }
+
+  /** Etiqueta de envio em PDF (so existe com o envio pronto para despacho). */
+  async downloadLabel(account: ProviderAccount, shipmentId: string): Promise<Buffer> {
+    if (!account.accessToken) throw ApiError.unauthorized('Mercado Livre nao conectado (sem access token).');
+    const params = new URLSearchParams({ shipment_ids: shipmentId, response_type: 'pdf' });
+    const res = await fetch(`${API_BASE}/shipment_labels?${params.toString()}`, {
+      headers: { authorization: `Bearer ${account.accessToken}` },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null) as Record<string, unknown> | null;
+      const message = (data?.message as string) || `HTTP ${res.status}`;
+      throw ApiError.badRequest(`Etiqueta indisponível no Mercado Livre: ${message}`);
+    }
+    return Buffer.from(await res.arrayBuffer());
   }
 
   // ---------------------------------------------------------------------------
@@ -348,7 +399,8 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
     account: ProviderAccount,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
-    body?: unknown
+    body?: unknown,
+    extraHeaders: Record<string, string> = {}
   ): Promise<T> {
     if (!account.accessToken) {
       throw ApiError.unauthorized('Mercado Livre nao conectado (sem access token).');
@@ -360,6 +412,7 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
         authorization: `Bearer ${account.accessToken}`,
         'content-type': 'application/json',
         accept: 'application/json',
+        ...extraHeaders,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });

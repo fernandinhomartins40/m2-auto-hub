@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MarketplaceStockMode } from '@prisma/client';
+import { MarketplaceFulfillmentStage, MarketplaceStockMode } from '@prisma/client';
 import { LISTING_TYPES, WARRANTY_TYPES } from '../mappers/publication.js';
 
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use o formato HH:MM');
@@ -51,6 +51,13 @@ export const mlPanelQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });
 export type MlPanelQueryDto = z.infer<typeof mlPanelQuerySchema>;
+
+export const mlOrdersQuerySchema = z.object({
+  stage: z.union([z.nativeEnum(MarketplaceFulfillmentStage), z.enum(['OPEN', 'ALL'])]).default('OPEN'),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+});
+export const mlOrderMoveSchema = z.object({ action: z.enum(['SUPPLIER_RECEIVED', 'PICKED', 'BACK_TO_PICK']) });
 
 export const mlImagesSchema = z.object({ images: z.array(z.string().min(1)).max(12) });
 export const mlBulkApproveSchema = z.object({ productIds: z.array(z.string().uuid()).min(1).max(100) });
