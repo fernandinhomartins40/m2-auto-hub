@@ -266,7 +266,8 @@ export function qualityScore(input: QualityInput): { score: number; tips: string
 
   const ratio = input.totalAttributes > 0 ? input.filledAttributes / input.totalAttributes : 0;
   score += Math.round(ratio * 25);
-  if (ratio < 0.6) tips.push(`Preencha mais características (${input.filledAttributes} de ${input.totalAttributes}). Elas alimentam os filtros da busca.`);
+  if (input.totalAttributes === 0) tips.push('Escolha a categoria para ver as características da ficha técnica.');
+  else if (ratio < 0.6) tips.push(`Preencha mais características (${input.filledAttributes} de ${input.totalAttributes}). Elas alimentam os filtros da busca.`);
 
   if (input.titleLength >= 40) score += 10;
   else tips.push('Use mais do título (40 a 60 caracteres): tipo de peça, marca, modelo e aplicação.');
