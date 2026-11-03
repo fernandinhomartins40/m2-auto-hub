@@ -1,6 +1,3 @@
-warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
-For more information, see: https://pris.ly/prisma-config
-
 -- CreateEnum
 CREATE TYPE "MarketplaceStockMode" AS ENUM ('STORE_ONLY', 'STORE_PLUS_SUPPLIER', 'MADE_TO_ORDER');
 
@@ -47,14 +44,3 @@ CREATE UNIQUE INDEX "marketplace_product_profiles_productId_provider_key" ON "ma
 
 -- AddForeignKey
 ALTER TABLE "marketplace_product_profiles" ADD CONSTRAINT "marketplace_product_profiles_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-┌─────────────────────────────────────────────────────────┐
-│  Update available 6.19.3 -> 8.0.0-rc.30                 │
-│                                                         │
-│  This is a major update - please follow the guide at    │
-│  https://pris.ly/d/major-version-upgrade                │
-│                                                         │
-│  Run the following to update                            │
-│    npm i --save-dev prisma@latest                       │
-│    npm i @prisma/client@latest                          │
-└─────────────────────────────────────────────────────────┘
-
