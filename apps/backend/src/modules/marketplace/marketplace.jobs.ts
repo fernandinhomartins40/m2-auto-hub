@@ -5,12 +5,14 @@ import { tokenRefreshService } from './services/token-refresh.service.js';
 import { syncService } from './services/sync.service.js';
 import { eventProcessorService } from './services/event-processor.service.js';
 import { mlOrderService } from './services/ml-order.service.js';
+import { mlAiService } from './services/ml-ai.service.js';
 
 const EVENT_INTERVAL_MS = 30 * 1000; // 30s: processa eventos de webhook pendentes
 const TOKEN_INTERVAL_MS = 5 * 60 * 1000; // 5min: renova tokens proximos de expirar
 // 2min: estoque/preco mudados pelo Ellon, site e OS chegam ao marketplace (consulta unica, so envia o que mudou)
 const RECONCILE_INTERVAL_MS = 2 * 60 * 1000;
 const ORDERS_INTERVAL_MS = 10 * 60 * 1000; // 10min: vendas do ML sem aviso, envios e prazos
+const AI_QUEUE_INTERVAL_MS = 30 * 1000; // 30s: preparo de anuncios com IA em lote (retoma apos reinicio)
 
 const timers: NodeJS.Timeout[] = [];
 
@@ -42,6 +44,14 @@ export async function startMarketplaceJobs(): Promise<void> {
     setInterval(() => {
       void syncService.reconcile();
     }, RECONCILE_INTERVAL_MS)
+  );
+
+  timers.push(
+    setInterval(() => {
+      void mlAiService.processQueue().catch(err =>
+        logger.warn('[Marketplace] fila da IA falhou', { err: String(err) })
+      );
+    }, AI_QUEUE_INTERVAL_MS)
   );
 
   timers.push(

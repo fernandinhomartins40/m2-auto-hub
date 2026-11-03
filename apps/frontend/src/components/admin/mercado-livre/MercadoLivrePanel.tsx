@@ -12,6 +12,7 @@ import { AdminPageHeader } from "../AdminPageHeader";
 import { MlProductEditor } from "./MlProductEditor";
 import { MlSettingsCard } from "./MlSettingsCard";
 import { MlOrdersTab } from "./MlOrdersTab";
+import { MlAiSettingsCard } from "./MlAiSettingsCard";
 import {
   AlertCircle,
   CheckCircle2,
@@ -23,6 +24,7 @@ import {
   RefreshCw,
   Search,
   Send,
+  Sparkles,
   Store,
 } from "lucide-react";
 import {
@@ -38,13 +40,14 @@ import { ML_STATUS, STOCK_MODE_LABEL, brl } from "./mlLabels";
 
 const PAGE_SIZE = 25;
 
-const FILTERS: Array<{ value: "ALL" | MlPanelStatus; label: string }> = [
+const FILTERS: Array<{ value: "ALL" | "AI_READY" | MlPanelStatus; label: string }> = [
   { value: "ALL", label: "Todos" },
   { value: "READY", label: "Aptos" },
   { value: "PENDING", label: "Pendentes" },
   { value: "PUBLISHED", label: "Publicados" },
   { value: "PAUSED", label: "Pausados" },
   { value: "ERROR", label: "Com erro" },
+  { value: "AI_READY", label: "Sugestões da IA" },
 ];
 
 /** Painel do Mercado Livre: produtos aptos, pendências, aprovação e regras da loja. */
@@ -52,12 +55,12 @@ export function MercadoLivrePanel() {
   const { toast } = useToast();
   const [data, setData] = useState<MlPanelList | null>(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<"ALL" | MlPanelStatus>("ALL");
+  const [status, setStatus] = useState<"ALL" | "AI_READY" | MlPanelStatus>("ALL");
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [includeAll, setIncludeAll] = useState(false);
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Map<string, MlPanelRow>>(new Map());
   const [busyId, setBusyId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -92,31 +95,69 @@ export function MercadoLivrePanel() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const toggle = (id: string) => {
+  const toggle = (row: MlPanelRow) => {
     setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const next = new Map(prev);
+      if (next.has(row.productId)) next.delete(row.productId);
+      else next.set(row.productId, row);
       return next;
     });
   };
 
-  const readyOnPage = (data?.items ?? []).filter(row => row.status === "READY");
-  const allReadySelected = readyOnPage.length > 0 && readyOnPage.every(row => selected.has(row.productId));
+  const pageRows = data?.items ?? [];
+  const allPageSelected = pageRows.length > 0 && pageRows.every(row => selected.has(row.productId));
+  const chosen = [...selected.values()];
+  const readyIds = chosen.filter(row => row.status === "READY").map(row => row.productId);
+  const aiReadyIds = chosen.filter(row => row.aiStatus === "READY").map(row => row.productId);
 
-  const publishSelected = async () => {
-    if (selected.size === 0) return;
-    if (!confirm(`Publicar ${selected.size} produto(s) no Mercado Livre? Os anúncios ficam visíveis para os compradores na hora.`)) return;
+  const prepareSelected = async () => {
+    if (!confirm(`Preparar ${chosen.length} produto(s) com IA? Cada produto custa poucos centavos e entra numa fila; as sugestões aparecem em "Sugestões da IA".`)) return;
     setPublishing(true);
     try {
-      const results = await mlPanelService.approveMany([...selected]);
+      const result = await mlPanelService.aiQueue(chosen.map(row => row.productId));
+      toast({ title: `${result.queued} produto(s) na fila da IA`, description: "Pode continuar usando o painel. Atualize em alguns minutos." });
+      setSelected(new Map());
+      void load();
+    } catch (err) {
+      toast({ title: "Erro ao enviar para a IA", description: getErrorMessage(err), variant: "destructive" });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const applySelected = async () => {
+    if (!confirm(`Aplicar todas as sugestões da IA em ${aiReadyIds.length} produto(s)? Título, categoria, ficha técnica e descrição serão trocados. Nada é publicado ainda.`)) return;
+    setPublishing(true);
+    try {
+      const results = await mlPanelService.aiApplyMany(aiReadyIds);
+      const failed = results.filter(result => !result.ok);
+      toast({
+        title: `Sugestões aplicadas em ${results.length - failed.length} produto(s)`,
+        description: failed.length ? `${failed.length} com erro: ${failed[0].error}` : "Confira e publique os que ficaram aptos.",
+        variant: failed.length ? "destructive" : "default",
+      });
+      setSelected(new Map());
+      void load();
+    } catch (err) {
+      toast({ title: "Erro ao aplicar", description: getErrorMessage(err), variant: "destructive" });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const publishSelected = async () => {
+    if (readyIds.length === 0) return;
+    if (!confirm(`Publicar ${readyIds.length} produto(s) no Mercado Livre? Os anúncios ficam visíveis para os compradores na hora.`)) return;
+    setPublishing(true);
+    try {
+      const results = await mlPanelService.approveMany(readyIds);
       const failed = results.filter(result => !result.ok);
       toast({
         title: `${results.length - failed.length} produto(s) publicado(s)`,
         description: failed.length ? `${failed.length} com erro: ${failed[0].error}` : undefined,
         variant: failed.length ? "destructive" : "default",
       });
-      setSelected(new Set());
+      setSelected(new Map());
       void load();
     } catch (err) {
       toast({ title: "Erro ao publicar", description: getErrorMessage(err), variant: "destructive" });
@@ -221,25 +262,34 @@ export function MercadoLivrePanel() {
             </div>
           </div>
 
-          {readyOnPage.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-green-50 p-3">
+          {pageRows.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-gray-50 p-3">
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
-                  checked={allReadySelected}
+                  checked={allPageSelected}
                   onCheckedChange={checked => {
                     setSelected(prev => {
-                      const next = new Set(prev);
-                      readyOnPage.forEach(row => (checked ? next.add(row.productId) : next.delete(row.productId)));
+                      const next = new Map(prev);
+                      pageRows.forEach(row => (checked ? next.set(row.productId, row) : next.delete(row.productId)));
                       return next;
                     });
                   }}
                 />
-                Selecionar os aptos desta página
+                Selecionar esta página {selected.size > 0 && <span className="text-gray-500">({selected.size} selecionado(s))</span>}
               </label>
-              <Button size="sm" disabled={selected.size === 0 || publishing} onClick={publishSelected}>
-                {publishing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                Aprovar e publicar {selected.size > 0 ? `(${selected.size})` : ""}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" disabled={selected.size === 0 || publishing} onClick={prepareSelected}>
+                  <Sparkles className="h-4 w-4 mr-2 text-purple-600" />
+                  Preparar com IA {selected.size > 0 ? `(${selected.size})` : ""}
+                </Button>
+                <Button size="sm" variant="outline" disabled={aiReadyIds.length === 0 || publishing} onClick={applySelected}>
+                  Aplicar sugestões {aiReadyIds.length > 0 ? `(${aiReadyIds.length})` : ""}
+                </Button>
+                <Button size="sm" disabled={readyIds.length === 0 || publishing} onClick={publishSelected}>
+                  {publishing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  Aprovar e publicar {readyIds.length > 0 ? `(${readyIds.length})` : ""}
+                </Button>
+              </div>
             </div>
           )}
 
@@ -262,8 +312,7 @@ export function MercadoLivrePanel() {
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                           <Checkbox
                             checked={selected.has(row.productId)}
-                            disabled={row.status !== "READY"}
-                            onCheckedChange={() => toggle(row.productId)}
+                            onCheckedChange={() => toggle(row)}
                             aria-label="Selecionar"
                           />
                           <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-gray-100">
@@ -277,6 +326,12 @@ export function MercadoLivrePanel() {
                             <div className="flex flex-wrap items-center gap-2">
                               <Badge className={badge.color} variant="secondary">{badge.label}</Badge>
                               <Badge variant="outline">{STOCK_MODE_LABEL[row.stockMode]}</Badge>
+                              <span className={`text-xs font-semibold ${row.quality >= 80 ? "text-green-600" : row.quality >= 50 ? "text-amber-600" : "text-red-600"}`} title="Qualidade do anúncio">
+                                {row.quality}/100
+                              </span>
+                              {row.aiStatus === "READY" && <Badge className="bg-purple-100 text-purple-800" variant="secondary">Sugestão da IA</Badge>}
+                              {(row.aiStatus === "QUEUED" || row.aiStatus === "RUNNING") && <Badge className="bg-purple-50 text-purple-700" variant="secondary">IA preparando…</Badge>}
+                              {row.aiStatus === "FAILED" && <Badge className="bg-red-50 text-red-700" variant="secondary">IA falhou</Badge>}
                             </div>
                             <button
                               type="button"
@@ -357,8 +412,9 @@ export function MercadoLivrePanel() {
           )}
         </TabsContent>
 
-        <TabsContent value="rules" className="mt-4">
+        <TabsContent value="rules" className="mt-4 space-y-6">
           <MlSettingsCard />
+          <MlAiSettingsCard />
         </TabsContent>
       </Tabs>
 

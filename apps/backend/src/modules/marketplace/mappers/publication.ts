@@ -241,6 +241,43 @@ export function saleTerms(eff: EffectiveFields, settings: StoreSettings, clearMa
   return terms;
 }
 
+export interface QualityInput {
+  photos: number;
+  titleLength: number;
+  /** Caracteristicas preenchidas / disponiveis para preencher (sem as automaticas). */
+  filledAttributes: number;
+  totalAttributes: number;
+  descriptionLength: number;
+  ready: boolean;
+}
+
+/**
+ * Nota de 0 a 100 do anuncio, pelas praticas mais citadas por quem vende no ML:
+ * obrigatorios completos, varias fotos, ficha tecnica cheia, titulo aproveitando
+ * os 60 caracteres e descricao de verdade. Vem com o que melhorar.
+ */
+export function qualityScore(input: QualityInput): { score: number; tips: string[] } {
+  const tips: string[] = [];
+  let score = input.ready ? 25 : 0;
+  if (!input.ready) tips.push('Complete os itens obrigatórios.');
+
+  score += Math.min(input.photos, 6) * 4;
+  if (input.photos < 6) tips.push(`Adicione mais fotos (tem ${input.photos}; o ideal é de 6 a 12, com detalhes e a peça instalada).`);
+
+  const ratio = input.totalAttributes > 0 ? input.filledAttributes / input.totalAttributes : 0;
+  score += Math.round(ratio * 25);
+  if (ratio < 0.6) tips.push(`Preencha mais características (${input.filledAttributes} de ${input.totalAttributes}). Elas alimentam os filtros da busca.`);
+
+  if (input.titleLength >= 40) score += 10;
+  else tips.push('Use mais do título (40 a 60 caracteres): tipo de peça, marca, modelo e aplicação.');
+
+  if (input.descriptionLength >= 300) score += 16;
+  else tips.push('Escreva uma descrição completa, com aplicação e nomes regionais da peça.');
+
+  tips.push('Grave um clip vertical de 30 a 59 segundos e envie pelo app do Mercado Livre.');
+  return { score: Math.min(100, score), tips };
+}
+
 /**
  * O que falta para o produto poder ser aprovado. `missingAttributes` sao os
  * nomes dos atributos obrigatorios da categoria ainda vazios; null quando a

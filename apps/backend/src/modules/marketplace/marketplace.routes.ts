@@ -51,6 +51,13 @@ router.get('/ml-panel/products/:productId/categories', ...authManager, mlPanelCo
 router.post('/ml-panel/products/:productId/images', ...authManager, upload.array('images', 12), mlPanelController.addImages);
 router.put('/ml-panel/products/:productId/images', ...authManager, mlPanelController.setImages);
 router.post('/ml-panel/products/:productId/approve', ...authManager, mlPanelController.approve);
+// Assistente de anuncio com IA (MANAGER+)
+router.post('/ml-panel/ai/queue', ...authManager, mlPanelController.aiQueue);
+router.post('/ml-panel/ai/apply', ...authManager, mlPanelController.aiApplyMany);
+router.post('/ml-panel/products/:productId/ai', ...authManager, mlPanelController.aiGenerate);
+router.post('/ml-panel/products/:productId/ai/apply', ...authManager, mlPanelController.aiApply);
+router.get('/ml-panel/products/:productId/photos/candidates', ...authManager, mlPanelController.photoCandidates);
+router.post('/ml-panel/products/:productId/photos/import', ...authManager, mlPanelController.photoImport);
 // Vendas: acompanhamento do despacho (STAFF+: quem separa e despacha e a equipe)
 router.get('/ml-panel/orders', ...authStaff, mlPanelController.listOrders);
 router.post('/ml-panel/orders/sync', ...authStaff, mlPanelController.syncOrders);

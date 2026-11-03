@@ -119,6 +119,7 @@ export async function loadAndNormalizeProduct(
     price: eff.price,
     stock: eff.quantity,
     brand: eff.brand,
+    description: profile?.description?.trim() || normalized.description,
     publication: {
       title: eff.title,
       categoryId: profile?.categoryId ?? null,

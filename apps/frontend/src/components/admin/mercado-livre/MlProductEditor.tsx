@@ -8,6 +8,7 @@ import { Label } from "../../ui/label";
 import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Separator } from "../../ui/separator";
+import { Textarea } from "../../ui/textarea";
 import {
   ArrowLeft,
   ArrowRight,
@@ -31,11 +32,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors";
 import { LISTING_TYPE_LABEL, ML_STATUS, brl } from "./mlLabels";
+import { MlAiAssistant } from "./MlAiAssistant";
 
 type PriceMode = "default" | "markup" | "fixed";
 
 interface FormState {
   title: string;
+  description: string;
   brand: string;
   partNumber: string;
   packageWeightG: string;
@@ -82,6 +85,7 @@ function initialForm(detail: MlProductDetail): FormState {
   const fixed = profile?.fixedPrice;
   return {
     title: effective.title,
+    description: profile?.description ?? "",
     brand: text(effective.brand),
     partNumber: text(effective.partNumber),
     packageWeightG: text(effective.packageWeightG),
@@ -102,6 +106,7 @@ function initialForm(detail: MlProductDetail): FormState {
 function toUpdate(form: FormState): MlProfileUpdate {
   return {
     title: form.title.trim() || null,
+    description: form.description.trim() || null,
     brand: form.brand.trim() || null,
     partNumber: form.partNumber.trim() || null,
     packageWeightG: numberOrNull(form.packageWeightG) ? Math.round(numberOrNull(form.packageWeightG)!) : null,
@@ -343,6 +348,29 @@ export function MlProductEditor({ productId, onClose, onChanged }: Props) {
             <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 break-words">{detail.listing.lastError}</p>
           )}
 
+          {/* Qualidade */}
+          <section className="rounded-lg border p-3 text-sm">
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Qualidade do anúncio</p>
+              <span className={`text-lg font-bold ${detail.quality.score >= 80 ? "text-green-600" : detail.quality.score >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                {detail.quality.score}/100
+              </span>
+            </div>
+            <ul className="mt-1 list-disc pl-5 text-xs text-gray-600">
+              {detail.quality.tips.map(tip => <li key={tip}>{tip}</li>)}
+            </ul>
+          </section>
+
+          <MlAiAssistant
+            key={detail.ai?.updatedAt ?? "none"}
+            detail={detail}
+            beforeApply={async () => Boolean(await save())}
+            onDetail={next => {
+              apply(next);
+              onChanged();
+            }}
+          />
+
           {/* Fotos */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
@@ -400,6 +428,17 @@ export function MlProductEditor({ productId, onClose, onChanged }: Props) {
               </div>
               <Input id="ml-title" value={form.title} maxLength={60} onChange={event => set("title", event.target.value)} />
               <p className="text-xs text-gray-500">Produto + marca + modelo. Ex.: "Filtro de Óleo Gol 1.6 Tecfil". O nome do ERP continua igual.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ml-description">Descrição do anúncio</Label>
+              <Textarea
+                id="ml-description"
+                rows={6}
+                value={form.description}
+                placeholder="Vazio = usa a descrição do site. O assistente de IA pode escrever uma com aplicação e nomes regionais."
+                onChange={event => set("description", event.target.value)}
+              />
+              <p className="text-xs text-gray-500">Texto puro: sem links, telefone ou preço (regra do Mercado Livre).</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">

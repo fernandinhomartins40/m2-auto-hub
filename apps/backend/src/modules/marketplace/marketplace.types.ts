@@ -147,6 +147,18 @@ export interface CategoryAttribute {
   required: boolean;
   type?: string;
   values?: Array<{ id: string; name: string }>;
+  /** Unidades aceitas (number_unit), ex.: cm, mm, kg. */
+  units?: string[];
+  /** Atributo que o vendedor nao preenche (calculado ou somente leitura no ML). */
+  readOnly?: boolean;
+}
+
+/** Produto do catalogo oficial do marketplace, usado como referencia. */
+export interface CatalogProduct {
+  id: string;
+  name: string;
+  attributes: Array<{ id: string; name: string; valueId: string | null; valueName: string | null }>;
+  pictures: string[];
 }
 
 /** Evento de webhook normalizado para gravacao em MarketplaceEvent. */

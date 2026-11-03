@@ -1,4 +1,5 @@
 import {
+  AiSuggestionStatus,
   ListingSyncStatus,
   MarketplaceConnectionStatus,
   MarketplaceListing,
@@ -11,7 +12,7 @@ import { prisma } from '@config/database.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { logger } from '@shared/utils/logger.util.js';
 import { processProductImage } from '../../../middleware/upload.middleware.js';
-import { MercadoLivreAdapter } from '../adapters/mercado-livre.adapter.js';
+import { MercadoLivreAdapter, plainText } from '../adapters/mercado-livre.adapter.js';
 import { getAdapter } from '../adapters/index.js';
 import { CategoryAttribute, ProviderAccount } from '../marketplace.types.js';
 import {
@@ -22,6 +23,7 @@ import {
   effectiveFields,
   parseSettings,
   profileAttributes,
+  qualityScore,
   readiness,
 } from '../mappers/publication.js';
 import { absoluteImageUrl } from '../mappers/product-normalizer.js';
@@ -109,18 +111,35 @@ export class MlPanelService {
     return attributes;
   }
 
-  /** Nomes dos obrigatorios da categoria ainda vazios; null quando nao da para consultar. */
-  private async missingAttributes(
+  /**
+   * Obrigatorios ainda vazios (null quando nao da para consultar a categoria) e
+   * quantas caracteristicas a loja preenche de quantas a categoria oferece.
+   */
+  private async attributeStats(
     account: ProviderAccount | null,
     profile: MarketplaceProductProfile | undefined
-  ): Promise<string[] | null> {
-    if (!account || !profile?.categoryId) return null;
+  ): Promise<{ missing: string[] | null; filled: number; total: number }> {
+    const filled = new Set(profileAttributes(profile ?? null).map(item => item.id));
+    if (!account || !profile?.categoryId) return { missing: null, filled: filled.size, total: 0 };
     const attributes = await this.categoryAttributes(account, profile.categoryId).catch(() => null);
-    if (!attributes) return null;
-    const filled = new Set(profileAttributes(profile).map(item => item.id));
-    return attributes
-      .filter(attr => attr.required && !AUTO_ATTRIBUTES.has(attr.id) && !filled.has(attr.id))
-      .map(attr => attr.name);
+    if (!attributes) return { missing: null, filled: filled.size, total: 0 };
+    const fillable = attributes.filter(attr => !AUTO_ATTRIBUTES.has(attr.id) && !attr.readOnly);
+    return {
+      missing: fillable.filter(attr => attr.required && !filled.has(attr.id)).map(attr => attr.name),
+      filled: fillable.filter(attr => filled.has(attr.id)).length,
+      total: fillable.length,
+    };
+  }
+
+  private quality(eff: EffectiveFields, product: Product, profile: MarketplaceProductProfile | undefined, stats: { filled: number; total: number }, checks: ReadinessCheck[]) {
+    return qualityScore({
+      photos: images(product).length,
+      titleLength: eff.title.length,
+      filledAttributes: stats.filled,
+      totalAttributes: stats.total,
+      descriptionLength: plainText(profile?.description?.trim() || product.description || '').length,
+      ready: checks.every(check => check.ok),
+    });
   }
 
   // --- Lista ---
@@ -160,6 +179,7 @@ export class MlPanelService {
       include: {
         marketplaceProfiles: { where: { provider: PROVIDER } },
         marketplaceListings: { where: { provider: PROVIDER } },
+        aiSuggestions: { where: { provider: PROVIDER }, select: { status: true } },
       },
       orderBy: { name: 'asc' },
       take: MAX_CANDIDATES,
@@ -168,8 +188,11 @@ export class MlPanelService {
     const rows = [];
     for (const product of products) {
       const { profile, eff, listing } = this.evaluate(product, settings);
-      const checks = readiness(eff, images(product), profile?.categoryId, await this.missingAttributes(account, profile));
+      const stats = await this.attributeStats(account, profile);
+      const checks = readiness(eff, images(product), profile?.categoryId, stats.missing);
       rows.push({
+        aiStatus: product.aiSuggestions[0]?.status ?? null,
+        quality: this.quality(eff, product, profile, stats, checks).score,
         productId: product.id,
         name: product.name,
         sku: product.sku,
@@ -196,9 +219,14 @@ export class MlPanelService {
       });
     }
 
-    const counts = { ALL: rows.length, READY: 0, PENDING: 0, PUBLISHED: 0, PAUSED: 0, ERROR: 0 };
-    for (const row of rows) counts[row.status] += 1;
-    const filtered = query.status && query.status !== 'ALL' ? rows.filter(row => row.status === query.status) : rows;
+    const counts = { ALL: rows.length, READY: 0, PENDING: 0, PUBLISHED: 0, PAUSED: 0, ERROR: 0, AI_READY: 0 };
+    for (const row of rows) {
+      counts[row.status] += 1;
+      if (row.aiStatus === AiSuggestionStatus.READY) counts.AI_READY += 1;
+    }
+    const filtered = query.status === 'AI_READY'
+      ? rows.filter(row => row.aiStatus === AiSuggestionStatus.READY)
+      : query.status && query.status !== 'ALL' ? rows.filter(row => row.status === query.status) : rows;
     const start = (query.page - 1) * query.pageSize;
     return {
       items: filtered.slice(start, start + query.pageSize),
@@ -249,11 +277,16 @@ export class MlPanelService {
       }
     }
 
-    const missing = await this.missingAttributes(account, profile);
-    const checks = readiness(eff, images(product), profile?.categoryId, missing);
-    const fee = await this.estimateFee(account, eff, profile?.categoryId);
+    const stats = await this.attributeStats(account, profile);
+    const checks = readiness(eff, images(product), profile?.categoryId, stats.missing);
+    const [fee, ai] = await Promise.all([
+      this.estimateFee(account, eff, profile?.categoryId),
+      prisma.marketplaceAiSuggestion.findUnique({ where: { productId_provider: { productId, provider: PROVIDER } } }),
+    ]);
 
     return {
+      quality: this.quality(eff, product, profile, stats, checks),
+      ai: ai ? { status: ai.status, payload: ai.payload, error: ai.error, updatedAt: ai.updatedAt, appliedAt: ai.appliedAt } : null,
       product: {
         id: product.id,
         name: product.name,
@@ -323,6 +356,16 @@ export class MlPanelService {
 
     // Anuncio no ar recebe preco, quantidade e prazo novos na hora.
     const listing = await prisma.marketplaceListing.findUnique({ where: { productId_provider: { productId, provider: PROVIDER } } });
+    if (listing?.externalId && dto.description !== undefined) {
+      const product = await this.loadProduct(productId);
+      const text = dto.description?.trim() || product.description;
+      const account = await this.account();
+      if (account && text) {
+        await (getAdapter(PROVIDER) as MercadoLivreAdapter).updateDescription(account, listing.externalId, text).catch(err =>
+          logger.warn('[MlPanel] falha ao atualizar descricao do anuncio', { productId, err: String(err) })
+        );
+      }
+    }
     if (listing?.externalId) {
       await listingService.sync(listing.id).catch(err =>
         logger.warn('[MlPanel] falha ao atualizar anuncio apos edicao', { productId, err: String(err) })

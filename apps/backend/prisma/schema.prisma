@@ -544,6 +544,7 @@ model Product {
   vehicleCompatibility ProductVehicleCompatibility[]
   marketplaceListings  MarketplaceListing[]
   marketplaceProfiles  MarketplaceProductProfile[]
+  aiSuggestions        MarketplaceAiSuggestion[]
   serviceOrderItems    ServiceOrderItem[]
 
   @@index([category])
@@ -836,6 +837,7 @@ model MarketplaceProductProfile {
   provider  MarketplaceProvider
 
   title        String? // titulo do anuncio (ML: ate 60 caracteres)
+  description  String? @db.Text // descricao do anuncio; vazia = descricao do site
   brand        String?
   partNumber   String?
   categoryId   String?
@@ -918,6 +920,65 @@ model MarketplaceOrder {
   @@index([shipmentId])
   @@index([dispatchBy])
   @@map("marketplace_orders")
+}
+
+// --- Inteligencia artificial (DeepSeek) ---
+
+// Configuracao unica da IA. A chave fica criptografada como os segredos de marketplace.
+model AiSettings {
+  id              String   @id @default("default")
+  enabled         Boolean  @default(false)
+  apiKey          String? // ENCRYPTED
+  model           String   @default("deepseek-flash")
+  monthlyBudgetBrl Decimal @default(50) @db.Decimal(10, 2)
+  usdToBrl        Decimal  @default(5.5) @db.Decimal(8, 4) // cotacao usada para converter o custo
+  updatedAt       DateTime @updatedAt
+
+  @@map("ai_settings")
+}
+
+// Cada chamada a IA, com tokens e custo, para o limite mensal e a conferencia.
+model AiUsage {
+  id           String   @id @default(uuid())
+  feature      String // ex.: listing_assistant, photo_check
+  model        String
+  inputTokens  Int
+  cachedTokens Int      @default(0)
+  outputTokens Int
+  costUsd      Decimal  @db.Decimal(12, 6)
+  productId    String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("ai_usage")
+}
+
+enum AiSuggestionStatus {
+  QUEUED // na fila do preparo em lote
+  RUNNING
+  READY // pronta para revisar
+  APPLIED
+  FAILED
+}
+
+// Sugestao da IA para o anuncio de um produto, revisada pelo lojista antes de valer.
+model MarketplaceAiSuggestion {
+  id        String              @id @default(uuid())
+  productId String
+  provider  MarketplaceProvider
+  status    AiSuggestionStatus  @default(QUEUED)
+  payload   Json?
+  error     String?             @db.Text
+  costUsd   Decimal?            @db.Decimal(12, 6)
+  appliedAt DateTime?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, provider])
+  @@index([status])
+  @@map("marketplace_ai_suggestions")
 }
 
 // Log de eventos (auditoria/idempotencia de webhooks)

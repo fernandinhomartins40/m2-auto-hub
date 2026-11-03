@@ -111,6 +111,8 @@ export interface MlStoreSettings {
 }
 
 export interface MlPanelRow {
+  aiStatus: AiSuggestionStatus | null;
+  quality: number;
   productId: string;
   name: string;
   sku: string;
@@ -139,7 +141,7 @@ export interface MlPanelList {
   total: number;
   page: number;
   pageSize: number;
-  counts: Record<'ALL' | MlPanelStatus, number>;
+  counts: Record<'ALL' | 'AI_READY' | MlPanelStatus, number>;
   truncated: boolean;
   connected: boolean;
 }
@@ -152,6 +154,7 @@ export interface MlAttributeValue {
 
 export interface MlProfile {
   title: string | null;
+  description: string | null;
   brand: string | null;
   partNumber: string | null;
   categoryId: string | null;
@@ -196,6 +199,8 @@ export interface MlReadinessCheck {
 }
 
 export interface MlProductDetail {
+  quality: { score: number; tips: string[] };
+  ai: { status: AiSuggestionStatus; payload: AiListingSuggestion | null; error: string | null; updatedAt: string; appliedAt: string | null } | null;
   product: {
     id: string;
     name: string;
@@ -228,7 +233,7 @@ export type MlProfileUpdate = Partial<Omit<MlProfile, 'approvedAt' | 'markupPerc
 export interface MlPanelQuery {
   q?: string;
   scope?: 'default' | 'all';
-  status?: 'ALL' | MlPanelStatus;
+  status?: 'ALL' | 'AI_READY' | MlPanelStatus;
   page?: number;
   pageSize?: number;
 }
@@ -287,17 +292,105 @@ export interface MlOrderList {
 
 export type MlOrderAction = 'SUPPLIER_RECEIVED' | 'PICKED' | 'BACK_TO_PICK';
 
+// --- Inteligência artificial ---
+
+export type AiSuggestionStatus = 'QUEUED' | 'RUNNING' | 'READY' | 'APPLIED' | 'FAILED';
+export type AiApplyField = 'title' | 'category' | 'attributes' | 'description';
+
+export interface AiSettings {
+  enabled: boolean;
+  hasApiKey: boolean;
+  apiKeyMasked: string | null;
+  model: string;
+  models: string[];
+  monthlyBudgetBrl: number;
+  usdToBrl: number;
+  month: { spentBrl: number; calls: number; products: number };
+}
+
+export interface AiSuggestedAttribute {
+  id: string;
+  name: string;
+  valueId: string | null;
+  valueName: string;
+  source: string;
+  confidence: 'alta' | 'media';
+}
+
+export interface AiListingSuggestion {
+  categoryId: string | null;
+  categoryName: string | null;
+  title: string;
+  attributes: AiSuggestedAttribute[];
+  description: string;
+  keywords: string[];
+  regionalNames: string[];
+  clipScript: string;
+  photoChecklist: string[];
+  notes: string;
+  discarded: string[];
+  trends: string[];
+  catalog: Array<{ id: string; name: string; pictures: string[] }>;
+  generatedAt: string;
+}
+
+export interface AiPhotoCandidate {
+  url: string;
+  source: string;
+  width: number | null;
+  height: number | null;
+  verdict: { index: number; sameProduct: boolean; watermark: boolean; whiteBackground: boolean; reason: string } | null;
+  recommended: boolean;
+}
+
+export const aiService = {
+  async getSettings(): Promise<AiSettings> {
+    return unwrap((await apiClient.get('/ai/settings')).data);
+  },
+  async updateSettings(settings: Partial<Omit<AiSettings, 'hasApiKey' | 'apiKeyMasked' | 'models' | 'month'>> & { apiKey?: string }): Promise<AiSettings> {
+    return unwrap((await apiClient.put('/ai/settings', settings)).data);
+  },
+  async test(): Promise<{ ok: boolean }> {
+    return unwrap((await apiClient.post('/ai/test')).data);
+  },
+};
+
 function unwrap<T>(data: { data: T }): T {
   return data.data;
 }
 
 export const mlPanelService = {
+  async aiGenerate(productId: string): Promise<AiListingSuggestion> {
+    // A IA leva de 10 a 60 segundos; o padrão do cliente HTTP cortaria antes.
+    return unwrap((await apiClient.post(`/marketplace/ml-panel/products/${productId}/ai`, undefined, { timeout: 180_000 })).data);
+  },
+
+  async aiApply(productId: string, fields: AiApplyField[], attributeIds?: string[], description?: string): Promise<MlProductDetail> {
+    return unwrap((await apiClient.post(`/marketplace/ml-panel/products/${productId}/ai/apply`, { fields, attributeIds, description })).data);
+  },
+
+  async aiQueue(productIds: string[]): Promise<{ queued: number }> {
+    return unwrap((await apiClient.post('/marketplace/ml-panel/ai/queue', { productIds })).data);
+  },
+
+  async aiApplyMany(productIds: string[]): Promise<Array<{ productId: string; ok: boolean; error?: string }>> {
+    return unwrap((await apiClient.post('/marketplace/ml-panel/ai/apply', { productIds }, { timeout: 300_000 })).data);
+  },
+
+  async photoCandidates(productId: string): Promise<AiPhotoCandidate[]> {
+    return unwrap((await apiClient.get(`/marketplace/ml-panel/products/${productId}/photos/candidates`, { timeout: 180_000 })).data);
+  },
+
+  async photoImport(productId: string, urls: string[]): Promise<{ detail: MlProductDetail; added: number; failed: string[] }> {
+    return unwrap((await apiClient.post(`/marketplace/ml-panel/products/${productId}/photos/import`, { urls }, { timeout: 120_000 })).data);
+  },
+
   async listOrders(stage: 'OPEN' | 'ALL' | MlOrderStage, page = 1): Promise<MlOrderList> {
     return unwrap((await apiClient.get('/marketplace/ml-panel/orders', { params: { stage, page } })).data);
   },
 
   async syncOrders(): Promise<void> {
-    await apiClient.post('/marketplace/ml-panel/orders/sync');
+    await apiClient.post('/marketplace/ml-panel/orders/sync', undefined, { timeout: 120_000 });
   },
 
   async moveOrder(id: string, action: MlOrderAction): Promise<MlOrder> {
@@ -349,7 +442,7 @@ export const mlPanelService = {
   },
 
   async list(query: MlPanelQuery): Promise<MlPanelList> {
-    return unwrap((await apiClient.get('/marketplace/ml-panel/products', { params: query })).data);
+    return unwrap((await apiClient.get('/marketplace/ml-panel/products', { params: query, timeout: 60_000 })).data);
   },
 
   async detail(productId: string): Promise<MlProductDetail> {
@@ -383,7 +476,7 @@ export const mlPanelService = {
   },
 
   async approveMany(productIds: string[]): Promise<Array<{ productId: string; ok: boolean; error?: string }>> {
-    return unwrap((await apiClient.post('/marketplace/ml-panel/products/approve', { productIds })).data);
+    return unwrap((await apiClient.post('/marketplace/ml-panel/products/approve', { productIds }, { timeout: 300_000 })).data);
   },
 
   async activateListing(id: string): Promise<MarketplaceListing> {

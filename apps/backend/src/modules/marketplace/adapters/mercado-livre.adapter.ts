@@ -13,6 +13,7 @@ import {
   NormalizedOrderItem,
   CategorySuggestion,
   CategoryAttribute,
+  CatalogProduct,
   NormalizedWebhookEvent,
   NormalizedShipment,
   PublicationAttribute,
@@ -21,6 +22,19 @@ import {
 const API_BASE = 'https://api.mercadolibre.com';
 const AUTH_BASE = 'https://auth.mercadolivre.com.br';
 const SITE_ID = 'MLB'; // Brasil
+
+/** O ML recusa HTML na descricao: a do site pode vir do editor rico. */
+export function plainText(value: string): string {
+  return value
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\/\s*(p|div|li|h\d)\s*>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '- ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 function toMlValue(attr: PublicationAttribute): Record<string, unknown> {
   return attr.valueId ? { id: attr.id, value_id: attr.valueId } : { id: attr.id, value_name: attr.valueName };
@@ -137,8 +151,43 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
         values: Array.isArray(attr.values)
           ? (attr.values as Array<Record<string, unknown>>).map(v => ({ id: String(v.id), name: String(v.name) }))
           : undefined,
+        units: Array.isArray(attr.allowed_units)
+          ? (attr.allowed_units as Array<Record<string, unknown>>).map(u => String(u.id))
+          : undefined,
+        readOnly: Boolean(tags.read_only || tags.hidden || tags.fixed || tags.inferred),
       };
     });
+  }
+
+  /** Termos mais buscados na categoria (ou no site, sem categoria). */
+  async getTrends(account: ProviderAccount, categoryId?: string | null): Promise<string[]> {
+    const data = await this.apiGet<Array<Record<string, unknown>>>(account, `/trends/${SITE_ID}${categoryId ? `/${categoryId}` : ''}`);
+    return (data ?? []).map(item => String(item.keyword ?? '')).filter(Boolean);
+  }
+
+  /** Produtos do catalogo oficial parecidos com a busca, com atributos e fotos. */
+  async searchCatalog(account: ProviderAccount, query: string, limit = 3): Promise<CatalogProduct[]> {
+    const params = new URLSearchParams({ status: 'active', site_id: SITE_ID, q: query, limit: String(limit) });
+    const data = await this.apiGet<Record<string, unknown>>(account, `/products/search?${params.toString()}`);
+    const results = (data.results as Array<Record<string, unknown>>) ?? [];
+    return results.slice(0, limit).map(item => ({
+      id: String(item.id),
+      name: String(item.name ?? ''),
+      attributes: ((item.attributes as Array<Record<string, unknown>>) ?? []).map(attr => ({
+        id: String(attr.id),
+        name: String(attr.name ?? attr.id),
+        valueId: attr.value_id ? String(attr.value_id) : null,
+        valueName: attr.value_name ? String(attr.value_name) : null,
+      })),
+      pictures: ((item.pictures as Array<Record<string, unknown>>) ?? [])
+        .map(pic => String(pic.url ?? pic.secure_url ?? ''))
+        .filter(url => url.startsWith('http')),
+    }));
+  }
+
+  /** Troca a descricao de um anuncio ja publicado (o ML so aceita texto puro). */
+  async updateDescription(account: ProviderAccount, externalId: string, text: string): Promise<void> {
+    await this.apiSend(account, 'PUT', `/items/${externalId}/description`, { plain_text: plainText(text) });
   }
 
   // ---------------------------------------------------------------------------
@@ -195,7 +244,7 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
     // Descricao (endpoint separado no ML)
     if (product.description) {
       await this.apiSend(account, 'POST', `/items/${externalId}/description`, {
-        plain_text: product.description,
+        plain_text: plainText(product.description),
       }).catch(err => logger.warn('[ML] failed to set description', { externalId, err: String(err) }));
     }
 

@@ -3,7 +3,11 @@ import { ApiError } from '@shared/utils/error.util.js';
 import { mlPanelService } from './services/ml-panel.service.js';
 import { listingService } from './services/listing.service.js';
 import { mlOrderService } from './services/ml-order.service.js';
+import { mlAiService } from './services/ml-ai.service.js';
 import {
+  mlAiApplySchema,
+  mlAiBulkSchema,
+  mlPhotoImportSchema,
   mlBulkApproveSchema,
   mlCategorySearchSchema,
   mlImagesSchema,
@@ -46,6 +50,17 @@ export const mlPanelController = {
   approve: handle(req => mlPanelService.approveAndPublish(req.params.productId, req.admin?.adminId)),
   approveMany: handle(req => mlPanelService.approveMany(mlBulkApproveSchema.parse(req.body).productIds, req.admin?.adminId)),
   activateListing: handle(req => listingService.activate(req.params.id)),
+
+  // --- Inteligencia artificial ---
+  aiGenerate: handle(req => mlAiService.generate(req.params.productId)),
+  aiApply: handle(req => {
+    const dto = mlAiApplySchema.parse(req.body);
+    return mlAiService.apply(req.params.productId, dto.fields, dto.attributeIds, dto.description);
+  }),
+  aiQueue: handle(req => mlAiService.enqueue(mlAiBulkSchema.parse(req.body).productIds)),
+  aiApplyMany: handle(req => mlAiService.applyMany(mlAiBulkSchema.parse(req.body).productIds)),
+  photoCandidates: handle(req => mlAiService.photoCandidates(req.params.productId)),
+  photoImport: handle(req => mlAiService.importPhotos(req.params.productId, mlPhotoImportSchema.parse(req.body).urls)),
 
   // --- Vendas ---
   listOrders: handle(req => {

@@ -21,6 +21,7 @@ export type MlSettingsDto = z.infer<typeof mlSettingsSchema>;
 
 export const mlProfileSchema = z.object({
   title: optionalText(60),
+  description: optionalText(50000),
   brand: optionalText(120),
   partNumber: optionalText(120),
   categoryId: optionalText(40),
@@ -46,7 +47,7 @@ export type MlProfileDto = z.infer<typeof mlProfileSchema>;
 export const mlPanelQuerySchema = z.object({
   q: z.string().trim().max(120).optional(),
   scope: z.enum(['default', 'all']).default('default'),
-  status: z.enum(['ALL', 'READY', 'PENDING', 'PUBLISHED', 'PAUSED', 'ERROR']).default('ALL'),
+  status: z.enum(['ALL', 'READY', 'PENDING', 'PUBLISHED', 'PAUSED', 'ERROR', 'AI_READY']).default('ALL'),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });
@@ -58,6 +59,14 @@ export const mlOrdersQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });
 export const mlOrderMoveSchema = z.object({ action: z.enum(['SUPPLIER_RECEIVED', 'PICKED', 'BACK_TO_PICK']) });
+
+export const mlAiApplySchema = z.object({
+  fields: z.array(z.enum(['title', 'category', 'attributes', 'description'])).min(1),
+  attributeIds: z.array(z.string()).optional(),
+  description: z.string().max(50000).optional(),
+});
+export const mlAiBulkSchema = z.object({ productIds: z.array(z.string().uuid()).min(1).max(500) });
+export const mlPhotoImportSchema = z.object({ urls: z.array(z.string().url()).min(1).max(12) });
 
 export const mlImagesSchema = z.object({ images: z.array(z.string().min(1)).max(12) });
 export const mlBulkApproveSchema = z.object({ productIds: z.array(z.string().uuid()).min(1).max(100) });

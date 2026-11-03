@@ -35,6 +35,7 @@ import marketplaceRoutes, { webhookRouter } from '@modules/marketplace/marketpla
 import serviceOrdersRoutes from '@modules/service-orders/service-orders.routes.js';
 import privacyRoutes from '@modules/privacy/privacy.routes.js';
 import ellonRoutes from '@modules/ellon/ellon.routes.js';
+import aiRoutes from '@modules/ai/ai.routes.js';
 
 import { ensureLandingPageConfig } from './bootstrap/essential-data.js';
 
@@ -139,6 +140,7 @@ export function createApp(): Express {
   app.use('/service-orders', serviceOrdersRoutes);
   app.use('/privacy', privacyRoutes);
   app.use('/ellon', ellonRoutes);
+  app.use('/ai', aiRoutes);
   app.use('/', notificationsRoutes);
 
   app.use((_req: Request, res: Response) => {
