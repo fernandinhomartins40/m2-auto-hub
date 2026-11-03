@@ -1,0 +1,9 @@
+# Materiais da Play Store — app do cliente
+
+- `icone-ia-512.png`: ícone 3D gerado para o cliente (512 × 512).
+- `destaque-ia-1024x500.png`: gráfico de destaque gerado para o cliente (1024 × 500).
+- `screenshots/`: oito capturas originais da experiência do cliente.
+- `artes-ia/`: oito propostas geradas a partir das capturas, com fundo automotivo. Consulte o README dessa pasta antes de usá-las.
+- `icone-512.png` e `destaque-1024x500.png`: materiais anteriores, mantidos como alternativa.
+
+As artes geradas redesenham a marca ou as telas; confira a fidelidade à logo oficial e à experiência real antes do envio. Para screenshots, priorize as capturas reais. O formato adequado não garante aprovação pela Google Play.
