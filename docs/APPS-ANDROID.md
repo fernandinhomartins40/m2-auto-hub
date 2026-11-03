@@ -90,7 +90,7 @@ Para cada app:
 3. Deixar a **Assinatura de apps do Google Play** ativa.
 4. Preencher a ficha com os arquivos de `store/` (ícone 512 e destaque 1024x500) e ao menos duas capturas de tela do celular.
 5. Em **Conteúdo do app**, preencher:
-   - Política de privacidade: `https://m2centerauto.com.br/privacidade`
+   - Política de privacidade: `https://www.m2centerauto.com.br/privacidade`
    - Segurança dos dados: ver abaixo
    - Acesso a apps: informar uma conta de teste
    - Classificação de conteúdo, público-alvo e anúncios (não há anúncios)
@@ -98,7 +98,7 @@ Para cada app:
 
 ### Exclusão de conta (app do cliente)
 
-No Console, informe `https://m2centerauto.com.br/privacidade#excluir-conta`. No app, o caminho é Conta → Privacidade → Excluir minha conta.
+No Console, informe `https://www.m2centerauto.com.br/privacidade#excluir-conta`. No app, o caminho é Mais → Privacidade → Excluir minha conta.
 
 O pedido entra na fila de privacidade do painel (`DELETION`), com prazo de 15 dias. **A equipe precisa executar a exclusão**: a API registra o pedido, não apaga os dados sozinha.
 

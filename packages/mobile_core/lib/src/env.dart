@@ -7,15 +7,18 @@
 /// O default é produção: um build de loja sem o define continua funcionando.
 class Env {
   /// URL base da API. No emulador, `10.0.2.2` é a máquina de desenvolvimento.
+  ///
+  /// Com `www`: o domínio sem `www` responde 301, e o Dio não segue
+  /// redirecionamento em POST, então o login falharia.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://m2centerauto.com.br/api',
+    defaultValue: 'https://www.m2centerauto.com.br/api',
   );
 
   /// Site público: loja, aviso de privacidade e exclusão de conta.
   static const String siteUrl = String.fromEnvironment(
     'SITE_URL',
-    defaultValue: 'https://m2centerauto.com.br',
+    defaultValue: 'https://www.m2centerauto.com.br',
   );
 
   /// Origem da API, para montar a URL de imagens em `/uploads`.

@@ -14,7 +14,7 @@ Respostas para cada seção de **Painel → Configurar seu app** no Play Console
 Mesmo endereço nos dois apps:
 
 ```
-https://m2centerauto.com.br/privacidade
+https://www.m2centerauto.com.br/privacidade
 ```
 
 A página cita os dois apps, o que cada um coleta, o uso da câmera no app do mecânico, o e-mail de contato e como excluir a conta. Ela precisa estar no ar antes do envio: abra o endereço no navegador e confira se aparece a seção **Aplicativos para Android**.
@@ -82,7 +82,7 @@ O resultado esperado é **Livre** (L) para os dois.
 | Todos os dados são criptografados em trânsito? | Sim (só HTTPS) |
 | O app permite que os usuários criem uma conta? | Cliente: **Sim, por cadastro com usuário e senha**. Mecânico: **Não**, a conta é criada pela oficina. |
 | Os usuários podem pedir a exclusão dos dados? | Sim |
-| Link para exclusão da conta | `https://m2centerauto.com.br/privacidade#excluir-conta` |
+| Link para exclusão da conta | `https://www.m2centerauto.com.br/privacidade#excluir-conta` |
 
 **Compartilhamento:** responda **Não** em todos os tipos. Hospedagem, e-mail e o leitor de placas são serviços que trabalham para a M2, e o Google não conta isso como compartilhamento.
 
@@ -119,7 +119,7 @@ Os dados de clientes e veículos que o mecânico digita pertencem aos clientes d
 
 ## 11. Exclusão de conta
 
-- **Cliente:** no app, **Mais → Privacidade → Excluir minha conta**. Fora do app, pelo link `https://m2centerauto.com.br/privacidade#excluir-conta` ou pelo e-mail `contato@m2centerauto.com.br`. O prazo de resposta é de até 15 dias.
+- **Cliente:** no app, **Mais → Privacidade → Excluir minha conta**. Fora do app, pelo link `https://www.m2centerauto.com.br/privacidade#excluir-conta` ou pelo e-mail `contato@m2centerauto.com.br`. O prazo de resposta é de até 15 dias.
 - **Mecânico:** não há cadastro no app. A oficina encerra a conta pelo painel administrativo. Se o Console pedir um link, use o mesmo do cliente.
 
 ## 12. Permissões e serviços
@@ -135,7 +135,7 @@ Os dados de clientes e veículos que o mecânico digita pertencem aos clientes d
 - **Categoria:** Auto e veículos
 - **Tags:** manutenção de veículos, oficina mecânica, autopeças
 - **E-mail de contato:** `contato@m2centerauto.com.br`
-- **Site:** `https://m2centerauto.com.br`
+- **Site:** `https://www.m2centerauto.com.br`
 - **Telefone:** opcional; deixe em branco se não quiser exibir.
 
 ### App do cliente: M2 Center Auto
