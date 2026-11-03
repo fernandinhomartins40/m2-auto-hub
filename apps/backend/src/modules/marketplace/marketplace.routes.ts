@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { AdminRole } from '@prisma/client';
 import { AdminAuthMiddleware } from '@middlewares/admin-auth.middleware.js';
+import { upload } from '../../middleware/upload.middleware.js';
 import { marketplaceController } from './marketplace.controller.js';
+import { mlPanelController } from './ml-panel.controller.js';
 import { webhookController } from './webhook.controller.js';
 
 // ---------------------------------------------------------------------------
@@ -35,7 +37,20 @@ router.get('/products/:productId/listings', ...authManager, marketplaceControlle
 router.post('/listings/:productId/publish', ...authManager, marketplaceController.publish);
 router.post('/listings/:id/sync', ...authManager, marketplaceController.syncListing);
 router.post('/listings/:id/pause', ...authManager, marketplaceController.pauseListing);
+router.post('/listings/:id/activate', ...authManager, mlPanelController.activateListing);
 router.delete('/listings/:id', ...authManager, marketplaceController.closeListing);
+
+// Painel do Mercado Livre (MANAGER+): aptos, edicao rapida, aprovacao e regras
+router.get('/ml-panel/settings', ...authManager, mlPanelController.getSettings);
+router.put('/ml-panel/settings', ...authManager, mlPanelController.updateSettings);
+router.get('/ml-panel/products', ...authManager, mlPanelController.list);
+router.post('/ml-panel/products/approve', ...authManager, mlPanelController.approveMany);
+router.get('/ml-panel/products/:productId', ...authManager, mlPanelController.detail);
+router.put('/ml-panel/products/:productId', ...authManager, mlPanelController.updateProfile);
+router.get('/ml-panel/products/:productId/categories', ...authManager, mlPanelController.suggestCategories);
+router.post('/ml-panel/products/:productId/images', ...authManager, upload.array('images', 12), mlPanelController.addImages);
+router.put('/ml-panel/products/:productId/images', ...authManager, mlPanelController.setImages);
+router.post('/ml-panel/products/:productId/approve', ...authManager, mlPanelController.approve);
 
 export default router;
 

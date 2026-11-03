@@ -1,6 +1,8 @@
-import { Prisma } from '@prisma/client';
+import { MarketplaceProvider, Prisma } from '@prisma/client';
 import { prisma } from '@config/database.js';
+import { environment } from '@config/environment.js';
 import { NormalizedProduct, VehicleCompat } from '../marketplace.types.js';
+import { effectiveFields, parseSettings, publicationAttributes, saleTerms } from './publication.js';
 
 type ProductWithCompat = Prisma.ProductGetPayload<{
   include: { vehicleCompatibility: true };
@@ -83,14 +85,46 @@ export async function normalizeProduct(product: ProductWithCompat): Promise<Norm
   };
 }
 
+/** O marketplace baixa as fotos pela URL: caminhos locais (/uploads/...) viram absolutos. */
+export function absoluteImageUrl(url: string): string {
+  return url.startsWith('/') ? `${environment.app.baseUrl.replace(/\/$/, '')}${url}` : url;
+}
+
 /**
- * Carrega o produto com compatibilidades e normaliza.
+ * Carrega o produto com compatibilidades e normaliza. Com `provider`, aplica o
+ * perfil do painel e as regras da loja: preco e quantidade passam a ser os do
+ * anuncio, e `publication` traz titulo, categoria, atributos e termos de venda.
  */
-export async function loadAndNormalizeProduct(productId: string): Promise<NormalizedProduct | null> {
+export async function loadAndNormalizeProduct(
+  productId: string,
+  provider?: MarketplaceProvider
+): Promise<NormalizedProduct | null> {
   const product = await prisma.product.findUnique({
     where: { id: productId },
     include: { vehicleCompatibility: true },
   });
   if (!product) return null;
-  return normalizeProduct(product);
+  const normalized = await normalizeProduct(product);
+  normalized.images = normalized.images.map(absoluteImageUrl);
+  if (!provider) return normalized;
+
+  const [profile, connection] = await Promise.all([
+    prisma.marketplaceProductProfile.findUnique({ where: { productId_provider: { productId, provider } } }),
+    prisma.marketplaceConnection.findUnique({ where: { provider }, select: { settings: true } }),
+  ]);
+  const settings = parseSettings(connection?.settings);
+  const eff = effectiveFields(product, profile, settings);
+  return {
+    ...normalized,
+    price: eff.price,
+    stock: eff.quantity,
+    brand: eff.brand,
+    publication: {
+      title: eff.title,
+      categoryId: profile?.categoryId ?? null,
+      listingTypeId: eff.listingTypeId,
+      attributes: publicationAttributes(eff, product.sku, profile),
+      saleTerms: saleTerms(eff, settings, true),
+    },
+  };
 }

@@ -94,9 +94,200 @@ export interface CategoryAttribute {
   values?: Array<{ id: string; name: string }>;
 }
 
+// --- Painel do Mercado Livre ---
+
+export type MlStockMode = 'STORE_ONLY' | 'STORE_PLUS_SUPPLIER' | 'MADE_TO_ORDER';
+export type MlPanelStatus = 'READY' | 'PENDING' | 'PUBLISHED' | 'PAUSED' | 'ERROR';
+export type MlListingType = 'gold_special' | 'gold_pro';
+export type MlWarrantyType = 'Garantia do vendedor' | 'Garantia de fábrica' | 'Sem garantia';
+
+export interface MlStoreSettings {
+  markupPercent: number;
+  listingTypeId: MlListingType;
+  warrantyType: MlWarrantyType;
+  warrantyDays: number;
+  dispatchCutoff: string;
+  supplierDeadline: string;
+}
+
+export interface MlPanelRow {
+  productId: string;
+  name: string;
+  sku: string;
+  image: string | null;
+  stock: number;
+  sitePrice: number;
+  price: number;
+  quantity: number;
+  stockMode: MlStockMode;
+  title: string;
+  status: MlPanelStatus;
+  missing: string[];
+  approvedAt: string | null;
+  listing: {
+    id: string;
+    externalId: string | null;
+    externalUrl: string | null;
+    status: ListingSyncStatus;
+    pausedBySystem: boolean;
+    lastError: string | null;
+  } | null;
+}
+
+export interface MlPanelList {
+  items: MlPanelRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<'ALL' | MlPanelStatus, number>;
+  truncated: boolean;
+  connected: boolean;
+}
+
+export interface MlAttributeValue {
+  id: string;
+  valueId?: string | null;
+  valueName?: string | null;
+}
+
+export interface MlProfile {
+  title: string | null;
+  brand: string | null;
+  partNumber: string | null;
+  categoryId: string | null;
+  categoryName: string | null;
+  attributes: MlAttributeValue[] | null;
+  packageWeightG: number | null;
+  packageHeightCm: number | null;
+  packageWidthCm: number | null;
+  packageLengthCm: number | null;
+  stockMode: MlStockMode;
+  supplierQuantity: number;
+  manufacturingDays: number;
+  markupPercent: string | number | null;
+  fixedPrice: string | number | null;
+  listingTypeId: MlListingType | null;
+  approvedAt: string | null;
+}
+
+export interface MlEffective {
+  title: string;
+  brand: string | null;
+  partNumber: string | null;
+  gtin: string | null;
+  packageWeightG: number | null;
+  packageHeightCm: number | null;
+  packageWidthCm: number | null;
+  packageLengthCm: number | null;
+  basePrice: number;
+  price: number;
+  quantity: number;
+  stockMode: MlStockMode;
+  supplierQuantity: number;
+  manufacturingDays: number;
+  listingTypeId: string;
+}
+
+export interface MlReadinessCheck {
+  key: string;
+  label: string;
+  ok: boolean;
+  hint?: string;
+}
+
+export interface MlProductDetail {
+  product: {
+    id: string;
+    name: string;
+    sku: string;
+    description: string;
+    stock: number;
+    salePrice: number;
+    promoPrice: number | null;
+    images: Array<{ path: string; url: string }>;
+    ellon: { stock: unknown; reserved: unknown; barcode: unknown; factoryReference: unknown; application: unknown };
+  };
+  profile: MlProfile | null;
+  effective: MlEffective;
+  readiness: MlReadinessCheck[];
+  status: MlPanelStatus;
+  listing: (MarketplaceListing & { pausedBySystem: boolean }) | null;
+  category: { id: string; name: string | null } | null;
+  categoryAttributes: Array<CategoryAttribute & { value: { valueId: string | null; valueName: string | null } | null }>;
+  categorySuggestions: CategorySuggestion[];
+  fee: { saleFee: number; net: number } | null;
+  settings: MlStoreSettings;
+  connected: boolean;
+}
+
+export type MlProfileUpdate = Partial<Omit<MlProfile, 'approvedAt' | 'markupPercent' | 'fixedPrice'>> & {
+  markupPercent?: number | null;
+  fixedPrice?: number | null;
+};
+
+export interface MlPanelQuery {
+  q?: string;
+  scope?: 'default' | 'all';
+  status?: 'ALL' | MlPanelStatus;
+  page?: number;
+  pageSize?: number;
+}
+
 function unwrap<T>(data: { data: T }): T {
   return data.data;
 }
+
+export const mlPanelService = {
+  async getSettings(): Promise<MlStoreSettings> {
+    return unwrap((await apiClient.get('/marketplace/ml-panel/settings')).data);
+  },
+
+  async updateSettings(settings: Partial<MlStoreSettings>): Promise<MlStoreSettings> {
+    return unwrap((await apiClient.put('/marketplace/ml-panel/settings', settings)).data);
+  },
+
+  async list(query: MlPanelQuery): Promise<MlPanelList> {
+    return unwrap((await apiClient.get('/marketplace/ml-panel/products', { params: query })).data);
+  },
+
+  async detail(productId: string): Promise<MlProductDetail> {
+    return unwrap((await apiClient.get(`/marketplace/ml-panel/products/${productId}`)).data);
+  },
+
+  async update(productId: string, profile: MlProfileUpdate): Promise<MlProductDetail> {
+    return unwrap((await apiClient.put(`/marketplace/ml-panel/products/${productId}`, profile)).data);
+  },
+
+  async searchCategories(productId: string, q: string): Promise<CategorySuggestion[]> {
+    return unwrap((await apiClient.get(`/marketplace/ml-panel/products/${productId}/categories`, { params: { q } })).data);
+  },
+
+  async addImages(productId: string, files: File[]): Promise<MlProductDetail> {
+    const form = new FormData();
+    files.forEach(file => form.append('images', file));
+    // Sem isso o axios converte o FormData em JSON (o cliente usa JSON por padrao).
+    const res = await apiClient.post(`/marketplace/ml-panel/products/${productId}/images`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return unwrap(res.data);
+  },
+
+  async setImages(productId: string, images: string[]): Promise<MlProductDetail> {
+    return unwrap((await apiClient.put(`/marketplace/ml-panel/products/${productId}/images`, { images })).data);
+  },
+
+  async approve(productId: string): Promise<MlProductDetail> {
+    return unwrap((await apiClient.post(`/marketplace/ml-panel/products/${productId}/approve`)).data);
+  },
+
+  async approveMany(productIds: string[]): Promise<Array<{ productId: string; ok: boolean; error?: string }>> {
+    return unwrap((await apiClient.post('/marketplace/ml-panel/products/approve', { productIds })).data);
+  },
+
+  async activateListing(id: string): Promise<MarketplaceListing> {
+    return unwrap((await apiClient.post(`/marketplace/listings/${id}/activate`)).data);
+  },
+};
 
 export const marketplaceService = {
   async getConnections(): Promise<MarketplaceConnection[]> {

@@ -7,7 +7,7 @@ import { eventProcessorService } from './services/event-processor.service.js';
 
 const EVENT_INTERVAL_MS = 30 * 1000; // 30s: processa eventos de webhook pendentes
 const TOKEN_INTERVAL_MS = 5 * 60 * 1000; // 5min: renova tokens proximos de expirar
-const RECONCILE_INTERVAL_MS = 60 * 60 * 1000; // 1h: reconcilia anuncios out-of-sync
+const RECONCILE_INTERVAL_MS = 10 * 60 * 1000; // 10min: leva ao marketplace o estoque/preco vindo do Ellon
 
 const timers: NodeJS.Timeout[] = [];
 

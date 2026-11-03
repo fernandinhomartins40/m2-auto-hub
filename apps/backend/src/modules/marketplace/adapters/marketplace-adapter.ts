@@ -58,6 +58,9 @@ export interface MarketplaceAdapter {
 
   pauseListing(account: ProviderAccount, externalId: string): Promise<void>;
 
+  /** Reativa um anuncio pausado. Opcional: quem nao implementa so atualiza estoque. */
+  activateListing?(account: ProviderAccount, externalId: string): Promise<void>;
+
   closeListing(account: ProviderAccount, externalId: string): Promise<void>;
 
   // --- Pedidos ---

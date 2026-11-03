@@ -101,6 +101,7 @@ const AdminProductsSection = lazy(() => import("./AdminProductsSection").then((m
 const AdminServicesSection = lazy(() => import("./AdminServicesSection").then((module) => ({ default: module.AdminServicesSection })));
 const AdminCouponsSection = lazy(() => import("./AdminCouponsSection").then((module) => ({ default: module.AdminCouponsSection })));
 const MarketplacesContent = lazy(() => import("./MarketplacesContent").then((module) => ({ default: module.MarketplacesContent })));
+const MercadoLivrePanel = lazy(() => import("./mercado-livre/MercadoLivrePanel").then((module) => ({ default: module.MercadoLivrePanel })));
 const ServiceOrdersContent = lazy(() => import("./ServiceOrdersContent").then((module) => ({ default: module.ServiceOrdersContent })));
 const PrivacyGovernanceContent = lazy(() => import("./PrivacyGovernanceContent"));
 const LandingPageContent = lazy(() => import("./LandingPageContent").then((module) => ({ default: module.LandingPageContent })));
@@ -147,7 +148,7 @@ interface AdminContentProps {
 const adminWorkspaces = [
   { label: 'Catálogo', tabs: [
     { id: 'products', label: 'Produtos' }, { id: 'services', label: 'Serviços' },
-    { id: 'marketplaces', label: 'Marketplaces' },
+    { id: 'mercado-livre', label: 'Mercado Livre' }, { id: 'marketplaces', label: 'Marketplaces' },
   ] },
   { label: 'Clientes', tabs: [
     { id: 'customers', label: 'Clientes' }, { id: 'relationship', label: 'Relacionamento' },
@@ -2332,6 +2333,8 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
             setStatusFilter={setStatusFilter}
           />
         );
+      case 'mercado-livre':
+        return <MercadoLivrePanel />;
       case 'marketplaces':
         return <MarketplacesContent />;
       case 'service-orders':

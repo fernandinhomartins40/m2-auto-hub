@@ -124,6 +124,13 @@ enum ListingSyncStatus {
   ERROR
 }
 
+// Como o anuncio calcula a quantidade a venda.
+enum MarketplaceStockMode {
+  STORE_ONLY // so o estoque da loja; zerou, pausa
+  STORE_PLUS_SUPPLIER // loja + quantidade que o fornecedor entrega no mesmo dia
+  MADE_TO_ORDER // sob encomenda, com prazo de disponibilidade em dias
+}
+
 enum OrderItemType {
   PRODUCT
   SERVICE
@@ -530,6 +537,7 @@ model Product {
   // Relations
   vehicleCompatibility ProductVehicleCompatibility[]
   marketplaceListings  MarketplaceListing[]
+  marketplaceProfiles  MarketplaceProductProfile[]
   serviceOrderItems    ServiceOrderItem[]
 
   @@index([category])
@@ -766,6 +774,9 @@ model MarketplaceConnection {
   lastError  String?   @db.Text
   scopes     Json?
 
+  // Regras padrao da loja no marketplace (acrescimo, tipo de anuncio, garantia, horarios)
+  settings Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -794,6 +805,9 @@ model MarketplaceListing {
   // Mapeamento especifico do marketplace
   categoryMapping Json? // categoria/atributos resolvidos
   publishedAt     DateTime?
+  // Pausa feita pelo sistema (sem estoque): reativa sozinho quando o estoque volta.
+  // Pausa manual fica como esta.
+  pausedBySystem  Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -806,6 +820,47 @@ model MarketplaceListing {
   @@index([externalId])
   @@index([status])
   @@map("marketplace_listings")
+}
+
+// Dados do produto proprios do marketplace, editados no painel antes da aprovacao.
+// Campos vazios caem no cadastro do produto (nome, marca e medidas vindos do Ellon).
+model MarketplaceProductProfile {
+  id        String              @id @default(uuid())
+  productId String
+  provider  MarketplaceProvider
+
+  title        String? // titulo do anuncio (ML: ate 60 caracteres)
+  brand        String?
+  partNumber   String?
+  categoryId   String?
+  categoryName String?
+  attributes   Json? // [{ id, valueId?, valueName }]: atributos exigidos pela categoria
+
+  // Embalagem de envio
+  packageWeightG  Int?
+  packageHeightCm Float?
+  packageWidthCm  Float?
+  packageLengthCm Float?
+
+  stockMode         MarketplaceStockMode @default(STORE_ONLY)
+  supplierQuantity  Int                  @default(0)
+  manufacturingDays Int                  @default(0)
+
+  markupPercent Decimal? @db.Decimal(6, 2) // vazio = padrao da loja
+  fixedPrice    Decimal? @db.Decimal(10, 2) // preco fixo, ignora o acrescimo
+  listingTypeId String? // vazio = padrao da loja
+
+  approvedAt   DateTime?
+  approvedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, provider])
+  @@index([provider])
+  @@map("marketplace_product_profiles")
 }
 
 // Log de eventos (auditoria/idempotencia de webhooks)

@@ -29,7 +29,7 @@ export const adminSidebarItems: AdminNavItem[] = [
   { id: "dashboard", label: "Início", icon: LayoutDashboard, section: "Operação" },
   { id: "service-center", label: "Atendimentos", icon: BriefcaseBusiness, section: "Operação", activeTabs: ["service-center", "orders", "quotes", "service-orders", "revisions"] },
 
-  { id: "products", label: "Catálogo", icon: Package, section: "Operação", activeTabs: ["products", "services", "marketplaces"] },
+  { id: "products", label: "Catálogo", icon: Package, section: "Operação", activeTabs: ["products", "services", "mercado-livre", "marketplaces"] },
 
   { id: "customers", label: "Clientes", icon: Users, section: "Operação", activeTabs: ["customers", "relationship", "support", "loyalty"] },
 
@@ -55,6 +55,7 @@ export const adminTabSlugs: Record<string, string> = {
   revisions: "revisoes",
   products: "produtos",
   services: "servicos",
+  "mercado-livre": "mercado-livre",
   marketplaces: "marketplaces",
   customers: "clientes",
   relationship: "relacionamento",

@@ -14,11 +14,16 @@ import {
   CategorySuggestion,
   CategoryAttribute,
   NormalizedWebhookEvent,
+  PublicationAttribute,
 } from '../marketplace.types.js';
 
 const API_BASE = 'https://api.mercadolibre.com';
 const AUTH_BASE = 'https://auth.mercadolivre.com.br';
 const SITE_ID = 'MLB'; // Brasil
+
+function toMlValue(attr: PublicationAttribute): Record<string, unknown> {
+  return attr.valueId ? { id: attr.id, value_id: attr.valueId } : { id: attr.id, value_name: attr.valueName };
+}
 
 /**
  * Adapter do Mercado Livre.
@@ -138,7 +143,8 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
 
   async publishProduct(account: ProviderAccount, product: NormalizedProduct): Promise<ExternalListing> {
     const mapping = (product as NormalizedProduct & { categoryMapping?: Record<string, unknown> }).categoryMapping;
-    let categoryId = mapping?.categoryId as string | undefined;
+    const publication = product.publication;
+    let categoryId = publication?.categoryId ?? (mapping?.categoryId as string | undefined);
 
     // Se nao houver categoria mapeada, tenta prever pela descricao do produto
     if (!categoryId) {
@@ -149,29 +155,35 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
       throw ApiError.badRequest('Nao foi possivel determinar a categoria do Mercado Livre para este produto.');
     }
 
-    const attributes: Array<Record<string, unknown>> = [];
-    if (product.brand) {
-      attributes.push({ id: 'BRAND', value_name: product.brand });
+    const attributes: Array<Record<string, unknown>> = publication
+      ? publication.attributes.map(toMlValue)
+      : [];
+    if (!publication) {
+      if (product.brand) attributes.push({ id: 'BRAND', value_name: product.brand });
+      if (product.sku) attributes.push({ id: 'SELLER_SKU', value_name: product.sku });
     }
-    if (product.sku) {
-      attributes.push({ id: 'SELLER_SKU', value_name: product.sku });
-    }
-    // Atributos manuais resolvidos no frontend (id -> value_name)
-    const extraAttrs = (mapping?.attributes as Array<Record<string, unknown>>) ?? [];
-    attributes.push(...extraAttrs);
+    // Atributos manuais resolvidos no frontend (id -> value_name), sem repetir os do perfil
+    const known = new Set(attributes.map(attr => attr.id));
+    attributes.push(...((mapping?.attributes as Array<Record<string, unknown>>) ?? []).filter(attr => !known.has(attr.id)));
 
+    const title = (publication?.title ?? product.name).slice(0, 60);
     const payload: Record<string, unknown> = {
-      title: product.name.slice(0, 60),
       category_id: categoryId,
       price: product.price,
       currency_id: 'BRL',
       available_quantity: Math.max(product.stock, 0),
       buying_mode: 'buy_it_now',
-      listing_type_id: (mapping?.listingTypeId as string) ?? 'gold_special',
+      listing_type_id: publication?.listingTypeId ?? (mapping?.listingTypeId as string) ?? 'gold_special',
       condition: 'new',
       pictures: product.images.map(url => ({ source: url })),
       attributes,
+      shipping: { mode: 'me2', local_pick_up: false },
     };
+    const terms = publication?.saleTerms.filter(term => term.valueId || term.valueName) ?? [];
+    if (terms.length) payload.sale_terms = terms.map(toMlValue);
+    // Vendedores no modelo "User Products" mandam family_name; o ML gera o titulo.
+    if (await this.isUserProductSeller(account)) payload.family_name = title;
+    else payload.title = title;
 
     const created = await this.apiSend<Record<string, unknown>>(account, 'POST', '/items', payload);
     const externalId = String(created.id);
@@ -217,12 +229,42 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
     const body: Record<string, unknown> = {};
     if (patch.price !== undefined) body.price = patch.price;
     if (patch.stock !== undefined) body.available_quantity = Math.max(patch.stock, 0);
+    if (patch.saleTerms?.length) body.sale_terms = patch.saleTerms.map(toMlValue);
     if (Object.keys(body).length === 0) return;
     await this.apiSend(account, 'PUT', `/items/${externalId}`, body);
   }
 
   async pauseListing(account: ProviderAccount, externalId: string): Promise<void> {
     await this.apiSend(account, 'PUT', `/items/${externalId}`, { status: 'paused' });
+  }
+
+  async activateListing(account: ProviderAccount, externalId: string): Promise<void> {
+    await this.apiSend(account, 'PUT', `/items/${externalId}`, { status: 'active' });
+  }
+
+  /** Tarifa de venda estimada pelo ML para o preco, categoria e tipo de anuncio. */
+  async estimateSaleFee(
+    account: ProviderAccount,
+    price: number,
+    categoryId: string,
+    listingTypeId: string
+  ): Promise<number | null> {
+    const params = new URLSearchParams({ price: String(price), category_id: categoryId, listing_type_id: listingTypeId });
+    const data = await this.apiGet<unknown>(account, `/sites/${SITE_ID}/listing_prices?${params.toString()}`);
+    const entry = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined;
+    return typeof entry?.sale_fee_amount === 'number' ? entry.sale_fee_amount : null;
+  }
+
+  private userProductSeller = new Map<string, boolean>();
+
+  private async isUserProductSeller(account: ProviderAccount): Promise<boolean> {
+    const key = account.sellerId ?? '';
+    const cached = this.userProductSeller.get(key);
+    if (cached !== undefined) return cached;
+    const me = await this.apiGet<Record<string, unknown>>(account, '/users/me');
+    const value = Array.isArray(me.tags) && me.tags.includes('user_product_seller');
+    this.userProductSeller.set(key, value);
+    return value;
   }
 
   async closeListing(account: ProviderAccount, externalId: string): Promise<void> {
@@ -328,7 +370,15 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
     if (!res.ok) {
       logger.warn('[ML] API error', { method, path, status: res.status, data });
       const message = (data?.message as string) || (data?.error as string) || `HTTP ${res.status}`;
-      throw new ApiError(res.status >= 500 ? 502 : 400, `Mercado Livre: ${message}`);
+      // O ML lista os motivos da recusa em `cause`; sao eles que dizem o que corrigir.
+      const causes = Array.isArray(data?.cause)
+        ? (data.cause as Array<Record<string, unknown>>)
+          .filter(c => c.type !== 'warning')
+          .map(c => String(c.message ?? c.code ?? ''))
+          .filter(Boolean)
+        : [];
+      const detail = causes.length ? ` (${causes.join('; ')})` : '';
+      throw new ApiError(res.status >= 500 ? 502 : 400, `Mercado Livre: ${message}${detail}`);
     }
 
     return data as T;

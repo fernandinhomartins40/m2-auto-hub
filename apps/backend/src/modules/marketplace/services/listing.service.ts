@@ -12,6 +12,7 @@ import { logger } from '@shared/utils/logger.util.js';
 import { getAdapter } from '../adapters/index.js';
 import { connectionService } from './connection.service.js';
 import { tokenRefreshService } from './token-refresh.service.js';
+import { syncService } from './sync.service.js';
 import { loadAndNormalizeProduct } from '../mappers/product-normalizer.js';
 import { NormalizedProduct } from '../marketplace.types.js';
 
@@ -54,8 +55,16 @@ export class ListingService {
       throw ApiError.badRequest(`Conecte sua conta ${provider} antes de publicar.`);
     }
 
-    const normalized = await loadAndNormalizeProduct(productId);
+    const normalized = await loadAndNormalizeProduct(productId, provider);
     if (!normalized) throw ApiError.notFound('Produto nao encontrado.');
+
+    // Ja publicado: atualiza preco, estoque e termos sem mexer no status (pausa manual continua)
+    const existing = await prisma.marketplaceListing.findUnique({ where: { productId_provider: { productId, provider } } });
+    if (existing?.externalId) {
+      const updated = await syncService.pushListing(existing, normalized, true);
+      await connectionService.markSynced(provider);
+      return updated;
+    }
 
     // Upsert do registro de listing (estado QUEUED enquanto publica)
     let listing = await prisma.marketplaceListing.upsert({
@@ -84,17 +93,7 @@ export class ListingService {
     } as NormalizedProduct;
 
     try {
-      let result;
-      if (listing.externalId) {
-        // Ja publicado: atualiza preco/estoque
-        await adapter.updateListing(account, listing.externalId, {
-          price: normalized.price,
-          stock: normalized.stock,
-        });
-        result = { externalId: listing.externalId, externalUrl: listing.externalUrl, raw: null };
-      } else {
-        result = await adapter.publishProduct(account, withMapping);
-      }
+      const result = await adapter.publishProduct(account, withMapping);
 
       listing = await prisma.marketplaceListing.update({
         where: { id: listing.id },
@@ -123,41 +122,19 @@ export class ListingService {
     }
   }
 
-  /** Forca a ressincronizacao (preco/estoque) de um listing existente. */
+  /** Forca a ressincronizacao (preco/estoque/termos) de um listing existente. */
   async sync(id: string): Promise<MarketplaceListing> {
     const listing = await this.getById(id);
     if (!listing.externalId) {
       return this.publish(listing.productId, listing.provider);
     }
 
-    const normalized = await loadAndNormalizeProduct(listing.productId);
+    const normalized = await loadAndNormalizeProduct(listing.productId, listing.provider);
     if (!normalized) throw ApiError.notFound('Produto nao encontrado.');
 
-    const account = await tokenRefreshService.ensureFreshToken(listing.provider);
-    const adapter = getAdapter(listing.provider);
-
     try {
-      await adapter.updateListing(account, listing.externalId, {
-        price: normalized.price,
-        stock: normalized.stock,
-      });
-
-      const updated = await prisma.marketplaceListing.update({
-        where: { id },
-        data: {
-          status: normalized.stock <= 0 ? ListingSyncStatus.PAUSED : ListingSyncStatus.PUBLISHED,
-          lastSyncedPrice: new Prisma.Decimal(normalized.price),
-          lastSyncedStock: normalized.stock,
-          lastSyncedHash: listingHash(normalized),
-          lastError: null,
-        },
-      });
-
-      // Pausa automaticamente quando estoque zera (anti-overselling)
-      if (normalized.stock <= 0) {
-        await adapter.pauseListing(account, listing.externalId).catch(() => undefined);
-      }
-
+      const updated = await syncService.pushListing(listing, normalized, true);
+      await prisma.marketplaceListing.update({ where: { id }, data: { lastSyncedHash: listingHash(normalized) } });
       await connectionService.markSynced(listing.provider);
       return updated;
     } catch (err) {
@@ -178,8 +155,22 @@ export class ListingService {
     }
     return prisma.marketplaceListing.update({
       where: { id },
-      data: { status: ListingSyncStatus.PAUSED },
+      data: { status: ListingSyncStatus.PAUSED, pausedBySystem: false },
     });
+  }
+
+  /** Reativa um anuncio pausado a mao. Sem quantidade a venda, o ML recusaria. */
+  async activate(id: string): Promise<MarketplaceListing> {
+    const listing = await this.getById(id);
+    if (!listing.externalId) throw ApiError.badRequest('Anuncio ainda nao publicado.');
+    const normalized = await loadAndNormalizeProduct(listing.productId, listing.provider);
+    if (!normalized) throw ApiError.notFound('Produto nao encontrado.');
+    if (normalized.stock <= 0) {
+      throw ApiError.badRequest('Sem quantidade à venda. Ajuste o estoque ou a regra do produto antes de reativar.');
+    }
+    // Marca como pausa do sistema: o push reativa e acerta preco/estoque juntos.
+    const marked = await prisma.marketplaceListing.update({ where: { id }, data: { pausedBySystem: true } });
+    return syncService.pushListing(marked, normalized, true);
   }
 
   async close(id: string): Promise<void> {

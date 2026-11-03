@@ -44,6 +44,25 @@ export interface NormalizedProduct {
   specifications?: Record<string, unknown> | null;
   brand?: string | null;
   compatibilities: VehicleCompat[];
+  /** Dados resolvidos pelo perfil do marketplace (painel). Presente quando o produto tem perfil. */
+  publication?: MarketplacePublication;
+}
+
+/** Atributo pronto para envio (id do marketplace + valor). */
+export interface PublicationAttribute {
+  id: string;
+  valueId?: string | null;
+  valueName?: string | null;
+}
+
+/** Campos do anuncio ja resolvidos (perfil do painel + regras da loja). */
+export interface MarketplacePublication {
+  title: string;
+  categoryId: string | null;
+  listingTypeId: string;
+  attributes: PublicationAttribute[];
+  /** Termos de venda (ML: garantia e disponibilidade de estoque). */
+  saleTerms: PublicationAttribute[];
 }
 
 /** Resultado de uma publicacao no marketplace. */
@@ -57,6 +76,7 @@ export interface ExternalListing {
 export interface ListingPatch {
   price?: number;
   stock?: number;
+  saleTerms?: PublicationAttribute[];
 }
 
 /** Item de um pedido normalizado vindo do marketplace. */
