@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../api/api_exception.dart';
+import '../theme/app_theme.dart';
 import 'feedback.dart';
 
 /// Lista com "puxar para atualizar" e os três estados de uma tela de dados.
@@ -15,11 +18,16 @@ class AsyncPage<T> extends StatelessWidget {
     required this.onRefresh,
     required this.builder,
     this.isEmpty,
-    this.emptyIcon = Icons.inbox_outlined,
+    this.emptyIcon = LucideIcons.inbox,
     this.emptyMessage = 'Nada por aqui ainda.',
     this.emptyAction,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.fromLTRB(16, 20, 16, 24),
+    this.header = const [],
   });
+
+  /// Itens fixos no topo da lista (abas, cabeçalho de seção), visíveis também
+  /// enquanto carrega, quando vazio e no erro, como nos painéis do PWA.
+  final List<Widget> header;
 
   final AsyncValue<T> value;
   final Future<void> Function() onRefresh;
@@ -45,6 +53,7 @@ class AsyncPage<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (header.isNotEmpty) return _withHeader(context);
     if (value.hasValue) {
       final data = value.requireValue;
       final empty = isEmpty?.call(data) ?? false;
@@ -79,10 +88,48 @@ class AsyncPage<T> extends StatelessWidget {
     return const Center(child: CircularProgressIndicator());
   }
 
+  Widget _withHeader(BuildContext context) {
+    final List<Widget> body;
+    if (value.hasValue) {
+      final data = value.requireValue;
+      body = (isEmpty?.call(data) ?? false)
+          ? [
+              EmptyState(
+                icon: emptyIcon,
+                message: emptyMessage,
+                action: emptyAction,
+              ),
+            ]
+          : builder(data);
+    } else if (value.hasError) {
+      body = [
+        ErrorState(
+          message: friendlyError(value.error),
+          onRetry: () => _refresh(context),
+        ),
+      ];
+    } else {
+      body = const [
+        Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ];
+    }
+    return RefreshIndicator(
+      onRefresh: () => _refresh(context),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: padding,
+        children: _spaced([...header, ...body]),
+      ),
+    );
+  }
+
   List<Widget> _spaced(List<Widget> items) {
     return [
       for (var i = 0; i < items.length; i++) ...[
-        if (i > 0) const SizedBox(height: 12),
+        if (i > 0) const SizedBox(height: 16),
         items[i],
       ],
     ];
@@ -124,18 +171,17 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 56, color: color),
+          Icon(icon, size: 48, color: const Color(0xFF9CA3AF)),
           const SizedBox(height: 12),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(color: color),
+            style: const TextStyle(color: AppTheme.mutedForeground),
           ),
           if (action != null) ...[const SizedBox(height: 16), action!],
         ],
@@ -153,11 +199,11 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return EmptyState(
-      icon: Icons.cloud_off_outlined,
+      icon: LucideIcons.cloudOff,
       message: message,
       action: OutlinedButton.icon(
         onPressed: onRetry,
-        icon: const Icon(Icons.refresh),
+        icon: const Icon(LucideIcons.refreshCw),
         label: const Text('Tentar novamente'),
       ),
     );
@@ -173,8 +219,8 @@ class SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(title, style: Theme.of(context).textTheme.titleLarge),
     );
   }
 }

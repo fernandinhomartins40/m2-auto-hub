@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../format.dart';
 import 'feedback.dart';
+import 'panel.dart';
 import 'password_field.dart';
 
 /// Troca de senha. Cada app informa a chamada de API em [onSubmit].
@@ -41,36 +43,58 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Alterar senha')),
+    return PanelScaffold(
+      appBar: const PanelAppBar(title: 'Alterar senha'),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
           children: [
-            const Text('Depois de alterar, você entra de novo com a nova senha.'),
+            const PanelPageHeader(
+              icon: LucideIcons.lock,
+              title: 'Segurança',
+              description:
+                  'Depois de alterar, você entra de novo com a nova senha.',
+            ),
             const SizedBox(height: 16),
-            PasswordField(
-              controller: _current,
-              label: 'Senha atual',
-              validator: (v) => (v ?? '').isEmpty ? 'Informe a senha atual' : null,
+            GlassCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PasswordField(
+                    controller: _current,
+                    label: 'Senha atual',
+                    hint: 'Digite a senha atual',
+                    validator: (v) =>
+                        (v ?? '').isEmpty ? 'Informe a senha atual' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  PasswordField(
+                    controller: _next,
+                    label: 'Nova senha',
+                    hint: 'Digite a nova senha',
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (v) => passwordProblem(v ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                  PasswordField(
+                    controller: _repeat,
+                    label: 'Confirmar nova senha',
+                    hint: 'Repita a nova senha',
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (v) =>
+                        v == _next.text ? null : 'As senhas não coincidem',
+                  ),
+                  const SizedBox(height: 20),
+                  BusyButton(
+                    label: 'Alterar senha',
+                    busy: _busy,
+                    onPressed: _submit,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            PasswordField(
-              controller: _next,
-              label: 'Nova senha',
-              autofillHints: const [AutofillHints.newPassword],
-              validator: (v) => passwordProblem(v ?? ''),
-            ),
-            const SizedBox(height: 12),
-            PasswordField(
-              controller: _repeat,
-              label: 'Repita a nova senha',
-              autofillHints: const [AutofillHints.newPassword],
-              validator: (v) => v == _next.text ? null : 'As senhas não coincidem',
-            ),
-            const SizedBox(height: 24),
-            BusyButton(label: 'Alterar senha', busy: _busy, onPressed: _submit),
           ],
         ),
       ),

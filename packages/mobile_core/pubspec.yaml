@@ -15,6 +15,7 @@ dependencies:
   flutter_riverpod: ^3.3.2
   flutter_secure_storage: ^10.3.1
   intl: ^0.20.2
+  lucide_icons_flutter: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -23,3 +24,22 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Fontes do PWA (Google Fonts, licença OFL), embutidas para funcionar offline.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-400.ttf
+        - asset: assets/fonts/Inter-500.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-600.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-700.ttf
+          weight: 700
+    - family: Rajdhani
+      fonts:
+        - asset: assets/fonts/Rajdhani-500.ttf
+          weight: 500
+        - asset: assets/fonts/Rajdhani-600.ttf
+          weight: 600
+        - asset: assets/fonts/Rajdhani-700.ttf
+          weight: 700

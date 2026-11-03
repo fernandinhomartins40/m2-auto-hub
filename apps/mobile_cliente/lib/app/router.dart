@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:m2_core/m2_core.dart';
 
 import '../features/auth/auth_controller.dart';
 import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
-import '../features/auth/register_screen.dart';
 import '../features/shell/home_shell.dart';
 
 const _publicRoutes = {'/login', '/cadastro', '/recuperar-senha'};
@@ -35,7 +35,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/splash', builder: (_, __) => const _SplashScreen()),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/cadastro', builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+        path: '/cadastro',
+        builder: (_, __) => const LoginScreen(register: true),
+      ),
       GoRoute(
         path: '/recuperar-senha',
         builder: (_, __) => const ForgotPasswordScreen(),
@@ -56,6 +59,9 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const PanelScaffold(
+      login: true,
+      body: Center(child: BrandMark(size: 64)),
+    );
   }
 }

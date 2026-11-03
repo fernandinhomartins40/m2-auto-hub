@@ -4,11 +4,29 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/providers.dart';
 import '../../shared/links.dart';
+import '../../shared/ui.dart';
 
-/// Direitos da LGPD. "Excluir minha conta" atende à regra da Google Play para
-/// apps com cadastro: o pedido entra na fila de privacidade do painel.
-class PrivacyScreen extends ConsumerWidget {
+/// Privacidade aberta pelo menu "Mais".
+class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return PanelScaffold(
+      appBar: const PanelAppBar(title: 'Privacidade'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        children: const [PrivacyCard()],
+      ),
+    );
+  }
+}
+
+/// "Privacidade e seus dados" do perfil do PWA. "Solicitar eliminação"
+/// atende à regra da Google Play para apps com cadastro: o pedido entra na
+/// fila de privacidade do painel.
+class PrivacyCard extends ConsumerWidget {
+  const PrivacyCard({super.key});
 
   Future<void> _request(BuildContext context, WidgetRef ref, String type) {
     return runAction(
@@ -33,52 +51,59 @@ class PrivacyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Privacidade')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+    Widget left(Widget child) =>
+        Align(alignment: Alignment.centerLeft, child: child);
+
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Exerça seus direitos previstos na LGPD. A M2 pode confirmar sua '
-            'identidade antes de concluir uma solicitação.',
+          const CardHeading(
+            icon: LucideIcons.shieldCheck,
+            title: 'Privacidade e seus dados',
+            description: 'Exporte seus dados ou exerça direitos previstos na '
+                'LGPD. Solicitações podem exigir confirmação de identidade.',
           ),
-          const SizedBox(height: 16),
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.article_outlined),
-                  title: const Text('Ler aviso de privacidade'),
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () => openPrivacyNotice(context),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.download_outlined),
-                  title: const Text('Pedir cópia dos meus dados'),
-                  onTap: () => _request(context, ref, 'PORTABILITY'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('Pedir correção de dados'),
-                  onTap: () => _request(context, ref, 'CORRECTION'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.block_outlined),
-                  title: const Text('Revogar consentimento'),
-                  onTap: () => _request(context, ref, 'REVOCATION'),
-                ),
-              ],
+          const SizedBox(height: 20),
+          // O app pede a portabilidade; o arquivo chega pela equipe.
+          left(
+            OutlinedButton.icon(
+              onPressed: () => _request(context, ref, 'PORTABILITY'),
+              icon: const Icon(LucideIcons.download),
+              label: const Text('Baixar meus dados'),
             ),
           ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+          const SizedBox(height: 12),
+          left(
+            OutlinedButton(
+              onPressed: () => _request(context, ref, 'CORRECTION'),
+              child: const Text('Solicitar correção'),
             ),
-            onPressed: () => _deleteAccount(context, ref),
-            icon: const Icon(Icons.delete_forever_outlined),
-            label: const Text('Excluir minha conta'),
+          ),
+          const SizedBox(height: 12),
+          left(
+            OutlinedButton(
+              onPressed: () => _request(context, ref, 'REVOCATION'),
+              child: const Text('Revogar consentimento'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          left(
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.destructive,
+              ),
+              onPressed: () => _deleteAccount(context, ref),
+              child: const Text('Excluir minha conta'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          left(
+            TextButton(
+              onPressed: () => openPrivacyNotice(context),
+              child: const Text('Ler aviso de privacidade'),
+            ),
           ),
         ],
       ),

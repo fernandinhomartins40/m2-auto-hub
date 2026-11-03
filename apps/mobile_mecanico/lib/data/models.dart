@@ -28,17 +28,24 @@ class Mechanic {
 }
 
 class CustomerRef {
-  const CustomerRef({required this.id, required this.name, this.phone});
+  const CustomerRef({
+    required this.id,
+    required this.name,
+    this.phone,
+    this.email,
+  });
 
   factory CustomerRef.fromJson(Map<String, dynamic> json) => CustomerRef(
         id: json['id']?.toString() ?? '',
         name: json['name']?.toString() ?? 'Cliente',
         phone: (json['phone'] ?? json['whatsapp'])?.toString(),
+        email: json['email']?.toString(),
       );
 
   final String id;
   final String name;
   final String? phone;
+  final String? email;
 }
 
 class VehicleRef {
@@ -49,6 +56,7 @@ class VehicleRef {
     required this.plate,
     this.year,
     this.mileage,
+    this.color,
   });
 
   factory VehicleRef.fromJson(Map<String, dynamic> json) => VehicleRef(
@@ -58,6 +66,7 @@ class VehicleRef {
         plate: json['plate']?.toString() ?? '',
         year: json['year'] == null ? null : asInt(json['year']),
         mileage: json['mileage'] == null ? null : asInt(json['mileage']),
+        color: json['color']?.toString(),
       );
 
   final String id;
@@ -66,6 +75,7 @@ class VehicleRef {
   final String plate;
   final int? year;
   final int? mileage;
+  final String? color;
 
   String get label => '$brand $model'.trim();
 }
@@ -177,6 +187,7 @@ class Revision {
     required this.checks,
     this.date,
     this.completedAt,
+    this.createdAt,
     this.mileage,
     this.generalNotes,
     this.recommendations,
@@ -196,6 +207,7 @@ class Revision {
       checks: asMapList(json['checklistItems']).map(CheckEntry.fromJson).toList(),
       date: asDate(json['date']),
       completedAt: asDate(json['completedAt']),
+      createdAt: asDate(json['createdAt']),
       mileage: json['mileage'] == null ? null : asInt(json['mileage']),
       generalNotes: json['generalNotes']?.toString(),
       recommendations: json['recommendations']?.toString(),
@@ -212,6 +224,7 @@ class Revision {
   final List<CheckEntry> checks;
   final DateTime? date;
   final DateTime? completedAt;
+  final DateTime? createdAt;
   final int? mileage;
   final String? generalNotes;
   final String? recommendations;
@@ -544,6 +557,7 @@ class MechanicStats {
     required this.pending,
     required this.completionRate,
     this.averageMinutes,
+    this.averageHours,
   });
 
   factory MechanicStats.fromJson(Map<String, dynamic> json) => MechanicStats(
@@ -552,6 +566,9 @@ class MechanicStats {
         inProgress: asInt(json['inProgressRevisions']),
         pending: asInt(json['pendingRevisions']),
         completionRate: asDouble(json['completionRate']),
+        averageHours: json['averageCompletionTime'] == null
+            ? null
+            : asDouble(json['averageCompletionTime']),
       );
 
   final int total;
@@ -560,6 +577,9 @@ class MechanicStats {
   final int pending;
   final double completionRate;
   final double? averageMinutes;
+
+  /// `averageCompletionTime` da API, em horas; nulo sem revisões concluídas.
+  final double? averageHours;
 }
 
 class Activity {

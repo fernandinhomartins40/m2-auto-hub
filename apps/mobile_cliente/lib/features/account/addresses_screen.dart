@@ -4,10 +4,28 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../shared/ui.dart';
 import '../auth/auth_controller.dart';
 
-class AddressesScreen extends ConsumerWidget {
+/// Endereços aberto fora da Conta (por exemplo, ao pedir orçamento).
+class AddressesScreen extends StatelessWidget {
   const AddressesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return PanelScaffold(
+      appBar: const PanelAppBar(title: 'Meus Endereços'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        children: const [AddressesCard()],
+      ),
+    );
+  }
+}
+
+/// Cartão "Meus Endereços" da aba Endereços do perfil.
+class AddressesCard extends ConsumerWidget {
+  const AddressesCard({super.key});
 
   Future<void> _change(
     BuildContext context,
@@ -35,89 +53,177 @@ class AddressesScreen extends ConsumerWidget {
           MaterialPageRoute(builder: (_) => _AddressForm(address: address)),
         );
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Endereços')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: openForm,
-        icon: const Icon(Icons.add),
-        label: const Text('Adicionar'),
-      ),
-      body: addresses.isEmpty
-          ? const Center(
-              child: EmptyState(
-                icon: Icons.place_outlined,
-                message: 'Nenhum endereço cadastrado.',
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-              itemCount: addresses.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final address = addresses[index];
-                return Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        title: Row(
-                          children: [
-                            Text(address.typeLabel),
-                            if (address.isDefault) ...[
-                              const SizedBox(width: 8),
-                              const StatusChip(
-                                'Padrão',
-                                tone: StatusTone.info,
-                              ),
-                            ],
-                          ],
-                        ),
-                        subtitle: Text(
-                          '${address.line}\nCEP ${address.zipCode}',
-                        ),
-                        onTap: () => openForm(address),
-                      ),
-                      OverflowBar(
-                        alignment: MainAxisAlignment.end,
-                        children: [
-                          if (!address.isDefault)
-                            TextButton(
-                              onPressed: () => _change(
-                                context,
-                                ref,
-                                () => api.setDefaultAddress(address.id),
-                                'Endereço padrão alterado',
-                              ),
-                              child: const Text('Tornar padrão'),
-                            ),
-                          TextButton(
-                            onPressed: () async {
-                              final accepted = await confirm(
-                                context,
-                                title: 'Excluir endereço?',
-                                message: address.line,
-                                confirmLabel: 'Excluir',
-                                destructive: true,
-                              );
-                              if (accepted && context.mounted) {
-                                await _change(
-                                  context,
-                                  ref,
-                                  () => api.deleteAddress(address.id),
-                                  'Endereço excluído',
-                                );
-                              }
-                            },
-                            child: const Text('Excluir'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const CardHeading(
+            icon: LucideIcons.mapPin,
+            title: 'Meus Endereços',
+            description: 'Gerencie seus endereços de entrega',
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              onPressed: openForm,
+              icon: const Icon(LucideIcons.plus),
+              label: const Text('Novo Endereço'),
             ),
+          ),
+          const SizedBox(height: 16),
+          if (addresses.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  Icon(
+                    LucideIcons.mapPin,
+                    size: 48,
+                    color: AppTheme.mutedForeground.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Nenhum endereço cadastrado',
+                    style: TextStyle(color: AppTheme.mutedForeground),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: openForm,
+                    icon: const Icon(LucideIcons.plus),
+                    label: const Text('Adicionar Primeiro Endereço'),
+                  ),
+                ],
+              ),
+            ),
+          for (final address in addresses) ...[
+            _AddressTile(
+              address: address,
+              onEdit: () => openForm(address),
+              onDefault: address.isDefault
+                  ? null
+                  : () => _change(
+                        context,
+                        ref,
+                        () => api.setDefaultAddress(address.id),
+                        'Endereço padrão alterado',
+                      ),
+              onDelete: addresses.length <= 1
+                  ? null
+                  : () async {
+                      final accepted = await confirm(
+                        context,
+                        title: 'Excluir endereço?',
+                        message: address.line,
+                        confirmLabel: 'Excluir',
+                        destructive: true,
+                      );
+                      if (accepted && context.mounted) {
+                        await _change(
+                          context,
+                          ref,
+                          () => api.deleteAddress(address.id),
+                          'Endereço excluído',
+                        );
+                      }
+                    },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AddressTile extends StatelessWidget {
+  const _AddressTile({
+    required this.address,
+    required this.onEdit,
+    required this.onDefault,
+    required this.onDelete,
+  });
+
+  final Address address;
+  final VoidCallback onEdit;
+  final VoidCallback? onDefault;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    const muted = TextStyle(fontSize: 13, color: AppTheme.mutedForeground);
+    final icon = switch (address.type) {
+      'WORK' => LucideIcons.building2,
+      'OTHER' => LucideIcons.mapPin,
+      _ => LucideIcons.house,
+    };
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 20, color: AppTheme.mutedForeground),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      address.typeLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    if (address.isDefault) ...[
+                      const SizedBox(width: 8),
+                      const StatusChip('Principal'),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${address.street}, ${address.number}'
+                  '${(address.complement ?? '').isEmpty ? '' : ', ${address.complement}'}',
+                  style: muted,
+                ),
+                Text(
+                  '${address.neighborhood} - ${address.city}, ${address.state}',
+                  style: muted,
+                ),
+                Text('CEP: ${address.zipCode}', style: muted),
+                if (onDefault != null)
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 32),
+                    ),
+                    onPressed: onDefault,
+                    child: const Text('Tornar principal'),
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Editar endereço',
+            onPressed: onEdit,
+            icon: const Icon(LucideIcons.squarePen, size: 16),
+          ),
+          IconButton(
+            tooltip: 'Excluir endereço',
+            onPressed: onDelete,
+            icon: const Icon(LucideIcons.trash2, size: 16),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -188,78 +294,106 @@ class _AddressFormState extends ConsumerState<_AddressForm> {
     String? required(String? value) =>
         (value ?? '').trim().isEmpty ? 'Campo obrigatório' : null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.address == null ? 'Novo endereço' : 'Editar endereço'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    Widget field(
+      String label,
+      TextEditingController controller,
+      String hint, {
+      FormFieldValidator<String>? validator,
+      TextInputType? keyboard,
+      int? maxLength,
+      TextCapitalization caps = TextCapitalization.words,
+    }) {
+      return LabeledField(
+        label: label,
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboard,
+          maxLength: maxLength,
+          textCapitalization: caps,
+          decoration: InputDecoration(hintText: hint, counterText: ''),
+          validator: validator,
+        ),
+      );
+    }
+
+    Widget pair(Widget left, Widget right, {int leftFlex = 1}) => Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'HOME', label: Text('Casa')),
-                ButtonSegment(value: 'WORK', label: Text('Trabalho')),
-                ButtonSegment(value: 'OTHER', label: Text('Outro')),
-              ],
-              selected: {_type},
-              onSelectionChanged: (value) =>
-                  setState(() => _type = value.first),
+            Expanded(flex: leftFlex, child: left),
+            const SizedBox(width: 12),
+            Expanded(child: right),
+          ],
+        );
+
+    final editing = widget.address != null;
+    return FormPage(
+      title: editing ? 'Editar Endereço' : 'Novo Endereço',
+      formKey: _formKey,
+      header: PanelPageHeader(
+        icon: LucideIcons.mapPin,
+        title: editing ? 'Editar Endereço' : 'Novo Endereço',
+        description: 'Endereço usado nas entregas e como referência dos '
+            'atendimentos.',
+      ),
+      children: [
+        LabeledField(
+          label: 'Tipo do Endereço',
+          child: FilterSelect<String>(
+            value: _type,
+            options: const {
+              'HOME': 'Casa',
+              'WORK': 'Trabalho',
+              'OTHER': 'Outro',
+            },
+            onChanged: (value) => setState(() => _type = value),
+          ),
+        ),
+        pair(
+          field('Rua', _street, 'Nome da rua', validator: required),
+          field('Número', _number, '123', validator: required),
+          leftFlex: 2,
+        ),
+        field('Complemento (opcional)', _complement, 'Apto, sala, etc.'),
+        field('Bairro', _neighborhood, 'Nome do bairro', validator: required),
+        pair(
+          field('Cidade', _city, 'Cidade', validator: required),
+          field(
+            'Estado',
+            _state,
+            'SP',
+            maxLength: 2,
+            caps: TextCapitalization.characters,
+            validator: (v) =>
+                (v ?? '').trim().length == 2 ? null : 'Informe a UF',
+          ),
+          leftFlex: 2,
+        ),
+        field(
+          'CEP',
+          _zip,
+          '00000-000',
+          keyboard: TextInputType.number,
+          maxLength: 9,
+          validator: (v) =>
+              digitsOnly(v ?? '').length == 8 ? null : 'CEP inválido',
+        ),
+        Row(
+          children: [
+            OutlinedButton(
+              onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _zip,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'CEP'),
-              validator: (v) =>
-                  digitsOnly(v ?? '').length == 8 ? null : 'CEP inválido',
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _street,
-              decoration: const InputDecoration(labelText: 'Rua'),
-              validator: required,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _number,
-              decoration: const InputDecoration(labelText: 'Número'),
-              validator: required,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _complement,
-              decoration: const InputDecoration(
-                labelText: 'Complemento (opcional)',
+            const SizedBox(width: 8),
+            Expanded(
+              child: BusyButton(
+                label: editing ? 'Salvar Alterações' : 'Adicionar Endereço',
+                busy: _busy,
+                onPressed: _save,
               ),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _neighborhood,
-              decoration: const InputDecoration(labelText: 'Bairro'),
-              validator: required,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _city,
-              decoration: const InputDecoration(labelText: 'Cidade'),
-              validator: required,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _state,
-              maxLength: 2,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(labelText: 'UF'),
-              validator: (v) =>
-                  (v ?? '').trim().length == 2 ? null : 'Informe a UF',
-            ),
-            const SizedBox(height: 12),
-            BusyButton(label: 'Salvar', busy: _busy, onPressed: _save),
           ],
         ),
-      ),
+      ],
     );
   }
 }

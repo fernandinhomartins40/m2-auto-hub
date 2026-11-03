@@ -5,9 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
-import 'item_picker_screen.dart';
+import '../../shared/ui.dart';
+import '../auth/auth_controller.dart';
 import 'order_form_screen.dart';
 
+/// Detalhe da OS (`ServiceOrderDetailsModal`).
 class OrderDetailScreen extends ConsumerStatefulWidget {
   const OrderDetailScreen({super.key, required this.orderId});
 
@@ -48,22 +50,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
   }
 
-  /// A API substitui a lista inteira ao receber `items`: os novos entram
-  /// junto com os que já estão na OS.
-  Future<void> _addItems(ServiceOrder order) async {
-    final items = await Navigator.of(context).push<List<OrderItem>>(
-      MaterialPageRoute(builder: (_) => const ItemPickerScreen()),
-    );
-    if (items == null || !mounted) return;
-    await _run(
-      () => ref.read(apiProvider).updateOrder(order.id, {
-        'items': [for (final item in [...order.items, ...items]) item.toJson()],
-        'discount': order.discount,
-      }),
-      'Itens adicionados à OS',
-    );
-  }
-
   Future<void> _call(String phone) async {
     final opened = await launchUrl(Uri(scheme: 'tel', path: digitsOnly(phone)));
     if (!opened && mounted) {
@@ -76,51 +62,65 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     final value = ref.watch(orderProvider(widget.orderId));
     final order = value.value;
     final api = ref.read(apiProvider);
+    final mechanic = ref.watch(authControllerProvider).mechanic;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(order == null ? 'Ordem de serviço' : 'OS #${order.number}'),
+    return PanelScaffold(
+      appBar: PanelAppBar(
+        title: order == null ? 'Ordem de serviço' : 'OS #${order.number}',
         actions: [
-          if (order != null && order.isOpen)
-            IconButton(
-              tooltip: 'Editar OS',
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => OrderFormScreen(order: order)),
-              ),
+          if (order != null) ...[
+            Center(
+              child: StatusChip(order.statusView.$1, tone: order.statusView.$2),
             ),
+            if (order.isOpen)
+              IconButton(
+                tooltip: 'Editar OS',
+                icon: const Icon(LucideIcons.pencil, size: 18),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => OrderFormScreen(order: order),
+                    ),
+                  );
+                  _reload();
+                },
+              ),
+          ],
         ],
       ),
-      bottomNavigationBar: order == null || !order.isOpen
+      bottomNavigationBar: order == null
           ? null
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: Row(
                   children: [
-                    if (order.status == 'OPEN') ...[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () => _run(
-                                    () => api.startOrder(order.id),
-                                    'OS iniciada',
-                                  ),
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text('Iniciar'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Expanded(
-                      child: BusyButton(
-                        label: 'Concluir',
-                        icon: Icons.check,
-                        busy: _busy,
-                        onPressed: () => _complete(order),
-                      ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Voltar'),
                     ),
+                    if (order.status == 'OPEN') ...[
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () => _run(
+                                  () => api.startOrder(order.id),
+                                  'OS iniciada',
+                                ),
+                        icon: const Icon(LucideIcons.play),
+                        label: const Text('Iniciar'),
+                      ),
+                    ],
+                    if (order.isOpen) ...[
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        style: successFilled,
+                        onPressed: _busy ? null : () => _complete(order),
+                        icon: const Icon(LucideIcons.circleCheck),
+                        label: const Text('Concluir'),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -129,61 +129,181 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         value: value,
         onRefresh: () => ref.refresh(orderProvider(widget.orderId).future),
         builder: (order) => [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: StatusChip(order.statusView.$1, tone: order.statusView.$2),
-          ),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  InfoRow('Cliente', order.customerName),
-                  if (order.vehicleText.isNotEmpty)
-                    InfoRow('Veículo', order.vehicleText),
-                  InfoRow('Quilometragem', formatKm(order.mileage)),
-                  InfoRow('Aberta em', formatDateTime(order.createdAt)),
-                  if ((order.customerPhone ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: () => _call(order.customerPhone!),
-                      icon: const Icon(Icons.call_outlined),
-                      label: Text('Ligar: ${order.customerPhone}'),
-                    ),
-                  ],
-                ],
+          if (order.revisionId != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFF93C5FD)),
+                ),
+                child: Text(
+                  'Originada pela revisão #'
+                  '${order.revisionId!.length > 8 ? order.revisionId!.substring(0, 8) : order.revisionId}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1D4ED8),
+                  ),
+                ),
               ),
             ),
+          GlassCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  order.customerName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.slate950,
+                  ),
+                ),
+                if ((order.customerPhone ?? '').isNotEmpty)
+                  GestureDetector(
+                    onTap: () => _call(order.customerPhone!),
+                    child: Text(
+                      order.customerPhone!,
+                      style: const TextStyle(fontSize: 14, color: gray600),
+                    ),
+                  ),
+                Text(
+                  [
+                    if (order.vehicleText.isNotEmpty) order.vehicleText,
+                    if ((order.mileage ?? 0) > 0) '${order.mileage} km',
+                  ].join(' · '),
+                  style: const TextStyle(fontSize: 14, color: gray600),
+                ),
+                if ((order.description ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Descrição',
+                    style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                  ),
+                  Text(order.description!, style: const TextStyle(fontSize: 14)),
+                ],
+                if ((order.internalNotes ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Observações internas',
+                    style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                  ),
+                  Text(
+                    order.internalNotes!,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 12),
+                const Text(
+                  'Itens',
+                  style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                ),
+                const SizedBox(height: 4),
+                if (order.items.isEmpty)
+                  const Text(
+                    'Sem itens.',
+                    style: TextStyle(fontSize: 14, color: gray600),
+                  ),
+                for (final item in order.items)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        StatusChip(
+                          item.isProduct ? 'Produto' : 'Serviço',
+                          tone: item.isProduct
+                              ? StatusTone.info
+                              : StatusTone.orange,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${item.name} × ${item.quantity}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          formatMoney(item.subtotal),
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 8),
+                _TotalRow('Mão de obra', formatMoney(order.laborTotal)),
+                _TotalRow('Produtos', formatMoney(order.partsTotal)),
+                if (order.discount > 0)
+                  _TotalRow('Desconto', '- ${formatMoney(order.discount)}'),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Total',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      formatMoney(order.total),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ],
+                ),
+                if (mechanic != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Mecânico responsável: ${mechanic.name}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.mutedForeground,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-          if ((order.description ?? '').isNotEmpty) ...[
-            const SectionTitle('Descrição'),
-            Text(order.description!),
-          ],
-          if ((order.internalNotes ?? '').isNotEmpty) ...[
-            const SectionTitle('Observações internas'),
-            Text(order.internalNotes!),
-          ],
-          const SectionTitle('Itens'),
-          if (order.items.isEmpty) const Text('Sem itens.'),
-          for (final item in order.items)
-            InfoRow(
-              '${item.quantity}x ${item.name} '
-              '(${item.isProduct ? 'peça' : 'serviço'})',
-              formatMoney(item.subtotal),
+        ],
+      ),
+    );
+  }
+}
+
+class _TotalRow extends StatelessWidget {
+  const _TotalRow(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 14, color: AppTheme.mutedForeground),
             ),
-          if (order.isOpen)
-            OutlinedButton.icon(
-              onPressed: _busy ? null : () => _addItems(order),
-              icon: const Icon(Icons.add),
-              label: const Text('Adicionar itens'),
-            ),
-          const Divider(),
-          InfoRow('Mão de obra', formatMoney(order.laborTotal)),
-          InfoRow('Produtos', formatMoney(order.partsTotal)),
-          if (order.discount > 0)
-            InfoRow('Desconto', '- ${formatMoney(order.discount)}'),
-          InfoRow('Total', formatMoney(order.total), emphasized: true),
+          ),
+          Text(value, style: const TextStyle(fontSize: 14)),
         ],
       ),
     );

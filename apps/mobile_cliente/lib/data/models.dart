@@ -65,6 +65,8 @@ class Customer {
     required this.addresses,
     this.cpf,
     this.birthDate,
+    this.totalOrders = 0,
+    this.totalSpent = 0,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
@@ -76,6 +78,8 @@ class Customer {
         birthDate: asDate(json['birthDate']),
         level: json['level']?.toString() ?? 'BRONZE',
         addresses: asMapList(json['addresses']).map(Address.fromJson).toList(),
+        totalOrders: asInt(json['totalOrders']),
+        totalSpent: asDouble(json['totalSpent']),
       );
 
   final String id;
@@ -86,6 +90,8 @@ class Customer {
   final DateTime? birthDate;
   final String level;
   final List<Address> addresses;
+  final int totalOrders;
+  final double totalSpent;
 
   String get firstName => name.trim().split(' ').first;
 
@@ -157,8 +163,8 @@ class Order {
 
   (String, StatusTone) get statusView => switch (status) {
         'CONFIRMED' => ('Confirmado', StatusTone.info),
-        'IN_PRODUCTION' || 'PREPARING' => ('Preparando', StatusTone.warning),
-        'SHIPPED' => ('Enviado', StatusTone.info),
+        'IN_PRODUCTION' || 'PREPARING' => ('Preparando', StatusTone.orange),
+        'SHIPPED' => ('Enviado', StatusTone.purple),
         'DELIVERED' => ('Entregue', StatusTone.success),
         'CANCELLED' => ('Cancelado', StatusTone.danger),
         _ => ('Pendente', StatusTone.warning),
@@ -199,6 +205,7 @@ class Quote {
     this.createdAt,
     this.quotedAt,
     this.expiresAt,
+    this.approvedAt,
     this.address,
   });
 
@@ -213,6 +220,7 @@ class Quote {
       createdAt: asDate(json['createdAt']),
       quotedAt: asDate(json['quotedAt']),
       expiresAt: asDate(json['publicApprovalExpiresAt']),
+      approvedAt: asDate(json['quoteApprovedAt']),
       address: address == null ? null : Address.fromJson(address),
     );
   }
@@ -225,6 +233,7 @@ class Quote {
   final DateTime? createdAt;
   final DateTime? quotedAt;
   final DateTime? expiresAt;
+  final DateTime? approvedAt;
   final Address? address;
 
   String get shortId => id.length > 8 ? id.substring(0, 8).toUpperCase() : id;
@@ -232,11 +241,11 @@ class Quote {
   bool get awaitsApproval => status == 'QUOTED';
 
   (String, StatusTone) get statusView => switch (status) {
-        'ANALYZING' => ('Em análise', StatusTone.info),
-        'QUOTED' => ('Aguardando sua aprovação', StatusTone.warning),
+        'ANALYZING' => ('Em análise', StatusTone.purple),
+        'QUOTED' => ('Aguardando sua aprovação', StatusTone.info),
         'APPROVED' => ('Aprovado por você', StatusTone.success),
         'REJECTED' => ('Recusado por você', StatusTone.danger),
-        _ => ('Pendente', StatusTone.neutral),
+        _ => ('Pendente', StatusTone.warning),
       };
 }
 
@@ -250,6 +259,7 @@ class Vehicle {
     required this.color,
     this.mileage,
     this.chassisNumber,
+    this.createdAt,
   });
 
   factory Vehicle.fromJson(Map<String, dynamic> json) => Vehicle(
@@ -261,6 +271,7 @@ class Vehicle {
         color: json['color']?.toString() ?? '',
         mileage: json['mileage'] == null ? null : asInt(json['mileage']),
         chassisNumber: json['chassisNumber']?.toString(),
+        createdAt: asDate(json['createdAt']),
       );
 
   final String id;
@@ -271,6 +282,7 @@ class Vehicle {
   final String color;
   final int? mileage;
   final String? chassisNumber;
+  final DateTime? createdAt;
 
   String get label => '$brand $model'.trim();
 }
@@ -285,6 +297,7 @@ class Appointment {
     this.adminNotes,
     this.mechanicName,
     this.vehicle,
+    this.revisionId,
   });
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
@@ -298,6 +311,7 @@ class Appointment {
       adminNotes: json['adminNotes']?.toString(),
       mechanicName: json['mechanicName']?.toString(),
       vehicle: vehicle == null ? null : Vehicle.fromJson(vehicle),
+      revisionId: json['revisionId']?.toString(),
     );
   }
 
@@ -309,15 +323,16 @@ class Appointment {
   final String? adminNotes;
   final String? mechanicName;
   final Vehicle? vehicle;
+  final String? revisionId;
 
   bool get canCancel => status == 'REQUESTED' || status == 'SCHEDULED';
 
   (String, StatusTone) get statusView => switch (status) {
         'SCHEDULED' => ('Agendado', StatusTone.info),
-        'IN_SERVICE' => ('Em atendimento', StatusTone.warning),
+        'IN_SERVICE' => ('Em atendimento', StatusTone.purple),
         'COMPLETED' => ('Concluído', StatusTone.success),
         'CANCELLED' => ('Cancelado', StatusTone.danger),
-        _ => ('Solicitado', StatusTone.neutral),
+        _ => ('Solicitado', StatusTone.warning),
       };
 }
 
@@ -409,6 +424,8 @@ class FavoriteProduct {
     required this.price,
     this.promoPrice,
     this.imageUrl,
+    this.category,
+    this.addedAt,
   });
 
   factory FavoriteProduct.fromJson(Map<String, dynamic> json) {
@@ -423,6 +440,8 @@ class FavoriteProduct {
       imageUrl: images is List && images.isNotEmpty
           ? imageUrlFrom(images.first.toString())
           : null,
+      category: product['category']?.toString(),
+      addedAt: asDate(json['createdAt']),
     );
   }
 
@@ -431,6 +450,8 @@ class FavoriteProduct {
   final double price;
   final double? promoPrice;
   final String? imageUrl;
+  final String? category;
+  final DateTime? addedAt;
 }
 
 /// Imagens enviadas pelo painel chegam como caminho relativo (`/uploads/...`).
@@ -531,6 +552,9 @@ class Ticket {
     required this.status,
     this.rating,
     this.updatedAt,
+    this.createdAt,
+    this.priority = 'MEDIUM',
+    this.messageCount = 0,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
@@ -540,6 +564,9 @@ class Ticket {
         status: json['status']?.toString() ?? 'OPEN',
         rating: json['rating'] == null ? null : asInt(json['rating']),
         updatedAt: asDate(json['updatedAt']),
+        createdAt: asDate(json['createdAt']),
+        priority: json['priority']?.toString() ?? 'MEDIUM',
+        messageCount: asInt(asMap(json['_count'])?['messages']),
       );
 
   final String id;
@@ -548,16 +575,26 @@ class Ticket {
   final String status;
   final int? rating;
   final DateTime? updatedAt;
+  final DateTime? createdAt;
+  final String priority;
+  final int messageCount;
+
+  (String, StatusTone) get priorityView => switch (priority) {
+        'LOW' => ('Baixa', StatusTone.neutral),
+        'HIGH' => ('Alta', StatusTone.orange),
+        'URGENT' => ('Urgente', StatusTone.danger),
+        _ => ('Média', StatusTone.info),
+      };
 
   bool get isOpen => status != 'RESOLVED' && status != 'CLOSED';
 
   (String, StatusTone) get statusView => switch (status) {
-        'IN_PROGRESS' => ('Em atendimento', StatusTone.info),
-        'WAITING_CUSTOMER' => ('Aguardando você', StatusTone.warning),
-        'WAITING_SUPPORT' => ('Aguardando suporte', StatusTone.info),
+        'IN_PROGRESS' => ('Em atendimento', StatusTone.warning),
+        'WAITING_CUSTOMER' => ('Aguardando você', StatusTone.purple),
+        'WAITING_SUPPORT' => ('Aguardando suporte', StatusTone.orange),
         'RESOLVED' => ('Resolvido', StatusTone.success),
         'CLOSED' => ('Fechado', StatusTone.neutral),
-        _ => ('Aberto', StatusTone.warning),
+        _ => ('Aberto', StatusTone.info),
       };
 }
 
@@ -614,6 +651,8 @@ class SupportContacts {
     this.email,
     this.phone,
     this.hours = const [],
+    this.schedule = const [],
+    this.online = false,
   });
 
   factory SupportContacts.fromJson(Map<String, dynamic> json) {
@@ -630,6 +669,12 @@ class SupportContacts {
           if (asMap(business[key]) case final day?)
             '${day['label']}: ${day['hours']}',
       ],
+      schedule: [
+        for (final key in const ['weekdays', 'saturday', 'sunday'])
+          if (asMap(business[key]) case final day?)
+            (day['label']?.toString() ?? '', day['hours']?.toString() ?? ''),
+      ],
+      online: asMap(json['status'])?['isOnline'] == true,
     );
   }
 
@@ -638,4 +683,8 @@ class SupportContacts {
   final String? email;
   final String? phone;
   final List<String> hours;
+
+  /// Dia e horário separados, para o cartão "Horários de Atendimento".
+  final List<(String, String)> schedule;
+  final bool online;
 }

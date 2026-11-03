@@ -3,21 +3,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:m2_core/m2_core.dart';
 
 import '../../data/providers.dart';
+import '../../shared/ui.dart';
 
-const _categories = {
-  'ORDER_ISSUE': 'Problema com pedido',
-  'PRODUCT_QUESTION': 'Dúvida sobre produto',
-  'PAYMENT_ISSUE': 'Pagamento',
-  'DELIVERY_ISSUE': 'Entrega',
-  'REVISION_QUESTION': 'Dúvida sobre revisão',
-  'TECHNICAL_SUPPORT': 'Suporte técnico',
+/// Categorias aceitas pela API de suporte.
+const ticketCategories = {
+  'ORDER_ISSUE': 'Problema com Pedido',
+  'PRODUCT_QUESTION': 'Dúvida sobre Produto',
+  'PAYMENT_ISSUE': 'Problema com Pagamento',
+  'DELIVERY_ISSUE': 'Problema com Entrega',
+  'REVISION_QUESTION': 'Dúvida sobre Revisão',
+  'TECHNICAL_SUPPORT': 'Suporte Técnico',
   'SUGGESTION': 'Sugestão',
   'COMPLAINT': 'Reclamação',
   'OTHER': 'Outro',
 };
 
+const _priorities = {
+  'LOW': 'Baixa',
+  'MEDIUM': 'Média',
+  'HIGH': 'Alta',
+  'URGENT': 'Urgente',
+};
+
+/// Novo atendimento (`CreateTicketModal` do PWA).
 class NewTicketScreen extends ConsumerStatefulWidget {
-  const NewTicketScreen({super.key});
+  const NewTicketScreen({
+    super.key,
+    this.initialCategory = 'OTHER',
+    this.initialSubject,
+  });
+
+  final String initialCategory;
+  final String? initialSubject;
 
   @override
   ConsumerState<NewTicketScreen> createState() => _NewTicketScreenState();
@@ -25,9 +42,10 @@ class NewTicketScreen extends ConsumerStatefulWidget {
 
 class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _subject = TextEditingController();
+  late final _subject = TextEditingController(text: widget.initialSubject);
   final _message = TextEditingController();
-  String _category = 'OTHER';
+  late String _category = widget.initialCategory;
+  String _priority = 'MEDIUM';
   bool _busy = false;
 
   @override
@@ -45,6 +63,7 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
       () => ref.read(apiProvider).createTicket(
             subject: _subject.text.trim(),
             category: _category,
+            priority: _priority,
             message: _message.text.trim(),
           ),
       success: 'Atendimento aberto',
@@ -59,43 +78,75 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Novo atendimento')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    return FormPage(
+      title: 'Criar Novo Ticket',
+      formKey: _formKey,
+      header: const PanelPageHeader(
+        icon: LucideIcons.messageCircle,
+        title: 'Criar Novo Ticket',
+        description: 'Descreva o problema ou dúvida que você está '
+            'enfrentando. Nossa equipe responderá em breve.',
+      ),
+      children: [
+        LabeledField(
+          label: 'Assunto *',
+          child: TextFormField(
+            controller: _subject,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'Descreva brevemente o problema...',
+            ),
+            validator: (v) => (v ?? '').trim().length < 5
+                ? 'Descreva em poucas palavras'
+                : null,
+          ),
+        ),
+        LabeledField(
+          label: 'Categoria *',
+          child: FilterSelect<String>(
+            value: _category,
+            options: ticketCategories,
+            onChanged: (value) => setState(() => _category = value),
+          ),
+        ),
+        LabeledField(
+          label: 'Prioridade *',
+          child: FilterSelect<String>(
+            value: _priority,
+            options: _priorities,
+            onChanged: (value) => setState(() => _priority = value),
+          ),
+        ),
+        LabeledField(
+          label: 'Mensagem *',
+          child: TextFormField(
+            controller: _message,
+            maxLines: 6,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'Descreva detalhadamente o problema...',
+            ),
+            validator: (v) =>
+                (v ?? '').trim().length < 10 ? 'Conte um pouco mais' : null,
+          ),
+        ),
+        Row(
           children: [
-            DropdownButtonFormField<String>(
-              value: _category,
-              decoration: const InputDecoration(labelText: 'Assunto geral'),
-              items: [
-                for (final entry in _categories.entries)
-                  DropdownMenuItem(value: entry.key, child: Text(entry.value)),
-              ],
-              onChanged: (value) =>
-                  setState(() => _category = value ?? _category),
+            OutlinedButton(
+              onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _subject,
-              decoration: const InputDecoration(labelText: 'Título'),
-              validator: (v) =>
-                  (v ?? '').trim().length < 5 ? 'Descreva em poucas palavras' : null,
+            const SizedBox(width: 8),
+            Expanded(
+              child: BusyButton(
+                label: 'Criar Ticket',
+                busy: _busy,
+                onPressed: _submit,
+              ),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _message,
-              maxLines: 5,
-              decoration: const InputDecoration(labelText: 'Mensagem'),
-              validator: (v) =>
-                  (v ?? '').trim().length < 10 ? 'Conte um pouco mais' : null,
-            ),
-            const SizedBox(height: 24),
-            BusyButton(label: 'Enviar', busy: _busy, onPressed: _submit),
           ],
         ),
-      ),
+      ],
     );
   }
 }

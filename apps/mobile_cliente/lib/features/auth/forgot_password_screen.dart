@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:m2_core/m2_core.dart';
 
 import '../../data/providers.dart';
+import '../../shared/ui.dart';
+import 'login_screen.dart';
 
+/// Recuperar senha no mesmo cartão da entrada.
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
@@ -41,35 +44,37 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Recuperar senha')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: _sent
-              ? const [
-                  EmptyState(
-                    icon: Icons.mark_email_read_outlined,
-                    message: 'Se este e-mail tiver cadastro, enviamos um link '
-                        'para criar uma nova senha. Confira também o spam.',
-                  ),
-                ]
-              : [
-                  const Text(
-                    'Informe o e-mail da sua conta. Enviaremos um link para '
-                    'criar uma nova senha.',
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(labelText: 'E-mail'),
-                    validator: (v) => (v ?? '').contains('@')
-                        ? null
-                        : 'Informe um e-mail válido',
+    return AuthCardScaffold(
+      title: 'Recuperar senha',
+      subtitle: 'Informe o e-mail da sua conta. Enviaremos um link para criar '
+          'uma nova senha.',
+      onBack: () => Navigator.of(context).maybePop(),
+      child: _sent
+          ? const NoticeBox(
+              icon: LucideIcons.mailCheck,
+              tone: StatusTone.success,
+              child: Text(
+                'Se este e-mail tiver cadastro, enviamos um link para criar '
+                'uma nova senha. Confira também o spam.',
+              ),
+            )
+          : Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LabeledField(
+                    label: 'Email',
+                    child: TextFormField(
+                      controller: _email,
+                      keyboardType: TextInputType.emailAddress,
+                      autocorrect: false,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: iconInput(LucideIcons.mail, 'seu@email.com'),
+                      validator: (v) => (v ?? '').contains('@')
+                          ? null
+                          : 'Informe um e-mail válido',
+                    ),
                   ),
                   const SizedBox(height: 24),
                   BusyButton(
@@ -78,8 +83,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     onPressed: _submit,
                   ),
                 ],
-        ),
-      ),
+              ),
+            ),
     );
   }
 }

@@ -20,7 +20,6 @@ class M2MecanicoApp extends ConsumerWidget {
       title: 'M2 Mecânico',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
       locale: appLocale,
       supportedLocales: const [appLocale],
       localizationsDelegates: appLocalizationsDelegates,

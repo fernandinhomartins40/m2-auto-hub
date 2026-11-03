@@ -16,5 +16,8 @@ export 'src/theme/app_theme.dart';
 export 'src/widgets/change_password_screen.dart';
 export 'src/widgets/async_page.dart';
 export 'src/widgets/feedback.dart';
+export 'src/widgets/panel.dart';
 export 'src/widgets/password_field.dart';
 export 'src/widgets/status_chip.dart';
+
+export 'package:lucide_icons_flutter/lucide_icons.dart';

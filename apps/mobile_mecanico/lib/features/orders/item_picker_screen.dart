@@ -4,11 +4,15 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../shared/ui.dart';
 
-/// Escolhe produtos e serviços do catálogo, ou lança um item avulso.
-/// Devolve a lista escolhida ao fechar.
+/// "Adição rápida de itens" do PWA: escolhe serviços e produtos do catálogo,
+/// ou lança um item avulso. Devolve a lista escolhida ao fechar.
 class ItemPickerScreen extends ConsumerStatefulWidget {
-  const ItemPickerScreen({super.key});
+  const ItemPickerScreen({super.key, this.subtitle});
+
+  /// "OS #1 · João Silva".
+  final String? subtitle;
 
   @override
   ConsumerState<ItemPickerScreen> createState() => _ItemPickerScreenState();
@@ -17,6 +21,7 @@ class ItemPickerScreen extends ConsumerStatefulWidget {
 class _ItemPickerScreenState extends ConsumerState<ItemPickerScreen> {
   final _search = TextEditingController();
   final List<OrderItem> _picked = [];
+  int _tab = 0;
 
   @override
   void dispose() {
@@ -48,7 +53,7 @@ class _ItemPickerScreenState extends ConsumerState<ItemPickerScreen> {
     final item = await showModalBottomSheet<OrderItem>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => const _ManualItemSheet(),
+      builder: (_) => const ManualItemSheet(),
     );
     if (item != null) setState(() => _picked.add(item));
   }
@@ -73,104 +78,219 @@ class _ItemPickerScreenState extends ConsumerState<ItemPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Adicionar itens'),
-          actions: [
-            IconButton(
-              tooltip: 'Item avulso',
-              icon: const Icon(Icons.edit_note),
-              onPressed: _addManual,
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [Tab(text: 'Produtos'), Tab(text: 'Serviços')],
+    final services = _tab == 0;
+    return PanelScaffold(
+      appBar: PanelAppBar(
+        title: 'Adição rápida de itens',
+        actions: [
+          IconButton(
+            tooltip: 'Item avulso',
+            icon: const Icon(LucideIcons.squarePlus, size: 20),
+            onPressed: _addManual,
           ),
-        ),
-        bottomNavigationBar: SafeArea(
+        ],
+      ),
+      bottomNavigationBar: DecoratedBox(
+        decoration: frostedBarDecoration(top: false),
+        child: SafeArea(
+          top: false,
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
               children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 180),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      for (var i = 0; i < _picked.length; i++)
-                        _PickedRow(
-                          item: _picked[i],
-                          onChange: (delta) => _changeQuantity(i, delta),
-                        ),
-                    ],
-                  ),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Voltar'),
                 ),
-                const SizedBox(height: 8),
-                FilledButton(
+                const Spacer(),
+                FilledButton.icon(
                   onPressed: _picked.isEmpty
                       ? null
                       : () => Navigator.of(context).pop(_picked),
-                  child: Text('Adicionar (${_picked.length})'),
+                  icon: const Icon(LucideIcons.plus),
+                  label: const Text('Adicionar'),
                 ),
               ],
             ),
           ),
         ),
-        body: Column(
+      ),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: TextField(
-                controller: _search,
-                onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(
-                  labelText: 'Buscar',
-                  prefixIcon: Icon(Icons.search),
+            if (widget.subtitle != null)
+              Text(
+                widget.subtitle!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.mutedForeground,
                 ),
               ),
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  AsyncPage<List<CatalogProduct>>(
-                    value: ref.watch(productsProvider),
-                    onRefresh: () => ref.refresh(productsProvider.future),
-                    builder: (products) => [
-                      for (final product in products)
-                        if (_matches(product.name, product.category))
-                          ListTile(
-                            title: Text(product.name),
-                            subtitle: Text(
-                              '${formatMoney(product.price)} · '
-                              '${product.stock} em estoque',
-                            ),
-                            trailing: const Icon(Icons.add_circle_outline),
-                            onTap: () => _pick(product.toItem()),
-                          ),
-                    ],
-                  ),
-                  AsyncPage<List<CatalogService>>(
-                    value: ref.watch(servicesProvider),
-                    onRefresh: () => ref.refresh(servicesProvider.future),
-                    builder: (services) => [
-                      for (final service in services)
-                        if (_matches(service.name, service.category))
-                          ListTile(
-                            title: Text(service.name),
-                            subtitle: Text(formatMoney(service.price)),
-                            trailing: const Icon(Icons.add_circle_outline),
-                            onTap: () => _pick(service.toItem()),
-                          ),
-                    ],
-                  ),
+            const SizedBox(height: 12),
+            Center(
+              child: WorkspaceTabs(
+                index: _tab,
+                onChanged: (tab) => setState(() => _tab = tab),
+                tabs: const [
+                  WorkspaceTab('Serviços', icon: LucideIcons.wrench),
+                  WorkspaceTab('Produtos', icon: LucideIcons.package),
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: services ? 'Buscar serviços...' : 'Buscar produtos...',
+                fillColor: Colors.white.withValues(alpha: 0.85),
+                prefixIcon: const Icon(LucideIcons.search, size: 16),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              flex: 3,
+              child: services
+                  ? AsyncPage<List<CatalogService>>(
+                      value: ref.watch(servicesProvider),
+                      onRefresh: () => ref.refresh(servicesProvider.future),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      builder: (list) => [
+                        for (final service in list)
+                          if (_matches(service.name, service.category))
+                            _CatalogCard(
+                              name: service.name,
+                              detail: service.category,
+                              price: service.price,
+                              onTap: () => _pick(service.toItem()),
+                            ),
+                      ],
+                    )
+                  : AsyncPage<List<CatalogProduct>>(
+                      value: ref.watch(productsProvider),
+                      onRefresh: () => ref.refresh(productsProvider.future),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      builder: (list) => [
+                        for (final product in list)
+                          if (_matches(product.name, product.category))
+                            _CatalogCard(
+                              name: product.name,
+                              detail:
+                                  '${product.category} · ${product.stock} em estoque',
+                              price: product.price,
+                              onTap: () => _pick(product.toItem()),
+                            ),
+                      ],
+                    ),
+            ),
+            const Divider(),
+            const SizedBox(height: 12),
+            Text(
+              'Itens a adicionar (${_picked.length})',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              flex: 2,
+              child: _picked.isEmpty
+                  ? const Align(
+                      alignment: Alignment.topCenter,
+                      child: DashedBox(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.zap, size: 28, color: gray400),
+                            SizedBox(height: 6),
+                            Text(
+                              'Selecione itens acima para adicionar à OS',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.mutedForeground,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView(
+                      children: [
+                        for (var i = 0; i < _picked.length; i++)
+                          _PickedRow(
+                            item: _picked[i],
+                            onChange: (delta) => _changeQuantity(i, delta),
+                          ),
+                      ],
+                    ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CatalogCard extends StatelessWidget {
+  const _CatalogCard({
+    required this.name,
+    required this.detail,
+    required this.price,
+    required this.onTap,
+  });
+
+  final String name;
+  final String detail;
+  final double price;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.85),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: AppTheme.border),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.slate950,
+                      ),
+                    ),
+                    Text(
+                      detail,
+                      style: const TextStyle(fontSize: 12, color: gray600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      formatMoney(price),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(LucideIcons.plus, size: 20, color: Color(0xFF2563EB)),
+            ],
+          ),
         ),
       ),
     );
@@ -185,39 +305,62 @@ class _PickedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        IconButton(
-          tooltip: 'Diminuir ${item.name}',
-          icon: const Icon(Icons.remove_circle_outline),
-          onPressed: () => onChange(-1),
-        ),
-        Text('${item.quantity}'),
-        IconButton(
-          tooltip: 'Aumentar ${item.name}',
-          icon: const Icon(Icons.add_circle_outline),
-          onPressed: () => onChange(1),
-        ),
-      ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.fromLTRB(10, 4, 4, 4),
+      decoration: BoxDecoration(
+        color: gray50,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          StatusChip(
+            item.isProduct ? 'Produto' : 'Serviço',
+            tone: item.isProduct ? StatusTone.info : StatusTone.orange,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              item.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Diminuir ${item.name}',
+            iconSize: 16,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(LucideIcons.minus),
+            onPressed: () => onChange(-1),
+          ),
+          Text('${item.quantity}'),
+          IconButton(
+            tooltip: 'Aumentar ${item.name}',
+            iconSize: 16,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(LucideIcons.plus),
+            onPressed: () => onChange(1),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _ManualItemSheet extends StatefulWidget {
-  const _ManualItemSheet();
+/// Item avulso (peça ou serviço fora do catálogo).
+class ManualItemSheet extends StatefulWidget {
+  const ManualItemSheet({super.key});
 
   @override
-  State<_ManualItemSheet> createState() => _ManualItemSheetState();
+  State<ManualItemSheet> createState() => _ManualItemSheetState();
 }
 
-class _ManualItemSheetState extends State<_ManualItemSheet> {
+class _ManualItemSheetState extends State<ManualItemSheet> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _price = TextEditingController();
-  String _type = 'SERVICE';
+  int _type = 0;
 
   @override
   void dispose() {
@@ -230,7 +373,7 @@ class _ManualItemSheetState extends State<_ManualItemSheet> {
     if (!_formKey.currentState!.validate()) return;
     Navigator.of(context).pop(
       OrderItem(
-        type: _type,
+        type: _type == 0 ? 'SERVICE' : 'PRODUCT',
         name: _name.text.trim(),
         unitPrice: double.tryParse(_price.text.replaceAll(',', '.')) ?? 0,
         quantity: 1,
@@ -243,7 +386,7 @@ class _ManualItemSheetState extends State<_ManualItemSheet> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         16,
-        16,
+        0,
         16,
         16 + MediaQuery.viewInsetsOf(context).bottom,
       ),
@@ -253,30 +396,36 @@ class _ManualItemSheetState extends State<_ManualItemSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'SERVICE', label: Text('Serviço')),
-                ButtonSegment(value: 'PRODUCT', label: Text('Peça')),
-              ],
-              selected: {_type},
-              onSelectionChanged: (value) =>
-                  setState(() => _type = value.first),
+            Text(
+              'Item avulso',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            WorkspaceTabs(
+              expand: true,
+              index: _type,
+              onChanged: (type) => setState(() => _type = type),
+              tabs: const [
+                WorkspaceTab('Mão de obra', icon: LucideIcons.wrench),
+                WorkspaceTab('Peça', icon: LucideIcons.package),
+              ],
+            ),
+            const SizedBox(height: 12),
+            FormInput(
+              label: 'Nome do item',
               controller: _name,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Descrição'),
+              hint: 'Peça ou serviço',
+              capitalization: TextCapitalization.sentences,
               validator: (v) =>
                   (v ?? '').trim().isEmpty ? 'Informe a descrição' : null,
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            FormInput(
+              label: 'Valor (R\$)',
               controller: _price,
+              hint: '0,00',
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Valor (R\$)'),
             ),
             const SizedBox(height: 16),
             FilledButton(onPressed: _submit, child: const Text('Adicionar')),

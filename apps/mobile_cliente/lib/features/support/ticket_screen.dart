@@ -4,6 +4,7 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import 'support_screen.dart';
 
 class TicketScreen extends ConsumerStatefulWidget {
   const TicketScreen({super.key, required this.ticketId});
@@ -79,14 +80,14 @@ class _TicketScreenState extends ConsumerState<TicketScreen> {
     final messages = ref.watch(ticketMessagesProvider(_id));
     final open = ticket?.isOpen ?? false;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(ticket?.subject ?? 'Atendimento'),
+    return PanelScaffold(
+      appBar: PanelAppBar(
+        title: ticket?.subject ?? 'Atendimento',
         actions: [
           if (open)
             IconButton(
               tooltip: 'Encerrar atendimento',
-              icon: const Icon(Icons.task_alt),
+              icon: const Icon(LucideIcons.circleCheck, size: 20),
               onPressed: _close,
             ),
         ],
@@ -96,6 +97,7 @@ class _TicketScreenState extends ConsumerState<TicketScreen> {
           Expanded(
             child: AsyncPage<List<TicketMessage>>(
               value: messages,
+              header: [if (ticket != null) _TicketHeader(ticket: ticket)],
               onRefresh: () async {
                 _reload();
                 await ref
@@ -110,9 +112,11 @@ class _TicketScreenState extends ConsumerState<TicketScreen> {
             ),
           ),
           if (open)
-            SafeArea(
+            DecoratedBox(
+              decoration: frostedBarDecoration(top: false),
+              child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
                 child: Row(
                   children: [
                     Expanded(
@@ -126,30 +130,44 @@ class _TicketScreenState extends ConsumerState<TicketScreen> {
                         ),
                       ),
                     ),
-                    IconButton(
+                    const SizedBox(width: 8),
+                    IconButton.filled(
                       tooltip: 'Enviar',
-                      icon: const Icon(Icons.send),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      icon: const Icon(LucideIcons.send, size: 18),
                       onPressed: _sending ? null : _send,
                     ),
                   ],
                 ),
               ),
+            ),
             )
           else if (ticket != null && ticket.rating == null)
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Como foi o atendimento?'),
+                    Text(
+                      'Como foi o atendimento?',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         for (var star = 1; star <= 5; star++)
                           IconButton(
                             tooltip: '$star de 5',
-                            icon: const Icon(Icons.star_border),
+                            icon: const Icon(
+                              LucideIcons.star,
+                              color: Color(0xFFFACC15),
+                            ),
                             onPressed: () => _rate(star),
                           ),
                       ],
@@ -171,7 +189,6 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final mine = message.fromCustomer;
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
@@ -181,22 +198,56 @@ class _Bubble extends StatelessWidget {
         ),
         child: Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: mine ? scheme.primaryContainer : scheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: mine
+              ? BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                )
+              : glassDecoration(radius: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(message.message),
+              Text(
+                message.message,
+                style: TextStyle(color: mine ? Colors.white : AppTheme.slate950),
+              ),
               const SizedBox(height: 4),
               Text(
                 formatDateTime(message.createdAt),
-                style: Theme.of(context).textTheme.labelSmall,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: mine
+                      ? Colors.white.withValues(alpha: 0.8)
+                      : AppTheme.mutedForeground,
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TicketHeader extends StatelessWidget {
+  const _TicketHeader({required this.ticket});
+
+  final Ticket ticket;
+
+  @override
+  Widget build(BuildContext context) {
+    final (status, statusTone) = ticket.statusView;
+    final (priority, priorityTone) = ticket.priorityView;
+    return PanelPageHeader(
+      icon: LucideIcons.messageCircle,
+      title: ticket.subject,
+      description: 'Aberto ${timeAgo(ticket.createdAt ?? ticket.updatedAt)}',
+      badge: Wrap(
+        spacing: 6,
+        children: [
+          StatusChip(status, tone: statusTone),
+          StatusChip(priority, tone: priorityTone),
+        ],
       ),
     );
   }

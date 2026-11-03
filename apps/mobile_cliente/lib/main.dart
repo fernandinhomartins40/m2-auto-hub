@@ -20,7 +20,7 @@ class M2ClienteApp extends ConsumerWidget {
       title: 'M2 Center Auto',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.light,
       locale: appLocale,
       supportedLocales: const [appLocale],
       localizationsDelegates: appLocalizationsDelegates,

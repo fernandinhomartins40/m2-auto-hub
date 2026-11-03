@@ -257,12 +257,13 @@ class CustomerApi {
     required String subject,
     required String category,
     required String message,
+    String priority = 'MEDIUM',
   }) {
     return guardApi(() async {
       await _dio.post('/support/tickets', data: {
         'subject': subject,
         'category': category,
-        'priority': 'MEDIUM',
+        'priority': priority,
         'message': message,
       });
     });

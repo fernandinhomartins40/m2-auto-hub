@@ -4,7 +4,9 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../shared/ui.dart';
 
+/// Cadastro e edição de veículo (`CreateVehicleModalCustomer` do PWA).
 class VehicleFormScreen extends ConsumerStatefulWidget {
   const VehicleFormScreen({super.key, this.vehicle});
 
@@ -23,6 +25,8 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
   late final _color = TextEditingController(text: widget.vehicle?.color);
   late final _mileage =
       TextEditingController(text: widget.vehicle?.mileage?.toString());
+  late final _chassis =
+      TextEditingController(text: widget.vehicle?.chassisNumber);
   bool _busy = false;
 
   @override
@@ -33,6 +37,7 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
     _plate.dispose();
     _color.dispose();
     _mileage.dispose();
+    _chassis.dispose();
     super.dispose();
   }
 
@@ -40,6 +45,7 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     final mileage = int.tryParse(_mileage.text.trim());
+    final chassis = _chassis.text.trim().toUpperCase();
     final done = await runAction(
       context,
       () => ref.read(apiProvider).saveVehicle(widget.vehicle?.id, {
@@ -49,32 +55,13 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
         'plate': normalizePlate(_plate.text),
         'color': _color.text.trim(),
         if (mileage != null) 'mileage': mileage,
+        if (chassis.isNotEmpty) 'chassisNumber': chassis,
       }),
       success: 'Veículo salvo',
     );
     if (!mounted) return;
     setState(() => _busy = false);
     if (done) {
-      ref.invalidate(vehiclesProvider);
-      Navigator.of(context).pop();
-    }
-  }
-
-  Future<void> _delete() async {
-    final accepted = await confirm(
-      context,
-      title: 'Excluir veículo?',
-      message: 'O veículo sai da sua conta.',
-      confirmLabel: 'Excluir',
-      destructive: true,
-    );
-    if (!accepted || !mounted) return;
-    final done = await runAction(
-      context,
-      () => ref.read(apiProvider).deleteVehicle(widget.vehicle!.id),
-      success: 'Veículo excluído',
-    );
-    if (done && mounted) {
       ref.invalidate(vehiclesProvider);
       Navigator.of(context).pop();
     }
@@ -87,76 +74,107 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
     String? required(String? value) =>
         (value ?? '').trim().isEmpty ? 'Campo obrigatório' : null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(editing ? 'Editar veículo' : 'Novo veículo'),
-        actions: [
-          if (editing)
-            IconButton(
-              tooltip: 'Excluir veículo',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _delete,
-            ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+    Widget field(
+      String label,
+      TextEditingController controller,
+      String hint, {
+      FormFieldValidator<String>? validator,
+      TextInputType? keyboard,
+      TextCapitalization caps = TextCapitalization.words,
+      int? maxLength,
+    }) {
+      return LabeledField(
+        label: label,
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboard,
+          textCapitalization: caps,
+          maxLength: maxLength,
+          decoration: InputDecoration(hintText: hint, counterText: ''),
+          validator: validator,
+        ),
+      );
+    }
+
+    Widget pair(Widget left, Widget right) => Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
-              controller: _plate,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(labelText: 'Placa'),
-              validator: (v) =>
-                  isValidPlate(v ?? '') ? null : 'Placa inválida',
+            Expanded(child: left),
+            const SizedBox(width: 12),
+            Expanded(child: right),
+          ],
+        );
+
+    return FormPage(
+      title: editing ? 'Editar Veículo' : 'Cadastrar Novo Veículo',
+      formKey: _formKey,
+      header: PanelPageHeader(
+        icon: LucideIcons.car,
+        title: editing ? 'Editar Veículo' : 'Cadastrar Novo Veículo',
+        description: 'Os campos com * são obrigatórios.',
+      ),
+      children: [
+        pair(
+          field('Marca *', _brand, 'Ex: Volkswagen', validator: required),
+          field('Modelo *', _model, 'Ex: Gol 1.6', validator: required),
+        ),
+        pair(
+          field(
+            'Ano *',
+            _year,
+            '2020',
+            keyboard: TextInputType.number,
+            maxLength: 4,
+            validator: (v) {
+              final year = int.tryParse((v ?? '').trim());
+              return year == null || year < 1900 || year > currentYear + 1
+                  ? 'Ano inválido'
+                  : null;
+            },
+          ),
+          field(
+            'Placa *',
+            _plate,
+            'ABC1D23',
+            caps: TextCapitalization.characters,
+            maxLength: 8,
+            validator: (v) => isValidPlate(v ?? '') ? null : 'Placa inválida',
+          ),
+        ),
+        pair(
+          field('Cor *', _color, 'Ex: Branco, Preto, Prata',
+              validator: required),
+          field(
+            'Quilometragem (opcional)',
+            _mileage,
+            '50000',
+            keyboard: TextInputType.number,
+          ),
+        ),
+        field(
+          'Número do Chassi (opcional)',
+          _chassis,
+          '9BWZZZ377VT004251',
+          caps: TextCapitalization.characters,
+          maxLength: 17,
+        ),
+        Row(
+          children: [
+            OutlinedButton(
+              onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _brand,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Marca'),
-              validator: required,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _model,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Modelo'),
-              validator: required,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _year,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Ano'),
-              validator: (v) {
-                final year = int.tryParse((v ?? '').trim());
-                return year == null || year < 1900 || year > currentYear + 1
-                    ? 'Ano inválido'
-                    : null;
-              },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _color,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Cor'),
-              validator: required,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _mileage,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Quilometragem (opcional)',
+            const SizedBox(width: 8),
+            Expanded(
+              child: BusyButton(
+                label: editing ? 'Salvar Alterações' : 'Cadastrar Veículo',
+                busy: _busy,
+                onPressed: _save,
               ),
             ),
-            const SizedBox(height: 24),
-            BusyButton(label: 'Salvar', busy: _busy, onPressed: _save),
           ],
         ),
-      ),
+      ],
     );
   }
 }

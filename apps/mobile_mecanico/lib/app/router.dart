@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:m2_core/m2_core.dart';
 
 import '../features/auth/auth_controller.dart';
 import '../features/auth/forgot_password_screen.dart';
@@ -54,6 +55,9 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const PanelScaffold(
+      login: true,
+      body: Center(child: CircularProgressIndicator()),
+    );
   }
 }

@@ -76,39 +76,76 @@ class _PlateLookupScreenState extends ConsumerState<PlateLookupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Nova OS')),
+    return PanelScaffold(
+      appBar: const PanelAppBar(title: 'Ler placa'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          BusyButton(
-            label: 'Fotografar a placa',
-            icon: Icons.photo_camera_outlined,
-            busy: _busy,
-            onPressed: _photo,
+          const PanelPageHeader(
+            icon: LucideIcons.camera,
+            title: 'Criação rápida',
+            description: 'Fotografe a placa ou digite para encontrar o '
+                'cliente e o veículo.',
           ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _plate,
-            enabled: !_busy,
-            textCapitalization: TextCapitalization.characters,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _lookup(),
-            decoration: const InputDecoration(
-              labelText: 'Ou digite a placa',
-              hintText: 'ABC1D23',
+          const SizedBox(height: 16),
+          GlassCard(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                BusyButton(
+                  label: 'Fotografar a placa',
+                  icon: LucideIcons.camera,
+                  busy: _busy,
+                  onPressed: _photo,
+                ),
+                const SizedBox(height: 20),
+                const Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'ou digite',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.mutedForeground,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                LabeledField(
+                  label: 'Placa',
+                  child: TextField(
+                    controller: _plate,
+                    enabled: !_busy,
+                    textCapitalization: TextCapitalization.characters,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _lookup(),
+                    decoration: const InputDecoration(hintText: 'ABC1D23'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _lookup,
+                  icon: const Icon(LucideIcons.search),
+                  label: const Text('Consultar'),
+                ),
+                if (_status != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _status!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppTheme.mutedForeground),
+                  ),
+                ],
+              ],
             ),
           ),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: _busy ? null : _lookup,
-            child: const Text('Consultar'),
-          ),
-          if (_status != null) ...[
-            const SizedBox(height: 24),
-            Text(_status!, textAlign: TextAlign.center),
-          ],
-          const SizedBox(height: 24),
           TextButton(
             onPressed: _busy ? null : _skip,
             child: const Text('Continuar sem placa'),

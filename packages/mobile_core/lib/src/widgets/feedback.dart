@@ -71,12 +71,16 @@ class BusyButton extends StatelessWidget {
     required this.onPressed,
     this.busy = false,
     this.icon,
+    this.style,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool busy;
   final IconData? icon;
+
+  /// Troca a cor do botão (por exemplo, o verde de "Aprovar").
+  final ButtonStyle? style;
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +93,13 @@ class BusyButton extends StatelessWidget {
     );
     if (icon == null) {
       return FilledButton(
+        style: style,
         onPressed: busy ? null : onPressed,
         child: busy ? indicator : Text(label),
       );
     }
     return FilledButton.icon(
+      style: style,
       onPressed: busy ? null : onPressed,
       icon: busy ? indicator : Icon(icon),
       label: Text(label),

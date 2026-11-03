@@ -189,6 +189,45 @@ class MechanicApi {
         await _dio.patch('/service-orders/$id/complete');
       });
 
+  // ---- Clientes (assistente de OS) ----
+
+  /// `GET /admin/customers` devolve `{ customers, totalCount }`, sem envelope.
+  Future<List<CustomerRef>> searchCustomers(String term) => guardApi(() async {
+        final res = await _dio.get(
+          '/admin/customers',
+          queryParameters: {'page': 1, 'limit': 8, 'search': term},
+        );
+        final body = res.data;
+        final list = body is Map && body['customers'] is List
+            ? body['customers']
+            : unwrapList(body);
+        return asMapList(list).map(CustomerRef.fromJson).toList();
+      });
+
+  Future<List<VehicleRef>> customerVehicles(String customerId) {
+    return guardApi(() async {
+      final res = await _dio.get('/admin/customers/$customerId/vehicles');
+      return unwrapItems(res.data, VehicleRef.fromJson);
+    });
+  }
+
+  Future<CustomerRef> createCustomer({
+    required String name,
+    required String email,
+    required String phone,
+    String? cpf,
+  }) {
+    return guardApi(() async {
+      final res = await _dio.post('/admin/customers', data: {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        if ((cpf ?? '').isNotEmpty) 'cpf': cpf,
+      });
+      return CustomerRef.fromJson(unwrapObject(res.data));
+    });
+  }
+
   // ---- Catálogo e placa ----
 
   Future<List<CatalogProduct>> products() => guardApi(() async {

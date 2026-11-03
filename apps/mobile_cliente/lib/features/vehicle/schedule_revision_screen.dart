@@ -4,7 +4,9 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../shared/ui.dart';
 
+/// Agendar revisão (`ScheduleRevisionModal` do PWA).
 class ScheduleRevisionScreen extends ConsumerStatefulWidget {
   const ScheduleRevisionScreen({super.key, required this.vehicle});
 
@@ -69,45 +71,86 @@ class _ScheduleRevisionScreenState
   @override
   Widget build(BuildContext context) {
     final vehicle = widget.vehicle;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Agendar revisão')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.directions_car),
-              title: Text(vehicle.label),
-              subtitle: Text('Placa ${vehicle.plate} · Ano ${vehicle.year}'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: _pick,
-            icon: const Icon(Icons.event),
-            label: Text(
-              _when == null
-                  ? 'Escolher data e horário'
-                  : formatDateTime(_when),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _notes,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Observações (opcional)',
-              hintText: 'Algum barulho, luz no painel, ou serviço desejado',
-            ),
-          ),
-          const SizedBox(height: 24),
-          BusyButton(
-            label: 'Solicitar agendamento',
-            busy: _busy,
-            onPressed: _when == null ? null : _submit,
-          ),
-        ],
+    return FormPage(
+      title: 'Agendar Revisão',
+      header: const PanelPageHeader(
+        icon: LucideIcons.calendarClock,
+        title: 'Agendar Revisão',
+        description: 'Escolha o melhor horário. A oficina confirma ou ajusta '
+            'na confirmação final.',
       ),
+      children: [
+        NoticeBox(
+          icon: LucideIcons.car,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                vehicle.label,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              Text(
+                'Placa ${vehicle.plate} • Ano ${vehicle.year}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.mutedForeground,
+                ),
+              ),
+            ],
+          ),
+        ),
+        LabeledField(
+          label: 'Data e horário desejados',
+          helper: 'A oficina poderá ajustar esse horário na confirmação final.',
+          child: InkWell(
+            onTap: _pick,
+            borderRadius: BorderRadius.circular(6),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(LucideIcons.calendar, size: 16),
+              ),
+              child: Text(
+                _when == null
+                    ? 'Escolher data e horário'
+                    : formatDateTime(_when),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _when == null
+                      ? AppTheme.mutedForeground
+                      : AppTheme.foreground,
+                ),
+              ),
+            ),
+          ),
+        ),
+        LabeledField(
+          label: 'Observações para a oficina',
+          child: TextField(
+            controller: _notes,
+            maxLines: 4,
+            maxLength: 2000,
+            decoration: const InputDecoration(
+              hintText: 'Descreva sintomas, urgência ou alguma preferência.',
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            OutlinedButton(
+              onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: BusyButton(
+                label: 'Solicitar agendamento',
+                busy: _busy,
+                onPressed: _when == null ? null : _submit,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
