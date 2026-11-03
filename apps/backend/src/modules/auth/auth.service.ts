@@ -101,12 +101,15 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
-    const token = JwtUtil.generateToken({
-      customerId: customer.id,
-      email: customer.email,
-      level: customer.level,
-      status: customer.status,
-    });
+    const token = JwtUtil.generateToken(
+      {
+        customerId: customer.id,
+        email: customer.email,
+        level: customer.level,
+        status: customer.status,
+      },
+      dto.rememberMe ? '30d' : undefined
+    );
 
     const { password, ...customerWithoutPassword } = customer;
 
@@ -163,12 +166,15 @@ export class AuthService {
       },
     });
 
-    const token = JwtUtil.generateToken({
-      customerId: customer.id,
-      email: customer.email,
-      level: customer.level,
-      status: customer.status,
-    });
+    const token = JwtUtil.generateToken(
+      {
+        customerId: customer.id,
+        email: customer.email,
+        level: customer.level,
+        status: customer.status,
+      },
+      dto.rememberMe ? '30d' : undefined
+    );
 
     const { password, ...customerWithoutPassword } = customer;
 

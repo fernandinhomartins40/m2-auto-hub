@@ -27,6 +27,7 @@ export const registerSchema = z.object({
     .regex(/^\d{11}$/, 'CPF must be 11 digits')
     .optional()
     .transform(val => val || undefined),
+  rememberMe: z.boolean().optional(),
 });
 
 export type RegisterDto = z.infer<typeof registerSchema>;

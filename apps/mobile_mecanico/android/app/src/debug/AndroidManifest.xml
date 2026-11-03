@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Só em debug: o emulador fala com o backend local por HTTP. -->
+    <application android:usesCleartextTraffic="true" tools:replace="android:usesCleartextTraffic"/>
+</manifest>

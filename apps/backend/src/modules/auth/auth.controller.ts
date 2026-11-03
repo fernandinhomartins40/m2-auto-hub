@@ -25,12 +25,16 @@ export class AuthController {
       const result = await this.authService.login(dto);
 
       // Set httpOnly cookie
-      res.cookie('authToken', result.token, createSessionCookieOptions());
+      res.cookie('authToken', result.token, createSessionCookieOptions(dto.rememberMe));
 
       res.status(200).json({
         success: true,
         data: {
           customer: result.customer,
+          // Cookie httpOnly continua sendo usado pelo site.
+          // O token também é devolvido no corpo para o app nativo do cliente,
+          // que autentica via Authorization: Bearer.
+          token: result.token,
         },
       });
     } catch (error) {
@@ -47,12 +51,13 @@ export class AuthController {
       const result = await this.authService.register(dto);
 
       // Set httpOnly cookie
-      res.cookie('authToken', result.token, createSessionCookieOptions());
+      res.cookie('authToken', result.token, createSessionCookieOptions(dto.rememberMe));
 
       res.status(201).json({
         success: true,
         data: {
           customer: result.customer,
+          token: result.token,
         },
       });
     } catch (error) {

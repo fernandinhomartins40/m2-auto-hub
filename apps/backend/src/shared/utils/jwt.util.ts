@@ -21,9 +21,12 @@ export class JwtUtil {
   /**
    * Generate JWT token for customers
    */
-  static generateToken(payload: TokenPayload): string {
+  static generateToken(
+    payload: TokenPayload,
+    expiresIn: string = environment.jwt.expiresIn
+  ): string {
     return jwt.sign(payload, environment.jwt.secret, {
-      expiresIn: environment.jwt.expiresIn as jwt.SignOptions['expiresIn'],
+      expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
       issuer: 'moria-backend',
       audience: 'moria-frontend',
     });
