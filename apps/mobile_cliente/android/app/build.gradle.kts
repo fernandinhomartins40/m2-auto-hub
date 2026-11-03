@@ -32,8 +32,8 @@ android {
 
     defaultConfig {
         applicationId = "br.com.m2centerauto.cliente"
-        // flutter_secure_storage exige minSdk 23 (Android 6.0).
-        minSdk = 23
+        // A Proteção Automática da Play exige minSdk 24 (Android 7.0).
+        minSdk = 24
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
