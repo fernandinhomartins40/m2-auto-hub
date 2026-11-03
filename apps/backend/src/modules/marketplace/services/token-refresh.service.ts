@@ -1,8 +1,10 @@
 import { MarketplaceProvider, MarketplaceConnectionStatus } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { logger } from '@shared/utils/logger.util.js';
+import { ApiError } from '@shared/utils/error.util.js';
 import { getAdapter } from '../adapters/index.js';
 import { connectionService } from './connection.service.js';
+import { notifyStore } from './marketplace-notifier.js';
 
 /** Renova access tokens que estao proximos de expirar. */
 const REFRESH_MARGIN_MS = 10 * 60 * 1000; // renova 10 min antes de expirar
@@ -42,21 +44,45 @@ export class TokenRefreshService {
         { appId: account.appId, appSecret: account.appSecret },
         account.refreshToken
       );
+      const previous = await connectionService.getRaw(provider);
       await connectionService.saveTokens(provider, tokens);
       logger.info('[TokenRefresh] token renovado', { provider });
+      if (previous?.status === MarketplaceConnectionStatus.TOKEN_EXPIRED) {
+        await notifyStore('MARKETPLACE_LISTING_REACTIVATED', 'Conexão com o marketplace restabelecida', 'A automação de estoque, anúncios e vendas voltou a funcionar.', { provider });
+      }
     } catch (err) {
-      logger.warn('[TokenRefresh] falha ao renovar', { provider, err: String(err) });
+      // Falha de rede ou do marketplace fora do ar: mantem conectado e tenta no proximo ciclo.
+      const transient = !(err instanceof ApiError) || err.statusCode >= 500;
+      logger.warn('[TokenRefresh] falha ao renovar', { provider, transient, err: String(err) });
+      if (transient) {
+        await connectionService.setStatus(provider, MarketplaceConnectionStatus.CONNECTED, `Renovação adiada: ${String(err)}`);
+        return;
+      }
+      const previous = await connectionService.getRaw(provider);
       await connectionService.setStatus(provider, MarketplaceConnectionStatus.TOKEN_EXPIRED, String(err));
+      if (previous?.status !== MarketplaceConnectionStatus.TOKEN_EXPIRED) {
+        await notifyStore(
+          'MARKETPLACE_LISTING_ERROR',
+          'Mercado Livre desconectado',
+          'A autorização da conta expirou ou foi revogada. Estoque, anúncios e vendas param de sincronizar até reconectar em Catálogo → Marketplaces.',
+          { provider }
+        );
+      }
     }
   }
 
-  /** Varre todas as conexoes conectadas e renova as que estao perto de expirar. */
+  /**
+   * Renova as conexoes perto de expirar. Inclui as marcadas como expiradas:
+   * se o refresh token ainda valer, a conexao volta sozinha.
+   */
   async refreshExpiring(): Promise<void> {
     const soon = new Date(Date.now() + REFRESH_MARGIN_MS);
     const conns = await prisma.marketplaceConnection.findMany({
       where: {
-        status: MarketplaceConnectionStatus.CONNECTED,
-        tokenExpiresAt: { lte: soon },
+        OR: [
+          { status: MarketplaceConnectionStatus.CONNECTED, tokenExpiresAt: { lte: soon } },
+          { status: MarketplaceConnectionStatus.TOKEN_EXPIRED, refreshToken: { not: null } },
+        ],
       },
     });
 

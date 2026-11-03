@@ -706,6 +706,21 @@ export class NotificationsService {
   }
 
   private mapPersistedNotificationToAdminItem(notification: any): AdminNotificationCenterItem {
+    const panel = (type: AdminNotificationCenterItem['type'], priority: AdminNotificationCenterItem['priority']) => ({
+      type,
+      priority,
+      actionLabel: 'Abrir Mercado Livre',
+      actionUrl: '/mercado-livre',
+      actionTab: 'mercado-livre',
+    });
+    const marketplaceTypes = {
+      MARKETPLACE_SALE: panel('order', 'high'),
+      MARKETPLACE_SALE_CANCELLED: panel('order', 'high'),
+      MARKETPLACE_DISPATCH_DUE: panel('order', 'high'),
+      MARKETPLACE_LISTING_PAUSED: panel('stock', 'medium'),
+      MARKETPLACE_LISTING_REACTIVATED: panel('stock', 'low'),
+      MARKETPLACE_LISTING_ERROR: panel('stock', 'high'),
+    };
     const defaults = {
       type: 'system' as AdminNotificationCenterItem['type'],
       priority: 'medium' as AdminNotificationCenterItem['priority'],
@@ -774,6 +789,7 @@ export class NotificationsService {
         actionUrl: '/support',
         actionTab: 'support',
       },
+      ...marketplaceTypes,
     };
 
     const mapping = perType[notification.type as NotificationType] || defaults;

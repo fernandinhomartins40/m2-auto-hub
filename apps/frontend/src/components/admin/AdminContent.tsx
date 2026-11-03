@@ -612,6 +612,7 @@ export function AdminContent({ activeTab, onTabChange }: AdminContentProps) {
     onTabChange?.('service-center');
   };
   const mapNotificationToTab = (actionUrl?: string, notificationType?: string) => {
+    if (actionUrl?.includes('/mercado-livre')) return 'mercado-livre';
     if (actionUrl?.includes('/orders')) return 'orders';
     if (actionUrl?.includes('/quotes')) return 'quotes';
     if (actionUrl?.includes('/products')) return 'products';

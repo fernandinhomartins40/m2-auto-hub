@@ -3,6 +3,7 @@ import { prisma } from '@config/database.js';
 import { logger } from '@shared/utils/logger.util.js';
 import { orderImportService } from './order-import.service.js';
 import { mlOrderService } from './ml-order.service.js';
+import { syncService } from './sync.service.js';
 
 /** Topicos que representam um pedido (geram importacao). */
 const ORDER_TOPICS = new Set(['orders', 'orders_v2', 'order_status_push', 'shop_order']);
@@ -76,6 +77,11 @@ export class EventProcessorService {
       }
       if (topic === 'shipments') {
         await mlOrderService.syncShipment(externalId);
+        return;
+      }
+      // Anuncio mudou la (pausa/encerramento direto na conta, revisao): o painel acompanha.
+      if (topic === 'items') {
+        await syncService.applyRemoteStatus(provider, externalId);
         return;
       }
     }

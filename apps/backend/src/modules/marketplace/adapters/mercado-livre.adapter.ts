@@ -86,7 +86,10 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
     const data = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
       logger.warn('[ML] token request failed', { status: res.status, data });
-      throw ApiError.badRequest(
+      // 5xx/429 e instabilidade do ML (tenta de novo); 4xx e autorizacao revogada ou invalida.
+      const transient = res.status >= 500 || res.status === 429;
+      throw new ApiError(
+        transient ? 502 : 400,
         `Mercado Livre OAuth falhou: ${(data.message as string) || (data.error as string) || res.status}`
       );
     }
@@ -241,6 +244,14 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
 
   async activateListing(account: ProviderAccount, externalId: string): Promise<void> {
     await this.apiSend(account, 'PUT', `/items/${externalId}`, { status: 'active' });
+  }
+
+  async fetchListingStatus(account: ProviderAccount, externalId: string): Promise<{ status: string; subStatus: string[] }> {
+    const data = await this.apiGet<Record<string, unknown>>(account, `/items/${externalId}?attributes=status,sub_status`);
+    return {
+      status: String(data.status ?? 'unknown'),
+      subStatus: Array.isArray(data.sub_status) ? data.sub_status.map(String) : [],
+    };
   }
 
   /** Tarifa de venda estimada pelo ML para o preco, categoria e tipo de anuncio. */

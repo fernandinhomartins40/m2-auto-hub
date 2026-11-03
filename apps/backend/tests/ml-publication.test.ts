@@ -63,6 +63,13 @@ describe('quantidade por modo de estoque', () => {
     expect(resolvedQuantity(0, { stockMode: MarketplaceStockMode.STORE_PLUS_SUPPLIER, supplierQuantity: 5 })).toBe(5);
   });
 
+  it('produto desativado ou descontinuado não vende, nem do fornecedor', () => {
+    const profile = { stockMode: MarketplaceStockMode.STORE_PLUS_SUPPLIER, supplierQuantity: 5 };
+    expect(effectiveFields({ ...product, status: 'INACTIVE' }, profile, DEFAULT_SETTINGS).quantity).toBe(0);
+    expect(effectiveFields({ ...product, status: 'DISCONTINUED' }, profile, DEFAULT_SETTINGS).quantity).toBe(0);
+    expect(effectiveFields({ ...product, status: 'OUT_OF_STOCK', stock: 0 }, profile, DEFAULT_SETTINGS).quantity).toBe(5);
+  });
+
   it('sob encomenda tem prazo de pelo menos 1 dia', () => {
     const eff = effectiveFields(product, { stockMode: MarketplaceStockMode.MADE_TO_ORDER, supplierQuantity: 3, manufacturingDays: 0 }, DEFAULT_SETTINGS);
     expect(eff.quantity).toBe(5);

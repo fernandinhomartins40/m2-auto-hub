@@ -524,6 +524,16 @@ export class ProductsService {
       throw ApiError.notFound('Product not found');
     }
 
+    // O vinculo some em cascata com o produto: encerra antes os anuncios nos
+    // marketplaces, senao eles continuariam a venda sem ninguem controlando.
+    const listings = await prisma.marketplaceListing.findMany({ where: { productId: id }, select: { id: true } });
+    if (listings.length > 0) {
+      const { listingService } = await import('../marketplace/services/listing.service.js');
+      for (const listing of listings) {
+        await listingService.close(listing.id);
+      }
+    }
+
     await prisma.product.delete({
       where: { id },
     });

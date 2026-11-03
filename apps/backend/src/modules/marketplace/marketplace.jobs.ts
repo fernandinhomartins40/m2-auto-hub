@@ -8,7 +8,8 @@ import { mlOrderService } from './services/ml-order.service.js';
 
 const EVENT_INTERVAL_MS = 30 * 1000; // 30s: processa eventos de webhook pendentes
 const TOKEN_INTERVAL_MS = 5 * 60 * 1000; // 5min: renova tokens proximos de expirar
-const RECONCILE_INTERVAL_MS = 10 * 60 * 1000; // 10min: leva ao marketplace o estoque/preco vindo do Ellon
+// 2min: estoque/preco mudados pelo Ellon, site e OS chegam ao marketplace (consulta unica, so envia o que mudou)
+const RECONCILE_INTERVAL_MS = 2 * 60 * 1000;
 const ORDERS_INTERVAL_MS = 10 * 60 * 1000; // 10min: vendas do ML sem aviso, envios e prazos
 
 const timers: NodeJS.Timeout[] = [];

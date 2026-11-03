@@ -1,20 +1,18 @@
 import {
-  AdminRole,
   MarketplaceFulfillmentStage as Stage,
   MarketplaceOrder,
   MarketplaceProvider,
-  NotificationType,
   OrderStatus,
   Prisma,
 } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { ApiError } from '@shared/utils/error.util.js';
 import { logger } from '@shared/utils/logger.util.js';
-import notificationsService from '../../notifications/notifications.service.js';
 import { getAdapter } from '../adapters/index.js';
 import { MercadoLivreAdapter } from '../adapters/mercado-livre.adapter.js';
 import { AllocatedItem, allocate, isOpen, needsSupplier, nextStage } from '../mappers/fulfillment.js';
 import { NormalizedShipment } from '../marketplace.types.js';
+import { notifyStore } from './marketplace-notifier.js';
 import { orderImportService } from './order-import.service.js';
 import { tokenRefreshService } from './token-refresh.service.js';
 
@@ -23,7 +21,6 @@ const PROVIDER = MarketplaceProvider.MERCADO_LIVRE;
 const PAID = new Set(['paid', 'partially_refunded']);
 const RECENT_DAYS = 3;
 const SLA_ALERT_MS = 3 * 60 * 60 * 1000;
-const ALERT_ROLES: AdminRole[] = [AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.MANAGER];
 
 export type StageAction = 'SUPPLIER_RECEIVED' | 'PICKED' | 'BACK_TO_PICK';
 
@@ -48,8 +45,24 @@ function supplierName(specifications: unknown, fallback: string): string | null 
  * painel acompanha a separacao ate o envio.
  */
 export class MlOrderService {
-  /** Busca pedido e envio no ML e atualiza o acompanhamento. */
-  async sync(externalOrderId: string): Promise<MarketplaceOrder> {
+  private inflight = new Map<string, Promise<MarketplaceOrder>>();
+
+  /**
+   * Busca pedido e envio no ML e atualiza o acompanhamento. Chamadas da mesma
+   * venda (aviso + conferencia do job) rodam em fila, para o pedido do M2 nao
+   * ser criado duas vezes.
+   */
+  sync(externalOrderId: string): Promise<MarketplaceOrder> {
+    const previous = this.inflight.get(externalOrderId) ?? Promise.resolve(null);
+    const next = previous.catch(() => null).then(() => this.syncNow(externalOrderId));
+    this.inflight.set(externalOrderId, next);
+    void next.catch(() => undefined).finally(() => {
+      if (this.inflight.get(externalOrderId) === next) this.inflight.delete(externalOrderId);
+    });
+    return next;
+  }
+
+  private async syncNow(externalOrderId: string): Promise<MarketplaceOrder> {
     const account = await tokenRefreshService.ensureFreshToken(PROVIDER);
     const order = await adapter().fetchOrder(account, externalOrderId);
     const shipment: NormalizedShipment | null = order.shipmentId
@@ -96,7 +109,7 @@ export class MlOrderService {
 
     if (stage === Stage.CANCELLED && existing?.stage !== Stage.CANCELLED && orderId) {
       await orderImportService.cancelOrder(externalOrderId);
-      await this.notify('ORDER_STATUS_UPDATED', 'Venda cancelada no Mercado Livre', `A venda ${externalOrderId} foi cancelada. O estoque foi devolvido.`, externalOrderId);
+      await this.notify('MARKETPLACE_SALE_CANCELLED', 'Venda cancelada no Mercado Livre', `A venda ${externalOrderId} foi cancelada. O estoque foi devolvido.`, externalOrderId);
     }
     if (orderId && (stage === Stage.SHIPPED || stage === Stage.DELIVERED)) {
       await prisma.order.update({
@@ -139,7 +152,7 @@ export class MlOrderService {
       const units = items.reduce((sum, item) => sum + item.quantity, 0);
       const fromSupplier = items.reduce((sum, item) => sum + item.fromSupplier, 0);
       await this.notify(
-        'ORDER_CREATED',
+        'MARKETPLACE_SALE',
         'Nova venda no Mercado Livre',
         fromSupplier > 0
           ? `${units} un. vendida(s). ${fromSupplier} un. precisam vir do fornecedor.`
@@ -203,20 +216,13 @@ export class MlOrderService {
     });
     for (const order of due) {
       const when = order.dispatchBy?.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) ?? '';
-      await this.notify('ORDER_STATUS_UPDATED', 'Prazo de despacho perto de vencer', `A venda ${order.externalOrderId} precisa ser despachada até ${when}.`, order.externalOrderId);
+      await this.notify('MARKETPLACE_DISPATCH_DUE', 'Prazo de despacho perto de vencer', `A venda ${order.externalOrderId} precisa ser despachada até ${when}.`, order.externalOrderId);
       await prisma.marketplaceOrder.update({ where: { id: order.id }, data: { slaAlertedAt: new Date() } });
     }
   }
 
-  private async notify(type: NotificationType, title: string, message: string, externalOrderId: string): Promise<void> {
-    try {
-      const admins = await prisma.admin.findMany({ where: { status: 'ACTIVE', role: { in: ALERT_ROLES } }, select: { id: true } });
-      await Promise.all(admins.map(admin => notificationsService.createNotification({
-        recipientType: 'ADMIN', recipientId: admin.id, type, title, message, data: { externalOrderId, source: 'MERCADO_LIVRE' },
-      })));
-    } catch (err) {
-      logger.warn('[MlOrder] falha ao notificar', { externalOrderId, err: String(err) });
-    }
+  private notify(type: Parameters<typeof notifyStore>[0], title: string, message: string, externalOrderId: string): Promise<void> {
+    return notifyStore(type, title, message, { externalOrderId, source: 'MERCADO_LIVRE' });
   }
 
   // --- Painel ---

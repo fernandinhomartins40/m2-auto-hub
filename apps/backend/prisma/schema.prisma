@@ -166,6 +166,12 @@ enum NotificationType {
   ORDER_CREATED
   SUPPORT_TICKET_CREATED
   SUPPORT_TICKET_MESSAGE
+  MARKETPLACE_SALE // venda nova no marketplace
+  MARKETPLACE_SALE_CANCELLED
+  MARKETPLACE_DISPATCH_DUE // prazo de despacho perto de vencer
+  MARKETPLACE_LISTING_PAUSED // anuncio pausado pelo sistema (sem estoque)
+  MARKETPLACE_LISTING_REACTIVATED
+  MARKETPLACE_LISTING_ERROR // anuncio nao recebeu estoque/preco, encerrado ou em revisao
 }
 
 enum EllonConnectionStatus {

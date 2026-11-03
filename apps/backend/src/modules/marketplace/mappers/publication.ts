@@ -60,6 +60,8 @@ export interface ProductInput {
   name: string;
   sku: string;
   supplier: string;
+  /** INACTIVE/DISCONTINUED nao vendem, mesmo com estoque registrado. */
+  status?: string;
   salePrice: unknown;
   promoPrice: unknown;
   stock: number;
@@ -187,7 +189,8 @@ export function effectiveFields(product: ProductInput, profile: ProfileInput | n
     packageLengthCm: positive(profile?.packageLengthCm) ?? positive(s.length),
     basePrice,
     price: resolvedPrice(basePrice, profile, settings),
-    quantity: resolvedQuantity(product.stock, profile),
+    // Produto desativado no M2 ou retirado do Ellon sai do ar, inclusive o estoque do fornecedor.
+    quantity: product.status === 'INACTIVE' || product.status === 'DISCONTINUED' ? 0 : resolvedQuantity(product.stock, profile),
     stockMode: profile?.stockMode ?? MarketplaceStockMode.STORE_ONLY,
     supplierQuantity: Math.max(0, profile?.supplierQuantity ?? 0),
     manufacturingDays: resolvedManufacturingDays(profile),

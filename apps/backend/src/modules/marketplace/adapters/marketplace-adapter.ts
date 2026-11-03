@@ -61,6 +61,9 @@ export interface MarketplaceAdapter {
   /** Reativa um anuncio pausado. Opcional: quem nao implementa so atualiza estoque. */
   activateListing?(account: ProviderAccount, externalId: string): Promise<void>;
 
+  /** Situacao atual do anuncio no marketplace (active, paused, closed, under_review...). */
+  fetchListingStatus?(account: ProviderAccount, externalId: string): Promise<{ status: string; subStatus: string[] }>;
+
   closeListing(account: ProviderAccount, externalId: string): Promise<void>;
 
   // --- Pedidos ---
