@@ -295,7 +295,15 @@ export type MlOrderAction = 'SUPPLIER_RECEIVED' | 'PICKED' | 'BACK_TO_PICK';
 // --- Inteligência artificial ---
 
 export type AiSuggestionStatus = 'QUEUED' | 'RUNNING' | 'READY' | 'APPLIED' | 'FAILED';
-export type AiApplyField = 'title' | 'category' | 'attributes' | 'description';
+export type AiApplyField = 'title' | 'category' | 'attributes' | 'description' | 'package';
+
+export interface MlPackageSuggestion {
+  heightCm: number;
+  widthCm: number;
+  lengthCm: number;
+  weightG: number;
+  source: string;
+}
 
 export interface AiSettings {
   enabled: boolean;
@@ -328,6 +336,7 @@ export interface AiListingSuggestion {
   photoChecklist: string[];
   notes: string;
   discarded: string[];
+  package?: MlPackageSuggestion | null;
   trends: string[];
   catalog: Array<{ id: string; name: string; pictures: string[] }>;
   generatedAt: string;
@@ -365,7 +374,16 @@ export const mlPanelService = {
   },
 
   async aiApply(productId: string, fields: AiApplyField[], attributeIds?: string[], description?: string): Promise<MlProductDetail> {
-    return unwrap((await apiClient.post(`/marketplace/ml-panel/products/${productId}/ai/apply`, { fields, attributeIds, description })).data);
+    // Aplicar pode atualizar o anuncio publicado; o padrao de 10 s cortaria antes.
+    return unwrap((await apiClient.post(`/marketplace/ml-panel/products/${productId}/ai/apply`, { fields, attributeIds, description }, { timeout: 60_000 })).data);
+  },
+
+  async aiDismiss(productId: string): Promise<MlProductDetail> {
+    return unwrap((await apiClient.delete(`/marketplace/ml-panel/products/${productId}/ai`)).data);
+  },
+
+  async packageSuggestion(productId: string): Promise<MlPackageSuggestion | null> {
+    return unwrap((await apiClient.get(`/marketplace/ml-panel/products/${productId}/package`, { timeout: 60_000 })).data);
   },
 
   async aiQueue(productIds: string[]): Promise<{ queued: number }> {

@@ -51,6 +51,76 @@ export interface ListingSuggestion {
   discarded: string[];
 }
 
+export interface PackageSuggestion {
+  heightCm: number;
+  widthCm: number;
+  lengthCm: number;
+  weightG: number;
+  source: string;
+}
+
+/** Converte "10 cm", "0,5 m", "500 g", "1.4 kg" para cm ou g. */
+function measure(value: string | null, kind: 'length' | 'weight'): number | null {
+  const match = value?.trim().replace(',', '.').match(/^([\d.]+)\s*([a-zA-Z]*)$/);
+  if (!match) return null;
+  const n = Number(match[1]);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const unit = match[2].toLowerCase();
+  const factor = kind === 'length'
+    ? ({ '': 1, cm: 1, mm: 0.1, m: 100 } as Record<string, number>)[unit]
+    : ({ '': 1, g: 1, kg: 1000 } as Record<string, number>)[unit];
+  return factor ? Math.round(n * factor * 10) / 10 : null;
+}
+
+/**
+ * Medidas da embalagem: as do catalogo oficial quando vierem completas; senao
+ * as de referencia que o ML usa para a categoria.
+ */
+export function packageSuggestion(
+  catalog: CatalogProduct[],
+  reference: { heightCm: number; widthCm: number; lengthCm: number; weightG: number } | null,
+  categoryName: string | null
+): PackageSuggestion | null {
+  for (const item of catalog) {
+    const value = (id: string) => item.attributes.find(attr => attr.id === id)?.valueName ?? null;
+    const dims = {
+      heightCm: measure(value('PACKAGE_HEIGHT'), 'length'),
+      widthCm: measure(value('PACKAGE_WIDTH'), 'length'),
+      lengthCm: measure(value('PACKAGE_LENGTH'), 'length'),
+      weightG: measure(value('PACKAGE_WEIGHT'), 'weight'),
+    };
+    if (dims.heightCm && dims.widthCm && dims.lengthCm && dims.weightG) {
+      return { heightCm: dims.heightCm, widthCm: dims.widthCm, lengthCm: dims.lengthCm, weightG: Math.round(dims.weightG), source: `Catálogo do Mercado Livre (${item.name})` };
+    }
+  }
+  if (!reference) return null;
+  return { ...reference, source: `Referência do Mercado Livre para ${categoryName ?? 'a categoria'}` };
+}
+
+export type ApplyField = 'title' | 'category' | 'attributes' | 'description' | 'package';
+
+export type StoredSuggestion = ListingSuggestion & { package?: PackageSuggestion | null };
+
+/**
+ * Tira da sugestao o que acabou de ser aplicado. `done` = nao sobrou nada
+ * para aplicar (roteiro e lista de fotos sao so referencia).
+ */
+export function withoutApplied(suggestion: StoredSuggestion, fields: ApplyField[], attributeIds?: string[]): { suggestion: StoredSuggestion; done: boolean } {
+  const next: StoredSuggestion = { ...suggestion };
+  if (fields.includes('title')) next.title = '';
+  if (fields.includes('category')) {
+    next.categoryId = null;
+    next.categoryName = null;
+  }
+  if (fields.includes('description')) next.description = '';
+  if (fields.includes('package')) next.package = null;
+  if (fields.includes('attributes')) {
+    next.attributes = attributeIds?.length ? suggestion.attributes.filter(attr => !attributeIds.includes(attr.id)) : [];
+  }
+  const done = !next.title && !next.categoryId && !next.description && !next.package && next.attributes.length === 0;
+  return { suggestion: next, done };
+}
+
 /** Atributos que a IA pode preencher (o sistema cuida dos automaticos). */
 export function fillableAttributes(attributes: CategoryAttribute[]): CategoryAttribute[] {
   return attributes.filter(attr => !AUTO_ATTRIBUTES.has(attr.id) && !attr.readOnly && attr.id !== 'ITEM_CONDITION');

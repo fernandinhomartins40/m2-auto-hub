@@ -57,6 +57,8 @@ export const mlPanelController = {
     const dto = mlAiApplySchema.parse(req.body);
     return mlAiService.apply(req.params.productId, dto.fields, dto.attributeIds, dto.description);
   }),
+  aiDismiss: handle(req => mlAiService.dismiss(req.params.productId)),
+  packageSuggestion: handle(req => mlAiService.packageSuggestion(req.params.productId)),
   aiQueue: handle(req => mlAiService.enqueue(mlAiBulkSchema.parse(req.body).productIds)),
   aiApplyMany: handle(req => mlAiService.applyMany(mlAiBulkSchema.parse(req.body).productIds)),
   photoCandidates: handle(req => mlAiService.photoCandidates(req.params.productId)),

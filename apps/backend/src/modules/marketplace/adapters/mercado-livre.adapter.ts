@@ -165,6 +165,15 @@ export class MercadoLivreAdapter implements MarketplaceAdapter {
     return (data ?? []).map(item => String(item.keyword ?? '')).filter(Boolean);
   }
 
+  /** Medidas de referencia da embalagem que o ML usa para a categoria (cm e g). */
+  async getCategoryPackage(account: ProviderAccount, categoryId: string): Promise<{ heightCm: number; widthCm: number; lengthCm: number; weightG: number } | null> {
+    const data = await this.apiGet<Record<string, unknown>>(account, `/categories/${categoryId}/shipping_preferences`);
+    const dims = (data?.dimensions as Record<string, unknown>) ?? {};
+    const [heightCm, widthCm, lengthCm, weightG] = [dims.height, dims.width, dims.length, dims.weight].map(Number);
+    if (![heightCm, widthCm, lengthCm, weightG].every(n => Number.isFinite(n) && n > 0)) return null;
+    return { heightCm, widthCm, lengthCm, weightG };
+  }
+
   /** Produtos do catalogo oficial parecidos com a busca, com atributos e fotos. */
   async searchCatalog(account: ProviderAccount, query: string, limit = 3): Promise<CatalogProduct[]> {
     const params = new URLSearchParams({ status: 'active', site_id: SITE_ID, q: query, limit: String(limit) });

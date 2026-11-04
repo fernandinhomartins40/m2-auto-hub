@@ -61,7 +61,7 @@ export const mlOrdersQuerySchema = z.object({
 export const mlOrderMoveSchema = z.object({ action: z.enum(['SUPPLIER_RECEIVED', 'PICKED', 'BACK_TO_PICK']) });
 
 export const mlAiApplySchema = z.object({
-  fields: z.array(z.enum(['title', 'category', 'attributes', 'description'])).min(1),
+  fields: z.array(z.enum(['title', 'category', 'attributes', 'description', 'package'])).min(1),
   attributeIds: z.array(z.string()).optional(),
   description: z.string().max(50000).optional(),
 });

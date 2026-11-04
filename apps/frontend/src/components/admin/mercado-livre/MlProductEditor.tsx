@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ImagePlus,
   Loader2,
+  Ruler,
   Search,
   Trash2,
 } from "lucide-react";
@@ -140,6 +141,8 @@ export function MlProductEditor({ productId, onClose, onChanged }: Props) {
   const [categoryResults, setCategoryResults] = useState<CategorySuggestion[] | null>(null);
   const [changingCategory, setChangingCategory] = useState(false);
   const [showOptional, setShowOptional] = useState(false);
+  const [findingPackage, setFindingPackage] = useState(false);
+  const [packageSource, setPackageSource] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const apply = (next: MlProductDetail, resetForm = true) => {
@@ -240,6 +243,30 @@ export function MlProductEditor({ productId, onClose, onChanged }: Props) {
     } finally {
       setUploading(false);
       if (fileInput.current) fileInput.current.value = "";
+    }
+  };
+
+  // Preenche o formulário com as medidas do catálogo ou da categoria; só vale depois de salvar.
+  const findPackage = async () => {
+    setFindingPackage(true);
+    try {
+      const found = await mlPanelService.packageSuggestion(productId);
+      if (!found) {
+        toast({ title: "O Mercado Livre não tem medidas de referência para este produto", description: "Escolha a categoria primeiro ou meça a peça." });
+        return;
+      }
+      setForm(prev => (prev ? {
+        ...prev,
+        packageWeightG: String(Math.round(found.weightG)),
+        packageHeightCm: String(found.heightCm),
+        packageWidthCm: String(found.widthCm),
+        packageLengthCm: String(found.lengthCm),
+      } : prev));
+      setPackageSource(found.source);
+    } catch (err) {
+      toast({ title: "Erro ao buscar medidas", description: getErrorMessage(err), variant: "destructive" });
+    } finally {
+      setFindingPackage(false);
     }
   };
 
@@ -519,7 +546,14 @@ export function MlProductEditor({ productId, onClose, onChanged }: Props) {
 
           {/* Embalagem */}
           <section className="space-y-4">
-            <h3 className="font-semibold">Embalagem de envio</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">Embalagem de envio</h3>
+              <Button size="sm" variant="outline" onClick={findPackage} disabled={findingPackage || !detail.connected}>
+                {findingPackage ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Ruler className="h-4 w-4 mr-2" />}
+                Buscar medidas no Mercado Livre
+              </Button>
+            </div>
+            {packageSource && <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800">Preenchido com: {packageSource}. Confira na peça embalada e clique em Salvar.</p>}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="space-y-1.5">
                 <Label htmlFor="ml-weight">Peso (g)</Label>

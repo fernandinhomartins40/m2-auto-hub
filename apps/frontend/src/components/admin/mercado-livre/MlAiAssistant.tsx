@@ -28,13 +28,17 @@ const SOURCE_LABEL: Record<string, string> = {
   catalogo: "catálogo ML",
 };
 
+const formatWeight = (grams: number) => (grams >= 1000 ? `${(grams / 1000).toLocaleString("pt-BR")} kg` : `${grams} g`);
+
 /** Assistente de IA do editor: gera, mostra e aplica a sugestão; busca fotos. */
 export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
   const { toast } = useToast();
   const productId = detail.product.id;
-  const [suggestion, setSuggestion] = useState<AiListingSuggestion | null>(detail.ai?.payload ?? null);
-  const [busy, setBusy] = useState<"generate" | "apply" | "photos" | "import" | null>(null);
+  // Só a sugestão pendente aparece; aplicada ou descartada, some.
+  const [suggestion, setSuggestion] = useState<AiListingSuggestion | null>(detail.ai?.status === "READY" ? detail.ai.payload ?? null : null);
+  const [busy, setBusy] = useState<"generate" | "apply" | "dismiss" | "photos" | "import" | null>(null);
   const [useTitle, setUseTitle] = useState(true);
+  const [usePackage, setUsePackage] = useState(true);
   const [useCategory, setUseCategory] = useState(true);
   const [useDescription, setUseDescription] = useState(true);
   const [description, setDescription] = useState("");
@@ -48,7 +52,10 @@ export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
     setDescription(suggestion.description);
     setAttributes(new Set(suggestion.attributes.filter(attr => attr.confidence === "alta").map(attr => attr.id)));
     setUseCategory(Boolean(suggestion.categoryId && suggestion.categoryId !== detail.category?.id));
-  }, [suggestion, detail.category?.id]);
+    // Medidas já digitadas são reais; a sugestão só vem marcada quando falta alguma.
+    const { packageWeightG, packageHeightCm, packageWidthCm, packageLengthCm } = detail.effective;
+    setUsePackage(Boolean(suggestion.package) && !(packageWeightG && packageHeightCm && packageWidthCm && packageLengthCm));
+  }, [suggestion, detail.category?.id, detail.effective]);
 
   const generate = async () => {
     setBusy("generate");
@@ -68,7 +75,8 @@ export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
     if (useTitle && suggestion.title) fields.push("title");
     if (useCategory && suggestion.categoryId) fields.push("category");
     if (attributes.size > 0) fields.push("attributes");
-    if (useDescription && description.trim()) fields.push("description");
+    if (useDescription && suggestion.description && description.trim()) fields.push("description");
+    if (usePackage && suggestion.package) fields.push("package");
     if (fields.length === 0) {
       toast({ title: "Marque ao menos um item para aplicar" });
       return;
@@ -76,10 +84,25 @@ export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
     setBusy("apply");
     try {
       if (!(await beforeApply())) return;
-      onDetail(await mlPanelService.aiApply(productId, fields, [...attributes], description));
+      const next = await mlPanelService.aiApply(productId, fields, [...attributes], description);
+      setSuggestion(next.ai?.status === "READY" ? next.ai.payload ?? null : null);
+      onDetail(next);
       toast({ title: "Sugestão aplicada", description: "Confira os campos e publique quando estiver tudo certo." });
     } catch (err) {
       toast({ title: "Erro ao aplicar", description: getErrorMessage(err), variant: "destructive" });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const dismiss = async () => {
+    setBusy("dismiss");
+    try {
+      const next = await mlPanelService.aiDismiss(productId);
+      setSuggestion(null);
+      onDetail(next);
+    } catch (err) {
+      toast({ title: "Erro ao descartar", description: getErrorMessage(err), variant: "destructive" });
     } finally {
       setBusy(null);
     }
@@ -91,7 +114,7 @@ export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
       const found = await mlPanelService.photoCandidates(productId);
       setPhotos(found);
       setChosenPhotos(new Set(found.filter(photo => photo.recommended).map(photo => photo.url)));
-      if (found.length === 0) toast({ title: "Nenhuma foto encontrada no catálogo do Mercado Livre para este produto" });
+      if (found.length === 0) toast({ title: "Nenhuma foto nova no catálogo do Mercado Livre para este produto" });
     } catch (err) {
       toast({ title: "Erro ao buscar fotos", description: getErrorMessage(err), variant: "destructive" });
     } finally {
@@ -202,13 +225,26 @@ export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
 
       {suggestion && (
         <div className="space-y-4 rounded-md border bg-white p-3 text-sm">
-          <label className="flex items-start gap-2">
-            <Checkbox checked={useTitle} onCheckedChange={checked => setUseTitle(Boolean(checked))} className="mt-0.5" />
-            <span>
-              <span className="font-medium">Título:</span> {suggestion.title}
-              <span className="ml-1 text-xs text-gray-500">({suggestion.title.length}/60)</span>
-            </span>
-          </label>
+          {suggestion.title && (
+            <label className="flex items-start gap-2">
+              <Checkbox checked={useTitle} onCheckedChange={checked => setUseTitle(Boolean(checked))} className="mt-0.5" />
+              <span>
+                <span className="font-medium">Título:</span> {suggestion.title}
+                <span className="ml-1 text-xs text-gray-500">({suggestion.title.length}/60)</span>
+              </span>
+            </label>
+          )}
+
+          {suggestion.package && (
+            <label className="flex items-start gap-2">
+              <Checkbox checked={usePackage} onCheckedChange={checked => setUsePackage(Boolean(checked))} className="mt-0.5" />
+              <span>
+                <span className="font-medium">Medidas da embalagem:</span>{" "}
+                {suggestion.package.heightCm} × {suggestion.package.widthCm} × {suggestion.package.lengthCm} cm, {formatWeight(suggestion.package.weightG)}
+                <span className="block text-xs text-gray-500">{suggestion.package.source}. Confira na peça: medida errada muda o frete.</span>
+              </span>
+            </label>
+          )}
 
           {suggestion.categoryId && suggestion.categoryId !== detail.category?.id && (
             <label className="flex items-start gap-2">
@@ -217,43 +253,41 @@ export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
             </label>
           )}
 
-          <div className="space-y-1.5">
+          {suggestion.attributes.length > 0 && <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <p className="font-medium">Ficha técnica ({attributes.size} de {suggestion.attributes.length} marcadas)</p>
               <Button size="sm" variant="ghost" onClick={() => setAttributes(new Set(suggestion.attributes.map(attr => attr.id)))}>Marcar todas</Button>
             </div>
-            {suggestion.attributes.length === 0 ? (
-              <p className="text-xs text-gray-500">A IA não encontrou dados confiáveis para preencher características.</p>
-            ) : (
-              <div className="grid gap-1 sm:grid-cols-2">
-                {suggestion.attributes.map(attr => (
-                  <label key={attr.id} className="flex items-start gap-2 rounded px-1 py-0.5 hover:bg-gray-50">
-                    <Checkbox checked={attributes.has(attr.id)} onCheckedChange={() => toggleAttribute(attr.id)} className="mt-0.5" />
-                    <span>
-                      {attr.name}: <strong>{attr.valueName}</strong>
-                      <span className={`ml-1 text-xs ${attr.confidence === "alta" ? "text-green-700" : "text-amber-700"}`}>
-                        {SOURCE_LABEL[attr.source] ?? attr.source} · {attr.confidence === "alta" ? "certeza alta" : "conferir"}
-                      </span>
+            <div className="grid gap-1 sm:grid-cols-2">
+              {suggestion.attributes.map(attr => (
+                <label key={attr.id} className="flex items-start gap-2 rounded px-1 py-0.5 hover:bg-gray-50">
+                  <Checkbox checked={attributes.has(attr.id)} onCheckedChange={() => toggleAttribute(attr.id)} className="mt-0.5" />
+                  <span>
+                    {attr.name}: <strong>{attr.valueName}</strong>
+                    <span className={`ml-1 text-xs ${attr.confidence === "alta" ? "text-green-700" : "text-amber-700"}`}>
+                      {SOURCE_LABEL[attr.source] ?? attr.source} · {attr.confidence === "alta" ? "certeza alta" : "conferir"}
                     </span>
-                  </label>
-                ))}
-              </div>
-            )}
+                  </span>
+                </label>
+              ))}
+            </div>
             {suggestion.discarded.length > 0 && (
               <details className="text-xs text-gray-500">
                 <summary>{suggestion.discarded.length} sugestão(ões) descartada(s) por não valerem nesta categoria</summary>
                 <ul className="mt-1 list-disc pl-4">{suggestion.discarded.map(item => <li key={item}>{item}</li>)}</ul>
               </details>
             )}
-          </div>
+          </div>}
 
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 font-medium">
-              <Checkbox checked={useDescription} onCheckedChange={checked => setUseDescription(Boolean(checked))} />
-              Descrição (pode editar)
-            </label>
-            <Textarea value={description} onChange={event => setDescription(event.target.value)} rows={10} />
-          </div>
+          {suggestion.description && (
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 font-medium">
+                <Checkbox checked={useDescription} onCheckedChange={checked => setUseDescription(Boolean(checked))} />
+                Descrição (pode editar)
+              </label>
+              <Textarea value={description} onChange={event => setDescription(event.target.value)} rows={10} />
+            </div>
+          )}
 
           {suggestion.regionalNames.length > 0 && (
             <div>
@@ -286,7 +320,11 @@ export function MlAiAssistant({ detail, beforeApply, onDetail }: Props) {
           )}
           {suggestion.notes && <p className="rounded bg-amber-50 p-2 text-xs text-amber-800">Conferir: {suggestion.notes}</p>}
 
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="ghost" onClick={dismiss} disabled={busy !== null}>
+              {busy === "dismiss" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Descartar sugestão
+            </Button>
             <Button onClick={apply} disabled={busy !== null}>
               {busy === "apply" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Aplicar selecionados

@@ -11,13 +11,17 @@ import { getAdapter } from '../adapters/index.js';
 import { MercadoLivreAdapter } from '../adapters/mercado-livre.adapter.js';
 import { CatalogProduct, CategoryAttribute } from '../marketplace.types.js';
 import {
+  ApplyField,
   ListingContext,
-  ListingSuggestion,
+  PackageSuggestion,
   PhotoVerdict,
+  StoredSuggestion,
   buildListingMessages,
   buildPhotoMessages,
+  packageSuggestion,
   parsePhotoVerdicts,
   sanitizeSuggestion,
+  withoutApplied,
 } from '../mappers/ai-listing.js';
 import { effectiveFields, parseSettings, profileAttributes } from '../mappers/publication.js';
 import { tokenRefreshService } from './token-refresh.service.js';
@@ -31,7 +35,7 @@ const MAX_PHOTOS = 12;
 const MAX_DOWNLOAD = 10 * 1024 * 1024;
 const QUEUE_BATCH = 2;
 
-export type ApplyField = 'title' | 'category' | 'attributes' | 'description';
+export type { ApplyField };
 
 export interface PhotoCandidate {
   url: string;
@@ -68,7 +72,7 @@ async function download(url: string): Promise<Buffer> {
 export class MlAiService {
   // --- Contexto ---
 
-  private async context(productId: string): Promise<{ context: ListingContext; categoryAttributes: CategoryAttribute[] }> {
+  private async context(productId: string): Promise<{ context: ListingContext; categoryAttributes: CategoryAttribute[]; packageSuggestion: PackageSuggestion | null; importedPhotos: string[] }> {
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: { marketplaceProfiles: { where: { provider: PROVIDER } } },
@@ -87,14 +91,17 @@ export class MlAiService {
       const [first] = await adapter().suggestCategories(account, eff.title).catch(() => []);
       if (first) category = { id: first.id, name: first.name };
     }
-    const [attributes, trends, catalog] = await Promise.all([
+    const [attributes, trends, catalog, reference] = await Promise.all([
       category ? adapter().getCategoryAttributes(account, category.id).catch(() => [] as CategoryAttribute[]) : Promise.resolve([]),
       category ? adapter().getTrends(account, category.id).catch(() => [] as string[]) : Promise.resolve([]),
       this.catalog(account, eff.brand, eff.partNumber, eff.title),
+      category ? adapter().getCategoryPackage(account, category.id).catch(() => null) : Promise.resolve(null),
     ]);
 
     return {
       categoryAttributes: attributes,
+      packageSuggestion: packageSuggestion(catalog, reference, category?.name ?? null),
+      importedPhotos: profile?.importedPhotos ?? [],
       context: {
         product: {
           name: product.name,
@@ -124,12 +131,12 @@ export class MlAiService {
 
   // --- Sugestao ---
 
-  async generate(productId: string): Promise<ListingSuggestion & { catalog: CatalogProduct[]; trends: string[] }> {
-    const { context } = await this.context(productId);
+  async generate(productId: string): Promise<StoredSuggestion & { catalog: CatalogProduct[]; trends: string[] }> {
+    const { context, packageSuggestion: pkg } = await this.context(productId);
     if (!context.category) throw ApiError.badRequest('Não foi possível descobrir a categoria do Mercado Livre. Escolha a categoria no editor e tente de novo.');
     const raw = await aiService.chat<Record<string, unknown>>('listing_assistant', buildListingMessages(context), { productId, maxTokens: 6000 });
     const suggestion = sanitizeSuggestion(raw, context);
-    const payload = { ...suggestion, catalog: context.catalog, trends: context.trends.slice(0, 20), generatedAt: new Date().toISOString() };
+    const payload = { ...suggestion, package: pkg, catalog: context.catalog, trends: context.trends.slice(0, 20), generatedAt: new Date().toISOString() };
     await prisma.marketplaceAiSuggestion.upsert({
       where: { productId_provider: { productId, provider: PROVIDER } },
       update: { status: AiSuggestionStatus.READY, payload: payload as unknown as Prisma.InputJsonValue, error: null, appliedAt: null },
@@ -145,12 +152,14 @@ export class MlAiService {
   /**
    * Aplica ao perfil do produto os campos escolhidos. Caracteristicas se somam
    * as ja preenchidas (a sugestao vale no que repete). `attributeIds` limita
-   * quais entram; vazio = todas.
+   * quais entram; vazio = todas. O que foi aplicado sai da sugestao; sem mais
+   * nada para aplicar, ela some.
+   * `onlyEmptyPackage`: no lote, medidas reais ja digitadas nao sao trocadas.
    */
-  async apply(productId: string, fields: ApplyField[], attributeIds?: string[], description?: string) {
+  async apply(productId: string, fields: ApplyField[], attributeIds?: string[], description?: string, onlyEmptyPackage = false) {
     const row = await this.get(productId);
-    if (!row?.payload) throw ApiError.badRequest('Gere a sugestão da IA primeiro.');
-    const suggestion = row.payload as unknown as ListingSuggestion;
+    if (!row?.payload || row.status !== AiSuggestionStatus.READY) throw ApiError.badRequest('Gere a sugestão da IA primeiro.');
+    const suggestion = row.payload as unknown as StoredSuggestion;
     const profile = await prisma.marketplaceProductProfile.findUnique({ where: { productId_provider: { productId, provider: PROVIDER } } });
 
     const update: Parameters<typeof mlPanelService.updateProfile>[1] = {};
@@ -166,9 +175,40 @@ export class MlAiService {
       const keep = update.categoryId ? [] : profileAttributes(profile).filter(attr => !chosen.some(c => c.id === attr.id));
       update.attributes = [...keep, ...chosen.map(attr => ({ id: attr.id, valueId: attr.valueId, valueName: attr.valueName }))];
     }
-    const detail = await mlPanelService.updateProfile(productId, update);
-    await prisma.marketplaceAiSuggestion.update({ where: { id: row.id }, data: { status: AiSuggestionStatus.APPLIED, appliedAt: new Date() } });
-    return detail;
+    const pkg = suggestion.package;
+    const hasPackage = Boolean(profile?.packageWeightG && profile.packageHeightCm && profile.packageWidthCm && profile.packageLengthCm);
+    if (fields.includes('package') && pkg && !(onlyEmptyPackage && hasPackage)) {
+      update.packageHeightCm = pkg.heightCm;
+      update.packageWidthCm = pkg.widthCm;
+      update.packageLengthCm = pkg.lengthCm;
+      update.packageWeightG = Math.round(pkg.weightG);
+    }
+    await mlPanelService.updateProfile(productId, update);
+
+    // Categoria igual a atual nao e mostrada, entao conta como aplicada.
+    const applied: ApplyField[] = suggestion.categoryId === (update.categoryId ?? profile?.categoryId) ? [...fields, 'category'] : fields;
+    const { suggestion: rest, done } = withoutApplied(suggestion, applied, attributeIds);
+    await prisma.marketplaceAiSuggestion.update({
+      where: { id: row.id },
+      data: done
+        ? { status: AiSuggestionStatus.APPLIED, appliedAt: new Date(), payload: rest as unknown as Prisma.InputJsonValue }
+        : { payload: rest as unknown as Prisma.InputJsonValue },
+    });
+    return mlPanelService.detail(productId);
+  }
+
+  /** Descarta o que sobrou da sugestao. */
+  async dismiss(productId: string) {
+    const row = await this.get(productId);
+    if (row && row.status === AiSuggestionStatus.READY) {
+      await prisma.marketplaceAiSuggestion.update({ where: { id: row.id }, data: { status: AiSuggestionStatus.APPLIED, appliedAt: new Date() } });
+    }
+    return mlPanelService.detail(productId);
+  }
+
+  /** Medidas da embalagem pelo catalogo ou pela referencia da categoria (sem IA, sem custo). */
+  async packageSuggestion(productId: string): Promise<PackageSuggestion | null> {
+    return (await this.context(productId)).packageSuggestion;
   }
 
   // --- Fotos ---
@@ -178,8 +218,10 @@ export class MlAiService {
    * peca, sem marca d'agua). Recomendadas: aprovadas pela IA e com 500 px ou mais.
    */
   async photoCandidates(productId: string): Promise<PhotoCandidate[]> {
-    const { context } = await this.context(productId);
-    const urls = [...new Set(context.catalog.flatMap(item => item.pictures))].slice(0, 10);
+    const { context, importedPhotos } = await this.context(productId);
+    // Fotos ja adicionadas nao voltam na busca.
+    const imported = new Set(importedPhotos);
+    const urls = [...new Set(context.catalog.flatMap(item => item.pictures))].filter(url => !imported.has(url)).slice(0, 10);
     if (urls.length === 0) return [];
 
     type Measured = { url: string; width: number | null; height: number | null };
@@ -222,6 +264,7 @@ export class MlAiService {
 
     fs.mkdirSync(PRODUCTS_DIR, { recursive: true });
     const added: string[] = [];
+    const sources: string[] = [];
     const failed: string[] = [];
     for (const url of urls.slice(0, room)) {
       try {
@@ -235,11 +278,21 @@ export class MlAiService {
           .jpeg({ quality: 90 })
           .toFile(path.join(PRODUCTS_DIR, filename));
         added.push(`/uploads/products/${filename}`);
+        sources.push(url);
       } catch (err) {
         failed.push(`${url}: ${String((err as Error).message ?? err)}`);
       }
     }
-    if (added.length) await prisma.product.update({ where: { id: productId }, data: { images: [...current, ...added] } });
+    if (added.length) {
+      await prisma.product.update({ where: { id: productId }, data: { images: [...current, ...added] } });
+      const profile = await prisma.marketplaceProductProfile.findUnique({ where: { productId_provider: { productId, provider: PROVIDER } }, select: { importedPhotos: true } });
+      const importedPhotos = [...new Set([...(profile?.importedPhotos ?? []), ...sources])];
+      await prisma.marketplaceProductProfile.upsert({
+        where: { productId_provider: { productId, provider: PROVIDER } },
+        update: { importedPhotos },
+        create: { productId, provider: PROVIDER, importedPhotos },
+      });
+    }
     const detail = await mlPanelService.detail(productId);
     return { detail, added: added.length, failed };
   }
@@ -310,7 +363,7 @@ export class MlAiService {
     const results: Array<{ productId: string; ok: boolean; error?: string }> = [];
     for (const productId of productIds) {
       try {
-        await this.apply(productId, ['title', 'category', 'attributes', 'description']);
+        await this.apply(productId, ['title', 'category', 'attributes', 'description', 'package'], undefined, undefined, true);
         results.push({ productId, ok: true });
       } catch (err) {
         results.push({ productId, ok: false, error: err instanceof Error ? err.message : String(err) });

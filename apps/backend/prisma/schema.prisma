@@ -850,7 +850,9 @@ model MarketplaceProductProfile {
   packageWidthCm  Float?
   packageLengthCm Float?
 
-  stockMode         MarketplaceStockMode @default(STORE_ONLY)
+  importedPhotos String[] @default([]) // fotos do catalogo ja adicionadas (nao voltam na busca)
+
+  stockMode        MarketplaceStockMode @default(STORE_ONLY)
   supplierQuantity  Int                  @default(0)
   manufacturingDays Int                  @default(0)
 

@@ -5,8 +5,11 @@ import {
   cleanDescription,
   fillableAttributes,
   fitTitle,
+  packageSuggestion,
   parsePhotoVerdicts,
   sanitizeSuggestion,
+  withoutApplied,
+  type StoredSuggestion,
 } from '../src/modules/marketplace/mappers/ai-listing.js';
 import { qualityScore } from '../src/modules/marketplace/mappers/publication.js';
 import { parseJson, readUsage } from '../src/modules/ai/fusai.client.js';
@@ -107,6 +110,49 @@ describe('resposta da fusai', () => {
   it('aceita JSON cercado por ```json', () => {
     const result = { content: '```json\n{"ok": true}\n```', model: 'fuse/deepseek-chat', finishReason: 'stop', usage: readUsage({}) };
     expect(parseJson<{ ok: boolean }>(result).ok).toBe(true);
+  });
+});
+
+describe('medidas da embalagem', () => {
+  const reference = { heightCm: 20, widthCm: 15, lengthCm: 10, weightG: 1400 };
+
+  it('prefere as medidas completas do catálogo, convertendo unidades', () => {
+    const catalog = [{ id: 'MLB1', name: 'Pastilha X', pictures: [], attributes: [
+      { id: 'PACKAGE_HEIGHT', name: 'Altura', valueId: null, valueName: '5 cm' },
+      { id: 'PACKAGE_WIDTH', name: 'Largura', valueId: null, valueName: '120 mm' },
+      { id: 'PACKAGE_LENGTH', name: 'Comprimento', valueId: null, valueName: '0,2 m' },
+      { id: 'PACKAGE_WEIGHT', name: 'Peso', valueId: null, valueName: '1.2 kg' },
+    ] }];
+    expect(packageSuggestion(catalog, reference, 'Pastilhas')).toMatchObject({ heightCm: 5, widthCm: 12, lengthCm: 20, weightG: 1200 });
+  });
+
+  it('sem catálogo completo, usa a referência da categoria', () => {
+    const catalog = [{ id: 'MLB1', name: 'X', pictures: [], attributes: [{ id: 'PACKAGE_HEIGHT', name: 'Altura', valueId: null, valueName: '5 cm' }] }];
+    expect(packageSuggestion(catalog, reference, 'Pastilhas de Freios')).toEqual({ ...reference, source: 'Referência do Mercado Livre para Pastilhas de Freios' });
+    expect(packageSuggestion([], null, null)).toBeNull();
+  });
+});
+
+describe('sugestão depois de aplicar', () => {
+  const base: StoredSuggestion = {
+    categoryId: 'MLB1', categoryName: 'Cat', title: 'Título', description: 'Desc', keywords: [], regionalNames: [], clipScript: 'roteiro',
+    photoChecklist: [], notes: '', discarded: [], package: { heightCm: 1, widthCm: 1, lengthCm: 1, weightG: 1, source: 's' },
+    attributes: [
+      { id: 'A', name: 'A', valueId: null, valueName: '1', source: 'erp', confidence: 'alta' },
+      { id: 'B', name: 'B', valueId: null, valueName: '2', source: 'erp', confidence: 'media' },
+    ],
+  };
+
+  it('tira só o que foi aplicado e mantém o resto', () => {
+    const { suggestion, done } = withoutApplied(base, ['title', 'attributes'], ['A']);
+    expect(done).toBe(false);
+    expect(suggestion.title).toBe('');
+    expect(suggestion.attributes.map(attr => attr.id)).toEqual(['B']);
+    expect(suggestion.description).toBe('Desc');
+  });
+
+  it('sem nada para aplicar, a sugestão termina', () => {
+    expect(withoutApplied(base, ['title', 'category', 'attributes', 'description', 'package']).done).toBe(true);
   });
 });
 

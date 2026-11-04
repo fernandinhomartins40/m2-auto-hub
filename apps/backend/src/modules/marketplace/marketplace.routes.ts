@@ -56,6 +56,8 @@ router.post('/ml-panel/ai/queue', ...authManager, mlPanelController.aiQueue);
 router.post('/ml-panel/ai/apply', ...authManager, mlPanelController.aiApplyMany);
 router.post('/ml-panel/products/:productId/ai', ...authManager, mlPanelController.aiGenerate);
 router.post('/ml-panel/products/:productId/ai/apply', ...authManager, mlPanelController.aiApply);
+router.delete('/ml-panel/products/:productId/ai', ...authManager, mlPanelController.aiDismiss);
+router.get('/ml-panel/products/:productId/package', ...authManager, mlPanelController.packageSuggestion);
 router.get('/ml-panel/products/:productId/photos/candidates', ...authManager, mlPanelController.photoCandidates);
 router.post('/ml-panel/products/:productId/photos/import', ...authManager, mlPanelController.photoImport);
 // Vendas: acompanhamento do despacho (STAFF+: quem separa e despacha e a equipe)
