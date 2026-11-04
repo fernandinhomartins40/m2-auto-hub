@@ -13,7 +13,6 @@ const settingsSchema = z.object({
   apiKey: z.string().max(200).optional(),
   model: z.string().max(60).optional(),
   monthlyBudgetBrl: z.number().min(0).max(100000).optional(),
-  usdToBrl: z.number().positive().max(100).optional(),
 });
 
 function handle(fn: (req: Request) => Promise<unknown>) {

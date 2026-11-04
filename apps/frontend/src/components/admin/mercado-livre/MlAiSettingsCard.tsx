@@ -13,11 +13,12 @@ import { getErrorMessage } from "@/lib/errors";
 import { brl } from "./mlLabels";
 
 const MODEL_LABEL: Record<string, string> = {
-  "deepseek-flash": "DeepSeek Flash (recomendado: barato e confere fotos)",
-  "deepseek-v4-pro": "DeepSeek V4 Pro (textos mais elaborados, custa ~4x mais)",
+  "fuse/deepseek-chat": "DeepSeek Flash (recomendado: barato e confere fotos)",
+  "fuse/auto": "Automático (o mais barato disponível)",
+  "fuse/deepseek-v4-pro": "DeepSeek V4 Pro (textos mais elaborados, custa ~4x mais)",
 };
 
-/** Chave, modelo e limite de gasto da IA (DeepSeek). */
+/** Chave, modelo e limite de gasto da IA (fusai). */
 export function MlAiSettingsCard() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<AiSettings | null>(null);
@@ -43,7 +44,6 @@ export function MlAiSettingsCard() {
         enabled: settings.enabled,
         model: settings.model,
         monthlyBudgetBrl: settings.monthlyBudgetBrl,
-        usdToBrl: settings.usdToBrl,
         ...(apiKey.trim() && { apiKey: apiKey.trim() }),
       });
       setSettings(next);
@@ -60,10 +60,10 @@ export function MlAiSettingsCard() {
     setBusy("test");
     try {
       const result = await aiService.test();
-      toast({ title: result.ok ? "A DeepSeek respondeu: tudo certo" : "A DeepSeek respondeu, mas de forma inesperada" });
+      toast({ title: result.ok ? "A IA respondeu: tudo certo" : "A IA respondeu, mas de forma inesperada" });
       setSettings(await aiService.getSettings());
     } catch (err) {
-      toast({ title: "Falha ao falar com a DeepSeek", description: getErrorMessage(err), variant: "destructive" });
+      toast({ title: "Falha ao falar com a fusai", description: getErrorMessage(err), variant: "destructive" });
     } finally {
       setBusy(null);
     }
@@ -76,7 +76,7 @@ export function MlAiSettingsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg"><Sparkles className="h-5 w-5 text-purple-600" /> Inteligência artificial</CardTitle>
         <CardDescription>
-          Prepara título, ficha técnica, descrição com nomes regionais, roteiro de clip e confere fotos. Usa a DeepSeek;
+          Prepara título, ficha técnica, descrição com nomes regionais, roteiro de clip e confere fotos. Usa a fusai (cobrança em reais);
           só dados de produto são enviados, nunca dados de clientes.
         </CardDescription>
       </CardHeader>
@@ -88,16 +88,16 @@ export function MlAiSettingsCard() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="ai-key">Chave da API DeepSeek</Label>
+            <Label htmlFor="ai-key">Chave da API fusai</Label>
             <Input
               id="ai-key"
               type="password"
               autoComplete="off"
               value={apiKey}
-              placeholder={settings.hasApiKey ? `Cadastrada (${settings.apiKeyMasked})` : "sk-..."}
+              placeholder={settings.hasApiKey ? `Cadastrada (${settings.apiKeyMasked})` : "fai_live_..."}
               onChange={event => setApiKey(event.target.value)}
             />
-            <p className="text-xs text-gray-500">Crie em platform.deepseek.com → API Keys. A conta é pré-paga: coloque crédito lá.</p>
+            <p className="text-xs text-gray-500">Chave do projeto em fusai.com.br/app. O saldo é pré-pago: recarregue com Pix em Carteira.</p>
           </div>
           <div className="space-y-1.5">
             <Label>Modelo</Label>
@@ -113,11 +113,6 @@ export function MlAiSettingsCard() {
             <Input id="ai-budget" type="number" min={0} step="5" value={settings.monthlyBudgetBrl}
               onChange={event => set("monthlyBudgetBrl", Number(event.target.value))} />
             <p className="text-xs text-gray-500">Ao chegar no limite, a IA para até o próximo mês. Cada produto custa poucos centavos.</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ai-rate">Cotação do dólar usada no cálculo (R$)</Label>
-            <Input id="ai-rate" type="number" min={1} step="0.05" value={settings.usdToBrl}
-              onChange={event => set("usdToBrl", Number(event.target.value))} />
           </div>
         </div>
 

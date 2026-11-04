@@ -922,16 +922,15 @@ model MarketplaceOrder {
   @@map("marketplace_orders")
 }
 
-// --- Inteligencia artificial (DeepSeek) ---
+// --- Inteligencia artificial (fusai) ---
 
 // Configuracao unica da IA. A chave fica criptografada como os segredos de marketplace.
 model AiSettings {
   id              String   @id @default("default")
   enabled         Boolean  @default(false)
   apiKey          String? // ENCRYPTED
-  model           String   @default("deepseek-flash")
+  model           String   @default("fuse/deepseek-chat")
   monthlyBudgetBrl Decimal @default(50) @db.Decimal(10, 2)
-  usdToBrl        Decimal  @default(5.5) @db.Decimal(8, 4) // cotacao usada para converter o custo
   updatedAt       DateTime @updatedAt
 
   @@map("ai_settings")
@@ -945,7 +944,7 @@ model AiUsage {
   inputTokens  Int
   cachedTokens Int      @default(0)
   outputTokens Int
-  costUsd      Decimal  @db.Decimal(12, 6)
+  costBrl      Decimal  @db.Decimal(12, 6) // valor que saiu do saldo da fusai
   productId    String?
   createdAt    DateTime @default(now())
 
@@ -969,7 +968,7 @@ model MarketplaceAiSuggestion {
   status    AiSuggestionStatus  @default(QUEUED)
   payload   Json?
   error     String?             @db.Text
-  costUsd   Decimal?            @db.Decimal(12, 6)
+  costBrl   Decimal?            @db.Decimal(12, 6)
   appliedAt DateTime?
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt

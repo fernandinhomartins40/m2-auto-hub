@@ -9,7 +9,7 @@ import {
   sanitizeSuggestion,
 } from '../src/modules/marketplace/mappers/ai-listing.js';
 import { qualityScore } from '../src/modules/marketplace/mappers/publication.js';
-import { costUsd, isPeak } from '../src/modules/ai/deepseek.client.js';
+import { parseJson, readUsage } from '../src/modules/ai/fusai.client.js';
 import type { CategoryAttribute } from '../src/modules/marketplace/marketplace.types.js';
 
 const attributes: CategoryAttribute[] = [
@@ -97,19 +97,16 @@ describe('nota de qualidade', () => {
   });
 });
 
-describe('custo da DeepSeek', () => {
-  it('cobra o dobro no pico (01-04h e 06-10h UTC, dias úteis)', () => {
-    expect(isPeak(new Date('2026-11-04T07:00:00Z'))).toBe(true);
-    expect(isPeak(new Date('2026-11-04T15:00:00Z'))).toBe(false);
-    expect(isPeak(new Date('2026-11-07T07:00:00Z'))).toBe(false);
-    const usage = { inputTokens: 1_000_000, cachedTokens: 0, outputTokens: 1_000_000 };
-    expect(costUsd('deepseek-flash', usage, new Date('2026-11-04T15:00:00Z'))).toBeCloseTo(0.75);
-    expect(costUsd('deepseek-flash', usage, new Date('2026-11-04T07:00:00Z'))).toBeCloseTo(1.5);
+describe('resposta da fusai', () => {
+  it('usa o custo em reais que a fusai devolve', () => {
+    const usage = readUsage({ prompt_tokens: 1200, completion_tokens: 300, prompt_tokens_details: { cached_tokens: 800 }, cost_brl: '0.002812' });
+    expect(usage).toEqual({ inputTokens: 1200, cachedTokens: 800, outputTokens: 300, costBrl: 0.002812 });
+    expect(readUsage(undefined).costBrl).toBe(0);
   });
 
-  it('tokens em cache custam menos', () => {
-    const at = new Date('2026-11-04T15:00:00Z');
-    expect(costUsd('deepseek-flash', { inputTokens: 1_000_000, cachedTokens: 1_000_000, outputTokens: 0 }, at)).toBeCloseTo(0.003);
+  it('aceita JSON cercado por ```json', () => {
+    const result = { content: '```json\n{"ok": true}\n```', model: 'fuse/deepseek-chat', finishReason: 'stop', usage: readUsage({}) };
+    expect(parseJson<{ ok: boolean }>(result).ok).toBe(true);
   });
 });
 

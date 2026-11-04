@@ -304,7 +304,6 @@ export interface AiSettings {
   model: string;
   models: string[];
   monthlyBudgetBrl: number;
-  usdToBrl: number;
   month: { spentBrl: number; calls: number; products: number };
 }
 
