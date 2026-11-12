@@ -19,8 +19,8 @@ Por isso, a montagem é feita por código (Pillow ou ImageMagick): a captura ent
 
 ## Identidade visual
 
-- Azul da marca: use a cor de `apps/mobile_cliente/android/app/src/main/res/values/colors.xml` (`brand`) e as cores de `packages/mobile_core/lib/src/theme/app_theme.dart`.
-- Fundo: azul-marinho escuro com luz azul discreta, ambiente de oficina moderna, sem pessoas e sem carros de marca reconhecível.
+- Cores: o azul da marca e as demais cores estão em `packages/mobile_core/lib/src/theme/app_theme.dart`. O fundo escuro é `#0B1220` (`brand` em `apps/mobile_cliente/android/app/src/main/res/values/colors.xml`).
+- Fundo: esse azul-marinho escuro com luz azul discreta, ambiente de oficina moderna, sem pessoas e sem carros de marca reconhecível.
 - Fontes: Rajdhani nos títulos e Inter no texto. Os arquivos estão em `packages/mobile_core/assets/fonts/`.
 - Logo e ícone: use os arquivos que já existem em `apps/mobile_cliente/store/` e `apps/mobile_mecanico/store/` (`icone-512.png`). Não redesenhe a logo.
 
