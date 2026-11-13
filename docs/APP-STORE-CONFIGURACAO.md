@@ -11,7 +11,7 @@ As regras por trás de cada resposta, com link e data da conferência, estão em
 | SKU (só uso interno) | `m2-cliente` | `m2-mecanico` |
 | Idioma principal | Português (Brasil) | Português (Brasil) |
 | Aparelhos | Só iPhone | Só iPhone |
-| iOS mínimo | 13.0 | 13.0 |
+| iOS mínimo | 15.0 | 15.0 |
 | Distribuição | Pública na App Store | **Não listada** (só com link) |
 | Build | Enviado pelo workflow *Apps nativos - release* (ver [APPS-NATIVOS.md](APPS-NATIVOS.md)) | idem |
 
@@ -173,12 +173,7 @@ Os dados de clientes e veículos que o mecânico digita pertencem aos clientes d
 
 ### Coerência com o `PrivacyInfo.xcprivacy`
 
-O arquivo de cada app (`apps/mobile_*/ios/Runner/PrivacyInfo.xcprivacy`) deve listar os mesmos tipos. Hoje faltam:
-
-- **Cliente:** `NSPrivacyCollectedDataTypeUserID` e `NSPrivacyCollectedDataTypeCustomerSupport`.
-- **Mecânico:** `NSPrivacyCollectedDataTypeUserID`.
-
-Correção de código pendente. Não impede o envio, mas mantenha os dois iguais.
+O arquivo de cada app (`apps/mobile_*/ios/Runner/PrivacyInfo.xcprivacy`) lista os mesmos tipos destas tabelas. Se mudar um, mude o outro.
 
 ## 4. Classificação etária
 
