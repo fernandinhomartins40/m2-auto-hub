@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +5,6 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
-import '../../shared/share_pdf.dart';
 import '../../shared/ui.dart';
 import '../auth/auth_controller.dart';
 import 'checklist_row.dart';
@@ -16,16 +13,9 @@ final _longDate = DateFormat("d 'de' MMMM 'de' y 'às' HH:mm", 'pt_BR');
 
 /// Detalhes da revisão (`RevisionDetailsModal`): dados, checklist e histórico.
 class RevisionDetailsScreen extends ConsumerStatefulWidget {
-  const RevisionDetailsScreen({
-    super.key,
-    required this.revisionId,
-    this.share = sharePdf,
-  });
+  const RevisionDetailsScreen({super.key, required this.revisionId});
 
   final String revisionId;
-
-  /// Entrega o PDF ao sistema; trocado nos testes.
-  final Future<void> Function(BuildContext, Uint8List, String) share;
 
   @override
   ConsumerState<RevisionDetailsScreen> createState() =>
@@ -35,30 +25,9 @@ class RevisionDetailsScreen extends ConsumerStatefulWidget {
 class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
   late Future<Revision> _future = _fetch();
   int _tab = 0;
-  bool _exporting = false;
 
   Future<Revision> _fetch() =>
       ref.read(apiProvider).revision(widget.revisionId);
-
-  Future<void> _exportPdf(BuildContext buttonContext, String shortId) async {
-    setState(() => _exporting = true);
-    try {
-      final bytes = await ref.read(apiProvider).revisionPdf(widget.revisionId);
-      if (!buttonContext.mounted) return;
-      await widget.share(buttonContext, bytes, 'revisao-$shortId.pdf');
-      if (mounted) showMessage(context, 'PDF gerado');
-    } catch (error) {
-      if (mounted) {
-        showMessage(
-          context,
-          'Erro ao gerar PDF. ${friendlyError(error)}',
-          error: true,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _exporting = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,14 +44,13 @@ class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Builder(
-                builder: (buttonContext) => OutlinedButton.icon(
-                  onPressed: _exporting
-                      ? null
-                      : () => _exportPdf(buttonContext, shortId),
-                  icon: const Icon(LucideIcons.download),
-                  label: Text(_exporting ? 'Gerando PDF...' : 'Exportar PDF'),
-                ),
+              DownloadButton(
+                label: 'Exportar PDF',
+                busyLabel: 'Gerando PDF...',
+                path: '/admin/revisions/${widget.revisionId}/export-pdf',
+                data: const <String, dynamic>{},
+                fallbackName: 'revisao-$shortId.pdf',
+                success: 'PDF gerado',
               ),
               const SizedBox(height: 8),
               OutlinedButton(

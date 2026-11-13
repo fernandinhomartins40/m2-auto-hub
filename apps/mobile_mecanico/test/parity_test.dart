@@ -38,10 +38,6 @@ class _FakeApi extends MechanicApi {
   @override
   Future<Revision> revision(String id) async =>
       Revision.fromJson({'id': id, 'status': 'IN_PROGRESS'});
-
-  @override
-  Future<Uint8List> revisionPdf(String id) async =>
-      Uint8List.fromList([37, 80, 68, 70]);
 }
 
 void main() {
@@ -76,31 +72,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('detalhes da revisão exporta o PDF pelo compartilhamento',
+  testWidgets('detalhes da revisão pede o PDF com POST na rota do mecânico',
       (tester) async {
-    String? sharedName;
-    int? sharedSize;
+    RequestOptions? sent;
+    final dio = Dio()
+      ..interceptors.add(InterceptorsWrapper(
+        onRequest: (options, handler) {
+          sent = options;
+          // Sem plugin de compartilhamento no teste: para no 403.
+          handler.reject(DioException(
+            requestOptions: options,
+            type: DioExceptionType.badResponse,
+            response: Response(requestOptions: options, statusCode: 403),
+          ));
+        },
+      ));
     await _pump(
       tester,
-      RevisionDetailsScreen(
-        revisionId: 'abcdef123456',
-        share: (context, bytes, name) async {
-          sharedName = name;
-          sharedSize = bytes.length;
-        },
-      ),
+      const RevisionDetailsScreen(revisionId: 'abcdef123456'),
       overrides: [
         apiProvider.overrideWithValue(_FakeApi()),
         tokenStorageProvider.overrideWithValue(_NoToken()),
+        dioProvider.overrideWithValue(dio),
       ],
     );
     await tester.pumpAndSettle();
     expect(find.text('Fechar'), findsOneWidget);
     await tester.tap(find.text('Exportar PDF'));
     await tester.pumpAndSettle();
-    expect(sharedName, 'revisao-abcdef12.pdf');
-    expect(sharedSize, 4);
-    expect(find.text('PDF gerado'), findsOneWidget);
+    expect(sent?.method, 'POST');
+    expect(sent?.path, '/admin/revisions/abcdef123456/export-pdf');
+    expect(sent?.data, isEmpty);
+    expect(find.text('O servidor retornou um erro (403).'), findsOneWidget);
+    expect(find.text('Exportar PDF'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
