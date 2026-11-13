@@ -35,7 +35,7 @@ void main() {
     await e.type(find.byType(TextFormField).at(0), 'mecanico@moria.com');
     await e.type(find.byType(TextFormField).at(1), 'Test123!');
     await e.tap(find.text('Entrar no Painel'));
-    await e.screen('revisoes', find.text('Total de revisões'));
+    await e.screen('revisoes', find.text('Agendados'));
 
     // Detalhe da revisão concluída e o PDF que o botão "Exportar PDF" baixa.
     // O botão em si abre o compartilhamento nativo, que tiraria o app da
@@ -60,7 +60,7 @@ void main() {
     // "Concluir" abre a revisão e, em seguida, o orçamento. Volta sem gerar OS.
     await e.tap(find.text('Concluir'));
     await e.screen('orcamento', find.text('Concluir e gerar OS'));
-    await e.backTo(find.text('Total de revisões'));
+    await e.backTo(find.text('Agendados'));
 
     await e.tap(tab('Ordens de serviço'));
     await e.screen('ordens-de-servico', find.text('Minhas Ordens de Serviço'));

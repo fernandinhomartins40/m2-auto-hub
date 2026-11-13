@@ -23,7 +23,22 @@ class E2E {
   Future<void> waitFor(Finder finder, {int seconds = 30}) async {
     final end = DateTime.now().add(Duration(seconds: seconds));
     while (finder.evaluate().isEmpty) {
-      if (DateTime.now().isAfter(end)) fail('Não apareceu em ${seconds}s: $finder');
+      if (DateTime.now().isAfter(end)) {
+        // Mostra no log o que estava na tela e salva a imagem da falha.
+        final texts = find
+            .byType(Text)
+            .evaluate()
+            .map((el) => (el.widget as Text).data ?? '')
+            .where((t) => t.trim().isNotEmpty)
+            .toSet()
+            .join(' | ');
+        // ignore: avoid_print
+        print('NA TELA: $texts');
+        try {
+          await shot('FALHA');
+        } catch (_) {}
+        fail('Não apareceu em ${seconds}s: $finder');
+      }
       await pause(250);
     }
   }
