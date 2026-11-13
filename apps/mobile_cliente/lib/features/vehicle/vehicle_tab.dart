@@ -36,8 +36,11 @@ class _Vehicles extends ConsumerWidget {
   Future<void> _delete(BuildContext context, WidgetRef ref, Vehicle vehicle) async {
     final accepted = await confirm(
       context,
-      title: 'Remover veículo?',
-      message: '${vehicle.label} (${vehicle.plate}) sai da sua conta.',
+      title: 'Remover Veículo',
+      message: 'Tem certeza que deseja remover o veículo ${vehicle.label} - '
+          '${vehicle.plate}?\n\nAtenção: Esta ação NÃO PODE ser desfeita! O '
+          'veículo será removido permanentemente do sistema junto com TODAS '
+          'as suas revisões e histórico.',
       confirmLabel: 'Remover',
       destructive: true,
     );
@@ -87,7 +90,13 @@ class _Vehicles extends ConsumerWidget {
       ],
       isEmpty: (vehicles) => vehicles.isEmpty,
       emptyIcon: LucideIcons.car,
-      emptyMessage: 'Nenhum veículo cadastrado ainda.',
+      emptyTitle: 'Nenhum veículo cadastrado',
+      emptyMessage: 'Cadastre seu primeiro veículo para começar',
+      emptyAction: FilledButton.icon(
+        onPressed: openForm,
+        icon: const Icon(LucideIcons.plus),
+        label: const Text('Cadastrar Primeiro Veículo'),
+      ),
       builder: (vehicles) => [
         for (final vehicle in vehicles)
           _VehicleCard(
@@ -214,6 +223,23 @@ class _VehicleCard extends StatelessWidget {
                 ),
             ],
           ),
+          if ((vehicle.chassisNumber ?? '').isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text('Número do Chassi', style: muted),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: Text(
+                vehicle.chassisNumber!,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+              ),
+            ),
+          ],
           const Divider(height: 32),
           FilledButton.icon(
             onPressed: onSchedule,
@@ -340,7 +366,7 @@ class _RevisionsState extends ConsumerState<_Revisions> {
           3 => inProgress,
           _ => data.revisions,
         };
-        if (list.isEmpty) {
+        if (list.isEmpty && _filter == 1) {
           return const [
             _EmptyCard(
               icon: LucideIcons.clipboardCheck,
@@ -349,25 +375,25 @@ class _RevisionsState extends ConsumerState<_Revisions> {
             ),
           ];
         }
-        return [for (final revision in list) _RevisionCard(revision: revision)];
+        // Concluídas e Em andamento usam os cartões curtos do PWA.
+        return [
+          for (final revision in list)
+            switch (_filter) {
+              2 => _ShortRevisionCard(revision: revision, completed: true),
+              3 => _ShortRevisionCard(revision: revision, completed: false),
+              _ => _RevisionCard(revision: revision),
+            },
+        ];
       },
     );
   }
 
-  /// Itens críticos e de atenção da revisão concluída mais recente de cada
-  /// veículo, como os alertas do topo do PWA.
+  /// Um alerta por revisão concluída com item crítico ou de atenção, como
+  /// os alertas do topo do PWA.
   List<Widget> _alerts(List<Revision> completed) {
-    final latest = <String, Revision>{};
-    for (final revision in completed) {
-      final key = revision.vehicle?.plate ?? revision.id;
-      final current = latest[key];
-      if (current == null ||
-          (revision.date ?? DateTime(0)).isAfter(current.date ?? DateTime(0))) {
-        latest[key] = revision;
-      }
-    }
     final widgets = <Widget>[];
-    for (final revision in latest.values) {
+    for (final revision in completed) {
+      if (revision.vehicle == null) continue;
       for (final (status, tone, icon, title) in const [
         ('CRITICAL', StatusTone.danger, LucideIcons.circleX, 'Atenção imediata'),
         (
@@ -583,7 +609,7 @@ class _AppointmentCard extends StatelessWidget {
           LabeledBox(
             label: 'Horário confirmado',
             value: appointment.scheduledAt == null
-                ? '-'
+                ? 'Aguardando confirmação da oficina'
                 : formatDateTime(appointment.scheduledAt),
           ),
           const SizedBox(height: 12),
@@ -811,6 +837,59 @@ class _RevisionCard extends StatelessWidget {
             icon: const Icon(LucideIcons.eye),
             label: const Text('Ver detalhes completos'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Cartões curtos das abas "Concluídas" e "Em andamento" do PWA.
+class _ShortRevisionCard extends StatelessWidget {
+  const _ShortRevisionCard({required this.revision, required this.completed});
+
+  final Revision revision;
+  final bool completed;
+
+  @override
+  Widget build(BuildContext context) {
+    const muted = TextStyle(fontSize: 13, color: AppTheme.mutedForeground);
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            revision.vehicle?.label ?? 'Revisão',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            completed
+                ? 'Revisão concluída em '
+                    '${formatDate(revision.completedAt ?? revision.date)}'
+                : 'Revisão iniciada em ${formatDate(revision.date)}',
+            style: muted,
+          ),
+          const SizedBox(height: 16),
+          if (completed)
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => RevisionDetailScreen(revision: revision),
+                ),
+              ),
+              icon: const Icon(LucideIcons.eye),
+              label: const Text('Ver relatório completo'),
+            )
+          else
+            const NoticeBox(
+              icon: LucideIcons.circleAlert,
+              tone: StatusTone.neutral,
+              child: Text(
+                'Esta revisão ainda está em andamento. Aguarde a conclusão da '
+                'oficina.',
+              ),
+            ),
         ],
       ),
     );

@@ -7,6 +7,7 @@ import '../../data/providers.dart';
 import '../../shared/links.dart';
 import '../../shared/ui.dart';
 import '../auth/auth_controller.dart';
+import '../purchases/order_parts.dart';
 import '../purchases/quote_detail_screen.dart';
 import '../shell/home_shell.dart';
 
@@ -39,11 +40,19 @@ class HomeTab extends ConsumerWidget {
 
     final toApprove = quotes.where((quote) => quote.awaitsApproval).toList();
     final nextVisit = appointments.where((item) => item.canCancel).toList();
+    final orders = ref.watch(ordersProvider);
+    // Como no PWA: uma busca que falha vira aviso e o resto continua na tela.
+    final loadError = orders.hasError ||
+        ref.watch(favoritesProvider).hasError ||
+        ref.watch(couponsProvider).hasError;
 
     return AsyncPage<List<Order>>(
-      value: ref.watch(ordersProvider),
+      value: orders.hasError && !orders.hasValue
+          ? const AsyncValue.data(<Order>[])
+          : orders,
       onRefresh: () => _refresh(ref),
       header: [
+        if (loadError) _LoadErrorBox(onRetry: () => _refresh(ref)),
         PanelPageHeader(
           icon: LucideIcons.shoppingBag,
           title: customer == null ? 'Olá!' : 'Olá, ${customer.firstName}!',
@@ -76,6 +85,157 @@ class HomeTab extends ConsumerWidget {
         _Summary(customer: customer),
       ],
       builder: (orders) => [_RecentOrders(orders: orders, onOpen: onOpen)],
+    );
+  }
+}
+
+/// Aviso "Algumas informações não puderam ser atualizadas" do PWA.
+class _LoadErrorBox extends StatelessWidget {
+  const _LoadErrorBox({required this.onRetry});
+
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return NoticeBox(
+      icon: LucideIcons.circleAlert,
+      tone: StatusTone.warning,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Algumas informações não puderam ser atualizadas',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          const Text(
+            'Você ainda pode usar o painel normalmente ou tentar carregar '
+            'novamente.',
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: () async {
+              try {
+                await onRetry();
+              } catch (_) {
+                // O aviso continua na tela enquanto a busca falhar.
+              }
+            },
+            child: const Text('Tentar novamente'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Faixas de gasto do `getMembershipProgress` do PWA, usadas só para a
+/// barra e o "Faltam". O nível mostrado é o `level` do servidor, a mesma
+/// fonte do selo do app (decisão do dono pendente, item Média 1).
+const _levels = [
+  ('BRONZE', 'Bronze', 0.0),
+  ('SILVER', 'Prata', 500.0),
+  ('GOLD', 'Ouro', 2000.0),
+  ('PLATINUM', 'Platina', 5000.0),
+];
+
+/// "Programa de Fidelidade" de "Meu resumo e benefícios".
+class LoyaltyCard extends StatelessWidget {
+  const LoyaltyCard({super.key, required this.customer});
+
+  final Customer? customer;
+
+  @override
+  Widget build(BuildContext context) {
+    final spent = customer?.totalSpent ?? 0;
+    final index = _levels
+        .indexWhere((level) => level.$1 == (customer?.level ?? 'BRONZE'))
+        .clamp(0, _levels.length - 1);
+    final current = _levels[index];
+    final next = index + 1 < _levels.length ? _levels[index + 1] : null;
+    final progress = next == null
+        ? 1.0
+        : ((spent - current.$3) / (next.$3 - current.$3)).clamp(0.0, 1.0);
+    final remaining = next == null ? 0.0 : next.$3 - spent;
+    const muted = TextStyle(fontSize: 14, color: AppTheme.mutedForeground);
+
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(LucideIcons.star, size: 20, color: Color(0xFFEAB308)),
+              SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Programa de Fidelidade',
+                  style: TextStyle(
+                    fontFamily: AppTheme.headingFont,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text('Seu progresso para o próximo nível', style: muted),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Nível Atual: ${current.$2}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (next != null)
+                Flexible(child: Text('Próximo: ${next.$2}', style: muted)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+            ),
+          ),
+          if (remaining > 0) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Faltam ${formatMoney(remaining)} para o próximo nível',
+              style: muted,
+            ),
+          ],
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Benefícios do seu nível:',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                SizedBox(height: 4),
+                Text('• Desconto de 5% em todas as compras', style: muted),
+                Text('• Frete grátis acima de R\$ 200', style: muted),
+                Text('• Atendimento prioritário', style: muted),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -391,6 +551,10 @@ class _SummaryState extends ConsumerState<_Summary> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: LoyaltyCard(customer: customer),
+            ),
           ],
         ],
       ),
@@ -450,7 +614,10 @@ class _RecentOrders extends StatelessWidget {
             )
           else
             for (final order in orders.take(3)) ...[
-              _RecentOrderRow(order: order),
+              _RecentOrderRow(
+                order: order,
+                onTrack: () => onOpen(Section.purchases, 0),
+              ),
               const SizedBox(height: 12),
             ],
         ],
@@ -460,9 +627,10 @@ class _RecentOrders extends StatelessWidget {
 }
 
 class _RecentOrderRow extends StatelessWidget {
-  const _RecentOrderRow({required this.order});
+  const _RecentOrderRow({required this.order, required this.onTrack});
 
   final Order order;
+  final VoidCallback onTrack;
 
   @override
   Widget build(BuildContext context) {
@@ -480,9 +648,9 @@ class _RecentOrderRow extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: Icon(LucideIcons.clock,
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(orderStatusIcon(order.status),
                     size: 16, color: AppTheme.mutedForeground),
               ),
               const SizedBox(width: 12),
@@ -518,12 +686,33 @@ class _RecentOrderRow extends StatelessWidget {
             ],
           ),
           const Divider(height: 24),
-          Text(
-            '${order.items.length} itens',
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppTheme.mutedForeground,
-            ),
+          Row(
+            children: [
+              Text(
+                '${order.items.length} '
+                '${order.items.length == 1 ? 'item' : 'itens'}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.mutedForeground,
+                ),
+              ),
+              const Spacer(),
+              if ((order.trackingCode ?? '').isNotEmpty)
+                Flexible(
+                  child: InkWell(
+                    onTap: onTrack,
+                    child: Text(
+                      'Rastrear: ${order.trackingCode}',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),

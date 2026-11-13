@@ -8,6 +8,7 @@ import '../../shared/links.dart';
 import '../../shared/ui.dart';
 import '../support/new_ticket_screen.dart';
 import 'order_detail_screen.dart';
+import 'order_parts.dart';
 import 'quote_detail_screen.dart';
 import 'request_quote_screen.dart';
 
@@ -63,6 +64,7 @@ class _OrdersState extends ConsumerState<_Orders> {
 
   @override
   Widget build(BuildContext context) {
+    final filtered = _search.isNotEmpty || _status != 'all';
     return AsyncPage<List<Order>>(
       value: ref.watch(ordersProvider),
       onRefresh: () => ref.refresh(ordersProvider.future),
@@ -96,16 +98,21 @@ class _OrdersState extends ConsumerState<_Orders> {
       ],
       isEmpty: (orders) => orders.where(_matches).isEmpty,
       emptyIcon: LucideIcons.package,
-      emptyMessage: _search.isEmpty && _status == 'all'
-          ? 'Você ainda não fez nenhum pedido.'
-          : 'Nenhum pedido encontrado com esses filtros.',
-      emptyAction: OutlinedButton(
-        onPressed: () => openStore(context),
-        child: const Text('Explorar produtos'),
-      ),
+      emptyTitle:
+          filtered ? 'Nenhum pedido encontrado' : 'Você ainda não fez nenhum pedido',
+      emptyMessage: filtered
+          ? 'Tente ajustar os filtros de busca'
+          : 'Que tal explorar nossos produtos?',
+      emptyAction: filtered
+          ? null
+          : FilledButton(
+              onPressed: () => openStore(context),
+              child: const Text('Ver Produtos'),
+            ),
       builder: (orders) => [
         for (final order in orders.where(_matches)) OrderCard(order: order),
       ],
+      footer: const [StorePurchasesCard()],
     );
   }
 }
@@ -115,29 +122,6 @@ class OrderCard extends ConsumerWidget {
   const OrderCard({super.key, required this.order});
 
   final Order order;
-
-  /// Rastrear e Suporte abrem o WhatsApp da loja com a mensagem do PWA. O
-  /// número vem de `/support/config`, o mesmo da tela de Ajuda; sem número
-  /// cadastrado, o Suporte abre um chamado como antes.
-  Future<void> _whatsApp(
-    BuildContext context,
-    WidgetRef ref,
-    String message, {
-    VoidCallback? fallback,
-  }) async {
-    String number = '';
-    try {
-      number = (await ref.read(supportContactsProvider.future)).whatsapp ?? '';
-    } catch (_) {}
-    if (!context.mounted) return;
-    if (number.isEmpty) {
-      fallback != null
-          ? fallback()
-          : showMessage(context, 'Não foi possível abrir o link.', error: true);
-      return;
-    }
-    await openLink(context, Uri.https('wa.me', '/$number', {'text': message}));
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -151,9 +135,9 @@ class OrderCard extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: Icon(LucideIcons.clock,
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Icon(orderStatusIcon(order.status),
                     size: 18, color: AppTheme.mutedForeground),
               ),
               const SizedBox(width: 16),
@@ -162,7 +146,7 @@ class OrderCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pedido #${order.shortId}',
+                      'Pedido #${order.id}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 2),
@@ -210,6 +194,14 @@ class OrderCard extends ConsumerWidget {
             MetaLine(LucideIcons.creditCard, 'Pagamento: ${order.paymentMethod}'),
             const SizedBox(height: 8),
           ],
+          if ((order.invoiceKey ?? '').isNotEmpty) ...[
+            InvoiceLine(order: order),
+            const SizedBox(height: 8),
+          ],
+          if ((order.trackingCode ?? '').isNotEmpty) ...[
+            TrackingLink(code: order.trackingCode!),
+            const SizedBox(height: 8),
+          ],
           if (order.address != null) ...[
             MetaLine(
               LucideIcons.mapPin,
@@ -217,8 +209,11 @@ class OrderCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
           ],
-          if ((order.trackingCode ?? '').isNotEmpty) ...[
-            MetaLine(LucideIcons.truck, 'Rastreio: ${order.trackingCode}'),
+          if (order.estimatedDelivery != null) ...[
+            MetaLine(
+              LucideIcons.calendar,
+              'Entrega prevista: ${formatDate(order.estimatedDelivery)}',
+            ),
             const SizedBox(height: 8),
           ],
           const Divider(height: 16),
@@ -238,17 +233,16 @@ class OrderCard extends ConsumerWidget {
               ),
               if ((order.trackingCode ?? '').isNotEmpty)
                 OutlinedButton.icon(
-                  onPressed: () => _whatsApp(
+                  onPressed: () => openStoreWhatsApp(
                     context,
                     ref,
-                    'Olá! Gostaria de rastrear meu pedido. Código de '
-                    'rastreamento: ${order.trackingCode}',
+                    trackingMessage(order.trackingCode!),
                   ),
                   icon: const Icon(LucideIcons.truck),
                   label: const Text('Rastrear'),
                 ),
               OutlinedButton.icon(
-                onPressed: () => _whatsApp(
+                onPressed: () => openStoreWhatsApp(
                   context,
                   ref,
                   'Olá! Preciso de ajuda com meu pedido #${order.id}. '
@@ -277,9 +271,9 @@ const _quoteFilters = {
   'all': 'Todos os status',
   'PENDING': 'Pendente',
   'ANALYZING': 'Em análise',
-  'QUOTED': 'Aguardando sua aprovação',
-  'APPROVED': 'Aprovado por você',
-  'REJECTED': 'Recusado por você',
+  'QUOTED': 'Orçado',
+  'APPROVED': 'Aprovado',
+  'REJECTED': 'Rejeitado',
 };
 
 class _Quotes extends ConsumerStatefulWidget {
@@ -384,9 +378,15 @@ class _QuotesState extends ConsumerState<_Quotes> {
       ],
       isEmpty: (items) => items.where(_matches).isEmpty,
       emptyIcon: LucideIcons.fileText,
-      emptyMessage: all.isEmpty
-          ? 'Peça um orçamento de serviços para o seu veículo.'
-          : 'Nenhum orçamento encontrado com esses filtros.',
+      emptyTitle: 'Nenhum orçamento encontrado',
+      emptyMessage:
+          'Solicite seu primeiro orçamento para acompanhar tudo pelo painel.',
+      emptyAction: FilledButton(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RequestQuoteScreen()),
+        ),
+        child: const Text('Solicitar primeiro orçamento'),
+      ),
       builder: (items) => [
         for (final quote in items.where(_matches)) QuoteCard(quote: quote),
       ],

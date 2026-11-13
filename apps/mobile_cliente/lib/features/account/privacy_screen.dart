@@ -33,7 +33,8 @@ class PrivacyCard extends ConsumerWidget {
     return runAction(
       context,
       () => ref.read(apiProvider).privacyRequest(type),
-      success: 'Solicitação registrada. Respondemos em até 15 dias.',
+      success: 'Solicitação registrada. Acompanhe o retorno pelos canais '
+          'cadastrados.',
     );
   }
 

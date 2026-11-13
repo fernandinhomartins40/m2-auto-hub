@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:m2_cliente/data/customer_api.dart';
 import 'package:m2_cliente/data/fipe_api.dart';
 import 'package:m2_cliente/data/models.dart';
@@ -53,6 +54,8 @@ Future<ProviderContainer> _pump(
 }
 
 void main() {
+  setUpAll(() => initializeDateFormatting('pt_BR'));
+
   testWidgets('cadastro de veículo escolhe marca, modelo e ano na FIPE',
       (tester) async {
     await _pump(
