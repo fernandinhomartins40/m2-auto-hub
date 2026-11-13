@@ -1677,6 +1677,8 @@ async function seedChecklistData() {
       services: JSON.stringify(defaultConfig.services),
       contact: JSON.stringify(defaultConfig.contact),
       footer: JSON.stringify(defaultConfig.footer),
+      contactPage: JSON.stringify({}),
+      aboutPage: JSON.stringify({}),
     },
   });
 
