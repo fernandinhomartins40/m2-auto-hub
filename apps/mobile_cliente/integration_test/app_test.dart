@@ -31,7 +31,7 @@ void main() {
       await e.tap(find.text(item).last);
     }
 
-    final home = find.textContaining('Olá');
+    final home = find.text('O que você quer fazer?');
 
     await app.main();
     await e.screen('login', find.text('Fazer Login'));
