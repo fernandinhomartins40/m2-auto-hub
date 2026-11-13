@@ -322,7 +322,8 @@ class _ProblemCardState extends State<_ProblemCard> {
             .where(
               (p) =>
                   withoutAccents(p.name).contains(term) ||
-                  withoutAccents(p.category).contains(term),
+                  withoutAccents(p.category).contains(term) ||
+                  withoutAccents(p.sku).contains(term),
             )
             .take(8)
             .toList();
@@ -445,7 +446,7 @@ class _ProblemCardState extends State<_ProblemCard> {
                                           ),
                                         ),
                                         Text(
-                                          '${product.category} · estoque '
+                                          'SKU ${product.sku} · estoque '
                                           '${product.stock}',
                                           style: const TextStyle(
                                             fontSize: 12,

@@ -196,7 +196,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
     final customer = await showModalBottomSheet<CustomerRef>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => const _CustomerSheet(),
+      builder: (_) => const CustomerSheet(),
     );
     if (customer != null && mounted) {
       _selectCustomer(customer);
@@ -1359,15 +1359,16 @@ class _MoneyRow extends StatelessWidget {
   }
 }
 
-/// Cadastro de cliente (`CreateCustomerModal`), usado pela etapa 1.
-class _CustomerSheet extends ConsumerStatefulWidget {
-  const _CustomerSheet();
+/// Cadastro de cliente (`CreateCustomerModal`), usado pela etapa 1 e pela
+/// leitura de placa.
+class CustomerSheet extends ConsumerStatefulWidget {
+  const CustomerSheet({super.key});
 
   @override
-  ConsumerState<_CustomerSheet> createState() => _CustomerSheetState();
+  ConsumerState<CustomerSheet> createState() => _CustomerSheetState();
 }
 
-class _CustomerSheetState extends ConsumerState<_CustomerSheet> {
+class _CustomerSheetState extends ConsumerState<CustomerSheet> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();

@@ -194,11 +194,16 @@ class Revision {
     this.assignedMechanicId,
     this.customer,
     this.vehicle,
+    this.assignedMechanic,
+    this.assignedAt,
+    this.mechanicNotes,
+    this.transfers = const [],
   });
 
   factory Revision.fromJson(Map<String, dynamic> json) {
     final customer = asMap(json['customer']);
     final vehicle = asMap(json['vehicle']);
+    final mechanic = asMap(json['assignedMechanic']);
     return Revision(
       id: json['id'].toString(),
       customerId: json['customerId']?.toString() ?? '',
@@ -214,6 +219,18 @@ class Revision {
       assignedMechanicId: json['assignedMechanicId']?.toString(),
       customer: customer == null ? null : CustomerRef.fromJson(customer),
       vehicle: vehicle == null ? null : VehicleRef.fromJson(vehicle),
+      assignedMechanic: mechanic == null ? null : Mechanic.fromJson(mechanic),
+      assignedAt: asDate(json['assignedAt']),
+      mechanicNotes: json['mechanicNotes']?.toString(),
+      transfers: [
+        for (final t in asMapList(json['transferHistory']))
+          (
+            from: t['fromName']?.toString() ?? '',
+            to: t['toName']?.toString() ?? '',
+            at: asDate(t['transferredAt']),
+            reason: t['reason']?.toString(),
+          ),
+      ],
     );
   }
 
@@ -222,6 +239,13 @@ class Revision {
   final String vehicleId;
   final String status;
   final List<CheckEntry> checks;
+  final Mechanic? assignedMechanic;
+  final DateTime? assignedAt;
+  final String? mechanicNotes;
+
+  /// `transferHistory` da API: de quem para quem a revisão passou.
+  final List<({String from, String to, DateTime? at, String? reason})>
+      transfers;
   final DateTime? date;
   final DateTime? completedAt;
   final DateTime? createdAt;
@@ -457,6 +481,7 @@ class CatalogProduct {
     required this.category,
     required this.price,
     required this.stock,
+    this.sku = '',
   });
 
   factory CatalogProduct.fromJson(Map<String, dynamic> json) {
@@ -467,6 +492,7 @@ class CatalogProduct {
       category: json['category']?.toString() ?? '',
       price: promo > 0 ? promo : asDouble(json['salePrice']),
       stock: asInt(json['stock']),
+      sku: json['sku']?.toString() ?? '',
     );
   }
 
@@ -475,6 +501,7 @@ class CatalogProduct {
   final String category;
   final double price;
   final int stock;
+  final String sku;
 
   OrderItem toItem() => OrderItem(
         type: 'PRODUCT',
@@ -523,6 +550,7 @@ class PlateLookup {
     this.customer,
     this.vehicle,
     this.vehicleLabel,
+    this.technical,
   });
 
   factory PlateLookup.fromJson(Map<String, dynamic> json) {
@@ -539,6 +567,7 @@ class PlateLookup {
       customer: customer == null ? null : CustomerRef.fromJson(customer),
       vehicle: vehicle == null ? null : VehicleRef.fromJson(vehicle),
       vehicleLabel: technicalLabel.isEmpty ? null : technicalLabel,
+      technical: technical,
     );
   }
 
@@ -547,6 +576,9 @@ class PlateLookup {
   final CustomerRef? customer;
   final VehicleRef? vehicle;
   final String? vehicleLabel;
+
+  /// `technicalData` da consulta, usado para preencher o cadastro do veículo.
+  final Map<String, dynamic>? technical;
 }
 
 class MechanicStats {

@@ -383,9 +383,12 @@ class _RevisionCard extends StatelessWidget {
               const Spacer(),
               const Icon(LucideIcons.calendar, size: 14, color: gray400),
               const SizedBox(width: 4),
-              Text(
-                formatDate(revision.date),
-                style: const TextStyle(fontSize: 12, color: gray600),
+              Flexible(
+                child: Text(
+                  formatDate(revision.date),
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: gray600),
+                ),
               ),
             ],
           ),
@@ -393,7 +396,9 @@ class _RevisionCard extends StatelessWidget {
           _PersonLine(
             icon: LucideIcons.user,
             title: customer?.name ?? 'N/A',
-            subtitle: customer?.phone ?? '',
+            subtitle: (customer?.phone ?? '').isNotEmpty
+                ? customer!.phone!
+                : customer?.email ?? '',
           ),
           const SizedBox(height: 10),
           _PersonLine(
