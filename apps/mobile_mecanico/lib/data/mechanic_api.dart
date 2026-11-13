@@ -228,6 +228,20 @@ class MechanicApi {
     });
   }
 
+  /// `POST /admin/customers/:id/vehicles` devolve o veículo sem envelope.
+  Future<VehicleRef> createVehicle(
+    String customerId,
+    Map<String, dynamic> data,
+  ) {
+    return guardApi(() async {
+      final res = await _dio.post(
+        '/admin/customers/$customerId/vehicles',
+        data: data,
+      );
+      return VehicleRef.fromJson(unwrapObject(res.data));
+    });
+  }
+
   // ---- Catálogo e placa ----
 
   Future<List<CatalogProduct>> products() => guardApi(() async {

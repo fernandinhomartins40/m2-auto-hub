@@ -110,7 +110,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 24),
                       BusyButton(
-                        label: 'Enviar instruções',
+                        label: 'Enviar link de recuperação',
                         icon: LucideIcons.mail,
                         busy: _busy,
                         onPressed: _submit,
