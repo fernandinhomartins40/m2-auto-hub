@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+const appBuildRule = z.object({
+  minBuild: z.number().int().min(1),
+  storeUrl: z.string().url().max(500).nullable().optional(),
+});
+const appPlatforms = z.object({ android: appBuildRule.optional(), ios: appBuildRule.optional() });
+export const appVersionPolicySchema = z.object({ cliente: appPlatforms.optional(), mecanico: appPlatforms.optional() });
+
 /**
  * Schema de validação para atualização de configurações
  */
@@ -80,6 +87,9 @@ export const updateSettingsSchema = z.object({
   pwaMechanicDesktopIconUrl: z.string().max(1000).nullable().optional(),
   pwaMechanicAppleTouchIconUrl: z.string().max(1000).nullable().optional(),
   pwaMechanicMaskableIconUrl: z.string().max(1000).nullable().optional(),
+
+  // Build mínimo dos apps nativos; o que não for informado usa o padrão (build 1).
+  appVersionPolicy: appVersionPolicySchema.optional(),
 
   // Flags de Conexão
   whatsappConnected: z.boolean().optional(),
