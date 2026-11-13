@@ -7,6 +7,7 @@ import 'app/router.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initLocale();
+  await clearTokenAfterReinstall(TokenStorage());
   // Sem repetição automática: a tela mostra o erro com "Tentar novamente".
   runApp(ProviderScope(retry: (_, __) => null, child: const M2ClienteApp()));
 }
