@@ -5,6 +5,10 @@ name: Apps nativos - release (Cliente e Mecânico)
 # Passo a passo e lista de secrets: docs/APPS-NATIVOS.md.
 
 on:
+  # Etiqueta release/<app>/<plataforma>/<qualquer coisa>, ex.: release/cliente/android/1.
+  # Serve para gerar fora do main; a aprovação do ambiente `release` continua valendo.
+  push:
+    tags: ["release/*/*/*"]
   workflow_dispatch:
     inputs:
       app:
@@ -26,7 +30,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.app }}
+  group: ${{ github.workflow }}-${{ inputs.app || github.ref_name }}
   cancel-in-progress: false
 
 env:
@@ -41,11 +45,33 @@ jobs:
     timeout-minutes: 5
     outputs:
       build_number: ${{ steps.build.outputs.number }}
+      app: ${{ steps.alvo.outputs.app }}
+      plataforma: ${{ steps.alvo.outputs.plataforma }}
+      api_base_url: ${{ steps.alvo.outputs.api_base_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Ler app e plataforma
+        id: alvo
+        env:
+          IN_APP: ${{ inputs.app }}
+          IN_PLATAFORMA: ${{ inputs.plataforma }}
+          IN_URL: ${{ inputs.api_base_url }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -n "$IN_APP" ]; then
+            app=$IN_APP; plataforma=$IN_PLATAFORMA; url=$IN_URL
+          else
+            app=$(echo "$REF_NAME" | cut -d/ -f2); plataforma=$(echo "$REF_NAME" | cut -d/ -f3)
+            url="https://www.m2centerauto.com.br/api"
+          fi
+          case "$app" in cliente|mecanico) ;; *) echo "::error::App inválido na etiqueta: $app (use cliente ou mecanico)"; exit 1 ;; esac
+          case "$plataforma" in ambos|android|ios) ;; *) echo "::error::Plataforma inválida: $plataforma (use ambos, android ou ios)"; exit 1 ;; esac
+          { echo "app=$app"; echo "plataforma=$plataforma"; echo "api_base_url=$url"; } >> "$GITHUB_OUTPUT"
+          echo "App: $app, plataforma: $plataforma, API: $url" >> "$GITHUB_STEP_SUMMARY"
 
       # Mesmo commit dá o mesmo número no AAB e no IPA. Cresce a cada commit em main
       # e já passa de qualquer build enviado antes (o workflow antigo usava GITHUB_RUN_NUMBER, máximo 7).
@@ -59,7 +85,7 @@ jobs:
       # O app não segue redirecionamento em POST: uma URL que devolve 3xx quebra o login.
       - name: Conferir URL da API
         env:
-          API_BASE_URL: ${{ inputs.api_base_url }}
+          API_BASE_URL: ${{ steps.alvo.outputs.api_base_url }}
         run: |
           case "$API_BASE_URL" in
             https://*) ;;
@@ -74,15 +100,15 @@ jobs:
           esac
 
   android:
-    name: AAB assinado (${{ inputs.app }})
+    name: AAB assinado (${{ needs.prepare.outputs.app }})
     needs: prepare
-    if: inputs.plataforma != 'ios'
+    if: needs.prepare.outputs.plataforma != 'ios'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: release
     defaults:
       run:
-        working-directory: apps/mobile_${{ inputs.app }}
+        working-directory: apps/mobile_${{ needs.prepare.outputs.app }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -100,9 +126,9 @@ jobs:
       # Sem assinatura a Play recusa o envio: falta de secret para o build aqui.
       - name: Restaurar keystore de upload
         env:
-          KEYSTORE_BASE64: ${{ inputs.app == 'cliente' && secrets.ANDROID_CLIENTE_KEYSTORE_BASE64 || secrets.ANDROID_MECANICO_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ inputs.app == 'cliente' && secrets.ANDROID_CLIENTE_KEYSTORE_PASSWORD || secrets.ANDROID_MECANICO_KEYSTORE_PASSWORD }}
-          PREFIX: ANDROID_${{ inputs.app == 'cliente' && 'CLIENTE' || 'MECANICO' }}
+          KEYSTORE_BASE64: ${{ needs.prepare.outputs.app == 'cliente' && secrets.ANDROID_CLIENTE_KEYSTORE_BASE64 || secrets.ANDROID_MECANICO_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ needs.prepare.outputs.app == 'cliente' && secrets.ANDROID_CLIENTE_KEYSTORE_PASSWORD || secrets.ANDROID_MECANICO_KEYSTORE_PASSWORD }}
+          PREFIX: ANDROID_${{ needs.prepare.outputs.app == 'cliente' && 'CLIENTE' || 'MECANICO' }}
         run: |
           missing=""
           [ -n "$KEYSTORE_BASE64" ] || missing="$missing ${PREFIX}_KEYSTORE_BASE64"
@@ -123,7 +149,7 @@ jobs:
 
       - name: Gerar AAB
         env:
-          API_BASE_URL: ${{ inputs.api_base_url }}
+          API_BASE_URL: ${{ needs.prepare.outputs.api_base_url }}
           BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
         run: flutter build appbundle --release --build-number="$BUILD_NUMBER" --dart-define=API_BASE_URL="$API_BASE_URL"
 
@@ -134,21 +160,21 @@ jobs:
       # Envio à Play fica manual até existir uma conta de serviço (secret futuro PLAY_SERVICE_ACCOUNT_JSON).
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: m2-${{ inputs.app }}-android-${{ needs.prepare.outputs.build_number }}
-          path: apps/mobile_${{ inputs.app }}/build/app/outputs/bundle/release/app-release.aab
+          name: m2-${{ needs.prepare.outputs.app }}-android-${{ needs.prepare.outputs.build_number }}
+          path: apps/mobile_${{ needs.prepare.outputs.app }}/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 30
 
   ios:
-    name: IPA assinado e TestFlight (${{ inputs.app }})
+    name: IPA assinado e TestFlight (${{ needs.prepare.outputs.app }})
     needs: prepare
-    if: inputs.plataforma != 'android'
+    if: needs.prepare.outputs.plataforma != 'android'
     runs-on: macos-26
     timeout-minutes: 60
     environment: release
     defaults:
       run:
-        working-directory: apps/mobile_${{ inputs.app }}
+        working-directory: apps/mobile_${{ needs.prepare.outputs.app }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -170,7 +196,7 @@ jobs:
             exit 1
           fi
           if [ ! -f ios/Runner.xcodeproj/project.pbxproj ]; then
-            echo "::error::apps/mobile_${{ inputs.app }} não tem a pasta ios/."
+            echo "::error::apps/mobile_${{ needs.prepare.outputs.app }} não tem a pasta ios/."
             exit 1
           fi
 
@@ -196,7 +222,7 @@ jobs:
       # Gera Generated.xcconfig (número de build, API_BASE_URL) e instala os pods, sem compilar.
       - name: Preparar projeto Xcode
         env:
-          API_BASE_URL: ${{ inputs.api_base_url }}
+          API_BASE_URL: ${{ needs.prepare.outputs.api_base_url }}
           BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
         run: |
           flutter pub get
@@ -235,8 +261,8 @@ jobs:
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: m2-${{ inputs.app }}-ios-${{ needs.prepare.outputs.build_number }}
-          path: apps/mobile_${{ inputs.app }}/build/ios/ipa/*.ipa
+          name: m2-${{ needs.prepare.outputs.app }}-ios-${{ needs.prepare.outputs.build_number }}
+          path: apps/mobile_${{ needs.prepare.outputs.app }}/build/ios/ipa/*.ipa
           if-no-files-found: error
           retention-days: 30
 

@@ -84,6 +84,8 @@ Workflow **Apps nativos - release** (`.github/workflows/mobile-apps-release.yml`
    - **Android:** o AAB fica em *Artifacts* do run (`m2-<app>-android-<número>`). Envie à mão no Play Console. Ainda não há envio automático: ele depende de uma conta de serviço da Play (secret futuro `PLAY_SERVICE_ACCOUNT_JSON`).
    - **iPhone:** o IPA fica em *Artifacts* (`m2-<app>-ios-<número>`) e já é enviado ao TestFlight. Em até 30 minutos o build aparece no App Store Connect.
 
+**Sem passar pelo `main`:** crie e envie uma etiqueta no formato `release/<app>/<plataforma>/<número>`, por exemplo `git tag release/cliente/android/1 && git push origin release/cliente/android/1`. O release roda no commit da etiqueta, com a URL da API padrão, e continua pedindo aprovação do ambiente `release`. Use para gerar um build de teste a partir de um branch. Para produção, prefira `main`.
+
 O primeiro passo do release confere a URL da API: se um POST em `<url>/auth/login` receber redirecionamento (3xx), o build para. O app não segue redirecionamento em POST, e sem o `www` o login quebraria.
 
 Os artefatos ficam 30 dias. Eles não contêm chave nenhuma, mas qualquer pessoa logada no GitHub consegue baixar artefatos de um repositório público.
