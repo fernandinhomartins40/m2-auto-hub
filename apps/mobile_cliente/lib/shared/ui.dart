@@ -52,7 +52,7 @@ class FilterSelect<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       icon: const Icon(LucideIcons.chevronDown, size: 16),
       decoration: InputDecoration(
