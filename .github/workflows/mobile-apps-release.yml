@@ -1,0 +1,261 @@
+name: Apps nativos - release (Cliente e Mecânico)
+
+# Gera o AAB (Play) e o IPA (App Store) assinados, sob demanda.
+# Os jobs com secret ficam no ambiente `release`, que exige aprovação.
+# Passo a passo e lista de secrets: docs/APPS-NATIVOS.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "App"
+        required: true
+        type: choice
+        options: [cliente, mecanico]
+      plataforma:
+        description: "Plataforma"
+        required: true
+        type: choice
+        options: [ambos, android, ios]
+      api_base_url:
+        description: "URL base da API embutida no build (com www: sem www o login recebe 301)"
+        required: true
+        default: "https://www.m2centerauto.com.br/api"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.app }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.41.9"
+  # A linha 3.41 do Flutter suporta Xcode 26, não o 27.
+  XCODE_PATH: /Applications/Xcode_26.4.1.app
+
+jobs:
+  prepare:
+    name: Número de build e URL da API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      build_number: ${{ steps.build.outputs.number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Mesmo commit dá o mesmo número no AAB e no IPA. Cresce a cada commit em main
+      # e já passa de qualquer build enviado antes (o workflow antigo usava GITHUB_RUN_NUMBER, máximo 7).
+      - name: Calcular número de build
+        id: build
+        run: |
+          n=$(git rev-list --count HEAD)
+          echo "number=$n" >> "$GITHUB_OUTPUT"
+          echo "Número de build: $n (commit $GITHUB_SHA)" >> "$GITHUB_STEP_SUMMARY"
+
+      # O app não segue redirecionamento em POST: uma URL que devolve 3xx quebra o login.
+      - name: Conferir URL da API
+        env:
+          API_BASE_URL: ${{ inputs.api_base_url }}
+        run: |
+          case "$API_BASE_URL" in
+            https://*) ;;
+            *) echo "::error::A URL da API precisa começar com https://"; exit 1 ;;
+          esac
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+            -H 'Content-Type: application/json' -d '{}' "${API_BASE_URL%/}/auth/login" || true)
+          echo "POST ${API_BASE_URL%/}/auth/login respondeu $code"
+          case "$code" in
+            3??) echo "::error::A URL da API responde $code (redirecionamento) ao POST de login. Use a URL final, por exemplo https://www.m2centerauto.com.br/api"; exit 1 ;;
+            000) echo "::error::A URL da API não respondeu."; exit 1 ;;
+          esac
+
+  android:
+    name: AAB assinado (${{ inputs.app }})
+    needs: prepare
+    if: inputs.plataforma != 'ios'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+    defaults:
+      run:
+        working-directory: apps/mobile_${{ inputs.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # Sem assinatura a Play recusa o envio: falta de secret para o build aqui.
+      - name: Restaurar keystore de upload
+        env:
+          KEYSTORE_BASE64: ${{ inputs.app == 'cliente' && secrets.ANDROID_CLIENTE_KEYSTORE_BASE64 || secrets.ANDROID_MECANICO_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ inputs.app == 'cliente' && secrets.ANDROID_CLIENTE_KEYSTORE_PASSWORD || secrets.ANDROID_MECANICO_KEYSTORE_PASSWORD }}
+          PREFIX: ANDROID_${{ inputs.app == 'cliente' && 'CLIENTE' || 'MECANICO' }}
+        run: |
+          missing=""
+          [ -n "$KEYSTORE_BASE64" ] || missing="$missing ${PREFIX}_KEYSTORE_BASE64"
+          [ -n "$KEYSTORE_PASSWORD" ] || missing="$missing ${PREFIX}_KEYSTORE_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Falta cadastrar no ambiente release o(s) secret(s):$missing. Veja docs/APPS-NATIVOS.md."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+          {
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=upload"
+            echo "storeFile=$RUNNER_TEMP/upload-keystore.jks"
+          } > android/key.properties
+
+      - run: flutter pub get
+
+      - name: Gerar AAB
+        env:
+          API_BASE_URL: ${{ inputs.api_base_url }}
+          BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
+        run: flutter build appbundle --release --build-number="$BUILD_NUMBER" --dart-define=API_BASE_URL="$API_BASE_URL"
+
+      - name: Apagar keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload-keystore.jks" android/key.properties
+
+      # Envio à Play fica manual até existir uma conta de serviço (secret futuro PLAY_SERVICE_ACCOUNT_JSON).
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: m2-${{ inputs.app }}-android-${{ needs.prepare.outputs.build_number }}
+          path: apps/mobile_${{ inputs.app }}/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
+
+  ios:
+    name: IPA assinado e TestFlight (${{ inputs.app }})
+    needs: prepare
+    if: inputs.plataforma != 'android'
+    runs-on: macos-26
+    timeout-minutes: 60
+    environment: release
+    defaults:
+      run:
+        working-directory: apps/mobile_${{ inputs.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Conferir secrets da Apple
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY_BASE64 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          missing=""
+          for s in APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_PRIVATE_KEY_BASE64 APPLE_TEAM_ID; do
+            [ -n "${!s}" ] || missing="$missing $s"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Falta cadastrar no ambiente release o(s) secret(s):$missing. Veja docs/APPS-NATIVOS.md."
+            exit 1
+          fi
+          if [ ! -f ios/Runner.xcodeproj/project.pbxproj ]; then
+            echo "::error::apps/mobile_${{ inputs.app }} não tem a pasta ios/."
+            exit 1
+          fi
+
+      - name: Selecionar Xcode
+        run: |
+          sudo xcode-select -s "$XCODE_PATH"
+          xcodebuild -version
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Gravar chave da API do App Store Connect
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_PRIVATE_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY_BASE64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/private_keys"
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8"
+
+      # Gera Generated.xcconfig (número de build, API_BASE_URL) e instala os pods, sem compilar.
+      - name: Preparar projeto Xcode
+        env:
+          API_BASE_URL: ${{ inputs.api_base_url }}
+          BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
+        run: |
+          flutter pub get
+          flutter build ios --release --config-only --build-number="$BUILD_NUMBER" --dart-define=API_BASE_URL="$API_BASE_URL"
+
+      # Assinatura automática com a chave da API: o xcodebuild cria ou baixa
+      # certificado e perfil no portal da Apple. A chave precisa do papel Admin.
+      - name: Arquivar e exportar IPA
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          auth=(-allowProvisioningUpdates
+            -authenticationKeyPath "$RUNNER_TEMP/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8"
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID"
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID")
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/ios/archive/Runner.xcarchive \
+            "${auth[@]}" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" archive
+          # destination=export gera o IPA do artefato; o passo do TestFlight troca para upload.
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>destination</key><string>export</string>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath build/ios/ipa -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" "${auth[@]}"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: m2-${{ inputs.app }}-ios-${{ needs.prepare.outputs.build_number }}
+          path: apps/mobile_${{ inputs.app }}/build/ios/ipa/*.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      # O altool --upload-app está obsoleto e no Xcode 26 pode falhar sem código de erro;
+      # o próprio xcodebuild envia com destination=upload, usando a mesma chave da API.
+      - name: Enviar ao TestFlight
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          sed -i '' 's|<string>export</string>|<string>upload</string>|' "$RUNNER_TEMP/ExportOptions.plist"
+          grep -q '<string>upload</string>' "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath "$RUNNER_TEMP/upload" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8" \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+
+      - name: Apagar chave da API
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/private_keys" "$RUNNER_TEMP/ExportOptions.plist" "$RUNNER_TEMP/upload"

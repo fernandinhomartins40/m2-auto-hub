@@ -1,12 +1,12 @@
-# Apps Android: Cliente e Mecânico
+# Apps nativos: Cliente e Mecânico (Android e iPhone)
 
-Apps nativos em Flutter que substituem os PWAs do cliente e do mecânico no Android. As telas ficam dentro do app e os dados vêm da mesma API do site, com `Authorization: Bearer` no lugar do cookie. O app `apps/mobile` (M2 Admin) é separado e não mudou.
+Apps nativos em Flutter que substituem os PWAs do cliente e do mecânico no Android e no iPhone. As telas ficam dentro do app e os dados vêm da mesma API do site, com `Authorization: Bearer` no lugar do cookie. O app `apps/mobile` (M2 Admin) é separado e não mudou.
 
 | | Cliente | Mecânico |
 |---|---|---|
 | Pasta | `apps/mobile_cliente` | `apps/mobile_mecanico` |
 | Nome na loja | M2 Center Auto | M2 Mecânico |
-| Application ID | `br.com.m2centerauto.cliente` | `br.com.m2centerauto.mecanico` |
+| Application ID / Bundle ID | `br.com.m2centerauto.cliente` | `br.com.m2centerauto.mecanico` |
 | Login | `POST /auth/login` | `POST /auth/admin/login`, só papel `STAFF` |
 | Sessão | 30 dias | 30 dias |
 
@@ -39,7 +39,7 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3001
 
 `10.0.2.2` é a máquina de desenvolvimento vista do emulador. Sem o define, o app usa a API de produção. HTTP sem TLS só é permitido no build de debug.
 
-Use o Flutter **3.32.8**, a mesma versão do CI.
+Use o Flutter **3.41.9**, a mesma versão do CI. No iPhone o CI usa o Xcode 26.4.1 (a linha 3.41 do Flutter não suporta o Xcode 27).
 
 ## Validar
 
@@ -49,6 +49,8 @@ flutter test
 ```
 
 Rodar nas três pastas: `packages/mobile_core`, `apps/mobile_cliente` e `apps/mobile_mecanico`.
+
+O GitHub Actions faz isso sozinho no workflow **Apps nativos - validação** (`.github/workflows/mobile-apps-ci.yml`), em todo push e pull request que mexe nos apps: `analyze` e `test` nos três pacotes, APK de debug dos dois apps e build de iOS sem assinatura no macOS. Esse workflow não usa nenhum secret.
 
 ## Gerar o AAB
 
@@ -70,16 +72,54 @@ Cada app tem a própria chave de upload, fora do git:
 
 Sem `key.properties` o build sai com assinatura de debug: instala para teste, mas a Play recusa.
 
-### AAB pelo GitHub Actions
+## Release pelo GitHub Actions
 
-Actions → *Mobile Android (Cliente e Mecânico)* → *Run workflow*, escolhendo o app. Cadastre antes estes secrets:
+Workflow **Apps nativos - release** (`.github/workflows/mobile-apps-release.yml`). Gera o AAB e o IPA assinados.
 
-| Secret | Conteúdo |
-|---|---|
-| `ANDROID_CLIENTE_KEYSTORE_BASE64` | `base64 -w0 upload-keystore.jks` do cliente |
-| `ANDROID_CLIENTE_KEYSTORE_PASSWORD` | `storePassword` do `key.properties` do cliente |
-| `ANDROID_MECANICO_KEYSTORE_BASE64` | o mesmo, do mecânico |
-| `ANDROID_MECANICO_KEYSTORE_PASSWORD` | o mesmo, do mecânico |
+1. Confira se o último commit está verde no workflow de validação.
+2. Actions → *Apps nativos - release* → *Run workflow*.
+3. Escolha o **app** (cliente ou mecânico) e a **plataforma** (ambos, android ou ios). Deixe a URL da API como está: `https://www.m2centerauto.com.br/api`.
+4. Aprove o ambiente `release` quando o GitHub pedir.
+5. Resultado:
+   - **Android:** o AAB fica em *Artifacts* do run (`m2-<app>-android-<número>`). Envie à mão no Play Console. Ainda não há envio automático: ele depende de uma conta de serviço da Play (secret futuro `PLAY_SERVICE_ACCOUNT_JSON`).
+   - **iPhone:** o IPA fica em *Artifacts* (`m2-<app>-ios-<número>`) e já é enviado ao TestFlight. Em até 30 minutos o build aparece no App Store Connect.
+
+O primeiro passo do release confere a URL da API: se um POST em `<url>/auth/login` receber redirecionamento (3xx), o build para. O app não segue redirecionamento em POST, e sem o `www` o login quebraria.
+
+Os artefatos ficam 30 dias. Eles não contêm chave nenhuma, mas qualquer pessoa logada no GitHub consegue baixar artefatos de um repositório público.
+
+### Número de build
+
+É o número de commits do branch (`git rev-list --count HEAD`). O mesmo commit gera o mesmo número no AAB e no IPA, e cada commit novo em `main` aumenta o número. Ele já está acima de qualquer build enviado antes (o workflow antigo usava o número do run, que chegou a 7).
+
+Consequência: para enviar de novo o mesmo app na mesma loja, é preciso um commit novo. Rode o release sempre a partir de `main`; um branch com menos commits geraria número menor.
+
+### Secrets
+
+Cadastre em Settings → Environments → `release` → *Environment secrets* (não em secrets do repositório). O ambiente deve exigir aprovação. Sem um secret, o job para logo no início dizendo qual falta.
+
+| Secret | Conteúdo | Como gerar |
+|---|---|---|
+| `ANDROID_CLIENTE_KEYSTORE_BASE64` | A keystore de upload do cliente em base64 | `base64 -w0 apps/mobile_cliente/android/app/upload-keystore.jks` (no Windows: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("upload-keystore.jks"))`) |
+| `ANDROID_CLIENTE_KEYSTORE_PASSWORD` | Senha da keystore do cliente | o `storePassword` do `key.properties` do cliente |
+| `ANDROID_MECANICO_KEYSTORE_BASE64` | O mesmo, do mecânico | idem, em `apps/mobile_mecanico` |
+| `ANDROID_MECANICO_KEYSTORE_PASSWORD` | O mesmo, do mecânico | idem |
+| `APP_STORE_CONNECT_KEY_ID` | ID da chave de API (10 caracteres) | App Store Connect → Usuários e acesso → Integrações → Chaves da API da App Store Connect → gerar chave com papel **Admin** |
+| `APP_STORE_CONNECT_ISSUER_ID` | ID do emissor (formato UUID) | mesma tela, no topo da lista de chaves |
+| `APP_STORE_CONNECT_PRIVATE_KEY_BASE64` | O arquivo `AuthKey_<ID>.p8` em base64 | baixe o `.p8` (só dá para baixar uma vez) e rode `base64 -i AuthKey_XXXX.p8` |
+| `APPLE_TEAM_ID` | ID do time Apple (10 caracteres) | developer.apple.com → Account → Membership details → Team ID |
+
+O workflow monta o `key.properties` com `keyAlias=upload` e a mesma senha para a keystore e para a chave, como nos arquivos locais. Se alguma keystore usar outro alias ou senhas diferentes, o workflow precisa de ajuste.
+
+A chave `.p8` e a keystore são gravadas na pasta temporária do runner e apagadas no fim do job, mesmo em caso de erro.
+
+### Assinatura do iPhone
+
+Não há certificado nem perfil guardado em secret. O `xcodebuild` usa a chave de API com `-allowProvisioningUpdates` e assinatura automática: registra o Bundle ID, cria ou baixa o certificado e o perfil e assina com o certificado de distribuição gerenciado pela Apple. Por isso a chave precisa do papel **Admin** (ou acesso a certificados de distribuição gerenciados na nuvem).
+
+Antes do primeiro envio de cada app, crie o app no App Store Connect (Apps → +) com o Bundle ID da tabela do início. Sem isso o envio ao TestFlight falha.
+
+Se a assinatura automática falhar no runner, a alternativa é guardar certificado de distribuição (`.p12`) e perfil em secrets e assinar de forma manual.
 
 ## Publicar na Google Play
 
