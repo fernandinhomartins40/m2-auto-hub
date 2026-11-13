@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import { processLandingPageImage, processPwaIcon } from '../../middleware/upload.middleware.js';
 import { updateSettingsSchema } from './dto/update-settings.dto.js';
 import { settingsService } from './settings.service.js';
 import { CryptoUtil } from '@shared/utils/crypto.util.js';
 import plateLookupService from '@shared/services/plate-lookup.service.js';
+
+const appVersionQuerySchema = z.object({ app: z.enum(['cliente', 'mecanico']), platform: z.enum(['android', 'ios']) });
 
 export class SettingsController {
   private buildAbsoluteUrl(req: Request, value: string) {
@@ -214,6 +216,20 @@ export class SettingsController {
         error: 'Erro ao buscar ícone Apple Touch',
         details: error.message,
       });
+    }
+  }
+
+  async getAppVersion(req: Request, res: Response): Promise<void> {
+    const query = appVersionQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      res.status(400).json({ success: false, error: 'Informe app (cliente|mecanico) e platform (android|ios)' });
+      return;
+    }
+    try {
+      const data = await settingsService.getAppVersionRule(query.data.app, query.data.platform);
+      res.status(200).json({ success: true, data });
+    } catch {
+      res.status(500).json({ success: false, error: 'Erro ao buscar versão mínima do app' });
     }
   }
 

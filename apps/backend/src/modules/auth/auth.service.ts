@@ -82,6 +82,11 @@ export class AuthService {
       throw ApiError.forbidden('Your account has been blocked');
     }
 
+    // Conta inativa ou excluída: a sessão seria recusada pelo middleware em seguida.
+    if (customer.status !== CustomerStatus.ACTIVE || customer.deletedAt) {
+      throw ApiError.unauthorized('Invalid phone/email or password');
+    }
+
     if (!customer.password) {
       logger.warn('Customer login rejected: password not configured');
       throw ApiError.unauthorized('Invalid phone/email or password');

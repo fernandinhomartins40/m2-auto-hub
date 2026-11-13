@@ -14,13 +14,16 @@ import {
 } from '@prisma/client';
 import notificationsService from '@modules/notifications/notifications.service.js';
 import pdfGeneratorService from '@shared/services/pdf-generator.service.js';
+import { buildQuotePdfHtml } from '@shared/pdf-templates/quote.template.js';
 
 const exportQuotePdfSchema = z.object({
   html: z
     .string()
     .trim()
     .min(1, 'HTML do PDF e obrigatorio')
-    .max(2_000_000, 'HTML do PDF excede o limite suportado'),
+    .max(2_000_000, 'HTML do PDF excede o limite suportado')
+    // Sem html (apps nativos), o servidor monta o documento com o modelo padrão.
+    .optional(),
   filename: z.string().trim().min(1).max(120).optional(),
 });
 
@@ -364,7 +367,7 @@ export class CustomerController {
       }
 
       const { id } = req.params;
-      const { html, filename } = exportQuotePdfSchema.parse(req.body);
+      const { html, filename } = exportQuotePdfSchema.parse(req.body ?? {});
       const quote = await this.getOwnedQuote(customerId, id);
 
       if (!quote) {
@@ -374,7 +377,7 @@ export class CustomerController {
 
       const pdfBuffer = await pdfGeneratorService.generatePdfBuffer({
         title: `Orcamento ${quote.id}`,
-        bodyHtml: html,
+        bodyHtml: html || buildQuotePdfHtml(this.mapQuote(quote)),
       });
 
       const safeFilename = pdfGeneratorService.sanitizeFilename(

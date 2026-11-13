@@ -279,6 +279,8 @@ export class EllonMasterSyncService {
     let metadata = linkMetadata(link?.metadata);
 
     if (link && customer) {
+      // Conta excluída pelo titular: não reimporta os dados pessoais da Ellon.
+      if (customer.deletedAt) return;
       if (await this.hasPendingLocalChanges(customer, metadata)) return;
       if (await this.applyCustomer(customer, item, metadata)) result.updated += 1;
     } else {
