@@ -14,6 +14,10 @@ final ordersProvider = FutureProvider.autoDispose<List<Order>>(
   (ref) => ref.watch(apiProvider).orders(),
 );
 
+final storePurchasesProvider = FutureProvider.autoDispose<StorePurchases>(
+  (ref) => ref.watch(apiProvider).storePurchases(),
+);
+
 final quotesProvider = FutureProvider.autoDispose<List<Quote>>(
   (ref) => ref.watch(apiProvider).quotes(),
 );

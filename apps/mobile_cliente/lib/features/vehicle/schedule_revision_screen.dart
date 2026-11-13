@@ -42,10 +42,15 @@ class _ScheduleRevisionScreenState
       context: context,
       initialTime: const TimeOfDay(hour: 9, minute: 0),
     );
-    if (time == null) return;
-    setState(() {
-      _when = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-    });
+    if (time == null || !mounted) return;
+    final when =
+        DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    // Como o `min` do campo no PWA: não aceita horário que já passou.
+    if (when.isBefore(DateTime.now())) {
+      showMessage(context, 'Escolha um horário a partir de agora.', error: true);
+      return;
+    }
+    setState(() => _when = when);
   }
 
   Future<void> _submit() async {

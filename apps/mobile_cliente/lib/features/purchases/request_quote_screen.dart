@@ -58,7 +58,8 @@ class _RequestQuoteScreenState extends ConsumerState<RequestQuoteScreen> {
         .where(
           (service) =>
               withoutAccents(service.name).contains(term) ||
-              withoutAccents(service.category).contains(term),
+              withoutAccents(service.category).contains(term) ||
+              withoutAccents(service.description).contains(term),
         )
         .toList();
   }
@@ -356,9 +357,22 @@ class _ServiceTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  service.name,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      service.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    if (service.description.isNotEmpty)
+                      Text(
+                        service.description,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.mutedForeground,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(width: 12),
@@ -384,6 +398,13 @@ class _ServiceTile extends StatelessWidget {
             children: [
               Text(
                 'Categoria: ${service.category}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.mutedForeground,
+                ),
+              ),
+              Text(
+                'Tempo: ${service.estimatedTime}',
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppTheme.mutedForeground,
@@ -467,7 +488,7 @@ class _SelectedTile extends StatelessWidget {
             children: [
               OutlinedButton(
                 style: square,
-                onPressed: () => onChanged(quantity - 1),
+                onPressed: quantity > 1 ? () => onChanged(quantity - 1) : null,
                 child: const Icon(LucideIcons.minus, size: 16),
               ),
               SizedBox(

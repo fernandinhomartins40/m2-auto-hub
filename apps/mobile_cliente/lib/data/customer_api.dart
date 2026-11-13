@@ -99,6 +99,15 @@ class CustomerApi {
         return unwrapItems(res.data, Order.fromJson);
       });
 
+  Future<StorePurchases> storePurchases() => guardApi(() async {
+        final res = await _dio.get('/customers/me/store-purchases');
+        final body = asMap(res.data) ?? const <String, dynamic>{};
+        return StorePurchases(
+          linked: body['linked'] == true,
+          purchases: asMapList(body['data']).map(StorePurchase.fromJson).toList(),
+        );
+      });
+
   Future<List<Quote>> quotes() => guardApi(() async {
         final res = await _dio.get('/customers/me/quotes');
         return unwrapItems(res.data, Quote.fromJson);
@@ -297,13 +306,40 @@ class CustomerApi {
         await _dio.delete('/support/tickets/$id');
       });
 
-  Future<void> rateTicket(String id, int rating) => guardApi(() async {
-        await _dio.post('/support/tickets/$id/rating', data: {'rating': rating});
+  Future<void> rateTicket(String id, int rating, {String? feedback}) {
+    return guardApi(() async {
+      await _dio.post('/support/tickets/$id/rating', data: {
+        'rating': rating,
+        if (feedback != null && feedback.isNotEmpty) 'feedback': feedback,
+      });
+    });
+  }
+
+  /// "Reabrir" do PWA: volta o atendimento resolvido para aberto.
+  Future<void> reopenTicket(String id) => guardApi(() async {
+        await _dio.patch('/support/tickets/$id', data: {'status': 'OPEN'});
       });
 
   Future<List<FaqCategory>> faq() => guardApi(() async {
         final res = await _dio.get('/support/faq');
         return unwrapItems(res.data, FaqCategory.fromJson);
+      });
+
+  Future<List<FaqItem>> searchFaq(String query) => guardApi(() async {
+        final res = await _dio.get(
+          '/support/faq/search',
+          queryParameters: {'q': query},
+        );
+        return unwrapItems(res.data, FaqItem.fromJson);
+      });
+
+  /// Voto em "Esta resposta foi útil?".
+  Future<void> rateFaq(String id, bool helpful) => guardApi(() async {
+        await _dio.post('/support/faq/$id/helpful', data: {'isHelpful': helpful});
+      });
+
+  Future<void> viewFaq(String id) => guardApi(() async {
+        await _dio.post('/support/faq/$id/view');
       });
 
   Future<SupportContacts> supportContacts() => guardApi(() async {

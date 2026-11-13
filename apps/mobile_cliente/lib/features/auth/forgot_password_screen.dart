@@ -46,8 +46,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return AuthCardScaffold(
       title: 'Recuperar senha',
-      subtitle: 'Informe o e-mail da sua conta. Enviaremos um link para criar '
-          'uma nova senha.',
+      subtitle: 'Acesso do cliente. Use o e-mail informado no cadastro.',
       onBack: () => Navigator.of(context).maybePop(),
       child: _sent
           ? const NoticeBox(
@@ -78,7 +77,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 24),
                   BusyButton(
-                    label: 'Enviar link',
+                    label: 'Enviar link de recuperação',
                     busy: _busy,
                     onPressed: _submit,
                   ),

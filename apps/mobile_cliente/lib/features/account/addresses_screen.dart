@@ -386,7 +386,7 @@ class _AddressFormState extends ConsumerState<_AddressForm> {
             const SizedBox(width: 8),
             Expanded(
               child: BusyButton(
-                label: editing ? 'Salvar Alterações' : 'Adicionar Endereço',
+                label: editing ? 'Atualizar' : 'Salvar',
                 busy: _busy,
                 onPressed: _save,
               ),

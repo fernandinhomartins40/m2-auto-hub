@@ -4,6 +4,8 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../shared/ui.dart';
+import 'new_ticket_screen.dart';
 import 'support_screen.dart';
 
 class TicketScreen extends ConsumerStatefulWidget {
@@ -62,28 +64,47 @@ class _TicketScreenState extends ConsumerState<TicketScreen> {
       () => ref.read(apiProvider).closeTicket(_id),
       success: 'Atendimento encerrado',
     );
+    if (!done || !mounted) return;
+    _reload();
+    // Como no PWA, fechar leva direto à avaliação.
+    if (ref.read(ticketProvider(_id)).value?.rating == null) await _rate();
+  }
+
+  Future<void> _reopen() async {
+    final done = await runAction(
+      context,
+      () => ref.read(apiProvider).reopenTicket(_id),
+      success: 'Atendimento reaberto',
+    );
     if (done) _reload();
   }
 
-  Future<void> _rate(int rating) async {
-    final done = await runAction(
-      context,
-      () => ref.read(apiProvider).rateTicket(_id, rating),
-      success: 'Obrigado pela avaliação',
+  Future<void> _rate() async {
+    final rated = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => TicketRatingSheet(ticketId: _id),
     );
-    if (done) _reload();
+    if (rated == true) _reload();
   }
 
   @override
   Widget build(BuildContext context) {
     final ticket = ref.watch(ticketProvider(_id)).value;
     final messages = ref.watch(ticketMessagesProvider(_id));
-    final open = ticket?.isOpen ?? false;
+    // O PWA só tira a resposta e o "Fechar" do atendimento fechado.
+    final open = ticket != null && ticket.status != 'CLOSED';
+    final canRate = ticket != null &&
+        (ticket.status == 'CLOSED' || ticket.status == 'RESOLVED') &&
+        ticket.rating == null;
 
     return PanelScaffold(
       appBar: PanelAppBar(
         title: ticket?.subject ?? 'Atendimento',
         actions: [
+          if (ticket?.status == 'RESOLVED')
+            TextButton(onPressed: _reopen, child: const Text('Reabrir')),
           if (open)
             IconButton(
               tooltip: 'Encerrar atendimento',
@@ -97,7 +118,25 @@ class _TicketScreenState extends ConsumerState<TicketScreen> {
           Expanded(
             child: AsyncPage<List<TicketMessage>>(
               value: messages,
-              header: [if (ticket != null) _TicketHeader(ticket: ticket)],
+              header: [
+                if (ticket != null) _TicketHeader(ticket: ticket),
+                if (canRate)
+                  NoticeBox(
+                    icon: LucideIcons.star,
+                    tone: StatusTone.neutral,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Seu problema foi resolvido?'),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                          onPressed: _rate,
+                          child: const Text('Avaliar Atendimento'),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
               onRefresh: () async {
                 _reload();
                 await ref
@@ -146,35 +185,6 @@ class _TicketScreenState extends ConsumerState<TicketScreen> {
                 ),
               ),
             ),
-            )
-          else if (ticket != null && ticket.rating == null)
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Como foi o atendimento?',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (var star = 1; star <= 5; star++)
-                          IconButton(
-                            tooltip: '$star de 5',
-                            icon: const Icon(
-                              LucideIcons.star,
-                              color: Color(0xFFFACC15),
-                            ),
-                            onPressed: () => _rate(star),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
             ),
         ],
       ),
@@ -244,9 +254,130 @@ class _TicketHeader extends StatelessWidget {
       description: 'Aberto ${timeAgo(ticket.createdAt ?? ticket.updatedAt)}',
       badge: Wrap(
         spacing: 6,
+        runSpacing: 6,
         children: [
+          StatusChip(
+            ticketCategories[ticket.category] ?? ticket.category,
+            tone: StatusTone.neutral,
+          ),
           StatusChip(status, tone: statusTone),
           StatusChip(priority, tone: priorityTone),
+        ],
+      ),
+    );
+  }
+}
+
+/// Avaliação do atendimento (`TicketRating` do PWA): estrelas, comentário
+/// opcional, "Pular" e "Enviar Avaliação". Fecha com `true` quando enviou.
+class TicketRatingSheet extends ConsumerStatefulWidget {
+  const TicketRatingSheet({super.key, required this.ticketId});
+
+  final String ticketId;
+
+  @override
+  ConsumerState<TicketRatingSheet> createState() => _TicketRatingSheetState();
+}
+
+class _TicketRatingSheetState extends ConsumerState<TicketRatingSheet> {
+  final _feedback = TextEditingController();
+  int _rating = 0;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _feedback.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() => _busy = true);
+    final done = await runAction(
+      context,
+      () => ref.read(apiProvider).rateTicket(
+            widget.ticketId,
+            _rating,
+            feedback: _feedback.text.trim(),
+          ),
+      success: 'Obrigado pela avaliação',
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (done) Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        24 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Como foi o atendimento?',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Sua opinião nos ajuda a melhorar',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.mutedForeground),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var star = 1; star <= 5; star++)
+                IconButton(
+                  tooltip: '$star de 5',
+                  iconSize: 36,
+                  icon: Icon(
+                    LucideIcons.star,
+                    color: star <= _rating
+                        ? const Color(0xFFFACC15)
+                        : const Color(0xFFD1D5DB),
+                  ),
+                  onPressed: () => setState(() => _rating = star),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LabeledField(
+            label: 'Comentário (opcional)',
+            child: TextField(
+              controller: _feedback,
+              minLines: 3,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Conte-nos mais sobre sua experiência...',
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton(
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                child: const Text('Pular'),
+              ),
+              BusyButton(
+                label: 'Enviar Avaliação',
+                busy: _busy,
+                onPressed: _rating == 0 ? null : _submit,
+              ),
+            ],
+          ),
         ],
       ),
     );
