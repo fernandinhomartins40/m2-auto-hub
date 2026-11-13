@@ -68,13 +68,38 @@ class E2E {
     );
   }
 
-  /// Espera [visible], confere erros e salva a imagem como `NN-name.png`.
-  Future<void> screen(String name, Finder visible) async {
-    await waitFor(visible);
+  /// Espera [marker] (algo fixo da tela: AppBar, aba ativa, barra inferior),
+  /// rola até [content] se houver, confere erros e salva `NN-name.png`.
+  Future<void> screen(String name, Finder marker, {Finder? content}) async {
+    await waitFor(marker);
     await settle();
+    if (content != null) await scrollTo(content);
     expectNoError(name);
     await shot(name);
   }
+
+  /// Espera [finder] sumir (por exemplo, a tela que se fecha sozinha).
+  Future<void> waitGone(Finder finder, {int seconds = 30}) async {
+    final end = DateTime.now().add(Duration(seconds: seconds));
+    while (finder.evaluate().isNotEmpty) {
+      if (DateTime.now().isAfter(end)) fail('Não sumiu em ${seconds}s: $finder');
+      await pause(250);
+    }
+    await settle();
+  }
+
+  /// Aba ou item da barra inferior marcado como ativo (`Semantics.selected`)
+  /// dentro de [bar] (`PanelBottomNav` ou `WorkspaceTabs`). Fica fora das
+  /// listas, então serve de marcador fixo da tela.
+  Finder active(Type bar, String label) => find.descendant(
+        of: find.byType(bar),
+        matching: find.ancestor(
+          of: find.text(label),
+          matching: find.byWidgetPredicate(
+            (w) => w is Semantics && w.properties.selected == true,
+          ),
+        ),
+      );
 
   Future<void> shot(String name) async {
     if (Platform.isAndroid && !_surfaceReady) {
@@ -86,20 +111,28 @@ class E2E {
     await binding.takeScreenshot('${_shots.toString().padLeft(2, '0')}-$name');
   }
 
-  /// Rola a lista visível até [finder] aparecer (primeiro para baixo, depois
-  /// para cima, porque a aba pode ter ficado rolada de uma visita anterior).
+  Finder get _lists => find
+      .byWidgetPredicate(
+        (w) => w is Scrollable && axisDirectionToAxis(w.axisDirection) == Axis.vertical,
+      )
+      .hitTestable();
+
+  /// Rola a lista visível até [finder] existir. As listas são preguiçosas:
+  /// item fora da tela nem é construído. Primeiro volta ao topo (sem arrastar,
+  /// para não disparar o "puxar para atualizar"), depois desce aos poucos.
   Future<void> scrollTo(Finder finder) async {
-    final lists = find
-        .byWidgetPredicate(
-          (w) => w is Scrollable && axisDirectionToAxis(w.axisDirection) == Axis.vertical,
-        )
-        .hitTestable();
-    for (final dy in [-300.0, 300.0]) {
-      for (var i = 0; i < 15 && finder.evaluate().isEmpty; i++) {
-        if (lists.evaluate().isEmpty) break;
-        await tester.drag(lists.first, Offset(0, dy));
-        await pause();
+    if (finder.evaluate().isEmpty) await settle();
+    if (finder.evaluate().isEmpty) {
+      for (final element in _lists.evaluate()) {
+        final position = (element as StatefulElement).state as ScrollableState;
+        position.position.jumpTo(position.position.minScrollExtent);
       }
+      await pause();
+    }
+    for (var i = 0; i < 20 && finder.evaluate().isEmpty; i++) {
+      if (_lists.evaluate().isEmpty) break;
+      await tester.drag(_lists.first, const Offset(0, -300));
+      await pause();
     }
     await waitFor(finder, seconds: 5);
     await tester.ensureVisible(finder.first);
@@ -118,10 +151,14 @@ class E2E {
     await pause();
   }
 
-  /// Volta como o botão "voltar" do sistema até [target] aparecer.
+  /// Volta como o botão "voltar" do sistema, só enquanto houver tela
+  /// empilhada. Na casca das abas o "voltar" leva ao Início (PopScope), por
+  /// isso nunca é acionado ali. Depois espera [target], que deve ser fixo.
   Future<void> backTo(Finder target) async {
-    for (var i = 0; i < 6 && target.hitTestable().evaluate().isEmpty; i++) {
-      await tester.state<NavigatorState>(find.byType(Navigator).last).maybePop();
+    for (var i = 0; i < 6; i++) {
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator).last);
+      if (!navigator.canPop()) break;
+      await navigator.maybePop();
       await pause(800);
     }
     await waitFor(target);

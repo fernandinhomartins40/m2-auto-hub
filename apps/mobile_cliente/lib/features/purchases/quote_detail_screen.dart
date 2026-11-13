@@ -66,7 +66,10 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
     if (done) {
       ref.invalidate(quotesProvider);
       ref.invalidate(ordersProvider);
-      if (widget.closeOnDecision) Navigator.of(context).pop();
+      // Só fecha se o orçamento ainda for a tela de cima (o usuário pode ter voltado antes).
+      if (widget.closeOnDecision && (ModalRoute.of(context)?.isCurrent ?? false)) {
+        Navigator.of(context).pop();
+      }
     }
   }
 

@@ -25,6 +25,13 @@ void main() {
           matching: find.text(label),
         );
 
+    Finder navOn(String label) => e.active(PanelBottomNav, label);
+    Finder tabOn(String label) => e.active(WorkspaceTabs, label);
+    Finder appBar(String title, {bool prefix = false}) => find.descendant(
+          of: find.byType(AppBar),
+          matching: prefix ? find.textContaining(title) : find.text(title),
+        );
+
     await app.main();
     await e.screen('login', find.text('Entrar no Painel'));
 
@@ -35,13 +42,16 @@ void main() {
     await e.type(find.byType(TextFormField).at(0), 'mecanico@moria.com');
     await e.type(find.byType(TextFormField).at(1), 'Test123!');
     await e.tap(find.text('Entrar no Painel'));
-    await e.screen('revisoes', find.text('Atualizar lista'));
+    // As abas Revisões | Ordens de serviço ficam fora da lista: marcador fixo.
+    await e.screen('revisoes', tabOn('Revisões'),
+        content: find.text('Total de revisões'));
 
-    // Detalhe da revisão concluída e o PDF que o botão "Exportar PDF" baixa.
-    // O botão em si abre o compartilhamento nativo, que tiraria o app da
-    // frente; por isso o PDF é pedido direto à API com a sessão do app.
+    // Detalhe da revisão e o PDF que o botão "Exportar PDF" baixa. O botão
+    // abre o compartilhamento nativo, que tiraria o app da frente; por isso o
+    // PDF é pedido direto à API com a sessão do app.
     await e.tap(find.text('Ver'));
-    await e.screen('revisao-detalhe', find.text('Exportar PDF'));
+    await e.screen('revisao-detalhe', appBar('Revisão #', prefix: true),
+        content: find.text('Exportar PDF'));
     final container = ProviderScope.containerOf(
       tester.element(find.text('Exportar PDF')),
     );
@@ -55,22 +65,24 @@ void main() {
           ),
         );
     expect(String.fromCharCodes(pdf.data!.take(4)), '%PDF');
-    await e.tap(find.text('Fechar'));
+    await e.backTo(tabOn('Revisões'));
 
     // "Concluir" abre a revisão e, em seguida, o orçamento. Volta sem gerar OS.
     await e.tap(find.text('Concluir'));
-    await e.screen('orcamento', find.text('Concluir e gerar OS'));
-    await e.backTo(find.text('Atualizar lista'));
+    await e.screen('orcamento', appBar('Continuar Revisão'),
+        content: find.text('Concluir e gerar OS'));
+    await e.backTo(tabOn('Revisões'));
 
     await e.tap(tab('Ordens de serviço'));
-    await e.screen('ordens-de-servico', find.text('Minhas Ordens de Serviço'));
+    await e.screen('ordens-de-servico', tabOn('Ordens de serviço'),
+        content: find.text('Minhas Ordens de Serviço'));
     await e.tap(find.text('Ver'));
-    await e.screen('ordem-de-servico-detalhe', find.textContaining('OS #'));
-    await e.backTo(find.text('Minhas Ordens de Serviço'));
+    await e.screen('ordem-de-servico-detalhe', appBar('OS #', prefix: true));
+    await e.backTo(tabOn('Ordens de serviço'));
 
     // Consulta de placa digitada (sem câmera). A placa é do veículo do João.
     await e.tap(find.text('Criação rápida (ler placa)'));
-    await e.screen('consulta-de-placa', find.text('Consultar'));
+    await e.screen('consulta-de-placa', appBar('Ler placa'));
     await e.type(
       find.descendant(
         of: find.byType(PlateLookupScreen),
@@ -79,14 +91,17 @@ void main() {
       'ABC1234',
     );
     await e.tap(find.text('Consultar'));
-    await e.screen('nova-os-pela-placa', find.text('Nova Ordem de Serviço'));
-    await e.backTo(find.text('Minhas Ordens de Serviço'));
+    await e.screen('nova-os-pela-placa', appBar('Nova Ordem de Serviço'));
+    await e.backTo(tabOn('Ordens de serviço'));
 
     await e.tap(nav('Perfil'));
-    await e.screen('perfil', find.text('Informações do Perfil'));
+    await e.screen('perfil', navOn('Perfil'),
+        content: find.text('Informações do Perfil'));
     await e.tap(find.byTooltip('Estatísticas'));
-    await e.screen('perfil-estatisticas', find.text('Estatísticas de Trabalho'));
+    await e.screen('perfil-estatisticas', navOn('Perfil'),
+        content: find.text('Estatísticas de Trabalho'));
     await e.tap(find.byTooltip('Histórico'));
-    await e.screen('perfil-historico', find.text('Histórico de Atividades'));
+    await e.screen('perfil-historico', navOn('Perfil'),
+        content: find.text('Histórico de Atividades'));
   });
 }
