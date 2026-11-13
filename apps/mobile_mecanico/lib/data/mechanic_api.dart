@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:m2_core/m2_core.dart';
 
@@ -119,6 +121,16 @@ class MechanicApi {
       return unwrapObject(res.data);
     });
   }
+
+  /// Sem `html` no corpo o servidor monta o PDF com o modelo padrão.
+  Future<Uint8List> revisionPdf(String id) => guardApi(() async {
+        final res = await _dio.post<List<int>>(
+          '/admin/revisions/$id/export-pdf',
+          data: const <String, dynamic>{},
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return Uint8List.fromList(res.data ?? const []);
+      });
 
   Future<void> startRevision(String id) => guardApi(() async {
         await _dio.patch('/admin/revisions/$id/start');

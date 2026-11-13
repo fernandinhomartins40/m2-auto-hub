@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +7,7 @@ import 'package:m2_core/m2_core.dart';
 
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../shared/share_pdf.dart';
 import '../../shared/ui.dart';
 import '../auth/auth_controller.dart';
 import 'checklist_row.dart';
@@ -13,9 +16,16 @@ final _longDate = DateFormat("d 'de' MMMM 'de' y 'às' HH:mm", 'pt_BR');
 
 /// Detalhes da revisão (`RevisionDetailsModal`): dados, checklist e histórico.
 class RevisionDetailsScreen extends ConsumerStatefulWidget {
-  const RevisionDetailsScreen({super.key, required this.revisionId});
+  const RevisionDetailsScreen({
+    super.key,
+    required this.revisionId,
+    this.share = sharePdf,
+  });
 
   final String revisionId;
+
+  /// Entrega o PDF ao sistema; trocado nos testes.
+  final Future<void> Function(BuildContext, Uint8List, String) share;
 
   @override
   ConsumerState<RevisionDetailsScreen> createState() =>
@@ -25,9 +35,30 @@ class RevisionDetailsScreen extends ConsumerStatefulWidget {
 class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
   late Future<Revision> _future = _fetch();
   int _tab = 0;
+  bool _exporting = false;
 
   Future<Revision> _fetch() =>
       ref.read(apiProvider).revision(widget.revisionId);
+
+  Future<void> _exportPdf(BuildContext buttonContext, String shortId) async {
+    setState(() => _exporting = true);
+    try {
+      final bytes = await ref.read(apiProvider).revisionPdf(widget.revisionId);
+      if (!buttonContext.mounted) return;
+      await widget.share(buttonContext, bytes, 'revisao-$shortId.pdf');
+      if (mounted) showMessage(context, 'PDF gerado');
+    } catch (error) {
+      if (mounted) {
+        showMessage(
+          context,
+          'Erro ao gerar PDF. ${friendlyError(error)}',
+          error: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +70,26 @@ class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
+          // Como o rodapé do modal no celular: empilhado, ação em cima.
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Builder(
+                builder: (buttonContext) => OutlinedButton.icon(
+                  onPressed: _exporting
+                      ? null
+                      : () => _exportPdf(buttonContext, shortId),
+                  icon: const Icon(LucideIcons.download),
+                  label: Text(_exporting ? 'Gerando PDF...' : 'Exportar PDF'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Fechar'),
+              ),
+            ],
           ),
         ),
       ),
@@ -283,7 +331,12 @@ class _Section extends StatelessWidget {
                   Icon(icon, size: 20, color: AppTheme.slate950),
                   const SizedBox(width: 8),
                 ],
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),

@@ -9,7 +9,10 @@ import '../../data/providers.dart';
 /// Primeiro passo da OS: encontra cliente e veículo pela placa, digitada ou
 /// lida de uma foto. Usa a câmera do sistema, sem pedir permissão de câmera.
 class PlateLookupScreen extends ConsumerStatefulWidget {
-  const PlateLookupScreen({super.key});
+  const PlateLookupScreen({super.key, this.pickPhoto = _openCamera});
+
+  /// Abre a câmera; trocado nos testes para simular falha.
+  final Future<XFile?> Function() pickPhoto;
 
   @override
   ConsumerState<PlateLookupScreen> createState() => _PlateLookupScreenState();
@@ -18,6 +21,7 @@ class PlateLookupScreen extends ConsumerStatefulWidget {
 class _PlateLookupScreenState extends ConsumerState<PlateLookupScreen> {
   final _plate = TextEditingController();
   String? _status;
+  String? _cameraError;
 
   bool get _busy => _status != null;
 
@@ -28,16 +32,26 @@ class _PlateLookupScreenState extends ConsumerState<PlateLookupScreen> {
   }
 
   Future<void> _photo() async {
-    final photo = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1600,
-      imageQuality: 80,
-    );
+    setState(() => _cameraError = null);
+    XFile? photo;
+    try {
+      photo = await widget.pickPhoto();
+    } catch (_) {
+      // Permissão negada, aparelho sem câmera ou falha do plugin: a digitação
+      // da placa continua disponível.
+      if (mounted) {
+        setState(() => _cameraError = 'Não foi possível acessar a câmera. '
+            'Verifique a permissão do app ou digite a placa.');
+      }
+      return;
+    }
+    // Sem foto: o usuário fechou a câmera.
     if (photo == null || !mounted) return;
+    final path = photo.path;
     setState(() => _status = 'Lendo a placa...');
     String? plate;
     await runAction(context, () async {
-      plate = await ref.read(apiProvider).recognizePlate(photo.path);
+      plate = await ref.read(apiProvider).recognizePlate(path);
     });
     if (!mounted) return;
     setState(() => _status = null);
@@ -99,6 +113,16 @@ class _PlateLookupScreenState extends ConsumerState<PlateLookupScreen> {
                   busy: _busy,
                   onPressed: _photo,
                 ),
+                if (_cameraError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _cameraError!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 const Row(
                   children: [
@@ -155,3 +179,9 @@ class _PlateLookupScreenState extends ConsumerState<PlateLookupScreen> {
     );
   }
 }
+
+Future<XFile?> _openCamera() => ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
