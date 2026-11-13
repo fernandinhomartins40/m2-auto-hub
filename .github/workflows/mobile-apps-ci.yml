@@ -1,0 +1,107 @@
+name: Apps nativos - validação (Cliente e Mecânico)
+
+# Roda em push de qualquer branch e em pull request. Não usa nenhum secret,
+# então é seguro para PR de fork. O release assinado fica em mobile-apps-release.yml.
+# O app admin (apps/mobile) continua em mobile-build.yml.
+
+on:
+  push:
+    paths:
+      - "apps/mobile_cliente/**"
+      - "apps/mobile_mecanico/**"
+      - "packages/mobile_core/**"
+      - ".github/workflows/mobile-apps-ci.yml"
+      - ".github/workflows/mobile-apps-release.yml"
+  pull_request:
+    paths:
+      - "apps/mobile_cliente/**"
+      - "apps/mobile_mecanico/**"
+      - "packages/mobile_core/**"
+      - ".github/workflows/mobile-apps-ci.yml"
+      - ".github/workflows/mobile-apps-release.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.41.9"
+  # A linha 3.41 do Flutter suporta Xcode 26, não o 27. Fixado para não depender do padrão da imagem.
+  XCODE_PATH: /Applications/Xcode_26.4.1.app
+
+jobs:
+  validate:
+    name: Analisar, testar e compilar Android (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - packages/mobile_core
+          - apps/mobile_cliente
+          - apps/mobile_mecanico
+    defaults:
+      run:
+        working-directory: ${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      # Prova que o app compila com o AGP e o Gradle atuais. Debug não precisa de keystore.
+      - name: Compilar APK de debug
+        if: matrix.package != 'packages/mobile_core'
+        run: flutter build apk --debug
+
+  ios:
+    name: Compilar iOS sem assinatura (${{ matrix.app }})
+    runs-on: macos-26
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [cliente, mecanico]
+    defaults:
+      run:
+        working-directory: apps/mobile_${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verificar se o app já tem projeto iOS
+        id: has
+        if: hashFiles(format('apps/mobile_{0}/ios/Runner.xcodeproj/project.pbxproj', matrix.app)) != ''
+        run: echo "ios=true" >> "$GITHUB_OUTPUT"
+      - name: Avisar que o iOS foi pulado
+        if: steps.has.outputs.ios != 'true'
+        run: echo "::notice::apps/mobile_${{ matrix.app }} ainda não tem a pasta ios/. Build iOS pulado."
+      - name: Selecionar Xcode
+        if: steps.has.outputs.ios == 'true'
+        run: |
+          sudo xcode-select -s "$XCODE_PATH"
+          xcodebuild -version
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        if: steps.has.outputs.ios == 'true'
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - if: steps.has.outputs.ios == 'true'
+        run: flutter pub get
+      - if: steps.has.outputs.ios == 'true'
+        run: flutter build ios --no-codesign --release

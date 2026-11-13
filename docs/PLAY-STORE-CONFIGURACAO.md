@@ -209,4 +209,4 @@ Uso restrito à equipe: o acesso é criado pelo gerente da oficina.
 
 6. Revise e envie para análise. A primeira análise costuma levar de alguns dias a uma semana.
 
-Nas próximas versões, gere o AAB com um `--build-number` maior (veja [APPS-ANDROID.md](APPS-ANDROID.md)).
+Nas próximas versões, gere o AAB com um `--build-number` maior (veja [APPS-NATIVOS.md](APPS-NATIVOS.md)).

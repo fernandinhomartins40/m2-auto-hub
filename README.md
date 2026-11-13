@@ -4,7 +4,7 @@ Workspace reorganizado como monorepo Turbo, mantendo apenas:
 
 - `apps/frontend`: frontend principal da M2 em React/Vite.
 - `apps/backend`: backend herdado e isolado da base `moria-6df9f9ce`.
-- `apps/mobile_cliente` e `apps/mobile_mecanico`: apps Android nativos em Flutter, com núcleo em `packages/mobile_core`. Ver `docs/APPS-ANDROID.md`.
+- `apps/mobile_cliente` e `apps/mobile_mecanico`: apps nativos (Android e iPhone) em Flutter, com núcleo em `packages/mobile_core`. Ver `docs/APPS-NATIVOS.md`.
 - `apps/mobile`: app nativo do painel admin.
 - `services/alpr-service`: microservico auxiliar de leitura de placas.
 - `infra/nginx`: gateway reverso do stack de desenvolvimento (`docker-compose.yml`). Em produção o próprio container do frontend faz esse papel.
