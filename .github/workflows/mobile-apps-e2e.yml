@@ -1,0 +1,201 @@
+name: Apps nativos - teste de ponta a ponta (emulador e simulador)
+
+# Abre os apps Cliente e Mecânico num Android virtual e num iPhone virtual,
+# faz login e percorre as telas contra um backend de TESTE criado dentro do
+# próprio job (Postgres vazio + seed com contas fictícias). Nunca fala com
+# produção e não usa nenhum secret. Detalhes em docs/apps-nativos/TESTE.md.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - apps-nativos
+      - "wip/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.41.9"
+  XCODE_PATH: /Applications/Xcode_26.4.1.app
+  # Backend de teste: valores falsos, válidos só dentro deste job.
+  NODE_ENV: test
+  PORT: "3001"
+  JWT_SECRET: e2e-ci-only-secret-not-used-anywhere-else
+  CORS_ORIGIN: http://localhost:8080
+  COOKIE_SECURE: "false"
+  MARKETPLACE_JOBS_ENABLED: "false"
+  LOG_LEVEL: info
+
+jobs:
+  android-e2e:
+    name: Android E2E (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [cliente, mecanico]
+    env:
+      DATABASE_URL: postgresql://m2:m2_e2e@localhost:5432/m2_e2e?schema=public
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: m2
+          POSTGRES_PASSWORD: m2_e2e
+          POSTGRES_DB: m2_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U m2"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Preparar banco e subir backend de teste
+        working-directory: apps/backend
+        run: |
+          npm ci
+          npx prisma generate
+          npx prisma migrate deploy
+          npm run prisma:seed
+          npx tsx prisma/seeds/ci-e2e.ts
+          # Chromium só para o PDF da revisão (pdf-generator.service.ts).
+          npx playwright install --with-deps --only-shell chromium
+          nohup npx tsx src/server.ts > backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3001/health && exit 0
+            sleep 2
+          done
+          cat backend.log
+          exit 1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: apps/mobile_${{ matrix.app }}
+
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # No emulador, 10.0.2.2 é a máquina do runner. HTTP só vale no build de
+      # debug (android/app/src/debug/AndroidManifest.xml), nunca no release.
+      - name: Rodar o teste no emulador Android
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          working-directory: apps/mobile_${{ matrix.app }}
+          script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart --dart-define=API_BASE_URL=http://10.0.2.2:3001 -d emulator-5554
+
+      - name: Guardar imagens e log do backend
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-android-${{ matrix.app }}
+          path: |
+            apps/mobile_${{ matrix.app }}/screenshots/
+            apps/backend/backend.log
+          if-no-files-found: warn
+
+  ios-e2e:
+    name: iOS E2E (${{ matrix.app }})
+    runs-on: macos-26
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [cliente, mecanico]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # O macOS do GitHub não traz Postgres: instala pelo Homebrew. O usuário
+      # do runner vira o dono do banco, sem senha, só em localhost.
+      - name: Instalar e iniciar Postgres
+        run: |
+          brew install postgresql@16
+          PG="$(brew --prefix postgresql@16)/bin"
+          echo "$PG" >> "$GITHUB_PATH"
+          brew services start postgresql@16
+          for i in $(seq 1 30); do "$PG/pg_isready" -h localhost && break; sleep 2; done
+          "$PG/createdb" -h localhost m2_e2e
+          echo "DATABASE_URL=postgresql://$(whoami)@localhost:5432/m2_e2e?schema=public" >> "$GITHUB_ENV"
+
+      - name: Preparar banco e subir backend de teste
+        working-directory: apps/backend
+        run: |
+          npm ci
+          npx prisma generate
+          npx prisma migrate deploy
+          npm run prisma:seed
+          npx tsx prisma/seeds/ci-e2e.ts
+          npx playwright install --only-shell chromium
+          nohup npx tsx src/server.ts > backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3001/health && exit 0
+            sleep 2
+          done
+          cat backend.log
+          exit 1
+
+      - name: Selecionar Xcode
+        run: |
+          sudo xcode-select -s "$XCODE_PATH"
+          xcodebuild -version
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: apps/mobile_${{ matrix.app }}
+
+      - name: Ligar um iPhone virtual
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          test -n "$UDID" && test "$UDID" != null
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      # No simulador, o próprio Mac é 127.0.0.1. O Dio usa o HttpClient do
+      # Dart, que não passa pelo ATS do iOS; o Info.plist não muda.
+      - name: Rodar o teste no simulador iOS
+        working-directory: apps/mobile_${{ matrix.app }}
+        run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart --dart-define=API_BASE_URL=http://127.0.0.1:3001 -d "${{ steps.sim.outputs.udid }}"
+
+      - name: Guardar imagens e log do backend
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-ios-${{ matrix.app }}
+          path: |
+            apps/mobile_${{ matrix.app }}/screenshots/
+            apps/backend/backend.log
+          if-no-files-found: warn
