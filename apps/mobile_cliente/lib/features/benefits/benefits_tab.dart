@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -81,6 +83,49 @@ class _FavoritesState extends ConsumerState<_Favorites> {
     if (done) ref.invalidate(favoritesProvider);
   }
 
+  Future<void> _clearAll() async {
+    final accepted = await confirm(
+      context,
+      title: 'Limpar Todos',
+      message: 'Tem certeza que deseja remover TODOS os favoritos? Esta ação '
+          'não pode ser desfeita.',
+      confirmLabel: 'Limpar Todos',
+      destructive: true,
+    );
+    if (!accepted || !mounted) return;
+    final done = await runAction(
+      context,
+      () => ref.read(apiProvider).clearFavorites(),
+      success: 'Todos os favoritos foram removidos.',
+    );
+    if (done) ref.invalidate(favoritesProvider);
+  }
+
+  /// Mesmo texto do PWA: até cinco nomes e quantos faltam.
+  Future<void> _share(BuildContext anchor, List<FavoriteProduct> items) {
+    final names = items.take(5).map((item) => item.name).join(', ');
+    final more = items.length > 5 ? ' e mais ${items.length - 5}...' : '';
+    return shareText(
+      anchor,
+      'Confira meus produtos favoritos: $names$more',
+      title: 'Meus Favoritos - M2 Center Auto',
+    );
+  }
+
+  Future<void> _export(BuildContext anchor, List<FavoriteProduct> items) {
+    final day = DateTime.now().toIso8601String().split('T').first;
+    return runAction(
+      context,
+      () => shareBytes(
+        anchor,
+        utf8.encode(favoritesCsv(items)),
+        name: 'favoritos-$day.csv',
+        mimeType: 'text/csv',
+      ),
+      success: 'Lista de favoritos exportada com sucesso.',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final favorites = ref.watch(favoritesProvider);
@@ -90,10 +135,43 @@ class _FavoritesState extends ConsumerState<_Favorites> {
       onRefresh: () => ref.refresh(favoritesProvider.future),
       header: [
         widget.tabs,
-        const PanelPageHeader(
+        PanelPageHeader(
           icon: LucideIcons.heart,
           title: 'Meus favoritos',
           description: 'Produtos que você salvou para depois',
+          actions: [
+            if (all.isNotEmpty)
+              Builder(
+                builder: (anchor) => MenuAnchor(
+                  menuChildren: [
+                    MenuItemButton(
+                      leadingIcon: const Icon(LucideIcons.share2, size: 16),
+                      onPressed: () => _share(anchor, _visible(all)),
+                      child: const Text('Compartilhar'),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(LucideIcons.download, size: 16),
+                      onPressed: () => _export(anchor, _visible(all)),
+                      child: const Text('Exportar CSV'),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(LucideIcons.trash2,
+                          size: 16, color: AppTheme.destructive),
+                      onPressed: _clearAll,
+                      child: const Text(
+                        'Limpar Todos',
+                        style: TextStyle(color: AppTheme.destructive),
+                      ),
+                    ),
+                  ],
+                  builder: (context, menu, _) => OutlinedButton.icon(
+                    onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+                    icon: const Icon(LucideIcons.share2),
+                    label: const Text('Mais'),
+                  ),
+                ),
+              ),
+          ],
         ),
         SearchBox(
           hint: 'Buscar produtos...',
@@ -490,4 +568,31 @@ class _CouponCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// CSV de "Exportar CSV" com as colunas do PWA. Campos com vírgula ou aspas
+/// vão entre aspas para não quebrar a planilha.
+String favoritesCsv(List<FavoriteProduct> items) {
+  String cell(Object? value) {
+    final text = '${value ?? ''}';
+    return text.contains(RegExp(r'[",\n]'))
+        ? '"${text.replaceAll('"', '""')}"'
+        : text;
+  }
+
+  return [
+    'nome,categoria,subcategoria,preco,estoque,disponivel,adicionado_em',
+    for (final item in items)
+      [
+        item.name,
+        item.category,
+        item.subcategory,
+        (item.promoPrice ?? item.price).toStringAsFixed(2),
+        item.stock,
+        item.active ? 'Sim' : 'Não',
+        item.addedAt == null
+            ? ''
+            : DateFormat('dd/MM/yyyy').format(item.addedAt!),
+      ].map(cell).join(','),
+  ].join('\n');
 }

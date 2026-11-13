@@ -63,6 +63,10 @@ class CustomerApi {
         await _dio.post('/auth/forgot-password', data: {'email': email});
       });
 
+  Future<void> resendVerification() => guardApi(() async {
+        await _dio.post('/auth/resend-verification');
+      });
+
   Future<Customer> profile() => guardApi(() async {
         final res = await _dio.get('/auth/profile');
         return Customer.fromJson(unwrapObject(res.data));
@@ -201,6 +205,10 @@ class CustomerApi {
         await _dio.delete('/favorites/product/$productId');
       });
 
+  Future<void> clearFavorites() => guardApi(() async {
+        await _dio.delete('/favorites');
+      });
+
   Future<List<Coupon>> coupons() => guardApi(() async {
         final res = await _dio.get('/coupons/active');
         return unwrapItems(res.data, Coupon.fromJson);
@@ -305,9 +313,18 @@ class CustomerApi {
 
   // ---- Privacidade ----
 
-  /// Abre uma solicitação LGPD. `DELETION` é a exclusão de conta exigida pela
-  /// Google Play para apps com cadastro.
+  /// Abre uma solicitação LGPD (correção, revogação).
   Future<void> privacyRequest(String type) => guardApi(() async {
         await _dio.post('/privacy/me/requests', data: {'type': type});
+      });
+
+  /// Exclui a conta na hora (exigência da Google Play e da App Store).
+  /// Devolve o texto da API sobre o que foi apagado e o que fica por lei.
+  Future<String> deleteAccount() => guardApi(() async {
+        final res = await _dio.post(
+          '/privacy/me/requests',
+          data: {'type': 'DELETION', 'confirm': true},
+        );
+        return asMap(res.data)?['message']?.toString() ?? 'Conta excluída.';
       });
 }

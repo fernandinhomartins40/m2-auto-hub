@@ -172,8 +172,16 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
             ),
             const SizedBox(height: 12),
           ],
+          DownloadButton(
+            label: 'Exportar PDF',
+            busyLabel: 'Gerando PDF...',
+            path: '/customers/me/quotes/${quote.id}/export-pdf',
+            data: const <String, dynamic>{},
+            fallbackName: 'orcamento-${quote.shortId}.pdf',
+            success: 'PDF gerado',
+          ),
           if (quote.awaitsApproval) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             BusyButton(
               label: 'Aprovar e Virar Pedido',
               icon: LucideIcons.thumbsUp,
@@ -189,12 +197,14 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
               label: const Text('Rejeitar'),
             ),
           ],
-          if (quote.status == 'APPROVED')
+          if (quote.status == 'APPROVED') ...[
+            const SizedBox(height: 12),
             const NoticeBox(
               icon: LucideIcons.circleCheck,
               tone: StatusTone.success,
               child: Text('Orçamento aprovado e convertido em pedido.'),
             ),
+          ],
         ],
       ),
     );
