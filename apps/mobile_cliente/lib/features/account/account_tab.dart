@@ -72,6 +72,10 @@ class _ProfileState extends ConsumerState<_Profile> {
         children: [
           widget.tabs,
           const SizedBox(height: 16),
+          if (customer != null && !customer.emailVerified) ...[
+            const VerifyEmailBox(),
+            const SizedBox(height: 16),
+          ],
           const PanelPageHeader(
             icon: LucideIcons.user,
             title: 'Meu perfil',
@@ -400,6 +404,57 @@ class _SecurityCardState extends ConsumerState<_SecurityCard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Aviso do topo do perfil do PWA para quem ainda não confirmou o e-mail.
+class VerifyEmailBox extends ConsumerStatefulWidget {
+  const VerifyEmailBox({super.key});
+
+  @override
+  ConsumerState<VerifyEmailBox> createState() => _VerifyEmailBoxState();
+}
+
+class _VerifyEmailBoxState extends ConsumerState<VerifyEmailBox> {
+  bool _sending = false;
+
+  Future<void> _resend() async {
+    setState(() => _sending = true);
+    try {
+      await ref.read(apiProvider).resendVerification();
+      if (mounted) {
+        showMessage(context, 'E-mail de confirmação enviado. Verifique '
+            'também a pasta de spam.');
+      }
+    } catch (_) {
+      if (mounted) {
+        showMessage(context, 'Não foi possível enviar. Tente novamente mais '
+            'tarde.', error: true);
+      }
+    }
+    if (mounted) setState(() => _sending = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NoticeBox(
+      icon: LucideIcons.mail,
+      tone: StatusTone.neutral,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Confirme seu e-mail para manter seus dados de acesso '
+              'atualizados.'),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _sending ? null : _resend,
+            child: Text(_sending
+                ? 'Enviando...'
+                : 'Reenviar confirmação de e-mail'),
+          ),
+        ],
       ),
     );
   }

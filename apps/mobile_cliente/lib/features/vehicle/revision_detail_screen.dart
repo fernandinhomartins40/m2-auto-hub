@@ -168,6 +168,20 @@ class RevisionDetailScreen extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          // Rodapé do `RevisionDetailsModal` que o cliente abre no PWA.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: DownloadButton(
+              label: 'Exportar PDF',
+              busyLabel: 'Gerando PDF...',
+              icon: LucideIcons.download,
+              path: '/customer-revisions/${revision.id}/export-pdf',
+              data: const <String, dynamic>{},
+              fallbackName: 'revisao.pdf',
+              success: 'PDF gerado',
+            ),
+          ),
         ],
       ),
     );

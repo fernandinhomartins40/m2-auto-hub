@@ -67,6 +67,7 @@ class Customer {
     this.birthDate,
     this.totalOrders = 0,
     this.totalSpent = 0,
+    this.emailVerified = true,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
@@ -80,6 +81,9 @@ class Customer {
         addresses: asMapList(json['addresses']).map(Address.fromJson).toList(),
         totalOrders: asInt(json['totalOrders']),
         totalSpent: asDouble(json['totalSpent']),
+        // Sem o campo na resposta, não mostra o aviso de confirmação.
+        emailVerified: !json.containsKey('emailVerifiedAt') ||
+            json['emailVerifiedAt'] != null,
       );
 
   final String id;
@@ -92,6 +96,7 @@ class Customer {
   final List<Address> addresses;
   final int totalOrders;
   final double totalSpent;
+  final bool emailVerified;
 
   String get firstName => name.trim().split(' ').first;
 
@@ -426,6 +431,9 @@ class FavoriteProduct {
     this.imageUrl,
     this.category,
     this.addedAt,
+    this.subcategory,
+    this.stock = 0,
+    this.active = true,
   });
 
   factory FavoriteProduct.fromJson(Map<String, dynamic> json) {
@@ -442,6 +450,9 @@ class FavoriteProduct {
           : null,
       category: product['category']?.toString(),
       addedAt: asDate(json['createdAt']),
+      subcategory: product['subcategory']?.toString(),
+      stock: asInt(product['stock']),
+      active: (product['status'] ?? 'ACTIVE') == 'ACTIVE',
     );
   }
 
@@ -452,6 +463,9 @@ class FavoriteProduct {
   final String? imageUrl;
   final String? category;
   final DateTime? addedAt;
+  final String? subcategory;
+  final int stock;
+  final bool active;
 }
 
 /// Imagens enviadas pelo painel chegam como caminho relativo (`/uploads/...`).

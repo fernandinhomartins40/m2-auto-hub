@@ -5,6 +5,7 @@ import 'package:m2_core/m2_core.dart';
 import '../../data/providers.dart';
 import '../../shared/links.dart';
 import '../../shared/ui.dart';
+import '../auth/auth_controller.dart';
 
 /// Privacidade aberta pelo menu "Mais".
 class PrivacyScreen extends StatelessWidget {
@@ -22,9 +23,9 @@ class PrivacyScreen extends StatelessWidget {
   }
 }
 
-/// "Privacidade e seus dados" do perfil do PWA. "Solicitar eliminação"
-/// atende à regra da Google Play para apps com cadastro: o pedido entra na
-/// fila de privacidade do painel.
+/// "Privacidade e seus dados" do perfil do PWA. "Excluir minha conta"
+/// atende à Google Play e à App Store: a API exclui a conta na hora e o app
+/// encerra a sessão.
 class PrivacyCard extends ConsumerWidget {
   const PrivacyCard({super.key});
 
@@ -40,13 +41,23 @@ class PrivacyCard extends ConsumerWidget {
     final accepted = await confirm(
       context,
       title: 'Excluir sua conta?',
-      message: 'Vamos excluir ou anonimizar seu cadastro, veículos, endereços '
-          'e favoritos em até 15 dias. Notas fiscais e registros de pedidos e '
-          'serviços são mantidos pelo prazo exigido em lei.',
-      confirmLabel: 'Solicitar exclusão',
+      message: 'Sua conta será excluída agora e você sairá do app. Apagamos '
+          'ou anonimizamos seu cadastro, veículos, endereços e favoritos. '
+          'Notas fiscais e registros de pedidos e serviços são mantidos pelo '
+          'prazo exigido em lei. Essa ação não pode ser desfeita.',
+      confirmLabel: 'Excluir conta',
       destructive: true,
     );
-    if (accepted && context.mounted) await _request(context, ref, 'DELETION');
+    if (!accepted || !context.mounted) return;
+    try {
+      final message = await ref.read(apiProvider).deleteAccount();
+      if (context.mounted) showMessage(context, message);
+      await ref.read(authControllerProvider.notifier).logout();
+    } catch (error) {
+      if (context.mounted) {
+        showMessage(context, friendlyError(error), error: true);
+      }
+    }
   }
 
   @override
@@ -66,12 +77,13 @@ class PrivacyCard extends ConsumerWidget {
                 'LGPD. Solicitações podem exigir confirmação de identidade.',
           ),
           const SizedBox(height: 20),
-          // O app pede a portabilidade; o arquivo chega pela equipe.
           left(
-            OutlinedButton.icon(
-              onPressed: () => _request(context, ref, 'PORTABILITY'),
-              icon: const Icon(LucideIcons.download),
-              label: const Text('Baixar meus dados'),
+            const DownloadButton(
+              label: 'Baixar meus dados',
+              icon: LucideIcons.download,
+              path: '/privacy/me/export',
+              mimeType: 'application/json',
+              fallbackName: 'meus-dados.json',
             ),
           ),
           const SizedBox(height: 12),

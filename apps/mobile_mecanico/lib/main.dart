@@ -25,6 +25,8 @@ class M2MecanicoApp extends ConsumerWidget {
       supportedLocales: const [appLocale],
       localizationsDelegates: appLocalizationsDelegates,
       routerConfig: ref.watch(routerProvider),
+      // Build abaixo do mínimo da API vê "Atualize o app" no lugar das telas.
+      builder: (_, child) => MinVersionGate(app: 'mecanico', child: child!),
     );
   }
 }

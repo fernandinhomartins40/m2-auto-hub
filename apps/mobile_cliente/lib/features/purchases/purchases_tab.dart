@@ -111,13 +111,36 @@ class _OrdersState extends ConsumerState<_Orders> {
 }
 
 /// Cartão do pedido como na lista do PWA: itens, pagamento, cidade e ações.
-class OrderCard extends StatelessWidget {
+class OrderCard extends ConsumerWidget {
   const OrderCard({super.key, required this.order});
 
   final Order order;
 
+  /// Rastrear e Suporte abrem o WhatsApp da loja com a mensagem do PWA. O
+  /// número vem de `/support/config`, o mesmo da tela de Ajuda; sem número
+  /// cadastrado, o Suporte abre um chamado como antes.
+  Future<void> _whatsApp(
+    BuildContext context,
+    WidgetRef ref,
+    String message, {
+    VoidCallback? fallback,
+  }) async {
+    String number = '';
+    try {
+      number = (await ref.read(supportContactsProvider.future)).whatsapp ?? '';
+    } catch (_) {}
+    if (!context.mounted) return;
+    if (number.isEmpty) {
+      fallback != null
+          ? fallback()
+          : showMessage(context, 'Não foi possível abrir o link.', error: true);
+      return;
+    }
+    await openLink(context, Uri.https('wa.me', '/$number', {'text': message}));
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final (label, tone) = order.statusView;
     final navigator = Navigator.of(context);
     return GlassCard(
@@ -200,7 +223,9 @@ class OrderCard extends StatelessWidget {
           ],
           const Divider(height: 16),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               OutlinedButton.icon(
                 onPressed: () => navigator.push(
@@ -211,13 +236,29 @@ class OrderCard extends StatelessWidget {
                 icon: const Icon(LucideIcons.eye),
                 label: const Text('Ver Detalhes'),
               ),
-              const SizedBox(width: 8),
+              if ((order.trackingCode ?? '').isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: () => _whatsApp(
+                    context,
+                    ref,
+                    'Olá! Gostaria de rastrear meu pedido. Código de '
+                    'rastreamento: ${order.trackingCode}',
+                  ),
+                  icon: const Icon(LucideIcons.truck),
+                  label: const Text('Rastrear'),
+                ),
               OutlinedButton.icon(
-                onPressed: () => navigator.push(
-                  MaterialPageRoute(
-                    builder: (_) => NewTicketScreen(
-                      initialCategory: 'ORDER_ISSUE',
-                      initialSubject: 'Pedido #${order.shortId}',
+                onPressed: () => _whatsApp(
+                  context,
+                  ref,
+                  'Olá! Preciso de ajuda com meu pedido #${order.id}. '
+                  'Pode me ajudar?',
+                  fallback: () => navigator.push(
+                    MaterialPageRoute(
+                      builder: (_) => NewTicketScreen(
+                        initialCategory: 'ORDER_ISSUE',
+                        initialSubject: 'Pedido #${order.shortId}',
+                      ),
                     ),
                   ),
                 ),
