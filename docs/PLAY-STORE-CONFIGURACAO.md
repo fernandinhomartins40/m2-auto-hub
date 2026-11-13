@@ -17,7 +17,17 @@ Mesmo endereço nos dois apps:
 https://www.m2centerauto.com.br/privacidade
 ```
 
-A página cita os dois apps, o que cada um coleta, o uso da câmera no app do mecânico, o e-mail de contato e como excluir a conta. Ela precisa estar no ar antes do envio: abra o endereço no navegador e confira se aparece a seção **Aplicativos para Android**.
+A página cita os dois apps, o que cada um coleta, o uso da câmera no app do mecânico, o e-mail de contato, como excluir a conta e o que fica guardado depois da exclusão.
+
+Antes do envio, publique o site e a API deste branch e abra o endereço no navegador. A seção precisa se chamar **Aplicativos para iPhone e Android**, e a parte **Excluir sua conta** precisa dizer que a exclusão pelo app acontece na hora. Em 12/11/2026 o site no ar ainda mostrava a versão antiga ("Aplicativos para Android" e prazo de 15 dias).
+
+## Antes de criar os apps
+
+- **Verificação de desenvolvedor Android:** desde 30/09/2026, no Brasil, só instalam pelo caminho normal os apps de desenvolvedores verificados, e todo pacote da Play precisa estar registrado. A Google tenta registrar apps novos sozinha, mas não garante. Depois de criar cada app, abra a página inicial do Play Console e a página **Verificação de desenvolvedor Android** e confira se `br.com.m2centerauto.cliente` e `br.com.m2centerauto.mecanico` aparecem como registrados. Se não, registre ali.
+- **Teste fechado:** se a conta do Play Console for **pessoal** e criada depois de 13/11/2023, cada app precisa de um teste fechado com pelo menos **12 testadores inscritos sem interrupção por 14 dias** antes de ir para produção. Quem sai e volta reinicia a contagem. Os mesmos 12 podem testar os dois apps. Depois, peça acesso à produção no Painel (a Google responde em até 7 dias). Conta de empresa não tem essa exigência.
+- **Páginas de 16 KB:** exigidas para apps com alvo Android 15 ou mais. Teste o AAB final no emulador de 16 KB antes de enviar. Atualizações sem suporte são bloqueadas a partir de 01/02/2027.
+
+As fontes e as datas de cada regra estão em [apps-nativos/CONFORMIDADE.md](apps-nativos/CONFORMIDADE.md).
 
 ## 2. Acesso ao app
 
@@ -25,14 +35,18 @@ Os dois apps só funcionam com login. Escolha **Todas ou algumas funcionalidades
 
 Crie as contas em produção antes de enviar, com dados fictícios e uma senha só para isso. Não use contas de clientes ou funcionários reais.
 
+A Google exige que o acesso funcione sempre, de qualquer lugar, possa ser usado várias vezes e não peça código de verificação. Ela pede as instruções em inglês. **A senha não fica neste documento** (o repositório é público): ela está nos secrets do GitHub.
+
 | | Cliente | Mecânico |
 |---|---|---|
-| Nome da instrução | Conta de teste | Conta de teste do mecânico |
-| Usuário | e-mail ou telefone da conta de teste | e-mail de um usuário com papel Mecânico (STAFF) |
-| Senha | senha da conta de teste | senha da conta de teste |
-| Outras informações | "Entre com o e-mail e a senha. Não há verificação em duas etapas." | "Conta criada pela oficina. Entre com e-mail e senha. A conta precisa ter ao menos uma revisão agendada para mostrar o checklist." |
+| Nome da instrução | Demo account | Demo mechanic account |
+| Usuário | secret `DEMO_CLIENTE_LOGIN` | secret `DEMO_MECANICO_LOGIN` (papel Mecânico, STAFF) |
+| Senha | secret `DEMO_CLIENTE_SENHA` | secret `DEMO_MECANICO_SENHA` |
+| Outras informações | "Sign in with email and password. No two-factor authentication. Account deletion: Mais > Privacidade > Excluir minha conta (immediate). If you delete this account, create a new one with Criar conta." | "Staff account created by the shop (there is no sign-up in this app). Sign in with email and password. The account has a scheduled revision with a checklist and an open service order." |
 
-Para o mecânico, deixe uma revisão agendada e uma ordem de serviço aberta para a conta de teste. Sem isso, o revisor vê só listas vazias.
+Para o cliente, deixe um veículo, uma revisão com checklist, um orçamento aguardando aprovação e um pedido. Para o mecânico, uma revisão agendada e uma ordem de serviço aberta. Sem isso, o revisor vê só listas vazias.
+
+Se o revisor excluir a conta do cliente, ela deixa de existir na hora. Antes de cada novo envio, confira se a conta ainda entra e recrie se for preciso.
 
 ## 3. Anúncios
 
@@ -81,10 +95,14 @@ O resultado esperado é **Livre** (L) para os dois.
 | O app coleta ou compartilha algum dos tipos de dados exigidos? | Sim |
 | Todos os dados são criptografados em trânsito? | Sim (só HTTPS) |
 | O app permite que os usuários criem uma conta? | Cliente: **Sim, por cadastro com usuário e senha**. Mecânico: **Não**, a conta é criada pela oficina. |
-| Os usuários podem pedir a exclusão dos dados? | Sim |
-| Link para exclusão da conta | `https://www.m2centerauto.com.br/privacidade#excluir-conta` |
+| Os usuários podem pedir a exclusão dos dados? | Sim. Cliente: pelo app, na hora, ou pelo site e e-mail. Mecânico: pela oficina ou pelo e-mail. |
+| Link para exclusão da conta | Cliente: `https://www.m2centerauto.com.br/privacidade#excluir-conta`. Mecânico: o Console não pede, porque o app não permite criar conta. |
 
 **Compartilhamento:** responda **Não** em todos os tipos. Hospedagem, e-mail e o leitor de placas são serviços que trabalham para a M2, e o Google não conta isso como compartilhamento.
+
+**Tabela FIPE:** o cadastro de veículo do cliente consulta a tabela FIPE pública (`fipe.parallelum.com.br`) direto do app, só com os códigos de marca, modelo e ano. Não vai nome, conta, aparelho nem localização, e não há SDK da FIPE no app. Não é dado do usuário, então não entra no formulário. Os dados do veículo que o cliente salva vão para a API da M2 e já estão em "Outras informações".
+
+**Baixar meus dados:** o cliente baixa uma cópia dos dados em JSON pelo app (Mais → Privacidade → Baixar meus dados). O formulário não tem pergunta sobre isso; não muda nenhuma resposta.
 
 ### App do cliente: dados coletados
 
@@ -119,8 +137,11 @@ Os dados de clientes e veículos que o mecânico digita pertencem aos clientes d
 
 ## 11. Exclusão de conta
 
-- **Cliente:** no app, **Mais → Privacidade → Excluir minha conta**. Fora do app, pelo link `https://www.m2centerauto.com.br/privacidade#excluir-conta` ou pelo e-mail `contato@m2centerauto.com.br`. O prazo de resposta é de até 15 dias.
-- **Mecânico:** não há cadastro no app. A oficina encerra a conta pelo painel administrativo. Se o Console pedir um link, use o mesmo do cliente.
+- **Cliente, no app:** **Mais → Privacidade → Excluir minha conta**. Depois de confirmar, a conta é excluída **na hora**: os dados pessoais são apagados ou anonimizados, a sessão é encerrada em todos os aparelhos e o app sai para o login.
+- **Cliente, fora do app:** pelo link `https://www.m2centerauto.com.br/privacidade#excluir-conta` (no site, Perfil → Privacidade e seus dados → Solicitar eliminação) ou pelo e-mail `contato@m2centerauto.com.br`. Nesses casos a equipe conclui em até 15 dias.
+- **O que é apagado:** nome, e-mail, telefone, CPF, data de nascimento, senha, endereços, placa, chassi, cor e município dos veículos, favoritos, notificações e mensagens.
+- **O que fica:** notas fiscais e registros de pedidos, orçamentos, revisões, ordens de serviço, pontos e atendimentos, **sem dado pessoal**, pelo prazo da lei fiscal e do consumidor (em regra 5 anos). O prazo precisa da confirmação do jurídico. A Google aceita essa guarda porque o aviso de privacidade a explica.
+- **Mecânico:** não há cadastro no app, e a regra de exclusão da Google só vale para apps que criam conta. A oficina encerra a conta pelo painel administrativo; o funcionário pode pedir ao gerente ou pelo e-mail.
 
 ## 12. Permissões e serviços
 
@@ -152,21 +173,24 @@ Revisões, orçamentos, pedidos e veículos da M2 Center Auto na palma da mão.
 O app da M2 Center Auto reúne tudo o que você precisa para cuidar do seu carro com a nossa oficina e loja de autopeças.
 
 • Revisões: agende, acompanhe o andamento e veja o checklist completo feito pelo mecânico.
-• Orçamentos: receba, confira cada item e aprove ou recuse direto pelo celular.
+• Orçamentos: receba, confira cada item, aprove ou recuse direto pelo celular e salve em PDF.
 • Pedidos: acompanhe suas compras e o status de cada uma.
-• Veículos: cadastre seus carros e mantenha o histórico de cada um.
+• Veículos: cadastre seus carros pela tabela FIPE e mantenha o histórico de cada um.
+• Favoritos: guarde as peças que interessam e compartilhe a lista.
 • Benefícios: veja seus pontos de fidelidade e cupons de desconto.
-• Ajuda: abra atendimentos, consulte as perguntas frequentes e fale com a loja.
-• Privacidade: baixe seus dados ou peça a exclusão da conta quando quiser.
+• Ajuda: abra atendimentos, consulte as perguntas frequentes e fale com a loja pelo WhatsApp.
+• Privacidade: baixe seus dados ou exclua sua conta quando quiser, pelo próprio app.
 
-Para usar, crie sua conta grátis ou entre com o mesmo acesso do site m2centerauto.com.br.
+A compra de peças abre a loja no site m2centerauto.com.br.
+
+Para usar, crie sua conta grátis ou entre com o mesmo acesso do site.
 ```
 
 **Imagens** (pasta `apps/mobile_cliente/store/`):
 
 - **Ícone:** 512 × 512, `icone-ia-512.png` ou `icone-512.png`.
 - **Gráfico de destaque:** 1024 × 500, `destaque-ia-1024x500.png` ou `destaque-1024x500.png`.
-- **Capturas do telefone:** de 2 a 8 arquivos da pasta `screenshots/`.
+- **Capturas do telefone:** de 2 a 8, com lados entre 320 e 3840 px e o lado maior até 2 vezes o menor. Para o app aparecer em destaques, use ao menos 4 com 1080 px ou mais. Só capturas reais do app, tiradas com a conta de demonstração: as artes de `artes-ia/` redesenham a tela e não servem.
 
 ### App do mecânico: M2 Mecânico
 
@@ -186,6 +210,7 @@ O M2 Mecânico é o app da equipe da oficina M2 Center Auto. Ele leva para o cel
 • Orçamento: transforme os itens com problema em orçamento para o cliente aprovar.
 • Ordens de serviço: crie, acompanhe, inicie e conclua as OS atribuídas a você.
 • Leitura de placa: fotografe a placa para encontrar o cliente e o veículo na hora.
+• PDF: gere o relatório da revisão para enviar ao cliente.
 • Perfil: acompanhe suas estatísticas, seu histórico e suas preferências.
 
 Uso restrito à equipe: o acesso é criado pelo gerente da oficina.
