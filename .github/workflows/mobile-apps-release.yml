@@ -226,7 +226,7 @@ jobs:
           BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
         run: |
           flutter pub get
-          flutter build ios --release --config-only --build-number="$BUILD_NUMBER" --dart-define=API_BASE_URL="$API_BASE_URL"
+          flutter build ios --release --config-only --no-codesign --build-number="$BUILD_NUMBER" --dart-define=API_BASE_URL="$API_BASE_URL"
 
       # Assinatura automática com a chave da API: o xcodebuild cria ou baixa
       # certificado e perfil no portal da Apple. A chave precisa do papel Admin.
