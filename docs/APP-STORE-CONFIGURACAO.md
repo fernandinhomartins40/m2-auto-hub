@@ -6,7 +6,7 @@ As regras por trás de cada resposta, com link e data da conferência, estão em
 
 | | Cliente | Mecânico |
 |---|---|---|
-| Nome na loja | M2 Center Auto | M2 Mecânico |
+| Nome na loja | M2 Auto Center | M2 Auto Center - Mecânico |
 | Bundle ID | `br.com.m2centerauto.cliente` | `br.com.m2centerauto.mecanico` |
 | SKU (só uso interno) | `m2-cliente` | `m2-mecanico` |
 | Idioma principal | Português (Brasil) | Português (Brasil) |
@@ -29,7 +29,7 @@ Em **Apps → + → Novo app**:
 | Campo | Cliente | Mecânico |
 |---|---|---|
 | Plataforma | iOS | iOS |
-| Nome | M2 Center Auto | M2 Mecânico |
+| Nome | M2 Auto Center | M2 Auto Center - Mecânico |
 | Idioma principal | Português (Brasil) | Português (Brasil) |
 | Bundle ID | `br.com.m2centerauto.cliente` | `br.com.m2centerauto.mecanico` |
 | SKU | `m2-cliente` | `m2-mecanico` |
