@@ -48,7 +48,7 @@ async function seedPair({ customer: customerEmail, mechanic: mechanicEmail }) {
 
   const categories = await prisma.checklistCategory.findMany({ include: { items: true }, orderBy: { order: 'asc' } });
   const items = categories.flatMap(c => c.items.map(i => ({ categoryId: c.id, categoryName: c.name, itemId: i.id, itemName: i.name })));
-  if (items.length < 3) throw new Error('Checklist sem itens cadastrados');
+  // A loja pode ainda não ter configurado o checklist: aí a revisão sai sem itens.
   const statusOf = i => (i === 0 ? 'ATTENTION' : 'OK');
   const checklistItems = items.map((item, i) => ({
     ...item,
