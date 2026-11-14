@@ -1,0 +1,37 @@
+name: Contas de demonstração (produção)
+
+# Cria revisões, orçamento, pedido e ordem de serviço para as contas de revisão
+# das lojas e de gravação (apps/backend/scripts/demo-accounts-seed.cjs).
+# Dispara com uma etiqueta seed-demo/<n>; só roda depois da aprovação do ambiente `release`.
+
+on:
+  push:
+    tags: ["seed-demo/*"]
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    name: Criar dados de demonstração
+    runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 10
+    env:
+      VPS_HOST: 72.60.10.108
+      VPS_USER: root
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Instalar sshpass
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+
+      - name: Rodar o seeder no container do backend
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" \
+            'c=$(docker ps --format "{{.Names}}" | grep -i backend | grep -v -i -E "migrate|bootstrap" | head -1); test -n "$c" || { echo "container do backend não encontrado"; exit 1; }; echo "container: $c"; docker exec -i -w /app "$c" node -' \
+            < apps/backend/scripts/demo-accounts-seed.cjs
