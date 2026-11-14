@@ -22,7 +22,12 @@ async function seedPair({ customer: customerEmail, mechanic: mechanicEmail }) {
 
   const done = await prisma.revision.findFirst({ where: { customerId: customer.id, generalNotes: MARK } });
   if (done) {
-    console.log(`${customerEmail}: já tem os dados de demonstração, pulando.`);
+    // A 1ª versão criou o pedido de peça sem hasProducts, e a lista "Meus pedidos" só mostra pedidos com produto.
+    const fixed = await prisma.order.updateMany({
+      where: { customerId: customer.id, status: 'CONFIRMED', hasProducts: false, items: { some: { type: 'PRODUCT' } } },
+      data: { hasProducts: true },
+    });
+    console.log(`${customerEmail}: já tem os dados de demonstração (pedidos corrigidos: ${fixed.count}).`);
     return;
   }
 
@@ -107,7 +112,7 @@ async function seedPair({ customer: customerEmail, mechanic: mechanicEmail }) {
   const p = product ? Number(product.promoPrice ?? product.salePrice) : 49.9;
   await prisma.order.create({
     data: {
-      customerId: customer.id, addressId: address.id, status: 'CONFIRMED', subtotal: p * 2, total: p * 2, paymentMethod: 'PIX',
+      customerId: customer.id, addressId: address.id, status: 'CONFIRMED', hasProducts: true, subtotal: p * 2, total: p * 2, paymentMethod: 'PIX',
       items: { create: [{ type: 'PRODUCT', productId: product?.id, name: product?.name ?? 'Óleo de motor 5W30 1L', price: p, quantity: 2, subtotal: p * 2 }] },
     },
   });
