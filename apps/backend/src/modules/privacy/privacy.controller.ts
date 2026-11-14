@@ -9,16 +9,23 @@ import {
 import { z } from 'zod';
 import { prisma } from '@config/database.js';
 import { ApiError } from '@shared/utils/error.util.js';
+import { createClearCookieOptions } from '@shared/utils/auth-cookie.util.js';
+import { anonymizeCustomer, DELETION_SUMMARY } from './account-deletion.service.js';
 
-const POLICY_VERSION = '2026-09-30';
+const POLICY_VERSION = '2026-11-12';
+// O banner de cookies do site ainda envia a versão anterior; o consentimento vale para o texto que a pessoa viu.
+const ACCEPTED_CONSENT_VERSIONS = [POLICY_VERSION, '2026-09-30'] as const;
+const OPEN_STATUSES = [PrivacyRequestStatus.OPEN, PrivacyRequestStatus.IDENTITY_CHECK, PrivacyRequestStatus.IN_REVIEW];
 const requestSchema = z.object({
   type: z.nativeEnum(PrivacyRequestType),
   details: z.string().trim().max(2000).optional(),
+  // Só com confirm=true a exclusão é executada na hora; sem ele vira pedido para a equipe concluir.
+  confirm: z.boolean().optional(),
 });
 const consentSchema = z.object({
   subjectKey: z.string().uuid(),
   choices: z.object({ analytics: z.boolean(), marketing: z.boolean() }),
-  policyVersion: z.literal(POLICY_VERSION),
+  policyVersion: z.enum(ACCEPTED_CONSENT_VERSIONS),
 });
 const requestUpdateSchema = z.object({
   status: z.nativeEnum(PrivacyRequestStatus),
@@ -105,13 +112,30 @@ export class PrivacyController {
   createRequest = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = requestSchema.parse(req.body);
+      const customerId = req.user!.customerId;
+      if (input.type === PrivacyRequestType.DELETION && input.confirm) {
+        const request = await prisma.$transaction(async (tx) => {
+          const deleted = await anonymizeCustomer(tx, customerId);
+          // Pedido simultâneo: a outra chamada já excluiu; devolve o registro dela.
+          if (!deleted) return tx.privacyRequest.findFirst({ where: { customerId, type: PrivacyRequestType.DELETION }, orderBy: { createdAt: 'desc' } });
+          const now = new Date();
+          const done = { status: PrivacyRequestStatus.COMPLETED, completedAt: now, response: DELETION_SUMMARY };
+          const open = await tx.privacyRequest.findFirst({ where: { customerId, type: PrivacyRequestType.DELETION, status: { in: OPEN_STATUSES } } });
+          return open
+            ? tx.privacyRequest.update({ where: { id: open.id }, data: done })
+            : tx.privacyRequest.create({ data: { customerId, type: PrivacyRequestType.DELETION, details: input.details, dueAt: now, ...done } });
+        });
+        res.clearCookie('authToken', createClearCookieOptions());
+        res.status(200).json({ ...request, accountDeleted: true, message: DELETION_SUMMARY });
+        return;
+      }
       const openDuplicate = await prisma.privacyRequest.findFirst({
-        where: { customerId: req.user!.customerId, type: input.type, status: { in: [PrivacyRequestStatus.OPEN, PrivacyRequestStatus.IDENTITY_CHECK, PrivacyRequestStatus.IN_REVIEW] } },
+        where: { customerId, type: input.type, status: { in: OPEN_STATUSES } },
       });
       if (openDuplicate) throw ApiError.conflict('Ja existe uma solicitacao aberta deste tipo');
       const dueAt = new Date();
       dueAt.setDate(dueAt.getDate() + 15);
-      const request = await prisma.privacyRequest.create({ data: { customerId: req.user!.customerId, type: input.type, details: input.details, dueAt } });
+      const request = await prisma.privacyRequest.create({ data: { customerId, type: input.type, details: input.details, dueAt } });
       res.status(201).json(request);
     } catch (error) { next(error); }
   };
@@ -133,11 +157,18 @@ export class PrivacyController {
     try {
       const input = requestUpdateSchema.parse(req.body);
       const completed = input.status === PrivacyRequestStatus.COMPLETED || input.status === PrivacyRequestStatus.REJECTED;
-      const updated = await prisma.privacyRequest.update({ where: { id: req.params.id }, data: {
-        status: input.status, response: input.response, reviewedById: req.admin!.adminId,
-        identityVerifiedAt: input.identityVerified ? new Date() : undefined,
-        completedAt: completed ? new Date() : null,
-      } });
+      const current = await prisma.privacyRequest.findUnique({ where: { id: req.params.id }, select: { type: true, customerId: true } });
+      if (!current) throw ApiError.notFound('Solicitacao nao encontrada');
+      // Concluir um pedido de exclusão aberto pelo site ou por e-mail executa a anonimização.
+      const executesDeletion = current.type === PrivacyRequestType.DELETION && input.status === PrivacyRequestStatus.COMPLETED;
+      const updated = await prisma.$transaction(async (tx) => {
+        if (executesDeletion) await anonymizeCustomer(tx, current.customerId);
+        return tx.privacyRequest.update({ where: { id: req.params.id }, data: {
+          status: input.status, response: input.response ?? (executesDeletion ? DELETION_SUMMARY : undefined), reviewedById: req.admin!.adminId,
+          identityVerifiedAt: input.identityVerified ? new Date() : undefined,
+          completedAt: completed ? new Date() : null,
+        } });
+      });
       res.json(updated);
     } catch (error) { next(error); }
   };

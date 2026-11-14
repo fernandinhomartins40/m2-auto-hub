@@ -1,7 +1,16 @@
 import { Settings } from '@prisma/client';
 import { prisma } from '@config/database.js';
 import { CryptoUtil } from '@shared/utils/crypto.util.js';
-import { UpdateSettingsDTO } from './dto/update-settings.dto.js';
+import { UpdateSettingsDTO, appVersionPolicySchema } from './dto/update-settings.dto.js';
+
+export type NativeApp = 'cliente' | 'mecanico';
+export type NativePlatform = 'android' | 'ios';
+
+// URL da App Store depende do ID numérico criado no App Store Connect; até lá vai por configuração.
+const DEFAULT_STORE_URLS: Record<NativeApp, Record<NativePlatform, string | null>> = {
+  cliente: { android: 'https://play.google.com/store/apps/details?id=br.com.m2centerauto.cliente', ios: null },
+  mecanico: { android: 'https://play.google.com/store/apps/details?id=br.com.m2centerauto.mecanico', ios: null },
+};
 
 export class SettingsService {
   private getDefaultCustomerPwaConfig(storeName = 'M2 Center Auto') {
@@ -262,6 +271,18 @@ export class SettingsService {
         ...this.getDefaultMechanicPwaConfig('M2 Center Auto'),
       } as any,
     });
+  }
+
+  async getAppVersionRule(app: NativeApp, platform: NativePlatform) {
+    const settings = await this.getSettings();
+    const parsed = appVersionPolicySchema.safeParse(settings.appVersionPolicy ?? {});
+    const rule = parsed.success ? parsed.data[app]?.[platform] : undefined;
+    return {
+      app,
+      platform,
+      minBuild: rule?.minBuild ?? 1,
+      storeUrl: rule?.storeUrl !== undefined ? rule.storeUrl : DEFAULT_STORE_URLS[app][platform],
+    };
   }
 
   async testWhatsAppConnection(apiKey: string): Promise<boolean> {

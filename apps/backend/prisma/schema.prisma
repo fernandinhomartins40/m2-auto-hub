@@ -356,6 +356,8 @@ model Customer {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
+  // Preenchido quando a conta foi excluida a pedido do titular (dados anonimizados).
+  deletedAt   DateTime?
 
   // Relations
   addresses Address[]
@@ -1947,6 +1949,10 @@ model Settings {
   pwaMechanicDesktopIconUrl    String?
   pwaMechanicAppleTouchIconUrl String?
   pwaMechanicMaskableIconUrl   String?
+
+  // Build minimo aceito por app e plataforma: {"cliente":{"android":{"minBuild":1,"storeUrl":"..."}}}.
+  appVersionPolicy Json?
+
   loyaltyProgramName          String  @default("Clube Fidelidade M2")
   loyaltyProgramDescription   String  @default("Acumule pontos em compras e revisoes para trocar por vantagens.")
   loyaltyProgramActive        Boolean @default(true)

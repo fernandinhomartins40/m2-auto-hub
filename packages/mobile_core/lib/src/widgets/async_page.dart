@@ -21,13 +21,18 @@ class AsyncPage<T> extends StatelessWidget {
     this.emptyIcon = LucideIcons.inbox,
     this.emptyMessage = 'Nada por aqui ainda.',
     this.emptyAction,
+    this.emptyTitle,
     this.padding = const EdgeInsets.fromLTRB(16, 20, 16, 24),
     this.header = const [],
+    this.footer = const [],
   });
 
   /// Itens fixos no topo da lista (abas, cabeçalho de seção), visíveis também
   /// enquanto carrega, quando vazio e no erro, como nos painéis do PWA.
   final List<Widget> header;
+
+  /// Itens fixos no fim da lista, visíveis em qualquer estado.
+  final List<Widget> footer;
 
   final AsyncValue<T> value;
   final Future<void> Function() onRefresh;
@@ -38,6 +43,9 @@ class AsyncPage<T> extends StatelessWidget {
   final IconData emptyIcon;
   final String emptyMessage;
   final Widget? emptyAction;
+
+  /// Título em destaque acima de [emptyMessage], como nos vazios do PWA.
+  final String? emptyTitle;
   final EdgeInsets padding;
 
   /// O erro vira aviso: a lista anterior continua na tela.
@@ -53,7 +61,7 @@ class AsyncPage<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (header.isNotEmpty) return _withHeader(context);
+    if (header.isNotEmpty || footer.isNotEmpty) return _withHeader(context);
     if (value.hasValue) {
       final data = value.requireValue;
       final empty = isEmpty?.call(data) ?? false;
@@ -63,6 +71,7 @@ class AsyncPage<T> extends StatelessWidget {
             ? _CenteredScroll(
                 child: EmptyState(
                   icon: emptyIcon,
+                  title: emptyTitle,
                   message: emptyMessage,
                   action: emptyAction,
                 ),
@@ -96,6 +105,7 @@ class AsyncPage<T> extends StatelessWidget {
           ? [
               EmptyState(
                 icon: emptyIcon,
+                title: emptyTitle,
                 message: emptyMessage,
                 action: emptyAction,
               ),
@@ -121,7 +131,7 @@ class AsyncPage<T> extends StatelessWidget {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: padding,
-        children: _spaced([...header, ...body]),
+        children: _spaced([...header, ...body, ...footer]),
       ),
     );
   }
@@ -163,11 +173,13 @@ class EmptyState extends StatelessWidget {
     required this.icon,
     required this.message,
     this.action,
+    this.title,
   });
 
   final IconData icon;
   final String message;
   final Widget? action;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -178,6 +190,14 @@ class EmptyState extends StatelessWidget {
         children: [
           Icon(icon, size: 48, color: const Color(0xFF9CA3AF)),
           const SizedBox(height: 12),
+          if (title != null) ...[
+            Text(
+              title!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+          ],
           Text(
             message,
             textAlign: TextAlign.center,

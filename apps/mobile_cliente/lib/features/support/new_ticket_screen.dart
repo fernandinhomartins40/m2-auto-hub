@@ -9,11 +9,11 @@ import '../../shared/ui.dart';
 const ticketCategories = {
   'ORDER_ISSUE': 'Problema com Pedido',
   'PRODUCT_QUESTION': 'Dúvida sobre Produto',
-  'PAYMENT_ISSUE': 'Problema com Pagamento',
-  'DELIVERY_ISSUE': 'Problema com Entrega',
+  'PAYMENT_ISSUE': 'Problema de Pagamento',
+  'DELIVERY_ISSUE': 'Problema de Entrega',
   'REVISION_QUESTION': 'Dúvida sobre Revisão',
   'TECHNICAL_SUPPORT': 'Suporte Técnico',
-  'SUGGESTION': 'Sugestão',
+  'SUGGESTION': 'Sugestão/Feedback',
   'COMPLAINT': 'Reclamação',
   'OTHER': 'Outro',
 };

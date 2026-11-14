@@ -84,6 +84,7 @@ export class CustomerRevisionsService {
         customerId
       },
       include: {
+        customer: { select: { name: true, email: true, phone: true } },
         vehicle: {
           select: {
             id: true,

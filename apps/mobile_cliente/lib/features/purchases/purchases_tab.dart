@@ -8,6 +8,7 @@ import '../../shared/links.dart';
 import '../../shared/ui.dart';
 import '../support/new_ticket_screen.dart';
 import 'order_detail_screen.dart';
+import 'order_parts.dart';
 import 'quote_detail_screen.dart';
 import 'request_quote_screen.dart';
 
@@ -63,6 +64,7 @@ class _OrdersState extends ConsumerState<_Orders> {
 
   @override
   Widget build(BuildContext context) {
+    final filtered = _search.isNotEmpty || _status != 'all';
     return AsyncPage<List<Order>>(
       value: ref.watch(ordersProvider),
       onRefresh: () => ref.refresh(ordersProvider.future),
@@ -96,28 +98,33 @@ class _OrdersState extends ConsumerState<_Orders> {
       ],
       isEmpty: (orders) => orders.where(_matches).isEmpty,
       emptyIcon: LucideIcons.package,
-      emptyMessage: _search.isEmpty && _status == 'all'
-          ? 'Você ainda não fez nenhum pedido.'
-          : 'Nenhum pedido encontrado com esses filtros.',
-      emptyAction: OutlinedButton(
-        onPressed: () => openStore(context),
-        child: const Text('Explorar produtos'),
-      ),
+      emptyTitle:
+          filtered ? 'Nenhum pedido encontrado' : 'Você ainda não fez nenhum pedido',
+      emptyMessage: filtered
+          ? 'Tente ajustar os filtros de busca'
+          : 'Que tal explorar nossos produtos?',
+      emptyAction: filtered
+          ? null
+          : FilledButton(
+              onPressed: () => openStore(context),
+              child: const Text('Ver Produtos'),
+            ),
       builder: (orders) => [
         for (final order in orders.where(_matches)) OrderCard(order: order),
       ],
+      footer: const [StorePurchasesCard()],
     );
   }
 }
 
 /// Cartão do pedido como na lista do PWA: itens, pagamento, cidade e ações.
-class OrderCard extends StatelessWidget {
+class OrderCard extends ConsumerWidget {
   const OrderCard({super.key, required this.order});
 
   final Order order;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final (label, tone) = order.statusView;
     final navigator = Navigator.of(context);
     return GlassCard(
@@ -128,9 +135,9 @@ class OrderCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: Icon(LucideIcons.clock,
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Icon(orderStatusIcon(order.status),
                     size: 18, color: AppTheme.mutedForeground),
               ),
               const SizedBox(width: 16),
@@ -139,7 +146,7 @@ class OrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pedido #${order.shortId}',
+                      'Pedido #${order.id}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 2),
@@ -187,6 +194,14 @@ class OrderCard extends StatelessWidget {
             MetaLine(LucideIcons.creditCard, 'Pagamento: ${order.paymentMethod}'),
             const SizedBox(height: 8),
           ],
+          if ((order.invoiceKey ?? '').isNotEmpty) ...[
+            InvoiceLine(order: order),
+            const SizedBox(height: 8),
+          ],
+          if ((order.trackingCode ?? '').isNotEmpty) ...[
+            TrackingLink(code: order.trackingCode!),
+            const SizedBox(height: 8),
+          ],
           if (order.address != null) ...[
             MetaLine(
               LucideIcons.mapPin,
@@ -194,13 +209,18 @@ class OrderCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          if ((order.trackingCode ?? '').isNotEmpty) ...[
-            MetaLine(LucideIcons.truck, 'Rastreio: ${order.trackingCode}'),
+          if (order.estimatedDelivery != null) ...[
+            MetaLine(
+              LucideIcons.calendar,
+              'Entrega prevista: ${formatDate(order.estimatedDelivery)}',
+            ),
             const SizedBox(height: 8),
           ],
           const Divider(height: 16),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               OutlinedButton.icon(
                 onPressed: () => navigator.push(
@@ -211,13 +231,28 @@ class OrderCard extends StatelessWidget {
                 icon: const Icon(LucideIcons.eye),
                 label: const Text('Ver Detalhes'),
               ),
-              const SizedBox(width: 8),
+              if ((order.trackingCode ?? '').isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: () => openStoreWhatsApp(
+                    context,
+                    ref,
+                    trackingMessage(order.trackingCode!),
+                  ),
+                  icon: const Icon(LucideIcons.truck),
+                  label: const Text('Rastrear'),
+                ),
               OutlinedButton.icon(
-                onPressed: () => navigator.push(
-                  MaterialPageRoute(
-                    builder: (_) => NewTicketScreen(
-                      initialCategory: 'ORDER_ISSUE',
-                      initialSubject: 'Pedido #${order.shortId}',
+                onPressed: () => openStoreWhatsApp(
+                  context,
+                  ref,
+                  'Olá! Preciso de ajuda com meu pedido #${order.id}. '
+                  'Pode me ajudar?',
+                  fallback: () => navigator.push(
+                    MaterialPageRoute(
+                      builder: (_) => NewTicketScreen(
+                        initialCategory: 'ORDER_ISSUE',
+                        initialSubject: 'Pedido #${order.shortId}',
+                      ),
                     ),
                   ),
                 ),
@@ -236,9 +271,9 @@ const _quoteFilters = {
   'all': 'Todos os status',
   'PENDING': 'Pendente',
   'ANALYZING': 'Em análise',
-  'QUOTED': 'Aguardando sua aprovação',
-  'APPROVED': 'Aprovado por você',
-  'REJECTED': 'Recusado por você',
+  'QUOTED': 'Orçado',
+  'APPROVED': 'Aprovado',
+  'REJECTED': 'Rejeitado',
 };
 
 class _Quotes extends ConsumerStatefulWidget {
@@ -343,9 +378,15 @@ class _QuotesState extends ConsumerState<_Quotes> {
       ],
       isEmpty: (items) => items.where(_matches).isEmpty,
       emptyIcon: LucideIcons.fileText,
-      emptyMessage: all.isEmpty
-          ? 'Peça um orçamento de serviços para o seu veículo.'
-          : 'Nenhum orçamento encontrado com esses filtros.',
+      emptyTitle: 'Nenhum orçamento encontrado',
+      emptyMessage:
+          'Solicite seu primeiro orçamento para acompanhar tudo pelo painel.',
+      emptyAction: FilledButton(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RequestQuoteScreen()),
+        ),
+        child: const Text('Solicitar primeiro orçamento'),
+      ),
       builder: (items) => [
         for (final quote in items.where(_matches)) QuoteCard(quote: quote),
       ],

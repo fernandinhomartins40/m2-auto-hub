@@ -7,6 +7,7 @@ import 'app/router.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initLocale();
+  await clearTokenAfterReinstall(TokenStorage());
   // Sem repetição automática: a tela mostra o erro com "Tentar novamente".
   runApp(ProviderScope(retry: (_, __) => null, child: const M2ClienteApp()));
 }
@@ -25,6 +26,8 @@ class M2ClienteApp extends ConsumerWidget {
       supportedLocales: const [appLocale],
       localizationsDelegates: appLocalizationsDelegates,
       routerConfig: ref.watch(routerProvider),
+      // Build abaixo do mínimo da API vê "Atualize o app" no lugar das telas.
+      builder: (_, child) => MinVersionGate(app: 'cliente', child: child!),
     );
   }
 }

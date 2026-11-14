@@ -63,6 +63,10 @@ class CustomerApi {
         await _dio.post('/auth/forgot-password', data: {'email': email});
       });
 
+  Future<void> resendVerification() => guardApi(() async {
+        await _dio.post('/auth/resend-verification');
+      });
+
   Future<Customer> profile() => guardApi(() async {
         final res = await _dio.get('/auth/profile');
         return Customer.fromJson(unwrapObject(res.data));
@@ -93,6 +97,15 @@ class CustomerApi {
   Future<List<Order>> orders() => guardApi(() async {
         final res = await _dio.get('/customers/me/orders');
         return unwrapItems(res.data, Order.fromJson);
+      });
+
+  Future<StorePurchases> storePurchases() => guardApi(() async {
+        final res = await _dio.get('/customers/me/store-purchases');
+        final body = asMap(res.data) ?? const <String, dynamic>{};
+        return StorePurchases(
+          linked: body['linked'] == true,
+          purchases: asMapList(body['data']).map(StorePurchase.fromJson).toList(),
+        );
       });
 
   Future<List<Quote>> quotes() => guardApi(() async {
@@ -201,6 +214,10 @@ class CustomerApi {
         await _dio.delete('/favorites/product/$productId');
       });
 
+  Future<void> clearFavorites() => guardApi(() async {
+        await _dio.delete('/favorites');
+      });
+
   Future<List<Coupon>> coupons() => guardApi(() async {
         final res = await _dio.get('/coupons/active');
         return unwrapItems(res.data, Coupon.fromJson);
@@ -289,13 +306,40 @@ class CustomerApi {
         await _dio.delete('/support/tickets/$id');
       });
 
-  Future<void> rateTicket(String id, int rating) => guardApi(() async {
-        await _dio.post('/support/tickets/$id/rating', data: {'rating': rating});
+  Future<void> rateTicket(String id, int rating, {String? feedback}) {
+    return guardApi(() async {
+      await _dio.post('/support/tickets/$id/rating', data: {
+        'rating': rating,
+        if (feedback != null && feedback.isNotEmpty) 'feedback': feedback,
+      });
+    });
+  }
+
+  /// "Reabrir" do PWA: volta o atendimento resolvido para aberto.
+  Future<void> reopenTicket(String id) => guardApi(() async {
+        await _dio.patch('/support/tickets/$id', data: {'status': 'OPEN'});
       });
 
   Future<List<FaqCategory>> faq() => guardApi(() async {
         final res = await _dio.get('/support/faq');
         return unwrapItems(res.data, FaqCategory.fromJson);
+      });
+
+  Future<List<FaqItem>> searchFaq(String query) => guardApi(() async {
+        final res = await _dio.get(
+          '/support/faq/search',
+          queryParameters: {'q': query},
+        );
+        return unwrapItems(res.data, FaqItem.fromJson);
+      });
+
+  /// Voto em "Esta resposta foi útil?".
+  Future<void> rateFaq(String id, bool helpful) => guardApi(() async {
+        await _dio.post('/support/faq/$id/helpful', data: {'isHelpful': helpful});
+      });
+
+  Future<void> viewFaq(String id) => guardApi(() async {
+        await _dio.post('/support/faq/$id/view');
       });
 
   Future<SupportContacts> supportContacts() => guardApi(() async {
@@ -305,9 +349,18 @@ class CustomerApi {
 
   // ---- Privacidade ----
 
-  /// Abre uma solicitação LGPD. `DELETION` é a exclusão de conta exigida pela
-  /// Google Play para apps com cadastro.
+  /// Abre uma solicitação LGPD (correção, revogação).
   Future<void> privacyRequest(String type) => guardApi(() async {
         await _dio.post('/privacy/me/requests', data: {'type': type});
+      });
+
+  /// Exclui a conta na hora (exigência da Google Play e da App Store).
+  /// Devolve o texto da API sobre o que foi apagado e o que fica por lei.
+  Future<String> deleteAccount() => guardApi(() async {
+        final res = await _dio.post(
+          '/privacy/me/requests',
+          data: {'type': 'DELETION', 'confirm': true},
+        );
+        return asMap(res.data)?['message']?.toString() ?? 'Conta excluída.';
       });
 }

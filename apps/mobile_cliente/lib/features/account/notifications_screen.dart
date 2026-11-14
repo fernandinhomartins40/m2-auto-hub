@@ -55,7 +55,7 @@ class NotificationsList extends ConsumerWidget {
       ],
       isEmpty: (items) => items.isEmpty,
       emptyIcon: LucideIcons.bellOff,
-      emptyMessage: 'Nenhuma notificação por aqui.',
+      emptyMessage: 'Nenhuma notificação encontrada',
       builder: (items) => [
         for (final item in items)
           GlassCard(

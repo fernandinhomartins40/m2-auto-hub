@@ -12,9 +12,9 @@ import 'ticket_screen.dart';
 const _ticketStatus = {
   'all': 'Todos os Status',
   'OPEN': 'Aberto',
-  'IN_PROGRESS': 'Em atendimento',
-  'WAITING_CUSTOMER': 'Aguardando você',
-  'WAITING_SUPPORT': 'Aguardando suporte',
+  'IN_PROGRESS': 'Em Progresso',
+  'WAITING_CUSTOMER': 'Aguardando Cliente',
+  'WAITING_SUPPORT': 'Aguardando Suporte',
   'RESOLVED': 'Resolvido',
   'CLOSED': 'Fechado',
 };
@@ -37,6 +37,10 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
   String _search = '';
   String _status = 'all';
   String _category = 'all';
+
+  void _newTicket() => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const NewTicketScreen()),
+      );
 
   Future<void> _refresh() async {
     ref.invalidate(ticketsProvider);
@@ -143,12 +147,10 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
       ],
       isEmpty: (items) => _tab == 0 && items.where(_matches).isEmpty,
       emptyIcon: LucideIcons.messageCircle,
-      emptyMessage: all.isEmpty
-          ? 'Abra um atendimento quando precisar falar com a M2.'
-          : 'Nenhum ticket encontrado com esses filtros.',
+      emptyMessage: 'Nenhum ticket encontrado',
       builder: (items) => _tab == 0
           ? [for (final ticket in items.where(_matches)) _TicketCard(ticket)]
-          : [const _Faq()],
+          : [_Faq(onCreateTicket: _newTicket)],
     );
   }
 
@@ -241,6 +243,15 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                 ),
                 const SizedBox(height: 12),
               ],
+              if (!contacts.online && contacts.nextAvailable != null)
+                Text(
+                  'Próximo horário disponível: '
+                  '${formatDateTime(contacts.nextAvailable)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.mutedForeground,
+                  ),
+                ),
             ],
           ),
         ),
@@ -282,7 +293,7 @@ class _TicketTabs extends StatelessWidget {
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppTheme.border)),
       ),
-      child: Row(
+      child: Wrap(
         children: [
           tab(0, 'Meus Tickets'),
           tab(1, 'Central de Ajuda (FAQ)'),
@@ -415,6 +426,16 @@ class _TicketCard extends StatelessWidget {
                   Text('${ticket.messageCount} mensagens', style: muted),
                 ],
               ),
+              if ((ticket.assignedTo ?? '').isNotEmpty)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.user,
+                        size: 12, color: AppTheme.mutedForeground),
+                    const SizedBox(width: 4),
+                    Text(ticket.assignedTo!, style: muted),
+                  ],
+                ),
             ],
           ),
         ],
@@ -440,73 +461,311 @@ String timeAgo(DateTime? date) {
   return formatDate(date);
 }
 
-class _Faq extends ConsumerWidget {
-  const _Faq();
+/// Central de Ajuda (`FAQSection`): busca com 2 letras ou mais, categorias
+/// recolhíveis com contagem e descrição, votos e o rodapé de suporte.
+class _Faq extends ConsumerStatefulWidget {
+  const _Faq({required this.onCreateTicket});
+
+  final VoidCallback onCreateTicket;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final faq = ref.watch(faqProvider);
-    return faq.when(
-      skipLoadingOnRefresh: true,
-      loading: () => const Padding(
-        padding: EdgeInsets.all(32),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, _) => ErrorState(
-        message: friendlyError(error),
-        onRetry: () => ref.refresh(faqProvider.future),
-      ),
-      data: (categories) {
-        if (categories.isEmpty) {
-          return const EmptyState(
-            icon: LucideIcons.circleHelp,
-            message: 'Nenhuma pergunta frequente cadastrada.',
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final category in categories) ...[
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8, top: 4),
-                child: Text(
-                  category.name,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+  ConsumerState<_Faq> createState() => _FaqState();
+}
+
+class _FaqState extends ConsumerState<_Faq> {
+  String _term = '';
+  Future<List<FaqItem>>? _results;
+
+  void _search(String value) {
+    setState(() {
+      _term = value;
+      _results = value.trim().length >= 2
+          ? ref.read(apiProvider).searchFaq(value.trim())
+          : null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final results = _results;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const CardHeading(
+                icon: LucideIcons.circleHelp,
+                title: 'Central de Ajuda',
               ),
-              for (final item in category.items) ...[
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Theme(
-                    data: Theme.of(context)
-                        .copyWith(dividerColor: Colors.transparent),
-                    child: ExpansionTile(
-                      title: Text(
-                        item.question,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+              const SizedBox(height: 16),
+              SearchBox(hint: 'Busque por palavras-chave...', onChanged: _search),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (results != null)
+          FutureBuilder<List<FaqItem>>(
+            key: ValueKey(_term),
+            future: results,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final items = snapshot.data ?? const <FaqItem>[];
+              if (items.isEmpty) {
+                return GlassCard(
+                  color: const Color(0xFFF1F5F9),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Não encontramos resultados para sua busca',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppTheme.mutedForeground),
                       ),
-                      iconColor: AppTheme.primary,
-                      expandedAlignment: Alignment.centerLeft,
-                      childrenPadding:
-                          const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      children: [
+                      const SizedBox(height: 8),
+                      FilledButton(
+                        onPressed: widget.onCreateTicket,
+                        child: const Text('Criar Ticket de Suporte'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return GlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Resultados da Busca (${items.length})',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    for (final item in items) ...[
+                      const Divider(height: 24),
+                      Text(item.question,
+                          style: const TextStyle(fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 4),
+                      Text(item.answer,
+                          style: const TextStyle(color: AppTheme.mutedForeground)),
+                      if (item.categoryName != null)
                         Text(
-                          item.answer,
+                          'Categoria: ${item.categoryName}',
                           style: const TextStyle(
+                            fontSize: 12,
                             color: AppTheme.mutedForeground,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 8),
-              ],
-              const SizedBox(height: 8),
+              );
+            },
+          )
+        else
+          ref.watch(faqProvider).when(
+                skipLoadingOnRefresh: true,
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, _) => ErrorState(
+                  message: friendlyError(error),
+                  onRetry: () => ref.refresh(faqProvider.future),
+                ),
+                data: (categories) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final category in categories) ...[
+                      _FaqCategoryCard(category: category),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                ),
+              ),
+        const SizedBox(height: 16),
+        GlassCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              const Text(
+                'Não encontrou o que procurava?',
+                style: TextStyle(color: AppTheme.mutedForeground),
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: widget.onCreateTicket,
+                child: const Text('Fale com o Suporte'),
+              ),
             ],
-          ],
-        );
-      },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FaqCategoryCard extends StatefulWidget {
+  const _FaqCategoryCard({required this.category});
+
+  final FaqCategory category;
+
+  @override
+  State<_FaqCategoryCard> createState() => _FaqCategoryCardState();
+}
+
+class _FaqCategoryCardState extends State<_FaqCategoryCard> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final category = widget.category;
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _open = !_open),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if ((category.icon ?? '').isNotEmpty) ...[
+                        Text(category.icon!),
+                        const SizedBox(width: 8),
+                      ],
+                      Flexible(
+                        child: Text(
+                          category.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '(${category.items.length})',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.mutedForeground,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        _open ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                  if ((category.description ?? '').isNotEmpty && !_open)
+                    Text(
+                      category.description!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.mutedForeground,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (_open)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final item in category.items) _FaqItemTile(item: item),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pergunta com visualizações e "Esta resposta foi útil?" (`FAQItem`).
+class _FaqItemTile extends ConsumerStatefulWidget {
+  const _FaqItemTile({required this.item});
+
+  final FaqItem item;
+
+  @override
+  ConsumerState<_FaqItemTile> createState() => _FaqItemTileState();
+}
+
+class _FaqItemTileState extends ConsumerState<_FaqItemTile> {
+  bool? _vote;
+
+  @override
+  void initState() {
+    super.initState();
+    // Como o PWA, conta a visualização quando a resposta aparece.
+    if (widget.item.id.isNotEmpty) {
+      ref.read(apiProvider).viewFaq(widget.item.id).catchError((_) {});
+    }
+  }
+
+  Future<void> _rate(bool helpful) async {
+    setState(() => _vote = helpful);
+    try {
+      await ref.read(apiProvider).rateFaq(widget.item.id, helpful);
+    } catch (_) {
+      if (mounted) setState(() => _vote = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    const muted = TextStyle(fontSize: 12, color: AppTheme.mutedForeground);
+    final voted = _vote != null;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(item.question, style: const TextStyle(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          Text(item.answer, style: const TextStyle(color: AppTheme.mutedForeground)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.eye, size: 12, color: AppTheme.mutedForeground),
+                  const SizedBox(width: 4),
+                  Text('${item.views} visualizações', style: muted),
+                ],
+              ),
+              const Text('Esta resposta foi útil?', style: muted),
+              TextButton.icon(
+                onPressed: voted ? null : () => _rate(true),
+                icon: const Icon(LucideIcons.thumbsUp, size: 12),
+                label: Text('${item.helpfulYes + (_vote == true ? 1 : 0)}'),
+              ),
+              TextButton.icon(
+                onPressed: voted ? null : () => _rate(false),
+                icon: const Icon(LucideIcons.thumbsDown, size: 12),
+                label: Text('${item.helpfulNo + (_vote == false ? 1 : 0)}'),
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+        ],
+      ),
     );
   }
 }

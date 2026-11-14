@@ -66,7 +66,10 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
     if (done) {
       ref.invalidate(quotesProvider);
       ref.invalidate(ordersProvider);
-      if (widget.closeOnDecision) Navigator.of(context).pop();
+      // Só fecha se o orçamento ainda for a tela de cima (o usuário pode ter voltado antes).
+      if (widget.closeOnDecision && (ModalRoute.of(context)?.isCurrent ?? false)) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -103,12 +106,16 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
           const SizedBox(height: 12),
           LabeledBox(
             label: 'Total',
-            value: quote.total > 0 ? formatMoney(quote.total) : 'Sob análise',
+            value: quote.displayTotal > 0
+                ? formatMoney(quote.displayTotal)
+                : 'Sob análise',
           ),
           const SizedBox(height: 12),
           LabeledBox(
             label: 'Respondido em',
-            value: quote.quotedAt == null ? '-' : formatDateTime(quote.quotedAt),
+            value: quote.quotedAt == null
+                ? 'Não informado'
+                : formatDateTime(quote.quotedAt),
           ),
           const SizedBox(height: 12),
           LabeledBox(
@@ -117,6 +124,17 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
                 ? 'Ainda não'
                 : formatDateTime(quote.approvedAt),
           ),
+          if (quote.status == 'APPROVED' && quote.orderStatus != null) ...[
+            const SizedBox(height: 12),
+            NoticeBox(
+              icon: LucideIcons.package,
+              tone: StatusTone.success,
+              child: Text(
+                'Este orçamento virou pedido. Status atual: '
+                '${quote.orderStatus == 'IN_PRODUCTION' ? 'Em produção' : quote.orderStatus}.',
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           for (final item in quote.items) ...[
             _QuoteItemBox(item: item),
@@ -172,8 +190,16 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
             ),
             const SizedBox(height: 12),
           ],
+          DownloadButton(
+            label: 'Exportar PDF',
+            busyLabel: 'Gerando PDF...',
+            path: '/customers/me/quotes/${quote.id}/export-pdf',
+            data: const <String, dynamic>{},
+            fallbackName: 'orcamento-${quote.shortId}.pdf',
+            success: 'PDF gerado',
+          ),
           if (quote.awaitsApproval) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             BusyButton(
               label: 'Aprovar e Virar Pedido',
               icon: LucideIcons.thumbsUp,
@@ -189,12 +215,22 @@ class _QuoteCardState extends ConsumerState<QuoteCard> {
               label: const Text('Rejeitar'),
             ),
           ],
-          if (quote.status == 'APPROVED')
+          if (quote.status == 'APPROVED') ...[
+            const SizedBox(height: 12),
             const NoticeBox(
               icon: LucideIcons.circleCheck,
               tone: StatusTone.success,
               child: Text('Orçamento aprovado e convertido em pedido.'),
             ),
+          ],
+          if (quote.status == 'PENDING' || quote.status == 'ANALYZING') ...[
+            const SizedBox(height: 12),
+            const NoticeBox(
+              icon: LucideIcons.clock,
+              tone: StatusTone.warning,
+              child: Text('Sua solicitação está em análise pela equipe.'),
+            ),
+          ],
         ],
       ),
     );

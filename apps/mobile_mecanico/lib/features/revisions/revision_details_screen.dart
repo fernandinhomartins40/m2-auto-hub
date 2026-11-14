@@ -6,7 +6,6 @@ import 'package:m2_core/m2_core.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../shared/ui.dart';
-import '../auth/auth_controller.dart';
 import 'checklist_row.dart';
 
 final _longDate = DateFormat("d 'de' MMMM 'de' y 'às' HH:mm", 'pt_BR');
@@ -39,9 +38,25 @@ class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
+          // Como o rodapé do modal no celular: empilhado, ação em cima.
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DownloadButton(
+                label: 'Exportar PDF',
+                busyLabel: 'Gerando PDF...',
+                path: '/admin/revisions/${widget.revisionId}/export-pdf',
+                data: const <String, dynamic>{},
+                fallbackName: 'revisao-$shortId.pdf',
+                success: 'PDF gerado',
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Fechar'),
+              ),
+            ],
           ),
         ),
       ),
@@ -105,7 +120,7 @@ class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
   List<Widget> _details(Revision revision) {
     final customer = revision.customer;
     final vehicle = revision.vehicle;
-    final mechanic = ref.watch(authControllerProvider).mechanic;
+    final mechanic = revision.assignedMechanic;
     return [
       _Section(
         icon: LucideIcons.user,
@@ -133,56 +148,99 @@ class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
             LucideIcons.calendar,
             'Data: ${revision.date == null ? '-' : _longDate.format(revision.date!)}',
           ),
-          const SizedBox(height: 8),
-          MetaLine(
-            LucideIcons.gauge,
-            'Quilometragem: ${formatKm(revision.mileage)}',
-          ),
-          if ((revision.generalNotes ?? '').isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const UpperLabel('Observações gerais'),
-            const SizedBox(height: 2),
-            Text(revision.generalNotes!),
+          if ((revision.mileage ?? 0) > 0) ...[
+            const SizedBox(height: 8),
+            MetaLine(
+              LucideIcons.gauge,
+              'Quilometragem: ${formatKm(revision.mileage)}',
+            ),
           ],
-          if ((revision.recommendations ?? '').isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const UpperLabel('Recomendações'),
-            const SizedBox(height: 2),
-            Text(revision.recommendations!),
+          if (revision.completedAt != null) ...[
+            const SizedBox(height: 8),
+            MetaLine(
+              LucideIcons.circleCheck,
+              'Concluída em: ${_longDate.format(revision.completedAt!)}',
+            ),
           ],
         ],
       ),
-      if (mechanic != null)
-        _Section(
-          icon: LucideIcons.userCog,
-          title: 'Mecânico Responsável',
-          children: [
+      _Section(
+        icon: LucideIcons.userCog,
+        title: 'Mecânico Responsável',
+        children: [
+          if (mechanic == null)
+            const _Muted('Nenhum mecânico atribuído')
+          else ...[
             _Strong(mechanic.name),
             _Muted(mechanic.email),
             const SizedBox(height: 6),
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
-              child: StatusChip('Mecânico', tone: StatusTone.dark),
+              child: StatusChip(
+                mechanic.isMechanic ? 'Mecânico' : mechanic.role,
+                tone: StatusTone.dark,
+              ),
             ),
+            if (revision.assignedAt != null)
+              _Muted('Atribuído em ${formatDateTime(revision.assignedAt)}'),
+            if ((revision.mechanicNotes ?? '').isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: gray50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Observações do Mecânico:',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    _Muted(revision.mechanicNotes!),
+                  ],
+                ),
+              ),
+            ],
           ],
+        ],
+      ),
+      if ((revision.generalNotes ?? '').isNotEmpty)
+        _Section(
+          title: 'Observações Gerais',
+          children: [Text(revision.generalNotes!)],
+        ),
+      if ((revision.recommendations ?? '').isNotEmpty)
+        _Section(
+          title: 'Recomendações',
+          children: [Text(revision.recommendations!)],
         ),
     ];
   }
 
   List<Widget> _checklist(Revision revision) {
-    final evaluated = revision.checks
-        .where((entry) => entry.status != CheckStatus.notChecked)
-        .toList();
-    if (evaluated.isEmpty) {
-      return const [
-        EmptyState(
-          icon: LucideIcons.clipboardList,
-          message: 'Nenhum item avaliado nesta revisão.',
+    if (revision.checks.isEmpty) {
+      return [
+        const EmptyState(
+          icon: LucideIcons.circleAlert,
+          message: 'Nenhum item no checklist',
         ),
+        const Text(
+          'Esta revisão ainda não possui dados de checklist',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: gray600),
+        ),
+        if (revision.status == 'DRAFT')
+          const Text(
+            'Status: Rascunho - Aguardando preenchimento',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: AppTheme.primary),
+          ),
       ];
     }
     final grouped = <String, List<CheckEntry>>{};
-    for (final entry in evaluated) {
+    for (final entry in revision.checks) {
       grouped.putIfAbsent(entry.categoryName, () => []).add(entry);
     }
     return [
@@ -222,20 +280,53 @@ class _RevisionDetailsScreenState extends ConsumerState<RevisionDetailsScreen> {
   List<Widget> _history(Revision revision) {
     final events = [
       if (revision.createdAt != null)
-        ('Revisão criada', revision.createdAt!, LucideIcons.filePlus),
-      if (revision.date != null)
-        ('Data da revisão', revision.date!, LucideIcons.calendar),
+        ('Revisão Criada', revision.createdAt!, LucideIcons.circle),
+      if (revision.assignedAt != null)
+        ('Mecânico Atribuído', revision.assignedAt!, LucideIcons.userCog),
       if (revision.completedAt != null)
-        ('Revisão concluída', revision.completedAt!, LucideIcons.circleCheck),
+        ('Revisão Concluída', revision.completedAt!, LucideIcons.circleCheck),
     ];
-    if (events.isEmpty) {
-      return const [
-        EmptyState(icon: LucideIcons.history, message: 'Sem histórico.'),
-      ];
-    }
     return [
+      if (revision.transfers.isEmpty)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Text(
+            'Nenhuma transferência registrada',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: gray600),
+          ),
+        )
+      else
+        _Section(
+          icon: LucideIcons.arrowRightLeft,
+          title: 'Histórico de Transferências',
+          children: [
+            for (final t in revision.transfers) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const IconTile(icon: LucideIcons.arrowRightLeft, size: 36),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Strong('De ${t.from} para ${t.to}', size: 14),
+                        _Muted(formatDateTime(t.at)),
+                        if ((t.reason ?? '').isNotEmpty)
+                          _Muted('Motivo: ${t.reason}'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ],
+        ),
       _Section(
-        title: 'Histórico',
+        icon: LucideIcons.clock,
+        title: 'Timeline',
         children: [
           for (final (label, date, icon) in events) ...[
             Row(
@@ -283,7 +374,12 @@ class _Section extends StatelessWidget {
                   Icon(icon, size: 20, color: AppTheme.slate950),
                   const SizedBox(width: 8),
                 ],
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),

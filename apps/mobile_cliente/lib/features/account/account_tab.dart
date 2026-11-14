@@ -72,6 +72,10 @@ class _ProfileState extends ConsumerState<_Profile> {
         children: [
           widget.tabs,
           const SizedBox(height: 16),
+          if (customer != null && !customer.emailVerified) ...[
+            const VerifyEmailBox(),
+            const SizedBox(height: 16),
+          ],
           const PanelPageHeader(
             icon: LucideIcons.user,
             title: 'Meu perfil',
@@ -129,6 +133,7 @@ class _PersonalCardState extends ConsumerState<_PersonalCard> {
   late final _phone = TextEditingController();
   late final _cpf = TextEditingController();
   final _password = TextEditingController();
+  DateTime? _birthDate;
   bool _editing = false;
   bool _busy = false;
 
@@ -144,6 +149,7 @@ class _PersonalCardState extends ConsumerState<_PersonalCard> {
     _email.text = customer.email;
     _phone.text = customer.phone;
     _cpf.text = customer.cpf ?? '';
+    _birthDate = customer.birthDate;
     _password.clear();
   }
 
@@ -166,10 +172,18 @@ class _PersonalCardState extends ConsumerState<_PersonalCard> {
     final done = await runAction(
       context,
       () async {
+        final phone = digitsOnly(_phone.text);
+        final birth = _birthDate;
         await ref.read(apiProvider).updateProfile({
           'name': _name.text.trim(),
-          'phone': digitsOnly(_phone.text),
+          // A API recusa telefone vazio; sem telefone, o campo não vai.
+          if (phone.isNotEmpty) 'phone': phone,
           'cpf': digitsOnly(_cpf.text),
+          'birthDate': birth == null
+              ? ''
+              : '${birth.year.toString().padLeft(4, '0')}-'
+                  '${birth.month.toString().padLeft(2, '0')}-'
+                  '${birth.day.toString().padLeft(2, '0')}',
           if (_emailChanged) ...{
             'email': _email.text.trim(),
             'currentPassword': _password.text,
@@ -211,7 +225,7 @@ class _PersonalCardState extends ConsumerState<_PersonalCard> {
       );
     }
 
-    final birthDate = widget.customer.birthDate;
+    final birthDate = _birthDate;
     return GlassCard(
       padding: const EdgeInsets.all(20),
       child: Form(
@@ -243,7 +257,7 @@ class _PersonalCardState extends ConsumerState<_PersonalCard> {
               LucideIcons.user,
               'Seu nome completo',
               validator: (v) =>
-                  (v ?? '').trim().length < 3 ? 'Informe seu nome' : null,
+                  (v ?? '').trim().isEmpty ? 'Nome é obrigatório' : null,
             ),
             const SizedBox(height: 16),
             field(
@@ -272,9 +286,11 @@ class _PersonalCardState extends ConsumerState<_PersonalCard> {
               LucideIcons.phone,
               '(11) 99999-9999',
               keyboard: TextInputType.phone,
-              validator: (v) => digitsOnly(v ?? '').length < 10
-                  ? 'Informe DDD e número'
-                  : null,
+              // Opcional, como no PWA; se preenchido, com DDD.
+              validator: (v) {
+                final digits = digitsOnly(v ?? '').length;
+                return digits == 0 || digits >= 10 ? null : 'Informe DDD e número';
+              },
             ),
             const SizedBox(height: 16),
             field(
@@ -294,9 +310,20 @@ class _PersonalCardState extends ConsumerState<_PersonalCard> {
               child: TextFormField(
                 key: ValueKey(birthDate),
                 initialValue: birthDate == null ? '' : formatDate(birthDate),
-                enabled: false,
+                enabled: _editing,
+                readOnly: true,
                 style: const TextStyle(fontSize: 14),
                 decoration: iconInput(LucideIcons.calendar, 'dd/mm/aaaa'),
+                onTap: () async {
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: birthDate ?? DateTime(now.year - 30),
+                    firstDate: DateTime(1900),
+                    lastDate: now,
+                  );
+                  if (picked != null) setState(() => _birthDate = picked);
+                },
               ),
             ),
             if (_editing) ...[
@@ -400,6 +427,57 @@ class _SecurityCardState extends ConsumerState<_SecurityCard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Aviso do topo do perfil do PWA para quem ainda não confirmou o e-mail.
+class VerifyEmailBox extends ConsumerStatefulWidget {
+  const VerifyEmailBox({super.key});
+
+  @override
+  ConsumerState<VerifyEmailBox> createState() => _VerifyEmailBoxState();
+}
+
+class _VerifyEmailBoxState extends ConsumerState<VerifyEmailBox> {
+  bool _sending = false;
+
+  Future<void> _resend() async {
+    setState(() => _sending = true);
+    try {
+      await ref.read(apiProvider).resendVerification();
+      if (mounted) {
+        showMessage(context, 'E-mail de confirmação enviado. Verifique '
+            'também a pasta de spam.');
+      }
+    } catch (_) {
+      if (mounted) {
+        showMessage(context, 'Não foi possível enviar. Tente novamente mais '
+            'tarde.', error: true);
+      }
+    }
+    if (mounted) setState(() => _sending = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NoticeBox(
+      icon: LucideIcons.mail,
+      tone: StatusTone.neutral,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Confirme seu e-mail para manter seus dados de acesso '
+              'atualizados.'),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _sending ? null : _resend,
+            child: Text(_sending
+                ? 'Enviando...'
+                : 'Reenviar confirmação de e-mail'),
+          ),
+        ],
       ),
     );
   }

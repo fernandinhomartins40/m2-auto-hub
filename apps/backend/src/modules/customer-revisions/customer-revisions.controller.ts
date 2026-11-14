@@ -2,13 +2,16 @@ import { Request, Response } from 'express';
 import { CustomerRevisionsService } from './customer-revisions.service.js';
 import { z } from 'zod';
 import pdfGeneratorService from '@shared/services/pdf-generator.service.js';
+import { buildRevisionPdfHtml } from '@shared/pdf-templates/revision.template.js';
 
 const exportRevisionPdfSchema = z.object({
   html: z
     .string()
     .trim()
     .min(1, 'HTML do PDF e obrigatorio')
-    .max(2_000_000, 'HTML do PDF excede o limite suportado'),
+    .max(2_000_000, 'HTML do PDF excede o limite suportado')
+    // Sem html (apps nativos), o servidor monta o documento com o modelo padrão.
+    .optional(),
   filename: z.string().trim().min(1).max(120).optional(),
 });
 
@@ -166,7 +169,7 @@ export class CustomerRevisionsController {
       return;
     }
 
-    const { html, filename } = exportRevisionPdfSchema.parse(req.body);
+    const { html, filename } = exportRevisionPdfSchema.parse(req.body ?? {});
     const revision = await this.customerRevisionsService.getCustomerRevisionById(
       customerId,
       revisionId
@@ -174,7 +177,7 @@ export class CustomerRevisionsController {
 
     const pdfBuffer = await pdfGeneratorService.generatePdfBuffer({
       title: `Revisao ${revision.id}`,
-      bodyHtml: html,
+      bodyHtml: html || buildRevisionPdfHtml(revision),
     });
 
     const safeFilename = pdfGeneratorService.sanitizeFilename(

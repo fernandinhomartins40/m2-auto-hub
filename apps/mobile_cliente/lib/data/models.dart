@@ -67,6 +67,7 @@ class Customer {
     this.birthDate,
     this.totalOrders = 0,
     this.totalSpent = 0,
+    this.emailVerified = true,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
@@ -80,6 +81,9 @@ class Customer {
         addresses: asMapList(json['addresses']).map(Address.fromJson).toList(),
         totalOrders: asInt(json['totalOrders']),
         totalSpent: asDouble(json['totalSpent']),
+        // Sem o campo na resposta, não mostra o aviso de confirmação.
+        emailVerified: !json.containsKey('emailVerifiedAt') ||
+            json['emailVerifiedAt'] != null,
       );
 
   final String id;
@@ -92,6 +96,7 @@ class Customer {
   final List<Address> addresses;
   final int totalOrders;
   final double totalSpent;
+  final bool emailVerified;
 
   String get firstName => name.trim().split(' ').first;
 
@@ -132,10 +137,14 @@ class Order {
     this.paymentMethod,
     this.discount = 0,
     this.address,
+    this.invoiceNumber,
+    this.invoiceKey,
+    this.estimatedDelivery,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
     final address = asMap(json['address']);
+    final invoice = asMap(json['invoice']);
     return Order(
       id: json['id'].toString(),
       status: json['status']?.toString().toUpperCase() ?? 'PENDING',
@@ -146,6 +155,9 @@ class Order {
       trackingCode: json['trackingCode']?.toString(),
       paymentMethod: json['paymentMethod']?.toString(),
       address: address == null ? null : Address.fromJson(address),
+      invoiceNumber: invoice?['number']?.toString(),
+      invoiceKey: invoice?['key']?.toString(),
+      estimatedDelivery: asDate(json['estimatedDelivery']),
     );
   }
 
@@ -153,6 +165,11 @@ class Order {
   final String status;
   final double total;
   final double discount;
+  final String? invoiceNumber;
+
+  /// Chave de acesso da NF-e, para consulta no portal.
+  final String? invoiceKey;
+  final DateTime? estimatedDelivery;
   final List<OrderItem> items;
   final DateTime? createdAt;
   final String? trackingCode;
@@ -207,6 +224,7 @@ class Quote {
     this.expiresAt,
     this.approvedAt,
     this.address,
+    this.orderStatus,
   });
 
   factory Quote.fromJson(Map<String, dynamic> json) {
@@ -222,6 +240,7 @@ class Quote {
       expiresAt: asDate(json['publicApprovalExpiresAt']),
       approvedAt: asDate(json['quoteApprovedAt']),
       address: address == null ? null : Address.fromJson(address),
+      orderStatus: json['orderStatus']?.toString(),
     );
   }
 
@@ -235,6 +254,14 @@ class Quote {
   final DateTime? expiresAt;
   final DateTime? approvedAt;
   final Address? address;
+
+  /// Status do pedido gerado pelo orçamento.
+  final String? orderStatus;
+
+  /// Total do servidor; sem ele (0), a soma dos itens como no PWA.
+  double get displayTotal => total > 0
+      ? total
+      : items.fold(0, (sum, item) => sum + item.unitPrice * item.quantity);
 
   String get shortId => id.length > 8 ? id.substring(0, 8).toUpperCase() : id;
 
@@ -378,6 +405,11 @@ class Revision {
     this.recommendations,
     this.mechanicName,
     this.vehicle,
+    this.createdAt,
+    this.completedAt,
+    this.assignedAt,
+    this.mechanicNotes,
+    this.transfers = const [],
   });
 
   factory Revision.fromJson(Map<String, dynamic> json) {
@@ -391,8 +423,22 @@ class Revision {
       mileage: json['mileage'] == null ? null : asInt(json['mileage']),
       generalNotes: json['generalNotes']?.toString(),
       recommendations: json['recommendations']?.toString(),
-      mechanicName: json['mechanicName']?.toString(),
+      mechanicName: json['mechanicName']?.toString() ??
+          asMap(json['assignedMechanic'])?['name']?.toString(),
       vehicle: vehicle == null ? null : Vehicle.fromJson(vehicle),
+      createdAt: asDate(json['createdAt']),
+      completedAt: asDate(json['completedAt']),
+      assignedAt: asDate(json['assignedAt']),
+      mechanicNotes: json['mechanicNotes']?.toString(),
+      transfers: [
+        for (final item in asMapList(json['transferHistory']))
+          (
+            from: item['fromName']?.toString() ?? '',
+            to: item['toName']?.toString() ?? '',
+            at: asDate(item['transferredAt']),
+            reason: item['reason']?.toString(),
+          ),
+      ],
     );
   }
 
@@ -405,6 +451,12 @@ class Revision {
   final String? recommendations;
   final String? mechanicName;
   final Vehicle? vehicle;
+  final DateTime? createdAt;
+  final DateTime? completedAt;
+  final DateTime? assignedAt;
+  final String? mechanicNotes;
+  final List<({String from, String to, DateTime? at, String? reason})>
+      transfers;
 
   int countOf(String checkStatus) =>
       checks.where((check) => check.status == checkStatus).length;
@@ -426,6 +478,10 @@ class FavoriteProduct {
     this.imageUrl,
     this.category,
     this.addedAt,
+    this.subcategory,
+    this.stock = 0,
+    this.minStock = 0,
+    this.active = true,
   });
 
   factory FavoriteProduct.fromJson(Map<String, dynamic> json) {
@@ -442,6 +498,10 @@ class FavoriteProduct {
           : null,
       category: product['category']?.toString(),
       addedAt: asDate(json['createdAt']),
+      subcategory: product['subcategory']?.toString(),
+      stock: asInt(product['stock']),
+      minStock: asInt(product['minStock']),
+      active: (product['status'] ?? 'ACTIVE') == 'ACTIVE',
     );
   }
 
@@ -452,6 +512,13 @@ class FavoriteProduct {
   final String? imageUrl;
   final String? category;
   final DateTime? addedAt;
+  final String? subcategory;
+  final int stock;
+  final int minStock;
+  final bool active;
+
+  /// Sem estoque ou fora de linha (`status !== 'ACTIVE' || stock === 0`).
+  bool get available => active && stock > 0;
 }
 
 /// Imagens enviadas pelo painel chegam como caminho relativo (`/uploads/...`).
@@ -468,6 +535,8 @@ class Coupon {
     this.minValue,
     this.maxDiscount,
     this.expiresAt,
+    this.usageLimit,
+    this.usedCount = 0,
   });
 
   factory Coupon.fromJson(Map<String, dynamic> json) => Coupon(
@@ -481,6 +550,9 @@ class Coupon {
             ? null
             : asDouble(json['maxDiscount']),
         expiresAt: asDate(json['expiresAt']),
+        usageLimit:
+            json['usageLimit'] == null ? null : asInt(json['usageLimit']),
+        usedCount: asInt(json['usedCount']),
       );
 
   final String id;
@@ -491,6 +563,8 @@ class Coupon {
   final double? minValue;
   final double? maxDiscount;
   final DateTime? expiresAt;
+  final int? usageLimit;
+  final int usedCount;
 
   String get discountLabel => discountType == 'PERCENTAGE'
       ? '${discountValue.toStringAsFixed(0)}% de desconto'
@@ -528,12 +602,16 @@ class ServiceOption {
     required this.name,
     required this.category,
     this.basePrice,
+    this.description = '',
+    this.estimatedTime = '',
   });
 
   factory ServiceOption.fromJson(Map<String, dynamic> json) => ServiceOption(
         id: json['id'].toString(),
         name: json['name']?.toString() ?? '',
         category: json['category']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        estimatedTime: json['estimatedTime']?.toString() ?? '',
         basePrice:
             json['basePrice'] == null ? null : asDouble(json['basePrice']),
       );
@@ -542,6 +620,8 @@ class ServiceOption {
   final String name;
   final String category;
   final double? basePrice;
+  final String description;
+  final String estimatedTime;
 }
 
 class Ticket {
@@ -555,6 +635,7 @@ class Ticket {
     this.createdAt,
     this.priority = 'MEDIUM',
     this.messageCount = 0,
+    this.assignedTo,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
@@ -567,6 +648,7 @@ class Ticket {
         createdAt: asDate(json['createdAt']),
         priority: json['priority']?.toString() ?? 'MEDIUM',
         messageCount: asInt(asMap(json['_count'])?['messages']),
+        assignedTo: asMap(json['assignedTo'])?['name']?.toString(),
       );
 
   final String id;
@@ -579,6 +661,9 @@ class Ticket {
   final String priority;
   final int messageCount;
 
+  /// Nome do atendente, quando já atribuído.
+  final String? assignedTo;
+
   (String, StatusTone) get priorityView => switch (priority) {
         'LOW' => ('Baixa', StatusTone.neutral),
         'HIGH' => ('Alta', StatusTone.orange),
@@ -589,9 +674,9 @@ class Ticket {
   bool get isOpen => status != 'RESOLVED' && status != 'CLOSED';
 
   (String, StatusTone) get statusView => switch (status) {
-        'IN_PROGRESS' => ('Em atendimento', StatusTone.warning),
-        'WAITING_CUSTOMER' => ('Aguardando você', StatusTone.purple),
-        'WAITING_SUPPORT' => ('Aguardando suporte', StatusTone.orange),
+        'IN_PROGRESS' => ('Em Progresso', StatusTone.warning),
+        'WAITING_CUSTOMER' => ('Aguardando Cliente', StatusTone.purple),
+        'WAITING_SUPPORT' => ('Aguardando Suporte', StatusTone.orange),
         'RESOLVED' => ('Resolvido', StatusTone.success),
         'CLOSED' => ('Fechado', StatusTone.neutral),
         _ => ('Aberto', StatusTone.info),
@@ -621,26 +706,55 @@ class TicketMessage {
 }
 
 class FaqItem {
-  const FaqItem({required this.question, required this.answer});
+  const FaqItem({
+    required this.question,
+    required this.answer,
+    this.id = '',
+    this.views = 0,
+    this.helpfulYes = 0,
+    this.helpfulNo = 0,
+    this.categoryName,
+  });
 
   factory FaqItem.fromJson(Map<String, dynamic> json) => FaqItem(
+        id: json['id']?.toString() ?? '',
         question: json['question']?.toString() ?? '',
         answer: json['answer']?.toString() ?? '',
+        views: asInt(json['views']),
+        helpfulYes: asInt(json['helpfulYes']),
+        helpfulNo: asInt(json['helpfulNo']),
+        categoryName: asMap(json['category'])?['name']?.toString(),
       );
 
+  final String id;
   final String question;
   final String answer;
+  final int views;
+  final int helpfulYes;
+  final int helpfulNo;
+
+  /// Só nos resultados da busca.
+  final String? categoryName;
 }
 
 class FaqCategory {
-  const FaqCategory({required this.name, required this.items});
+  const FaqCategory({
+    required this.name,
+    required this.items,
+    this.description,
+    this.icon,
+  });
 
   factory FaqCategory.fromJson(Map<String, dynamic> json) => FaqCategory(
         name: json['name']?.toString() ?? '',
+        description: json['description']?.toString(),
+        icon: json['icon']?.toString(),
         items: asMapList(json['items']).map(FaqItem.fromJson).toList(),
       );
 
   final String name;
+  final String? description;
+  final String? icon;
   final List<FaqItem> items;
 }
 
@@ -653,6 +767,7 @@ class SupportContacts {
     this.hours = const [],
     this.schedule = const [],
     this.online = false,
+    this.nextAvailable,
   });
 
   factory SupportContacts.fromJson(Map<String, dynamic> json) {
@@ -675,6 +790,7 @@ class SupportContacts {
             (day['label']?.toString() ?? '', day['hours']?.toString() ?? ''),
       ],
       online: asMap(json['status'])?['isOnline'] == true,
+      nextAvailable: asDate(asMap(json['status'])?['nextAvailable']),
     );
   }
 
@@ -687,4 +803,66 @@ class SupportContacts {
   /// Dia e horário separados, para o cartão "Horários de Atendimento".
   final List<(String, String)> schedule;
   final bool online;
+  final DateTime? nextAvailable;
+}
+
+/// Compra feita no site, na oficina ou no balcão, registrada na Ellon
+/// (`GET /customers/me/store-purchases`).
+class StorePurchase {
+  const StorePurchase({
+    required this.id,
+    required this.kind,
+    required this.origin,
+    required this.total,
+    required this.cancelled,
+    required this.items,
+    this.date,
+    this.status,
+  });
+
+  factory StorePurchase.fromJson(Map<String, dynamic> json) => StorePurchase(
+        id: json['id']?.toString() ?? '',
+        kind: json['kind']?.toString() ?? 'SALE',
+        origin: json['origin']?.toString() ?? 'loja',
+        date: asDate(json['date']),
+        total: asDouble(json['total']),
+        status: json['status']?.toString(),
+        cancelled: json['cancelled'] == true,
+        items: [
+          for (final item in asMapList(json['items']))
+            (
+              name: item['name']?.toString() ?? '',
+              quantity: asInt(item['quantity']),
+              total: asDouble(item['total']),
+            ),
+        ],
+      );
+
+  final String id;
+  final String kind;
+  final String origin;
+  final DateTime? date;
+  final double total;
+  final String? status;
+  final bool cancelled;
+  final List<({String name, int quantity, double total})> items;
+
+  /// "Venda faturada nº 12" ou "Pedido nº 7"; ids internos ("h...") sem número.
+  String get title {
+    final label = kind == 'PRE_ORDER' ? 'Pedido' : 'Venda faturada';
+    return id.startsWith('h') ? label : '$label nº $id';
+  }
+
+  String get originLabel => switch (origin) {
+        'site' => 'Site',
+        'oficina' => 'Oficina',
+        _ => 'Loja',
+      };
+}
+
+class StorePurchases {
+  const StorePurchases({required this.linked, required this.purchases});
+
+  final bool linked;
+  final List<StorePurchase> purchases;
 }

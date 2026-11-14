@@ -297,7 +297,10 @@ class EvaluatedRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final option = optionOf(entry.status);
-    final label = option?.label ?? 'Não se aplica';
+    final label = option?.label ??
+        (entry.status == CheckStatus.notChecked
+            ? 'Não Verificado'
+            : 'Não se aplica');
     return InkWell(
       onTap: onReopen,
       child: Padding(

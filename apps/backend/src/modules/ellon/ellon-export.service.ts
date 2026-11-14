@@ -252,6 +252,10 @@ export class EllonExportService {
     const link = await prisma.ellonEntityLink.findUnique({
       where: { entityType_localId: { entityType: EllonEntityType.CUSTOMER, localId: customerId } },
     });
+    if (customer.deletedAt) {
+      if (link) return { externalId: link.externalId, skipped: true };
+      throw new Error('Cliente excluído a pedido do titular; não é enviado à Ellon.');
+    }
     const payload = customerPayload(customer, customer.addresses[0]);
     const hash = payloadHash(payload);
     const metadata = linkMetadata(link?.metadata);
@@ -364,7 +368,8 @@ export class EllonExportService {
         where: { id },
         include: { addresses: { orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }], take: 1 } },
       });
-      if (!customer) continue;
+      // Conta excluída: o cadastro da Ellon fica como registro fiscal, sem receber o anonimizado.
+      if (!customer || customer.deletedAt) continue;
       const link = await prisma.ellonEntityLink.findUnique({
         where: { entityType_localId: { entityType: EllonEntityType.CUSTOMER, localId: id } },
       });

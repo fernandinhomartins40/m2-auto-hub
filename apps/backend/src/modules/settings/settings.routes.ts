@@ -6,6 +6,7 @@ import { AdminRole } from '@prisma/client';
 
 const router = Router();
 
+router.get('/app-version', settingsController.getAppVersion.bind(settingsController));
 router.get('/public', settingsController.getPublicSettings.bind(settingsController));
 router.get('/pwa-manifest.webmanifest', settingsController.getPwaManifest.bind(settingsController));
 router.get('/pwa-apple-touch-icon.png', settingsController.getAppleTouchIcon.bind(settingsController));
