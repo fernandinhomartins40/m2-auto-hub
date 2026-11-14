@@ -56,10 +56,11 @@ async function seedPair({ customer: customerEmail, mechanic: mechanicEmail }) {
     ...(i === 0 && { notes: 'Pastilhas com desgaste; trocar na próxima visita.' }),
   }));
 
+  // Sem serviço cadastrado na loja, o item sai só com nome e preço (serviceId é opcional).
   const service = await prisma.service.findFirst({ where: { status: 'ACTIVE' } });
-  if (!service) throw new Error('Nenhum serviço ativo cadastrado');
+  const serviceName = service?.name ?? 'Troca das pastilhas de freio dianteiras';
   const product = await prisma.product.findFirst({ where: { status: 'ACTIVE' } });
-  const servicePrice = Number(service.basePrice ?? 150);
+  const servicePrice = Number(service?.basePrice ?? 189.9);
   const now = new Date();
   const days = n => new Date(now.getTime() + n * 86400000);
   const assigned = { assignedMechanicId: mechanic.id, mechanicName: mechanic.name, assignedAt: now };
@@ -86,7 +87,7 @@ async function seedPair({ customer: customerEmail, mechanic: mechanicEmail }) {
       status: 'OPEN', customerId: customer.id, vehicleId: vehicle.id, customerName: customer.name, customerPhone: customer.phone,
       vehicleLabel: `${vehicle.model} ${vehicle.year} - ${vehicle.plate}`, vehiclePlate: vehicle.plate,
       description: 'Troca das pastilhas de freio dianteiras.', laborTotal: servicePrice, total: servicePrice, ...assigned,
-      items: { create: [{ type: 'SERVICE', serviceId: service.id, name: service.name, unitPrice: servicePrice, quantity: 1, subtotal: servicePrice }] },
+      items: { create: [{ type: 'SERVICE', serviceId: service?.id, name: serviceName, unitPrice: servicePrice, quantity: 1, subtotal: servicePrice }] },
     },
   });
 
@@ -96,22 +97,20 @@ async function seedPair({ customer: customerEmail, mechanic: mechanicEmail }) {
       customerId: customer.id, addressId: address.id, status: 'PENDING', hasServices: true, quoteStatus: 'QUOTED', quotedAt: now,
       quoteNotes: 'Orçamento para a troca das pastilhas de freio.', subtotal: servicePrice, total: servicePrice, paymentMethod: 'PIX',
       items: {
-        create: [{ type: 'SERVICE', serviceId: service.id, name: service.name, price: servicePrice, quantity: 1, subtotal: servicePrice,
+        create: [{ type: 'SERVICE', serviceId: service?.id, name: serviceName, price: servicePrice, quantity: 1, subtotal: servicePrice,
           priceQuoted: true, quotedPrice: servicePrice, quotedAt: now }],
       },
     },
   });
 
-  // Pedido de peça já confirmado.
-  if (product) {
-    const p = Number(product.promoPrice ?? product.salePrice);
-    await prisma.order.create({
-      data: {
-        customerId: customer.id, addressId: address.id, status: 'CONFIRMED', subtotal: p * 2, total: p * 2, paymentMethod: 'PIX',
-        items: { create: [{ type: 'PRODUCT', productId: product.id, name: product.name, price: p, quantity: 2, subtotal: p * 2 }] },
-      },
-    });
-  }
+  // Pedido de peça já confirmado (sem produto cadastrado, o item sai só com nome e preço).
+  const p = product ? Number(product.promoPrice ?? product.salePrice) : 49.9;
+  await prisma.order.create({
+    data: {
+      customerId: customer.id, addressId: address.id, status: 'CONFIRMED', subtotal: p * 2, total: p * 2, paymentMethod: 'PIX',
+      items: { create: [{ type: 'PRODUCT', productId: product?.id, name: product?.name ?? 'Óleo de motor 5W30 1L', price: p, quantity: 2, subtotal: p * 2 }] },
+    },
+  });
 
   console.log(`${customerEmail} + ${mechanicEmail}: dados de demonstração criados.`);
 }
