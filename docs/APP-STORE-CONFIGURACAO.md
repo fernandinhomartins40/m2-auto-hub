@@ -12,7 +12,7 @@ As regras por trás de cada resposta, com link e data da conferência, estão em
 | Idioma principal | Português (Brasil) | Português (Brasil) |
 | Aparelhos | Só iPhone | Só iPhone |
 | iOS mínimo | 15.0 | 15.0 |
-| Distribuição | Pública na App Store | **Não listada** (só com link) |
+| Distribuição | Pública na App Store | Pública na App Store (decisão do dono em 14/11/2026) |
 | Build | Enviado pelo workflow *Apps nativos - release* (ver [APPS-NATIVOS.md](APPS-NATIVOS.md)) | idem |
 
 ## Antes de começar
